@@ -54,6 +54,10 @@ SimpleClaude/
 └── README.md                     # This file
 ```
 
+## Acknowledgments
+
+SimpleClaude was inspired by [SuperClaude](https://github.com/NomenAK/SuperClaude) which demonstrated effective patterns for natural language command interfaces. SimpleClaude builds on concepts pioneered by the SuperClaude project and I thank NomenAK for putting in the hard yards with SuperClaude - an awesome project with powerful features.
+
 ## Contributing
 
 SimpleClaude follows a user-driven development approach:
