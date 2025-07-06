@@ -92,6 +92,13 @@
 
 These phases will be prioritized based on actual user feedback:
 
+#### Command Enhancement
+
+Improve command behavior and user experience:
+
+- **Thinking Mode Integration**: When `sc-<command>` is run with arguments or `$ARGUMENTS`, automatically trigger Claude Code's thinking modes (see https://www.anthropic.com/engineering/claude-think-tool)
+- **Usage Suggestions**: When `sc-<command>` is run without arguments, output a short suggestion of how to use the command instead of processing empty input
+
 #### Optional: Missing Pattern Files
 
 Only create if users report issues:
