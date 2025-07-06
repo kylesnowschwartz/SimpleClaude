@@ -18,7 +18,7 @@
 
 ## Command Execution
 
-Executes immediately. Natural language controls behavior. Transforms: "$ARGUMENTS" into structured intent:
+Executes immediately following thinking mode directive. Natural language controls behavior. Transforms: "$ARGUMENTS" into structured intent:
 
 - What: [extracted-target]
 - How: [detected-approach]
