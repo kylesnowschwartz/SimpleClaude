@@ -11,7 +11,7 @@ detection_logic:
         const modes = [];
         const confidence = {};
         const lowerInput = input.toLowerCase();
-        
+
         // Direct flag detection (highest priority)
         if (input.includes('--')) {
           const flagMatches = input.match(/--[\w-]+/g) || [];
@@ -23,12 +23,12 @@ detection_logic:
             }
           });
         }
-        
+
         // Natural language pattern matching
         for (const [mode, patterns] of Object.entries(modePatterns)) {
           let score = 0;
           let matches = 0;
-          
+
           // Check primary keywords
           patterns.keywords.primary.forEach(keyword => {
             if (lowerInput.includes(keyword)) {
@@ -36,7 +36,7 @@ detection_logic:
               matches++;
             }
           });
-          
+
           // Check secondary keywords
           patterns.keywords.secondary.forEach(keyword => {
             if (lowerInput.includes(keyword)) {
@@ -44,7 +44,7 @@ detection_logic:
               matches++;
             }
           });
-          
+
           // Check natural patterns
           patterns.natural_patterns.forEach(pattern => {
             if (lowerInput.includes(pattern)) {
@@ -52,14 +52,14 @@ detection_logic:
               matches++;
             }
           });
-          
+
           // Store confidence if meaningful match
           if (matches > 0) {
             confidence[mode] = Math.min(score, 1.0);
             if (score >= 0.3) modes.push(mode); // 30% threshold
           }
         }
-        
+
         return { modes, confidence };
       }
 
@@ -153,16 +153,16 @@ mode_scoring:
       function calculateConfidence(input, context) {
         const baseScores = detectModes(input);
         const adjustedScores = {};
-        
+
         // Apply context adjustments
         for (const [mode, score] of Object.entries(baseScores.confidence)) {
           let adjusted = score;
-          
+
           // Project type boost
           if (context.projectType && modeProjectBoost[mode]?.[context.projectType]) {
             adjusted *= modeProjectBoost[mode][context.projectType];
           }
-          
+
           // File context boost
           if (context.currentFile && modeFileBoost[mode]) {
             const filePatterns = modeFileBoost[mode];
@@ -170,20 +170,20 @@ mode_scoring:
               adjusted *= 1.2; // 20% boost
             }
           }
-          
+
           // Error state boost
           if (context.hasErrors && ['safe_mode', 'interactive_mode'].includes(mode)) {
             adjusted *= 1.5; // 50% boost for safety in error conditions
           }
-          
+
           // Complexity boost
           if (context.complexity === 'high' && ['planning_mode', 'strict_mode'].includes(mode)) {
             adjusted *= 1.3; // 30% boost for planning in complex scenarios
           }
-          
+
           adjustedScores[mode] = Math.min(adjusted, 1.0);
         }
-        
+
         return adjustedScores;
       }
 
@@ -423,8 +423,8 @@ utility_functions:
         'interactive_mode': ['batch_mode'],
         'watch_mode': ['one_time_mode']
       };
-      
-      return !(incompatible[mode1]?.includes(mode2) || 
+
+      return !(incompatible[mode1]?.includes(mode2) ||
                incompatible[mode2]?.includes(mode1));
     }
 
@@ -447,18 +447,18 @@ utility_functions:
     function suggestModes(taskDescription) {
       const suggestions = [];
       const lower = taskDescription.toLowerCase();
-      
+
       if (lower.includes('ui') || lower.includes('component')) {
         suggestions.push('Consider --magic for UI generation');
       }
-      
+
       if (lower.includes('test') || lower.includes('spec')) {
         suggestions.push('Consider --tdd for test-driven development');
       }
-      
+
       if (lower.includes('production') || lower.includes('deploy')) {
         suggestions.push('Consider --safe --strict for production safety');
       }
-      
+
       return suggestions;
     }

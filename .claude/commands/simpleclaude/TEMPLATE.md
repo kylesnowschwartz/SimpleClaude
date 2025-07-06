@@ -2,20 +2,19 @@
 
 ---
 
-@include shared/simpleclaude/core-patterns.yml#Core_Philosophy @include
-shared/simpleclaude/mode-detection.yml
+@include shared/simpleclaude/core-patterns.yml#Core_Philosophy
+
+@include shared/simpleclaude/mode-detection.yml
 
 ## Command Execution
 
-Executes immediately. Natural language controls behavior. Transforms:
-"$ARGUMENTS" into structured intent:
+Executes immediately. Natural language controls behavior. Transforms: "$ARGUMENTS" into structured intent:
 
 - What: [extracted-target]
 - How: [detected-approach]
 - When: [execution-mode]
 
-[Main command description - explains how natural language is transformed into
-structured actions]
+[Main command description - explains how natural language is transformed into structured actions]
 
 ### Semantic Transformations
 
@@ -77,9 +76,7 @@ Examples:
   → [What happens with these keywords]
 ```
 
-**Intelligent Context Detection:** Analyzes request intent | Identifies scope
-automatically | Chooses optimal approach | Evidence-based modifications |
-Detects modes from natural language patterns
+**Intelligent Context Detection:** Analyzes request intent | Identifies scope automatically | Chooses optimal approach | Evidence-based modifications | Detects modes from natural language patterns
 
 @include shared/simpleclaude/core-patterns.yml#Task_Management
 

@@ -2,22 +2,19 @@
 
 ---
 
-@include ../shared/simpleclaude/core-patterns.yml#Core_Philosophy @include
-../shared/simpleclaude/mode-detection.yml
+@include ../shared/simpleclaude/core-patterns.yml#Core_Philosophy
+
+@include ../shared/simpleclaude/mode-detection.yml
 
 ## Command Execution
 
-Executes immediately. Natural language controls behavior. Transforms:
-"$ARGUMENTS" into structured intent:
+Executes immediately. Natural language controls behavior. Transforms: "$ARGUMENTS" into structured intent:
 
 - What: [analysis-target]
 - How: [explanation-approach]
 - When: [analysis-mode]
 
-`sc-understand` provides intelligent code analysis and explanation by detecting
-intent from natural language. It adapts between educational explanations, visual
-representations, deep analysis, interactive exploration, or documentation lookup
-based on your request.
+`sc-understand` provides intelligent code analysis and explanation by detecting intent from natural language. It adapts between educational explanations, visual representations, deep analysis, interactive exploration, or documentation lookup based on your request.
 
 ### Semantic Transformations
 
@@ -111,11 +108,9 @@ The command detects modes from natural language patterns:
 
 Examples:
 
-- `/understand explain how authentication works` - Step-by-step auth flow
-  explanation
+- `/understand explain how authentication works` - Step-by-step auth flow explanation
 - `/understand show me the architecture` - Visual architecture diagrams
-- `/understand deep analysis of data pipeline` - Comprehensive pipeline
-  evaluation
+- `/understand deep analysis of data pipeline` - Comprehensive pipeline evaluation
 - `/understand walk me through the API` - Interactive API exploration
 - `/understand React hooks documentation` - Quick hook reference lookup
 
@@ -138,9 +133,7 @@ Analysis: [analyze, evaluate, assess, metrics]
   → Comprehensive codebase evaluation
 ```
 
-**Intelligent Context Detection:** Analyzes request intent | Identifies analysis
-scope | Chooses optimal explanation approach | Evidence-based understanding |
-Detects modes from natural language patterns
+**Intelligent Context Detection:** Analyzes request intent | Identifies analysis scope | Chooses optimal explanation approach | Evidence-based understanding | Detects modes from natural language patterns
 
 @include ../shared/simpleclaude/core-patterns.yml#Task_Management
 
@@ -150,17 +143,13 @@ Detects modes from natural language patterns
 
 ## Core Workflows
 
-**Educational:** Question Analysis → Context Gathering → Explanation Generation
-→ Example Creation → Learning Resources
+**Educational:** Question Analysis → Context Gathering → Explanation Generation → Example Creation → Learning Resources
 
-**Visual:** Architecture Scan → Relationship Mapping → Diagram Generation →
-Annotation → Interactive Output
+**Visual:** Architecture Scan → Relationship Mapping → Diagram Generation → Annotation → Interactive Output
 
-**Deep Analysis:** Codebase Scan → Pattern Recognition → Metric Collection →
-Insight Generation → Recommendations
+**Deep Analysis:** Codebase Scan → Pattern Recognition → Metric Collection → Insight Generation → Recommendations
 
-**Interactive:** Initial Question → Context Building → Guided Exploration → Q&A
-Loop → Summary
+**Interactive:** Initial Question → Context Building → Guided Exploration → Q&A Loop → Summary
 
 ## Sub-Agent Delegation
 

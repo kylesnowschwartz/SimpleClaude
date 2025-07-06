@@ -2,20 +2,19 @@
 
 ---
 
-@include ../shared/simpleclaude/core-patterns.yml#Core_Philosophy @include
-../shared/simpleclaude/mode-detection.yml
+@include ../shared/simpleclaude/core-patterns.yml#Core_Philosophy
+
+@include ../shared/simpleclaude/mode-detection.yml
 
 ## Command Execution
 
-Executes immediately. Natural language controls behavior. Transforms:
-"$ARGUMENTS" into structured intent:
+Executes immediately. Natural language controls behavior. Transforms: "$ARGUMENTS" into structured intent:
 
 - What: Code/module/feature to review
 - How: Review approach (security/performance/quality/architecture)
 - When: One-time analysis or continuous monitoring
 
-Reviews code quality, security, performance, and maintainability based on
-natural language cues. Automatically detects review focus from request context.
+Reviews code quality, security, performance, and maintainability based on natural language cues. Automatically detects review focus from request context.
 
 ### Semantic Transformations
 
@@ -105,26 +104,16 @@ Examples:
 ## Smart Detection & Routing
 
 ```yaml
-Security:
-  security, vulnerabilities, threats, OWASP, authentication → Focus on
-  vulnerability detection and security best practices
+Security: security, vulnerabilities, threats, OWASP, authentication → Focus on vulnerability detection and security best practices
 
-Performance:
-  performance, optimization, speed, bottlenecks, efficiency → Analyze
-  algorithms, queries, and resource utilization
+Performance: performance, optimization, speed, bottlenecks, efficiency → Analyze algorithms, queries, and resource utilization
 
-Architecture:
-  architecture, design, patterns, structure, SOLID → Review design decisions and
-  structural integrity
+Architecture: architecture, design, patterns, structure, SOLID → Review design decisions and structural integrity
 
-Quality:
-  quality, standards, best practices, clean code, maintainability → General code
-  quality and maintainability assessment
+Quality: quality, standards, best practices, clean code, maintainability → General code quality and maintainability assessment
 ```
 
-**Intelligent Context Detection:** Analyzes review request | Identifies focus
-areas automatically | Chooses optimal review approach | Evidence-based feedback
-| Detects multiple concerns from natural language
+**Intelligent Context Detection:** Analyzes review request | Identifies focus areas automatically | Chooses optimal review approach | Evidence-based feedback | Detects multiple concerns from natural language
 
 @include ../shared/simpleclaude/core-patterns.yml#Task_Management
 
@@ -134,14 +123,11 @@ areas automatically | Chooses optimal review approach | Evidence-based feedback
 
 ## Core Workflows
 
-**Security Review:** Scan code → Identify vulnerabilities → Check dependencies →
-Generate report
+**Security Review:** Scan code → Identify vulnerabilities → Check dependencies → Generate report
 
-**Performance Review:** Profile code → Find bottlenecks → Suggest optimizations
-→ Measure impact
+**Performance Review:** Profile code → Find bottlenecks → Suggest optimizations → Measure impact
 
-**Quality Review:** Check standards → Find code smells → Suggest improvements →
-Track metrics
+**Quality Review:** Check standards → Find code smells → Suggest improvements → Track metrics
 
 ## Sub-Agent Delegation
 

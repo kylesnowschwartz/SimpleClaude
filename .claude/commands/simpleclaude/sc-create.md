@@ -1,23 +1,20 @@
-**Purpose**: Create anything from components to complete systems with
-intelligent routing
+**Purpose**: Create anything from components to complete systems with intelligent routing
 
 ---
 
-@include shared/simpleclaude/core-patterns.yml#Core_Philosophy @include
-shared/simpleclaude/mode-detection.yml
+@include shared/simpleclaude/core-patterns.yml#Core_Philosophy
+
+@include shared/simpleclaude/mode-detection.yml
 
 ## Command Execution
 
-Executes immediately. Natural language controls behavior. Transforms:
-"$ARGUMENTS" into structured intent:
+Executes immediately. Natural language controls behavior. Transforms: "$ARGUMENTS" into structured intent:
 
 - What: [extracted-target]
 - How: [detected-approach]
 - When: [execution-mode]
 
-Smart creation router that consolidates spawn, task, build, design, document,
-and dev-setup functionality. Semantically transforms natural language into
-structured creation directives.
+Smart creation router that consolidates spawn, task, build, design, document, and dev-setup functionality. Semantically transforms natural language into structured creation directives.
 
 ### Semantic Transformations
 
@@ -101,41 +98,27 @@ Examples:
 
 - `/sc-create user auth API` - Builds complete REST API with JWT, tests, docs
 - `/sc-create magic dashboard UI` - Generates full UI with modern patterns
-- `/sc-create react hooks with best practices` - Creates hooks using project
-  patterns
+- `/sc-create react hooks with best practices` - Creates hooks using project patterns
 - `/sc-create plan for payment system` - Routes to planning workflow first
-- `/sc-create carefully architect microservice system` - Thorough design with
-  detailed specs
+- `/sc-create carefully architect microservice system` - Thorough design with detailed specs
 - `/sc-create quickly prototype chat interface` - Rapid MVP with core features
 - `/sc-create meticulously test file upload API` - Comprehensive test coverage
 
 ## Smart Detection & Routing
 
 ```yaml
-Project/App:
-  scaffold, app, project, application, boilerplate → Full scaffold with
-  structure, config, dependencies, Git init, tests, README
+Project/App: scaffold, app, project, application, boilerplate → Full scaffold with structure, config, dependencies, Git init, tests, README
 
-API/Backend:
-  api, backend, rest, graphql, service, endpoint → Routes, validation, business
-  logic, OpenAPI docs, integration tests
+API/Backend: api, backend, rest, graphql, service, endpoint → Routes, validation, business logic, OpenAPI docs, integration tests
 
-Component/UI:
-  component, ui, interface, widget, element, react, vue → Pattern analysis,
-  styled components, state management, unit tests
+Component/UI: component, ui, interface, widget, element, react, vue → Pattern analysis, styled components, state management, unit tests
 
-Documentation:
-  docs, document, guide, readme, manual → Code analysis, API extraction,
-  examples generation, version management
+Documentation: docs, document, guide, readme, manual → Code analysis, API extraction, examples generation, version management
 
-Architecture:
-  architect, design, system, blueprint, structure → System design patterns,
-  service boundaries, API contracts, deployment strategies
+Architecture: architect, design, system, blueprint, structure → System design patterns, service boundaries, API contracts, deployment strategies
 ```
 
-**Intelligent Context Detection:** Analyzes request intent | Identifies scope
-automatically | Chooses optimal approach | Evidence-based modifications |
-Detects modes from natural language patterns
+**Intelligent Context Detection:** Analyzes request intent | Identifies scope automatically | Chooses optimal approach | Evidence-based modifications | Detects modes from natural language patterns
 
 @include shared/simpleclaude/core-patterns.yml#Task_Management
 
@@ -145,17 +128,13 @@ Detects modes from natural language patterns
 
 ## Core Workflows
 
-**Project Creation:** Analyze requirements → Generate structure → Setup config →
-Initialize Git → Create tests → Write documentation → Ready to develop
+**Project Creation:** Analyze requirements → Generate structure → Setup config → Initialize Git → Create tests → Write documentation → Ready to develop
 
-**API Development:** Design endpoints → Implement routes → Add validation →
-Business logic → Error handling → Generate docs → Integration tests
+**API Development:** Design endpoints → Implement routes → Add validation → Business logic → Error handling → Generate docs → Integration tests
 
-**Component Building:** Analyze patterns → Create structure → Implement logic →
-Add styling → State management → Unit tests → Usage examples
+**Component Building:** Analyze patterns → Create structure → Implement logic → Add styling → State management → Unit tests → Usage examples
 
-**Documentation Flow:** Analyze codebase → Extract APIs → Generate examples →
-Create guides → Version tracking → Deploy docs
+**Documentation Flow:** Analyze codebase → Extract APIs → Generate examples → Create guides → Version tracking → Deploy docs
 
 ## Sub-Agent Delegation
 

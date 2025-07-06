@@ -1,22 +1,20 @@
-**Purpose**: Fix bugs, errors, and issues with intelligent debugging and error
-resolution
+**Purpose**: Fix bugs, errors, and issues with intelligent debugging and error resolution
 
 ---
 
-@include ../shared/simpleclaude/core-patterns.yml#Core_Philosophy @include
-../shared/simpleclaude/mode-detection.yml
+@include ../shared/simpleclaude/core-patterns.yml#Core_Philosophy
+
+@include ../shared/simpleclaude/mode-detection.yml
 
 ## Command Execution
 
-Executes immediately. Natural language controls behavior. Transforms:
-"$ARGUMENTS" into structured intent:
+Executes immediately. Natural language controls behavior. Transforms: "$ARGUMENTS" into structured intent:
 
 - What: [issue/bug to fix]
 - How: [fixing approach]
 - When: [execution mode]
 
-Systematically investigates issues, applies fixes, and ensures code stability
-through various fixing strategies based on natural language patterns.
+Systematically investigates issues, applies fixes, and ensures code stability through various fixing strategies based on natural language patterns.
 
 ### Semantic Transformations
 
@@ -127,9 +125,7 @@ Database: [migration, deadlock, query, connection]
   → Resolves database-related issues
 ```
 
-**Intelligent Context Detection:** Analyzes error patterns | Identifies root
-causes automatically | Chooses optimal fix strategy | Evidence-based debugging |
-Detects fix urgency from natural language
+**Intelligent Context Detection:** Analyzes error patterns | Identifies root causes automatically | Chooses optimal fix strategy | Evidence-based debugging | Detects fix urgency from natural language
 
 @include ../shared/simpleclaude/core-patterns.yml#Task_Management
 

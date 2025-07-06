@@ -2,20 +2,19 @@
 
 ---
 
-@include shared/simpleclaude/core-patterns.yml#Core_Philosophy @include
-shared/simpleclaude/mode-detection.yml
+@include shared/simpleclaude/core-patterns.yml#Core_Philosophy
+
+@include shared/simpleclaude/mode-detection.yml
 
 ## Command Execution
 
-Executes immediately. Natural language controls behavior. Transforms:
-"$ARGUMENTS" into structured intent:
+Executes immediately. Natural language controls behavior. Transforms: "$ARGUMENTS" into structured intent:
 
 - What: [extracted-target]
 - How: [detected-approach]
 - When: [execution-mode]
 
-Intelligently modifies, improves, refactors, migrates, or deploys code by
-transforming natural language into structured modification directives.
+Intelligently modifies, improves, refactors, migrates, or deploys code by transforming natural language into structured modification directives.
 
 ### Semantic Transformations
 
@@ -78,11 +77,9 @@ The command detects modes from natural language patterns:
 Examples:
 
 - `/sc-modify improve performance` - Optimize code performance
-- `/sc-modify carefully refactor the payment module` - Safe refactoring with
-  backups
+- `/sc-modify carefully refactor the payment module` - Safe refactoring with backups
 - `/sc-modify quickly fix the typo in README` - Immediate fix, minimal overhead
-- `/sc-modify monitor while optimizing database queries` - Real-time performance
-  tracking
+- `/sc-modify monitor while optimizing database queries` - Real-time performance tracking
 - `/sc-modify walk me through upgrading React` - Interactive upgrade process
 
 ## Smart Detection & Routing
@@ -104,9 +101,7 @@ Cleanup: [cleanup, clean, remove unused, delete dead code, prune]
   → Dead code removal, dependency pruning, file organization
 ```
 
-**Intelligent Context Detection:** Analyzes request intent | Identifies scope
-automatically | Chooses optimal approach | Evidence-based modifications |
-Detects modes from natural language patterns
+**Intelligent Context Detection:** Analyzes request intent | Identifies scope automatically | Chooses optimal approach | Evidence-based modifications | Detects modes from natural language patterns
 
 @include shared/simpleclaude/core-patterns.yml#Task_Management
 
@@ -116,11 +111,9 @@ Detects modes from natural language patterns
 
 ## Core Workflows
 
-**Performance:** Profile first → Identify bottlenecks → Optimize algorithms →
-Measure improvements
+**Performance:** Profile first → Identify bottlenecks → Optimize algorithms → Measure improvements
 
-**Refactoring:** Analyze patterns → Extract common code → Simplify structure →
-Verify behavior
+**Refactoring:** Analyze patterns → Extract common code → Simplify structure → Verify behavior
 
 ## Sub-Agent Delegation
 
