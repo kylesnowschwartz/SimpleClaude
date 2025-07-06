@@ -37,7 +37,7 @@ patterns:
 
   context_awareness:
     auto_detect:
-      - "Project type from package files (package.json, pyproject.toml, etc.)"
+      - "Project type from package files (package.json, pyproject.toml, Gemfile etc.)"
       - "Testing framework from existing tests"
       - "Code style from existing codebase"
       - "Git workflow from commit history"
@@ -71,6 +71,18 @@ patterns:
       - "Follow existing project conventions"
       - "Write self-documenting code"
       - "Keep functions small and focused"
+      - "Follow 'KISS' (Keep It Simple, Stupid) - avoid unnecessary complexity"
+      - "Follow 'YAGNI' (You Ain't Gonna Need It) - don't add functionality until needed"
+      - "Follow 'DRY' (Don't Repeat Yourself) - extract common patterns"
+      - "Follow 'SOLID' principles - write maintainable object-oriented code"
+
+    anti_patterns_to_avoid:
+      - "Premature optimization"
+      - "Over-engineering solutions"
+      - "God objects/functions"
+      - "Copy-paste programming"
+      - "Magic numbers/strings"
+      - "Ignoring error cases"
 
     validation:
       - "Use project's linting configuration"
@@ -79,7 +91,7 @@ patterns:
 
   session_management:
     efficiency:
-      - "Use Claude Code's /compact for conversation compression"
+      - "Use Claude Code's '/compact $INSTRUCTIONS' for conversation compression"
       - "Clear context with /clear when switching tasks"
       - "Leverage sub-agents to avoid token overflow"
       - "Focus on one task at a time"
@@ -95,9 +107,8 @@ patterns:
         when: "Building UI components (optional)"
 
     claude_code_commands:
-      - "/compact - Compress conversation history"
+      - "/compact - Compress conversation history with optional INSTRUCTIONS"
       - "/clear - Clear context for new task"
-      - "/undo - Revert last changes"
 
   error_handling:
     approach:
@@ -105,6 +116,13 @@ patterns:
       - "Provide actionable solutions"
       - "Learn from errors to prevent recurrence"
       - "Use minimal reproducible examples for debugging"
+      - "Immediately ask human to install packages rather than switching alternatives"
+
+    package_installation:
+      - "When dependency missing → Ask user to install"
+      - "Provide exact installation command"
+      - "Never suggest inferior alternatives"
+      - "Wait for confirmation after installation"
 
   git_conventions:
     strategy: "Detect and follow existing project conventions"
@@ -113,3 +131,14 @@ patterns:
       - "Small, focused commits"
       - "Clear, descriptive messages"
       - "Reference issues when applicable"
+
+    pre_commit_hooks:
+      - "Before using --no-verify, request strict confirmation from user"
+      - "Fix lint and formatting issues before committing"
+      - "Run tests if configured in pre-commit"
+      - "Never bypass hooks without explicit permission"
+
+    push_practices:
+      - "Use 'git push' primarily"
+      - "Use 'git push --force-with-lease' only after rebases/merges/amendments"
+      - "Never use 'git push --force'"

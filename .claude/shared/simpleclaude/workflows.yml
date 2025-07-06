@@ -9,22 +9,23 @@ workflows:
       - "Architectural decisions"
       - "Breaking changes"
       - "Unclear requirements"
-    
+
     planning_structure:
       understand:
         - "Clarify requirements"
         - "Identify constraints"
         - "Research if needed"
-      
+
       design:
         - "Outline approach"
         - "Consider alternatives"
         - "Identify risks"
-      
+
       breakdown:
         - "List specific tasks"
-        - "Estimate complexity"
+        - "Identify complexity and dependencies"
         - "Define success criteria"
+        - "No timelines or metrics - focus on quality"
 
   feature_development:
     workflow:
@@ -34,21 +35,21 @@ workflows:
           - "Analyze user needs"
           - "Check existing codebase"
           - "Identify integration points"
-      
+
       - step: "Design solution"
         mode: "planner"
         actions:
           - "Architecture decisions"
           - "API design if needed"
           - "Consider edge cases"
-      
+
       - step: "Implement"
         mode: "implementer"
         actions:
           - "Write clean code"
           - "Follow project patterns"
           - "Add necessary comments"
-      
+
       - step: "Test"
         mode: "tester"
         actions:
@@ -63,19 +64,19 @@ workflows:
           - "Understand expected vs actual behavior"
           - "Create minimal reproduction"
           - "Gather error details"
-      
+
       - step: "Investigate"
         sub_agent_delegation:
           - "Analyze error logs"
           - "Trace execution flow"
           - "Check related code"
-      
+
       - step: "Fix"
         actions:
           - "Implement minimal fix"
           - "Validate fix works"
           - "Check for regressions"
-      
+
       - step: "Prevent recurrence"
         actions:
           - "Add tests for the bug"
@@ -89,35 +90,37 @@ workflows:
           - "Read PR description"
           - "Check modified files"
           - "Understand intent"
-      
+
       - step: "Review quality"
         focus_areas:
           - "Code clarity and style"
           - "Performance implications"
           - "Security considerations"
           - "Test coverage"
-      
+
       - step: "Provide feedback"
         approach:
           - "Be constructive"
-          - "Suggest improvements"
+          - "Suggest specific improvements"
           - "Acknowledge good patterns"
+          - "Identify anti-patterns without judgment"
+          - "Focus on code, not coder"
 
   refactoring:
     workflow:
-      - step: "Identify opportunities"
+      - step: "Identify specific opportunities"
         mode: "planner"
         actions:
           - "Find code smells"
           - "Identify duplication"
           - "Assess complexity"
-      
+
       - step: "Plan changes"
         considerations:
           - "Maintain functionality"
           - "Improve maintainability"
           - "Preserve performance"
-      
+
       - step: "Execute incrementally"
         mode: "implementer"
         approach:
@@ -132,13 +135,13 @@ workflows:
           - "Clarify what to research"
           - "Set success criteria"
           - "Identify sources"
-      
+
       - step: "Gather information"
         tools:
           - "Context7 for library docs"
           - "WebSearch for articles"
           - "Code analysis for patterns"
-      
+
       - step: "Synthesize findings"
         outputs:
           - "Key insights"
@@ -151,17 +154,17 @@ workflows:
       - "Parallel file modifications"
       - "Research while implementing"
       - "Complex analysis tasks"
-    
+
     delegation_examples:
       - task: "Analyze all test files"
         approach: "Spawn analyzer agent with test file scope"
-      
+
       - task: "Update multiple components"
         approach: "Parallel agents for independent components"
-      
+
       - task: "Research and implement"
         approach: "Research agent + implementation agent"
-    
+
     coordination:
       - "Clear task boundaries"
       - "Specific success criteria"
@@ -172,18 +175,20 @@ workflows:
       - "Fail fast with clear messages"
       - "Provide actionable solutions"
       - "Learn from failures"
-    
+      - "Ask for help when blocked"
+      - "Never hide or ignore errors"
+
     common_scenarios:
       missing_dependencies:
         - "Detect from error message"
         - "Suggest installation command"
         - "Verify after installation"
-      
+
       test_failures:
         - "Identify failing tests"
         - "Understand failure reason"
         - "Fix code or update tests"
-      
+
       linting_errors:
         - "Run linter to see issues"
         - "Fix formatting/style issues"

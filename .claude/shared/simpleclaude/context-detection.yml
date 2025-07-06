@@ -11,25 +11,35 @@ context_detection:
           vue: ["vue in dependencies", "*.vue files"]
           angular: ["@angular in dependencies"]
           next: ["next in dependencies", "pages directory"]
-      
+
       python:
-        indicators: ["requirements.txt", "pyproject.toml", "setup.py", "Pipfile"]
+        indicators:
+          ["requirements.txt", "pyproject.toml", "setup.py", "Pipfile"]
         frameworks:
           django: ["django in dependencies", "manage.py"]
           flask: ["flask in dependencies"]
           fastapi: ["fastapi in dependencies"]
-      
+
       go:
         indicators: ["go.mod", "go.sum"]
-      
+
       rust:
         indicators: ["Cargo.toml", "Cargo.lock"]
-    
+
+      ruby:
+        indicators: ["Gemfile", "rubocop.yml"]
+        frameworks:
+          rails: ["models views controllers"]
+
     auto_configure:
-      - "Detect package manager (npm, yarn, pnpm, pip, poetry)"
+      - "Detect package manager (npm, yarn, pnpm, pip, poetry, bundler, cargo, go mod)"
+      - "Detect version managers (mise, asdf, nvm, rbenv, pyenv)"
+      - "Detect system package managers (brew, apt, yum)"
       - "Identify testing framework from existing tests"
       - "Recognize build tools and scripts"
       - "Adapt to existing file organization"
+      - "Detect containerization (Docker, docker-compose)"
+      - "Identify CI/CD platforms (GitHub Actions, GitLab CI, CircleCI)"
 
   code_style:
     detection_strategy:
@@ -37,7 +47,7 @@ context_detection:
       - "Check for linter configurations (.eslintrc, .prettierrc, etc.)"
       - "Detect indentation (spaces vs tabs, size)"
       - "Identify naming conventions (camelCase, snake_case, etc.)"
-    
+
     adapt_to:
       - "Variable and function naming patterns"
       - "File and directory naming conventions"
@@ -48,25 +58,28 @@ context_detection:
     detection_points:
       - "Analyze recent commit messages for patterns"
       - "Check for .gitmessage template"
+      - "Check .git/hooks/ for pre-commit, pre-push hooks"
       - "Identify branch naming conventions"
       - "Detect PR/MR workflow patterns"
-    
+      - "Check for .gitignore patterns"
+      - "Identify protected branches"
+
     fallback: "Use conventional commits if no clear pattern"
 
   library_usage:
     detection_patterns:
-      javascript: 
+      javascript:
         - pattern: 'import .* from ["''][^./]'
           action: "Note external dependency"
         - pattern: 'require\(["''][^./]'
           action: "Note CommonJS dependency"
-      
+
       python:
         - pattern: 'from \w+ import'
           action: "Note Python import"
         - pattern: 'import \w+'
           action: "Note Python module"
-    
+
     auto_actions:
       - "When external library detected → Consider Context7 lookup"
       - "When UI framework detected → Consider magic-mcp for components"
@@ -78,17 +91,17 @@ context_detection:
         - "Keywords: design, architecture, system, scale"
         - "Questions about structure or organization"
         - "Planning new features or systems"
-      
+
       implementation_task:
         - "Keywords: build, create, implement, add, fix"
         - "Specific feature requests"
         - "Bug fixes or enhancements"
-      
+
       quality_task:
         - "Keywords: test, review, security, validate"
         - "Code review requests"
         - "Quality or security concerns"
-    
+
     mode_activation:
       - "Architecture task → Activate planner mode"
       - "Implementation task → Activate implementer mode"
@@ -101,9 +114,20 @@ context_detection:
       - "Adapt to existing patterns"
       - "Learn from corrections"
       - "Start minimal, add as needed"
-    
+      - "Respect existing configurations"
+      - "Never override explicit settings"
+
     examples:
       - "If React detected → Assume JSX, component patterns"
       - "If tests exist → Match existing test style"
       - "If CI/CD exists → Respect existing pipeline"
       - "If docs exist → Follow documentation format"
+
+  environment_detection:
+    files_to_check:
+      - ".env, .env.example → Environment variables in use"
+      - "docker-compose.yml → Container orchestration"
+      - ".nvmrc, .ruby-version → Version management"
+      - "Makefile → Build automation preferences"
+      - ".editorconfig → Editor settings to respect"
+      - ".vscode/, .idea/ → IDE configurations"
