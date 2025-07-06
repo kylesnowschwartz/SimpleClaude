@@ -2,7 +2,7 @@
 
 ## What is SimpleClaude?
 
-SimpleClaude is a practical minimalist AI assistant framework that transforms complex AI interactions into natural conversations. It consolidates 19+ SuperClaude commands into 5 intuitive commands that understand plain English.
+SimpleClaude is a practical minimalist AI assistant framework that transforms complex AI interactions into natural conversations. It includes 5 intuitive commands that understand plain English.
 
 ## Core Philosophy
 
@@ -66,7 +66,7 @@ Comprehensive quality checks:
 
 ### 3-Mode System
 
-Instead of 9 rigid personas, 3 adaptive modes that blend naturally:
+3 adaptive modes:
 
 1. **Planner**: Research-focused, asks clarifying questions
 2. **Implementer**: Action-oriented, builds solutions

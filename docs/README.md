@@ -42,4 +42,3 @@ SimpleClaude is ready for real-world testing! All core features are implemented:
 - ✅ Natural language understanding
 - ✅ Automatic mode detection
 - ✅ Zero configuration required
-- ✅ 75% simpler than alternatives

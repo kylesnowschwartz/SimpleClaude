@@ -2,15 +2,7 @@
 
 ---
 
-@include shared/simpleclaude/context-detection.yml
-
-@include shared/simpleclaude/core-patterns.yml
-
-@include shared/simpleclaude/mode-detection.yml
-
-@include shared/simpleclaude/modes.yml
-
-@include shared/simpleclaude/workflows.yml
+@include shared/simpleclaude/context-detection.yml @include shared/simpleclaude/core-patterns.yml @include shared/simpleclaude/mode-detection.yml @include shared/simpleclaude/modes.yml @include shared/simpleclaude/sub-agents.yml @include shared/simpleclaude/workflows.yml
 
 ## Command Execution
 
@@ -19,6 +11,9 @@ Executes immediately. Natural language controls behavior. Transforms: "$ARGUMENT
 - What: [extracted-target]
 - How: [detected-approach]
 - Mode: [execution-mode]
+- Agents: [auto-spawned sub-agents]
+
+**Auto-Spawning:** Spawns specialized sub-agents for parallel task execution.
 
 Comprehensive review router that transforms natural language into structured analysis for security, performance, architecture, and code quality assessment.
 
@@ -53,12 +48,8 @@ Examples:
 - `/sc-review test coverage gaps` - Test suite analysis and improvements
 - `/sc-review architecture patterns` - Design pattern and structure evaluation
 
-**Intelligent Context Detection:** Analyzes review request | Identifies focus areas automatically | Chooses optimal review approach | Evidence-based feedback | Detects multiple concerns from natural language
+**Context Detection:** Review request analysis → Focus areas identification → Review approach → Multiple concerns detection → Sub-agent spawning
 
 ## Core Workflows
 
-**Planner:** Define review scope → Identify risk areas → Create review strategy → Generate checklists
-
-**Implementer:** Execute review → Analyze code quality → Generate feedback → Provide recommendations
-
-**Tester:** Validate functionality → Check test coverage → Identify edge cases → Verify compliance
+**Planner:** Sub-agents → Define review scope → Identify risk areas → Create review strategy → Generate checklists **Implementer:** Sub-agents → Execute review → Analyze code quality → Generate feedback → Provide recommendations **Tester:** Sub-agents → Validate functionality → Check test coverage → Identify edge cases → Verify compliance

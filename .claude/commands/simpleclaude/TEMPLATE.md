@@ -10,7 +10,7 @@
 
 @include shared/simpleclaude/modes.yml
 
-@include shared/simpleclaude/modes.yml
+@include shared/simpleclaude/sub-agents.yml
 
 @include shared/simpleclaude/workflows.yml
 
@@ -21,33 +21,26 @@ Executes immediately. Natural language controls behavior. Transforms: "$ARGUMENT
 - What: [extracted-target]
 - How: [detected-approach]
 - Mode: [execution-mode]
+- Agents: [auto-spawned sub-agents]
+
+**Auto-Spawning:** Spawns specialized sub-agents for parallel task execution.
 
 ### Semantic Transformations
 
 [Main command description - explains how natural language is transformed into structured actions]
 
 ```
-"[natural language example]" →
-  What: [specific target extracted]
-  How: [approach/method detected]
-  Mode: [detected modes]
-
-"[another example]" →
-  What: [different target]
-  How: [different approach]
-  Mode: [different modes]
+"[natural language example]" → What: [target] | How: [approach] | Mode: [execution-mode]
+"[another example]" → What: [target] | How: [approach] | Mode: [execution-mode]
 ```
 
 Examples:
 
 - `/[command] [natural language]` - [What it does]
 - `/[command] [different natural language]` - [Different behavior]
-- `/[command] [compound natural language]` - [Blended modes]
 
-**Intelligent Context Detection:** Analyzes request intent | Identifies scope automatically | Chooses optimal approach | Evidence-based modifications | Detects modes from natural language patterns
+**Context Detection:** Request analysis → Scope identification → Approach selection → Mode detection → Sub-agent spawning
 
 ## Core Workflows
 
-**[Workflow 1]:** [Step 1] → [Step 2] → [Step 3] → [Result]
-
-**[Workflow 2]:** [Step 1] → [Step 2] → [Step 3] → [Result]
+**[Workflow 1]:** Sub-agents → [Step 1] → [Step 2] → [Step 3] → Synthesis **[Workflow 2]:** Sub-agents → [Step 1] → [Step 2] → [Step 3] → Synthesis

@@ -2,15 +2,7 @@
 
 ---
 
-@include shared/simpleclaude/context-detection.yml
-
-@include shared/simpleclaude/core-patterns.yml
-
-@include shared/simpleclaude/mode-detection.yml
-
-@include shared/simpleclaude/modes.yml
-
-@include shared/simpleclaude/workflows.yml
+@include shared/simpleclaude/context-detection.yml @include shared/simpleclaude/core-patterns.yml @include shared/simpleclaude/mode-detection.yml @include shared/simpleclaude/modes.yml @include shared/simpleclaude/sub-agents.yml @include shared/simpleclaude/workflows.yml
 
 ## Command Execution
 
@@ -19,6 +11,9 @@ Executes immediately. Natural language controls behavior. Transforms: "$ARGUMENT
 - What: [extracted-target]
 - How: [detected-approach]
 - Mode: [execution-mode]
+- Agents: [auto-spawned sub-agents]
+
+**Auto-Spawning:** Spawns specialized sub-agents for parallel task execution.
 
 Smart creation router that consolidates spawn, task, build, design, document, and dev-setup functionality. Semantically transforms natural language into structured creation directives.
 
@@ -53,12 +48,8 @@ Examples:
 - `/sc-create react hooks with best practices` - Develops hooks using project patterns
 - `/sc-create magic dashboard UI` - Generates full UI with modern patterns
 
-**Intelligent Context Detection:** Analyzes request intent | Identifies scope automatically | Chooses optimal approach | Evidence-based modifications | Detects modes from natural language patterns
+**Context Detection:** Request analysis → Scope identification → Approach selection → Mode detection → Sub-agent spawning
 
 ## Core Workflows
 
-**Planner:** Analyze requirements → Design architecture → Create implementation plan → Generate documentation
-
-**Implementer:** Read patterns → Build solution → Add tests → Validate standards → Deploy ready
-
-**Tester:** Analyze functionality → Create test scenarios → Implement validation → Verify coverage
+**Planner:** Sub-agents → Analyze requirements → Design architecture → Create plan → Generate docs **Implementer:** Sub-agents → Read patterns → Build solution → Add tests → Validate → Deploy ready **Tester:** Sub-agents → Analyze functionality → Create scenarios → Implement validation → Verify coverage

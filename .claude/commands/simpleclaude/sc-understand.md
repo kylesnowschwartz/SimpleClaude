@@ -2,15 +2,7 @@
 
 ---
 
-@include shared/simpleclaude/context-detection.yml
-
-@include shared/simpleclaude/core-patterns.yml
-
-@include shared/simpleclaude/mode-detection.yml
-
-@include shared/simpleclaude/modes.yml
-
-@include shared/simpleclaude/workflows.yml
+@include shared/simpleclaude/context-detection.yml @include shared/simpleclaude/core-patterns.yml @include shared/simpleclaude/mode-detection.yml @include shared/simpleclaude/modes.yml @include shared/simpleclaude/sub-agents.yml @include shared/simpleclaude/workflows.yml
 
 ## Command Execution
 
@@ -19,6 +11,9 @@ Executes immediately. Natural language controls behavior. Transforms: "$ARGUMENT
 - What: [extracted-target]
 - How: [detected-approach]
 - Mode: [execution-mode]
+- Agents: [auto-spawned sub-agents]
+
+**Auto-Spawning:** Spawns specialized sub-agents for parallel task execution.
 
 Intelligent analysis router that transforms natural language into structured understanding approaches for code explanation, architecture visualization, and knowledge extraction.
 
@@ -53,12 +48,8 @@ Examples:
 - `/sc-understand performance metrics` - Comprehensive performance breakdown
 - `/sc-understand API testing scenarios` - Interactive API exploration and validation
 
-**Intelligent Context Detection:** Analyzes request intent | Identifies analysis scope | Chooses optimal explanation approach | Evidence-based understanding | Detects modes from natural language patterns
+**Context Detection:** Request analysis → Analysis scope → Explanation approach → Mode detection → Sub-agent spawning
 
 ## Core Workflows
 
-**Planner:** Define analysis scope → Gather context → Create explanation strategy → Structure learning path
-
-**Implementer:** Analyze codebase → Generate explanations → Create visualizations → Provide examples
-
-**Tester:** Validate understanding → Create scenarios → Test knowledge → Identify gaps
+**Planner:** Sub-agents → Define analysis scope → Gather context → Create explanation strategy → Structure learning path **Implementer:** Sub-agents → Analyze codebase → Generate explanations → Create visualizations → Provide examples **Tester:** Sub-agents → Validate understanding → Create scenarios → Test knowledge → Identify gaps

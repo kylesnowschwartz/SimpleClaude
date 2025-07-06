@@ -2,15 +2,7 @@
 
 ---
 
-@include shared/simpleclaude/context-detection.yml
-
-@include shared/simpleclaude/core-patterns.yml
-
-@include shared/simpleclaude/mode-detection.yml
-
-@include shared/simpleclaude/modes.yml
-
-@include shared/simpleclaude/workflows.yml
+@include shared/simpleclaude/context-detection.yml @include shared/simpleclaude/core-patterns.yml @include shared/simpleclaude/mode-detection.yml @include shared/simpleclaude/modes.yml @include shared/simpleclaude/sub-agents.yml @include shared/simpleclaude/workflows.yml
 
 ## Command Execution
 
@@ -19,6 +11,9 @@ Executes immediately. Natural language controls behavior. Transforms: "$ARGUMENT
 - What: [extracted-target]
 - How: [detected-approach]
 - Mode: [execution-mode]
+- Agents: [auto-spawned sub-agents]
+
+**Auto-Spawning:** Spawns specialized sub-agents for parallel task execution.
 
 Smart modification router that transforms natural language into structured improvement directives for performance optimization, refactoring, migration, and deployment tasks.
 
@@ -53,12 +48,8 @@ Examples:
 - `/sc-modify quickly fix typo in README` - Immediate fix with minimal overhead
 - `/sc-modify migrate to React 18` - Framework upgrade with testing
 
-**Intelligent Context Detection:** Analyzes request intent | Identifies scope automatically | Chooses optimal approach | Evidence-based modifications | Detects modes from natural language patterns
+**Context Detection:** Request analysis → Scope identification → Approach selection → Mode detection → Sub-agent spawning
 
 ## Core Workflows
 
-**Planner:** Analyze current state → Design improvement strategy → Create safety plan → Document changes
-
-**Implementer:** Apply modifications → Run tests → Validate behavior → Measure improvements
-
-**Tester:** Create test scenarios → Validate changes → Performance benchmarks → Regression testing
+**Planner:** Sub-agents → Analyze current state → Design improvement strategy → Create safety plan → Document changes **Implementer:** Sub-agents → Apply modifications → Run tests → Validate behavior → Measure improvements **Tester:** Sub-agents → Create test scenarios → Validate changes → Performance benchmarks → Regression testing

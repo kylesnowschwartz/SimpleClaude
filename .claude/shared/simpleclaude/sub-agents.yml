@@ -1,0 +1,59 @@
+# SimpleClaude Sub-Agent Architecture
+# Token-efficient delegation through specialized agents for parallel processing
+
+spawning_directive: "Based on the implementation plan, spawn specialized sub agents for each task to work in parallel."
+
+explore_first_principle: |
+  IMPORTANT: Always explore before implementation:
+  • Spawn researcher sub-agents to understand codebase WITHOUT writing code
+  • Use sub-agents early, especially at conversation start
+  • Only implement after thorough exploration
+
+sub_agent_types:
+  researcher:
+    purpose: "Analysis specialist - explores WITHOUT writing code"
+    spawning: "spawn a researcher sub-agent to [task] (do not write code)"
+    rules: "Read/analyze files, verify assumptions, report findings"
+
+  coder:
+    purpose: "Implementation specialist"
+    spawning: "spawn a coder sub-agent to [task]"
+    rules: "Generate/modify code, follow patterns, minimal context"
+
+  validator:
+    purpose: "Testing specialist"
+    spawning: "spawn a validator sub-agent to [task]"
+    rules: "Create tests, validate code, check security/performance"
+
+  specialist:
+    purpose: "Domain-specific expert for specialized tasks"
+    spawning: "spawn a specialist sub-agent to [specialized task]"
+    rules: "Infer expertise needed from context, handle edge cases not covered by other types"
+
+spawning_reference: |
+  Pattern: "Based on the [type] plan, spawn specialized sub agents for each task to work in parallel:"
+
+  Examples:
+  • Research: "- Spawn a researcher sub-agent to analyze auth patterns (do not write code)"
+  • Implementation: "- Spawn a coder sub-agent to implement user model with validation"
+  • Testing: "- Spawn a validator sub-agent to create unit tests for user model"
+  • Specialized: "- Spawn a specialist sub-agent to optimize database queries for performance"
+
+workflow_sequence: "EXPLORE → PLAN → CODE → COMMIT (researchers → synthesis → coders → validators)"
+
+synthesis_rules:
+  - "Main thread coordinates and synthesizes all sub-agent outputs"
+  - "Validator findings override coder assumptions"
+  - "Security concerns take precedence"
+  - "Sub-agents receive minimal context, no conversation history"
+
+sub_agent_execution_pattern:
+  steps: 1. "Analyze the request and create implementation plan"
+    2. "Spawn specialized sub agents using natural language coordination"
+    3. "Coordinate sub-agent work without micromanaging"
+    4. "Synthesize results from all sub-agents into cohesive output"
+
+mode_specifics:
+  planner: "Researchers gather evidence → analysis → comprehensive planning"
+  implementer: "Researchers find patterns → coders implement → parallel execution"
+  tester: "Researchers identify edge cases → validators create tests → verification"
