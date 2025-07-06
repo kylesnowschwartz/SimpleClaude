@@ -1,10 +1,30 @@
 # SimpleClaude
 
-A streamlined AI assistant framework that consolidates complex command
-structures into 5 intuitive commands.
+A practical minimalist AI assistant framework that transforms complex AI interactions into natural conversations.
 
-**🚨 IMPORTANT**: SimpleClaude is a completely **STANDALONE** project. See
-[docs/README.md](docs/README.md) for full documentation.
+## Installation
+
+```bash
+# Clone the repository
+git clone https://github.com/yourusername/SimpleClaude.git
+cd SimpleClaude
+
+# Preview what will be installed (dry-run by default)
+./install.sh
+
+# Install SimpleClaude to your Claude configuration
+./install.sh --execute
+```
+
+## Updating
+
+```bash
+# Pull latest changes
+git pull
+
+# Update SimpleClaude (preserves your customizations)
+./install.sh --execute
+```
 
 ## Quick Start
 
@@ -18,19 +38,29 @@ structures into 5 intuitive commands.
 
 ## Documentation
 
-- [Full Documentation](docs/README.md)
-- [Development Phases](docs/PHASES.md)
-- [Progress Checkpoints](docs/CHECKPOINTS.md)
-- [Original Vision](docs/simple-claude-prompt.md)
+- [Project Vision](docs/VISION.md) - Philosophy and features
+- [Development Status](docs/PHASES.md) - Current status and roadmap
+- [Quick Start Guide](docs/README.md) - Examples and usage
 
 ## Project Structure
 
 ```
 SimpleClaude/
 ├── .claude/
-│   ├── commands/simpleclaude/    # Command implementations
-│   ├── shared/simpleclaude/      # Shared patterns
+│   ├── commands/simpleclaude/    # 5 natural language commands
+│   ├── shared/simpleclaude/      # Shared patterns and modes
 │   └── SIMPLE.md                 # Main configuration
 ├── docs/                         # Documentation
+├── install.sh                    # Installation/update script
 └── README.md                     # This file
 ```
+
+## Contributing
+
+SimpleClaude follows a user-driven development approach:
+
+1. Test the commands in real projects
+2. Report issues with specific use cases
+3. Suggest improvements based on actual needs
+
+We build based on real usage, not theoretical features.

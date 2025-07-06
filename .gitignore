@@ -1,2 +1,23 @@
-# Don't ignore .claude directory
-!.claude/
+# macOS
+.DS_Store
+
+# Editor directories and files
+.idea
+.vscode
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
+
+# Backup files
+*.backup
+*.bak
+
+# Test outputs
+test-output/
+coverage/
+
+# Node (if we add any tools later)
+node_modules/
