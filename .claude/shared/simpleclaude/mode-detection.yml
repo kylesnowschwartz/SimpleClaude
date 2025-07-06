@@ -2,40 +2,11 @@
 # Natural language patterns for detecting user intent
 # @include: ../simpleclaude/mode-detection.yml
 
-## Mode_Patterns
-mode_patterns:
-  watch:
-    triggers:
-      [
-        "watch",
-        "monitor",
-        "observe",
-        "track",
-        "continuous",
-        "real-time",
-        "live",
-      ]
-    phrases:
-      [
-        "watch for changes",
-        "monitor the files",
-        "keep an eye on",
-        "track updates",
-      ]
-
-  interactive:
-    triggers:
-      [
-        "interactive",
-        "step-by-step",
-        "guided",
-        "walkthrough",
-        "confirm",
-        "approve",
-      ]
-    phrases: ["guide me through", "step by step", "let me review", "ask before"]
-
-  planning:
+## Core_Modes
+# Three main modes that define the primary workflow
+core_modes:
+  planner:
+    description: "Plan and design before implementing"
     triggers:
       [
         "plan",
@@ -45,81 +16,198 @@ mode_patterns:
         "design",
         "blueprint",
         "roadmap",
+        "architecture",
+        "outline",
+        "structure",
       ]
     phrases:
-      ["show me the plan", "plan this out", "design first", "outline the steps"]
+      [
+        "show me the plan",
+        "plan this out",
+        "design first",
+        "outline the steps",
+        "what's the approach",
+        "how should we structure",
+        "create a blueprint",
+        "think through this",
+      ]
+
+  implementer:
+    description: "Build and code the solution"
+    triggers:
+      [
+        "implement",
+        "build",
+        "code",
+        "create",
+        "develop",
+        "write",
+        "make",
+        "construct",
+        "generate",
+        "produce",
+      ]
+    phrases:
+      [
+        "build this",
+        "implement the feature",
+        "write the code",
+        "create the function",
+        "develop the component",
+        "make it work",
+        "get it done",
+        "just code it",
+      ]
+
+  tester:
+    description: "Test and validate the solution"
+    triggers:
+      [
+        "test",
+        "testing",
+        "verify",
+        "validate",
+        "check",
+        "debug",
+        "fix",
+        "ensure",
+        "confirm",
+        "quality",
+      ]
+    phrases:
+      [
+        "test this",
+        "make sure it works",
+        "verify the behavior",
+        "check for bugs",
+        "validate the output",
+        "debug the issue",
+        "fix the problem",
+        "ensure quality",
+      ]
+
+## Workflow_Modifiers
+# Modifiers that affect how modes operate
+workflow_modifiers:
+  watch:
+    description: "Monitor and respond to changes continuously"
+    triggers:
+      [
+        "watch",
+        "monitor",
+        "observe",
+        "track",
+        "continuous",
+        "real-time",
+        "live",
+        "auto",
+      ]
+    phrases:
+      [
+        "watch for changes",
+        "monitor the files",
+        "keep an eye on",
+        "track updates",
+        "automatically update",
+        "continuous monitoring",
+      ]
+
+  interactive:
+    description: "Step-by-step with user confirmation"
+    triggers:
+      [
+        "interactive",
+        "step-by-step",
+        "guided",
+        "walkthrough",
+        "confirm",
+        "approve",
+        "ask",
+        "review",
+      ]
+    phrases:
+      [
+        "guide me through",
+        "step by step",
+        "let me review",
+        "ask before",
+        "confirm each step",
+        "interactive mode",
+        "walk me through",
+      ]
 
   tdd:
+    description: "Test-driven development workflow"
     triggers: ["tdd", "test-driven", "test-first", "red-green", "failing test"]
     phrases:
-      ["test driven development", "write the test first", "red green refactor"]
-
-  magic:
-    triggers:
-      ["ui", "component", "frontend", "interface", "button", "form", "modal"]
-    phrases:
       [
-        "create a UI",
-        "build the interface",
-        "design a form",
-        "frontend component",
+        "test driven development",
+        "write the test first",
+        "red green refactor",
+        "failing test first",
+        "test before code",
       ]
 
-  c7:
-    triggers:
-      ["library", "framework", "package", "documentation", "api", "reference"]
-    phrases:
-      ["how to use", "documentation for", "api reference", "library examples"]
+## Mode_Mapping
+# Maps old 8-mode system to new 3-mode system
+legacy_mode_mapping:
+  planning: planner
+  magic: implementer
+  c7: implementer
+  strict: tester
+  safe: tester
+  watch: watch # becomes modifier
+  interactive: interactive # becomes modifier
+  tdd: tdd # becomes modifier
 
-  strict:
-    triggers:
-      ["strict", "rigorous", "thorough", "comprehensive", "validate", "verify"]
-    phrases:
-      [
-        "be extra careful",
-        "strict validation",
-        "comprehensive testing",
-        "production quality",
-      ]
-
-  safe:
-    triggers: ["safe", "careful", "cautious", "secure", "backup", "rollback"]
-    phrases:
-      ["be careful with", "safe approach", "don't break", "cautious changes"]
-
-## Compatible_Modes
-compatible_modes:
-  - [watch, interactive]
-  - [tdd, strict]
-  - [planning, safe]
-  - [c7, magic]
-  - [strict, safe]
+## Compatible_Combinations
+# Which modes and modifiers work well together
+compatible_combinations:
+  - [planner, interactive]
+  - [implementer, watch]
+  - [tester, interactive]
+  - [implementer, tdd]
+  - [tester, tdd]
+  - [any_mode, interactive]
+  - [any_mode, watch]
 
 ## Context_Hints
+# File patterns that suggest specific modes
 context_hints:
   test_files:
-    patterns: [".test.", ".spec.", "test/", "spec/"]
-    suggest: [tdd, strict]
+    patterns: [".test.", ".spec.", "test/", "spec/", "__tests__/"]
+    suggest: [tester, tdd]
 
   ui_files:
-    patterns: [".jsx", ".tsx", ".vue", ".svelte"]
-    suggest: [magic]
+    patterns: [".jsx", ".tsx", ".vue", ".svelte", ".component."]
+    suggest: [implementer]
 
   config_files:
-    patterns: ["config.", "settings.", ".env"]
-    suggest: [safe, strict]
+    patterns: ["config.", "settings.", ".env", ".json", ".yaml", ".yml"]
+    suggest: [tester, interactive]
+
+  documentation:
+    patterns: [".md", ".rst", ".txt", "README", "CHANGELOG"]
+    suggest: [planner]
 
   production:
-    patterns: ["prod", "production"]
-    suggest: [safe, strict, interactive]
+    patterns: ["prod", "production", "deploy", "release"]
+    suggest: [tester, interactive]
 
   errors_present:
-    suggest: [safe, interactive, strict]
+    suggest: [tester, interactive]
+
+  new_feature:
+    patterns: ["feature", "new", "add", "create"]
+    suggest: [planner]
 
 ## Detection_Guidelines
 detection_guidelines:
-  - Look for mode keywords in natural language
-  - Check for common phrases that indicate intent
+  - Start with core mode detection (planner, implementer, tester)
+  - Add workflow modifiers that enhance the core mode
   - Consider file context when suggesting modes
-  - Safety modes take precedence when errors present
-  - Allow compatible modes to work together
+  - Default to planner for ambiguous requests
+  - Use tester mode when errors or quality concerns are present
+  - Interactive modifier recommended for complex or risky operations
+  - Watch modifier useful for iterative development
+  - TDD modifier enforces test-first approach
