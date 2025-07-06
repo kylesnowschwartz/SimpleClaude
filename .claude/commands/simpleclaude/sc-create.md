@@ -1,88 +1,87 @@
-**Purpose**: Smart creation router for any development need
+**Purpose**: Create anything from components to complete systems with
+intelligent routing
 
 ---
 
-## Command: /sc-create $ARGUMENTS
+@include shared/simpleclaude/core-patterns.yml#Core_Philosophy
 
-Creates anything from components to complete systems using intelligent workflow
-detection.
+## Command Execution
 
-## Smart Detection & Routing
+Executes immediately. Natural language controls behavior. Transforms:
+"$ARGUMENTS" into structured intent:
 
-```yaml
-Project/App: [project, app, application, platform, system, microservice]
-  → Full scaffold: structure, config, dependencies, tests, README
+- What: [extracted-target]
+- How: [detected-approach]
+- When: [execution-mode]
 
-API/Backend: [api, REST, GraphQL, endpoint, route, controller, backend]
-  → Complete API: routes, validation, business logic, OpenAPI docs, tests
+Smart creation router that consolidates spawn, task, build, design, document,
+and dev-setup functionality. Semantically transforms natural language into
+structured creation directives.
 
-Component/UI: [component, UI, interface, frontend, page, view, widget]
-  → Smart generation: follows patterns, includes styles, state, props, tests
+### Semantic Transformations
 
-Documentation: [documentation, readme, docs, guide, manual, spec]
-  → Analyzes code → generates appropriate format with examples
+```
+"user auth API" →
+  What: REST API with authentication endpoints
+  How: JWT tokens, validation, tests, documentation
+  When: immediate execution with progressive building
 
-Architecture: [architecture, design, schema, diagram, structure]
-  → System design: patterns, diagrams, service boundaries, contracts
+"plan for payment system" →
+  What: payment processing system architecture
+  How: design-first approach with comprehensive planning
+  When: planned mode - design then optional build
 
-DevOps: [environment, setup, docker, CI/CD, pipeline, deploy]
-  → Full automation: containers, configs, scripts, workflows
+"react hooks with tests" →
+  What: custom React hooks library
+  How: pattern analysis, unit tests, TypeScript types
+  When: immediate with test-driven development
 
-Code: [function, class, module, method, utility, helper]
-  → Clean code with tests, follows project conventions
+"--magic dashboard UI" →
+  What: interactive dashboard interface
+  How: modern UI patterns, responsive design, animations
+  When: immediate with visual generation mode
 ```
 
-## Examples That Show The Magic
+@include shared/simpleclaude/core-patterns.yml#Evidence_Standards
 
-```bash
-/sc-create user authentication API
-→ Builds complete REST API with JWT auth, validation, tests, OpenAPI docs
-
-/sc-create e-commerce platform with Stripe
-→ Scaffolds full app: API, database, payments, frontend, tests, deployment
-
-/sc-create react component for user profile
-→ Analyzes existing patterns → generates component, styles, state, tests
-
-/sc-create API documentation
-→ Scans codebase → generates OpenAPI spec, examples, auth guide
-
-/sc-create microservice architecture
-→ Designs service boundaries, API contracts, deployment strategy
-```
-
-## Core Workflows
-
-**Project**: Analyze stack → Structure → Dependencies → Git init → Tests →
-README
-
-**API**: Design endpoints → Routes → Validation → Logic → Docs → Tests
-
-**Component**: Check patterns → Generate → Style → State → Test → Index
-
-**Documentation**: Analyze code → Extract APIs → Format → Examples → Guides
-
-## Sub-Agent Delegation
-
-```yaml
-When: Complex multi-part tasks | Parallel work | Specialized expertise
-How: Research → Design → Build | Multiple builders in parallel
 Examples:
-  - OAuth: Research agent → Builder agent → Test agent
-  - Multiple APIs: Parallel builder agents
-  - System design: Architecture → Documentation
-```
 
-## Flags
+- `/sc-create user auth API` - Builds complete REST API with JWT, tests, docs
+- `/sc-create --magic dashboard UI` - Generates full UI with modern patterns
+- `/sc-create --c7 react hooks` - Creates hooks with Context7 best practices
+- `/sc-create plan for payment system` - Routes to planning workflow first
+- `/sc-create --plan microservice architecture` - Shows design plan before
+  building
 
-- `--plan` Show plan first | `--test` Include tests | `--tdd` Test-driven
-- `--magic` UI generation | `--minimal` Simplest version | `--style` Match
-  existing
+**Planning Mode:** Detects "plan", "design", "architect" keywords | Creates
+comprehensive design docs | TodoWrite for implementation steps | Can proceed to
+build after approval
 
-## Best Practices
+**Project/App:** Full scaffold with structure, config, dependencies | Git init |
+Complete test setup | README and documentation
 
-1. Be specific about what to create
-2. SimpleClaude analyzes context and patterns
-3. Always includes tests and documentation
-4. Follows existing project conventions
-5. Asks clarifying questions when ambiguous
+**API/Backend:** Routes, validation, business logic | OpenAPI documentation |
+Integration tests | Error handling patterns
+
+**Component/UI:** Pattern analysis from existing code | Styled components |
+State management | Unit tests | Storybook stories
+
+**Documentation:** Code analysis | API extraction | Examples generation | Guide
+creation | Version management
+
+**Architecture:** System design patterns | Service boundaries | API contracts |
+Deployment strategies | Scaling considerations
+
+**Intelligent Detection:** Automatically identifies creation type from
+$ARGUMENTS | Routes to planning when complex | Adapts approach based on project
+patterns
+
+**--watch:** Monitor creation progress | Auto-adjust on errors | Real-time
+feedback **--interactive:** Step-by-step guidance | User confirmation at key
+points | Progressive refinement
+
+@include shared/simpleclaude/core-patterns.yml#Task_Management
+
+@include shared/simpleclaude/workflows.yml#Creation_Workflow
+
+@include shared/simpleclaude/core-patterns.yml#Output_Organization

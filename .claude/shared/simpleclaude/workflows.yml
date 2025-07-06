@@ -31,7 +31,7 @@ Planning_Philosophy:
       - "No timelines or metrics - focus on quality"
       - "Use TodoWrite() for complex coordination"
 
-## Create_Workflow
+## Creation_Workflow
 Development_Flow:
   Parse_Intent: "Feature request→requirements | Enhancement→scope | New functionality→design"
   Research_Phase: "C7 docs if needed | Existing patterns | Stack conventions | Best practices"

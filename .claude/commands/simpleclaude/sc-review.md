@@ -1,285 +1,123 @@
-# /sc-review - Comprehensive Quality Assurance
+**Purpose**: Smart quality assurance router for comprehensive code review
 
-Unified quality assurance command that consolidates code review, security
-scanning, and test validation into a single comprehensive interface.
+---
 
-## Core Functionality
+@include shared/simpleclaude/core-patterns.yml#Core_Philosophy
 
-### Review Types
+## Command Execution
 
-- **Code Review**: Architecture, patterns, maintainability
-- **Security Scan**: Vulnerabilities, best practices, compliance
-- **Test Analysis**: Coverage, quality, edge cases
-- **Performance Review**: Bottlenecks, optimization opportunities
-- **Quality Check**: Standards compliance, documentation
+Executes immediately. Natural language controls behavior. Transforms:
+"$ARGUMENTS" into structured intent:
 
-### Intelligent Detection
+- What: [extracted-target]
+- How: [detected-approach]
+- When: [execution-mode]
 
-- Auto-detects review priorities based on:
-  - Recent changes (git diff analysis)
-  - File types and patterns
-  - Project configuration
-  - Previous issues found
+Performs multi-dimensional quality review by transforming review requests into
+structured quality assurance directives.
 
-## Usage Patterns
-
-### Basic Review
+### Semantic Transformations
 
 ```
-/sc-review
+"security" →
+  What: security vulnerabilities and risks
+  How: OWASP scanning, dependency audit, auth review
+  When: immediate with critical-first prioritization
+
+"code quality --magic" →
+  What: code architecture and maintainability
+  How: complexity analysis, pattern detection, visual reports
+  When: immediate with dashboard generation
+
+"test coverage" →
+  What: test completeness and quality
+  How: coverage metrics, edge case analysis, assertion quality
+  When: immediate with actionable gaps
+
+"performance --c7" →
+  What: performance bottlenecks and optimization
+  How: profiling, Context7 best practices, caching analysis
+  When: immediate with documentation integration
 ```
 
-Performs comprehensive review of recent changes
+@include shared/simpleclaude/core-patterns.yml#Evidence_Standards
 
-### Targeted Reviews
+Examples:
 
-```
-/sc-review security
-/sc-review performance src/api/
-/sc-review tests --coverage
-/sc-review code --focus=architecture
-```
+- `/sc-review` - Comprehensive review of recent changes
+- `/sc-review security` - Focus on security vulnerabilities
+- `/sc-review code quality --magic` - Code review with visual reports
+- `/sc-review test coverage` - Analyze test completeness
+- `/sc-review performance --c7` - Performance audit with best practices
 
-### Natural Language
-
-- "review recent changes"
-- "check security vulnerabilities"
-- "analyze test coverage"
-- "scan for performance issues"
-- "validate best practices"
-- "review code quality"
-
-## Review Workflow
-
-### 1. Discovery Phase
-
-@include review-discovery {
-
-- Analyze git history
-- Identify changed files
-- Detect review priorities
-- Load relevant patterns }
-
-### 2. Parallel Analysis
-
-Spawns specialized sub-agents:
-
-**Code Quality Agent** @include code-review-workflow {
-
-- Architecture analysis
-- Pattern detection
-- Maintainability scoring
-- Complexity metrics }
-
-**Security Agent** @include security-scan-patterns when: security {
-
-- Vulnerability scanning
-- Dependency audit
-- Configuration review
-- Compliance checks }
-
-**Test Agent** @include tester-mode-sections {
-
-- Coverage analysis
-- Test quality review
-- Edge case detection
-- Integration validation }
-
-**Performance Agent** @include performance-analysis when: performance {
-
-- Bottleneck detection
-- Resource usage
-- Optimization opportunities
-- Scalability concerns }
-
-### 3. Synthesis Phase
-
-@include quality-validation-patterns {
-
-- Consolidate findings
-- Prioritize issues
-- Generate recommendations
-- Create action items }
-
-## Output Format
-
-### Executive Summary
-
-```markdown
-## Quality Review Summary
-
-- **Overall Score**: 8.5/10
-- **Critical Issues**: 2
-- **Warnings**: 5
-- **Suggestions**: 12
-
-### Priority Actions
-
-1. Fix SQL injection vulnerability in UserController
-2. Add input validation to API endpoints
-3. Increase test coverage for payment module
-```
-
-### Detailed Findings
-
-```markdown
-## Code Quality
-
-- ✅ Clean architecture patterns
-- ⚠️ Complex methods need refactoring
-- 💡 Consider extracting service layer
-
-## Security
-
-- 🚨 SQL injection risk in search endpoint
-- ⚠️ Missing rate limiting
-- ✅ Proper authentication implementation
-
-## Test Coverage
-
-- Current: 67%
-- Target: 80%
-- Critical gaps: Payment processing, User authentication
-```
-
-## Integration Features
-
-### CI/CD Integration
+## Smart Detection & Routing
 
 ```yaml
-# .github/workflows/review.yml
-- name: SimpleClaude Review
-  run: |
-    sc-review --format=github
-    sc-review --fail-on=critical
+Code Quality: [code, quality, architecture, patterns, maintainability]
+  → Architecture analysis, complexity metrics, pattern detection, tech debt
+
+Security: [security, vulnerabilities, audit, OWASP, compliance]
+  → Vulnerability scanning, dependency audit, auth review, data protection
+
+Testing: [test, coverage, unit tests, integration, edge cases]
+  → Coverage analysis, test quality, missing scenarios, assertions
+
+Performance: [performance, speed, optimization, bottlenecks, scalability]
+  → Profiling, query analysis, caching opportunities, resource usage
+
+General: [review, check, validate, analyze]
+  → Multi-dimensional review covering all aspects with smart prioritization
 ```
 
-### Progress Tracking
+**Intelligent Prioritization:** Recent changes focus | Risk-based ordering |
+Critical issues first | Actionable insights
 
-Uses TodoWrite for actionable items:
+**--watch:** Continuous quality monitoring | Real-time feedback | Trend tracking
+**--interactive:** Guided review process | Explain findings | Fix suggestions
+**--strict:** Fail on critical issues | Enforce standards | Block merges
 
-```javascript
-{
-  id: "security-fix-sql",
-  content: "Fix SQL injection in UserController.search()",
-  priority: "critical",
-  type: "security",
-  effort: "30min"
-}
-```
+@include shared/simpleclaude/core-patterns.yml#Task_Management
 
-### Memory Integration
+@include shared/simpleclaude/workflows.yml#Review_Workflow
 
-Stores review history:
+@include shared/simpleclaude/core-patterns.yml#Output_Organization
 
-- Previous issues
-- Resolution patterns
-- Improvement trends
-- Team preferences
+## Core Workflows
 
-## Advanced Options
+**Discovery:** Analyze changes → Identify focus areas → Load patterns →
+Prioritize checks
 
-### Custom Rules
+**Analysis:** Deploy specialized agents → Gather findings → Score quality →
+Identify issues
+
+**Synthesis:** Consolidate results → Prioritize by severity → Generate report →
+Create tasks
+
+**Action:** Document findings → Suggest fixes → Track metrics → Follow up
+
+## Sub-Agent Delegation
 
 ```yaml
-# .claude/review-rules.yml
-code:
-  max-complexity: 10
-  max-file-length: 300
-  required-docs: public-methods
-
-security:
-  check-dependencies: true
-  scan-secrets: true
-
-tests:
-  min-coverage: 80
-  require-edge-cases: true
+When: Multi-aspect review | Large changeset | Parallel analysis needed
+How: Review coordinator → Specialized analyzers → Result aggregation
+Examples:
+  - Full review: Code + Security + Test + Performance agents
+  - PR review: Change analyzer → Focused review agents
+  - Audit mode: Deep analysis with multiple passes
 ```
 
-### Focused Reviews
+## Review Standards
 
-```bash
-# Review only changed files
-/sc-review --changes-only
-
-# Review specific patterns
-/sc-review --pattern="*.ts" --focus=typescript
-
-# Security-first review
-/sc-review --security-priority
-
-# Pre-commit review
-/sc-review --pre-commit
-```
+1. Evidence-based findings only
+2. Prioritize by actual impact
+3. Provide actionable solutions
+4. Track improvement over time
+5. Celebrate quality wins
 
 ## Best Practices
 
-### Regular Reviews
-
-- Run on every PR
-- Weekly security scans
-- Monthly architecture reviews
-- Quarterly dependency audits
-
-### Team Integration
-
-- Share findings in standup
-- Create tickets for critical issues
-- Track improvement metrics
-- Celebrate quality wins
-
-### Continuous Improvement
-
-- Refine review rules based on findings
-- Update patterns for new technologies
-- Learn from false positives
-- Evolve with codebase
-
-## Example Scenarios
-
-### Pre-Release Review
-
-```
-/sc-review --comprehensive --pre-release
-```
-
-Full system review before deployment
-
-### Quick PR Check
-
-```
-/sc-review --quick --pr
-```
-
-Fast review for pull requests
-
-### Security Audit
-
-```
-/sc-review --security --deep
-```
-
-Thorough security analysis
-
-### Performance Optimization
-
-```
-/sc-review --performance --profile
-```
-
-Identify optimization opportunities
-
-## Success Metrics
-
-Track improvement over time:
-
-- Code quality scores
-- Security vulnerability count
-- Test coverage percentage
-- Performance benchmarks
-- Technical debt reduction
-
-The `/sc-review` command transforms quality assurance from a chore into a
-collaborative, intelligent process that helps teams ship better code with
-confidence.
+- Review early and often
+- Focus on recent changes
+- Automate in CI/CD pipeline
+- Learn from patterns
+- Continuously improve standards

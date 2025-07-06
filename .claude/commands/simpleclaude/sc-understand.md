@@ -1,288 +1,124 @@
-# /sc-understand Command
+**Purpose**: Smart learning router for code understanding and analysis
 
-Unified codebase understanding and analysis command that intelligently adapts to
-your needs.
+---
 
-## Purpose
+@include shared/simpleclaude/core-patterns.yml#Core_Philosophy
 
-Consolidates SuperClaude's analysis commands (load, analyze, explain, estimate,
-index) into one intuitive interface that:
+## Command Execution
 
-- Auto-detects the appropriate analysis depth
-- Loads minimal context using @include directives
-- Supports educational explanations
-- Provides visual outputs when beneficial
-- Uses parallel sub-agents for large codebases
+Executes immediately. Natural language controls behavior. Transforms:
+"$ARGUMENTS" into structured intent:
 
-## Usage
+- What: [extracted-target]
+- How: [detected-approach]
+- When: [execution-mode]
+
+Provides intelligent code analysis, explanations, and understanding by
+transforming natural language queries into structured analytical directives.
+
+### Semantic Transformations
 
 ```
-/sc-understand [query]
+"how authentication works" →
+  What: authentication system flow and components
+  How: trace execution paths, explain with examples
+  When: immediate educational mode
+
+"architecture" →
+  What: system design, component relationships
+  How: map structure, generate diagrams, identify patterns
+  When: immediate with visual output
+
+"estimate OAuth integration" →
+  What: OAuth implementation effort and complexity
+  How: analyze scope, dependencies, risks, timeline
+  When: immediate estimation mode
+
+"security risks --c7" →
+  What: potential vulnerabilities and threats
+  How: OWASP analysis, Context7 best practices
+  When: immediate with documentation lookup
 ```
 
-## Natural Language Examples
+@include shared/simpleclaude/core-patterns.yml#Evidence_Standards
 
-### Architecture & Design
+Examples:
 
-- "how does the authentication work?"
-- "explain the architecture to a new developer"
-- "what's the overall system design?"
-- "how do the components interact?"
+- `/sc-understand how authentication works` - Explain auth flow
+- `/sc-understand architecture` - System design overview
+- `/sc-understand this function --magic` - Visual explanation with diagrams
+- `/sc-understand estimate OAuth integration` - Effort estimation
+- `/sc-understand security risks --c7` - Security analysis with docs
 
-### Code Analysis
-
-- "what does this module do?"
-- "analyze the payment processing flow"
-- "how is data validated?"
-- "trace the user registration process"
-
-### Performance & Security
-
-- "find performance bottlenecks"
-- "analyze database query efficiency"
-- "find security vulnerabilities"
-- "check for memory leaks"
-
-### Estimation & Planning
-
-- "estimate effort for payment integration"
-- "how complex is adding OAuth?"
-- "what's needed for mobile support?"
-- "assess refactoring difficulty"
-
-### Learning & Onboarding
-
-- "explain this like I'm new to React"
-- "tutorial on the API structure"
-- "walkthrough of the build process"
-- "guide me through the testing setup"
-
-## Analysis Depths
-
-The command auto-detects appropriate depth based on your query:
-
-### Quick Overview (1-2 min)
-
-- High-level structure
-- Key components
-- Main functionality
-- Basic dependencies
-
-### Standard Analysis (5-10 min)
-
-- Component relationships
-- Data flow
-- Key algorithms
-- Integration points
-
-### Deep Dive (15-30 min)
-
-- Full architecture review
-- Performance analysis
-- Security assessment
-- Code quality metrics
-
-### Comprehensive Study (30+ min)
-
-- Complete codebase analysis
-- Parallel sub-agent deployment
-- Cross-cutting concerns
-- Future recommendations
-
-## Smart Context Loading
-
-Uses @include directives to load only what's needed:
+## Smart Detection & Routing
 
 ```yaml
-# For architecture queries
-@include .claude/prompts/analyze/architecture.md
+Explain/Teach: [explain, how does, what is, teach me, show me, walkthrough]
+  → Educational mode: examples, visualizations, step-by-step guidance
 
-# For performance analysis
-@include .claude/prompts/analyze/performance.md
+Analyze: [analyze, review, assess, evaluate, find issues, bottlenecks]
+  → Deep analysis: patterns, performance, security, quality metrics
 
-# For security reviews
-@include .claude/prompts/analyze/security.md
+Architecture: [architecture, design, structure, components, system, flow]
+  → System overview: diagrams, relationships, patterns, boundaries
 
-# For estimation tasks
-@include .claude/prompts/project/estimation.md
+Estimate: [estimate, how long, effort, complexity, time needed]
+  → Effort analysis: scope, dependencies, risks, timeline
+
+Load/Index: [understand codebase, learn project, explore files]
+  → Progressive loading: smart context, parallel agents, caching
 ```
 
-## Features
+**Intelligent Depth Detection:** Quick overview (2min) | Standard analysis
+(10min) | Deep dive (30min) | Comprehensive (30min+)
 
-### 🧠 Intelligent Analysis
+**--watch:** Monitor code changes | Update understanding | Track evolution
+**--interactive:** Guided exploration | Q&A mode | Progressive learning
+**--visual:** Generate diagrams | Flowcharts | Architecture visualizations
 
-- Query interpretation
-- Depth auto-adjustment
-- Context awareness
-- Progressive exploration
+@include shared/simpleclaude/core-patterns.yml#Task_Management
 
-### 📚 Educational Mode
+@include shared/simpleclaude/workflows.yml#Understand_Workflow
 
-- Adapts to expertise level
-- Provides examples
-- Includes visualizations
-- Offers learning paths
+@include shared/simpleclaude/core-patterns.yml#Output_Organization
 
-### ⚡ Performance Optimization
+## Core Workflows
 
-- Smart caching
-- Parallel processing
-- Incremental analysis
-- Minimal file loading
+**Learning:** Parse query → Detect expertise → Load context → Explain clearly →
+Provide examples
 
-### 🎯 Focused Results
+**Analysis:** Identify scope → Deploy analyzers → Gather metrics → Synthesize
+findings
 
-- Relevant insights only
-- Actionable findings
-- Clear explanations
-- Next step suggestions
+**Architecture:** Map components → Trace relationships → Identify patterns →
+Generate visuals
 
-## Implementation Strategy
+**Estimation:** Analyze complexity → Identify dependencies → Assess risks →
+Calculate effort
 
-1. **Query Analysis**
+## Sub-Agent Delegation
 
-   - Parse natural language
-   - Detect intent and scope
-   - Determine expertise level
-   - Select analysis type
-
-2. **Context Loading**
-
-   - Use minimal @includes
-   - Load progressive context
-   - Cache repeated queries
-   - Optimize file access
-
-3. **Analysis Execution**
-
-   - Deploy appropriate tools
-   - Use parallel agents if needed
-   - Generate visualizations
-   - Compile findings
-
-4. **Result Presentation**
-   - Match user's expertise
-   - Provide clear structure
-   - Include examples
-   - Suggest next steps
-
-## Advanced Patterns
-
-### Comparative Analysis
-
-```
-/sc-understand "compare authentication methods"
-/sc-understand "React vs Vue patterns in this codebase"
+```yaml
+When: Large codebases | Multi-aspect analysis | Parallel exploration
+How: Query router → Specialized analyzers → Result synthesis
+Examples:
+  - Full codebase: Multiple file analyzers in parallel
+  - Security audit: Dedicated security analysis agent
+  - Performance review: Profiling and metrics agents
 ```
 
-### Historical Analysis
+## Educational Adaptation
 
-```
-/sc-understand "how has the API evolved?"
-/sc-understand "what changed in the last refactor?"
-```
+1. Auto-detects user expertise level
+2. Adjusts explanation depth accordingly
+3. Provides relevant examples
+4. Includes helpful visualizations
+5. Suggests learning paths
 
-### Impact Analysis
+## Best Practices
 
-```
-/sc-understand "impact of removing this module"
-/sc-understand "dependencies on the user service"
-```
-
-### Learning Paths
-
-```
-/sc-understand "guide me through the codebase"
-/sc-understand "onboarding path for new developers"
-```
-
-## Integration Points
-
-### With Other Commands
-
-- `/sc-task`: After understanding, create tasks
-- `/sc-improve`: Based on analysis findings
-- `/sc-test`: Target areas needing tests
-- `/sc-docs`: Document discoveries
-
-### With Development Workflow
-
-- Pre-implementation analysis
-- Code review assistance
-- Debugging support
-- Refactoring planning
-
-## Prompt Structure
-
-```markdown
-@include .claude/prompts/base/minimal-context.md @include
-.claude/prompts/analyze/query-interpreter.md
-
-Based on the query: "[user query]"
-
-1. Determine analysis type and depth
-2. Load only necessary context
-3. Execute focused analysis
-4. Present findings appropriately
-
-@if architecture @include .claude/prompts/analyze/architecture.md @endif
-
-@if performance @include .claude/prompts/analyze/performance.md @endif
-
-@if security @include .claude/prompts/analyze/security.md @endif
-
-@if educational @include .claude/prompts/explain/educational-mode.md @endif
-```
-
-## Caching Strategy
-
-- Cache common queries
-- Store analysis results
-- Reuse component maps
-- Update incrementally
-
-## Examples
-
-### Quick Architecture Overview
-
-```
-User: /sc-understand "how does this work?"
-Assistant: *Provides high-level system overview with main components*
-```
-
-### Deep Security Analysis
-
-```
-User: /sc-understand "find security vulnerabilities"
-Assistant: *Performs comprehensive security audit with specific findings*
-```
-
-### Educational Explanation
-
-```
-User: /sc-understand "explain the database layer to a junior dev"
-Assistant: *Provides detailed, educational walkthrough with examples*
-```
-
-### Effort Estimation
-
-```
-User: /sc-understand "estimate adding multi-tenancy"
-Assistant: *Analyzes impact, complexity, and provides time estimates*
-```
-
-## Success Metrics
-
-- Minimal context loading
-- Accurate depth detection
-- Clear, useful insights
-- Fast response times
-- High user satisfaction
-
-## Notes
-
-- Adapts to user expertise automatically
-- Learns from previous queries
-- Suggests related analyses
-- Provides actionable next steps
-- Integrates with existing workflow
+- Start with minimal context
+- Load progressively as needed
+- Cache analysis results
+- Provide actionable insights
+- Suggest next steps

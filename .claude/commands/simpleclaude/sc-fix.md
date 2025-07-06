@@ -1,400 +1,124 @@
-# /sc-fix Command
+**Purpose**: Smart debugging router for systematic error resolution
 
-Systematic troubleshooting and error resolution that automatically investigates,
-diagnoses, and fixes issues.
+---
 
-## Purpose
+@include shared/simpleclaude/core-patterns.yml#Core_Philosophy
 
-Consolidates debugging, error resolution, and troubleshooting into one
-intelligent command that:
+## Command Execution
 
-- Parses error messages and stack traces
-- Investigates root causes systematically
-- Applies appropriate fixes
-- Verifies resolution
-- Handles git conflicts and build issues
+Executes immediately. Natural language controls behavior. Transforms:
+"$ARGUMENTS" into structured intent:
 
-## Usage
+- What: [extracted-target]
+- How: [detected-approach]
+- When: [execution-mode]
+
+Systematically investigates, diagnoses, and fixes errors by transforming problem
+descriptions into structured debugging directives.
+
+### Semantic Transformations
 
 ```
-/sc-fix [error or issue description]
+"TypeError in user.js" →
+  What: runtime type error in user.js file
+  How: stack trace analysis, type validation, null checks
+  When: immediate with focused investigation
+
+"failing tests" →
+  What: test suite failures across codebase
+  How: analyze test output, trace failures, fix root causes
+  When: immediate with test re-execution
+
+"slow API response" →
+  What: API performance degradation
+  How: profiling, query analysis, caching opportunities
+  When: immediate with performance monitoring
+
+"merge conflicts --interactive" →
+  What: git merge conflict resolution
+  How: analyze both branches, preserve intent, validate
+  When: interactive mode with user confirmation
 ```
 
-## Natural Language Examples
+@include shared/simpleclaude/core-patterns.yml#Evidence_Standards
 
-### Error Resolution
+Examples:
 
-- "fix TypeError in production logs"
-- "fix undefined is not a function error"
-- "fix module not found error"
-- "fix connection refused on port 3000"
-- "fix CORS error in API calls"
+- `/sc-fix TypeError in user.js` - Fix runtime error
+- `/sc-fix failing tests` - Debug and fix test failures
+- `/sc-fix merge conflicts --interactive` - Resolve git conflicts
+- `/sc-fix slow API response` - Performance troubleshooting
+- `/sc-fix build error --c7` - Fix build with documentation help
 
-### Build & Deploy Issues
-
-- "fix failing tests"
-- "fix broken build"
-- "fix deployment pipeline failure"
-- "fix Docker container not starting"
-- "fix CI/CD pipeline errors"
-
-### Performance Problems
-
-- "fix slow API response"
-- "fix memory leak in production"
-- "fix high CPU usage"
-- "fix database query timeout"
-- "fix slow page load times"
-
-### Git & Version Control
-
-- "fix merge conflicts"
-- "fix detached HEAD state"
-- "fix corrupted git repository"
-- "fix failed rebase"
-- "fix uncommitted changes blocking pull"
-
-### Authentication & Security
-
-- "fix authentication not working"
-- "fix JWT token expiration issues"
-- "fix CSRF token mismatch"
-- "fix SSL certificate errors"
-- "fix permission denied errors"
-
-## Investigation Approach
-
-The command follows a systematic debugging methodology:
-
-### 1. Error Parsing
-
-- Extract error messages and stack traces
-- Identify error types and patterns
-- Parse log files for context
-- Collect environmental information
-
-### 2. Root Cause Analysis
-
-- Apply Five Whys methodology
-- Trace execution flow
-- Check recent changes
-- Analyze dependencies
-
-### 3. Fix Application
-
-- Generate targeted solutions
-- Apply fixes incrementally
-- Test each change
-- Document resolution
-
-### 4. Verification
-
-- Confirm error resolution
-- Run relevant tests
-- Check for side effects
-- Prevent regression
-
-## Smart Context Loading
-
-Uses minimal @include directives for focused debugging:
+## Smart Detection & Routing
 
 ```yaml
-# Core debugging patterns
-@include .claude/prompts/debug/error-patterns.md
-@include .claude/prompts/debug/investigation-steps.md
+Runtime Errors: [TypeError, ReferenceError, undefined, null, NaN]
+  → Stack trace analysis, variable tracing, null checks, type validation
 
-# Specific issue types
-@if syntax_error
-  @include .claude/prompts/debug/syntax-fixes.md
-@endif
+Build/Deploy: [build failed, compile error, webpack, deployment, CI/CD]
+  → Config validation, dependency check, environment vars, build logs
 
-@if build_error
-  @include .claude/prompts/debug/build-troubleshooting.md
-@endif
+Git Issues: [merge conflict, detached HEAD, rebase failed, uncommitted]
+  → Conflict resolution, branch recovery, stash management, history fix
 
-@if git_issue
-  @include .claude/prompts/debug/git-recovery.md
-@endif
+Performance: [slow, timeout, memory leak, high CPU, bottleneck]
+  → Profiling, query analysis, caching, algorithm optimization
 
-@if performance_issue
-  @include .claude/prompts/debug/performance-analysis.md
-@endif
+Security/Auth: [authentication, permission denied, CORS, token, SSL]
+  → Auth flow tracing, permission audit, token validation, cert check
 ```
 
-## Features
+**Five Whys Analysis:** Root cause investigation | Evidence gathering |
+Systematic approach | Prevention focus
 
-### 🔍 Automatic Detection
+**--watch:** Monitor error patterns | Real-time debugging | Auto-retry fixes
+**--interactive:** Step-by-step resolution | Explain fixes | User confirmation
+**--rollback:** Enable safe rollback | Track all changes | Quick recovery
 
-- Error pattern recognition
-- Issue type classification
-- Severity assessment
-- Impact analysis
+@include shared/simpleclaude/core-patterns.yml#Task_Management
 
-### 🎯 Targeted Investigation
+@include shared/simpleclaude/workflows.yml#Fix_Workflow
 
-- Focused file inspection
-- Minimal context loading
-- Efficient root cause finding
-- Quick resolution paths
+@include shared/simpleclaude/core-patterns.yml#Output_Organization
 
-### 🛠️ Fix Strategies
+## Core Workflows
 
-- Incremental fixes
-- Safe rollback options
-- Alternative solutions
-- Prevention measures
+**Error Analysis:** Parse error → Extract context → Identify patterns → Find
+root cause
 
-### ✅ Verification Methods
+**Investigation:** Trace execution → Check recent changes → Analyze dependencies
+→ Test hypotheses
 
-- Automated testing
-- Manual verification steps
-- Regression checks
-- Performance validation
+**Fix Application:** Generate solutions → Apply incrementally → Test each fix →
+Verify resolution
 
-## Implementation Strategy
+**Prevention:** Add error handling → Improve logging → Create tests → Document
+solution
 
-### Error Pattern Matching
+## Sub-Agent Delegation
 
-```typescript
-interface ErrorPattern {
-  pattern: RegExp;
-  type: "syntax" | "runtime" | "build" | "git" | "network" | "security";
-  severity: "critical" | "high" | "medium" | "low";
-  commonCauses: string[];
-  quickFixes: string[];
-}
-
-const errorPatterns: ErrorPattern[] = [
-  {
-    pattern: /TypeError:.*undefined/i,
-    type: "runtime",
-    severity: "high",
-    commonCauses: [
-      "Missing null checks",
-      "Async timing issues",
-      "Incorrect property access",
-    ],
-    quickFixes: [
-      "Add optional chaining",
-      "Check variable initialization",
-      "Verify async/await usage",
-    ],
-  },
-  {
-    pattern: /ECONNREFUSED/i,
-    type: "network",
-    severity: "critical",
-    commonCauses: ["Service not running", "Wrong port", "Firewall blocking"],
-    quickFixes: [
-      "Check service status",
-      "Verify port configuration",
-      "Test connectivity",
-    ],
-  },
-  // ... more patterns
-];
+```yaml
+When: Complex debugging | Multi-system issues | Performance analysis
+How: Error parser → Investigation agents → Fix validation
+Examples:
+  - Production errors: Log analyzer → Code tracer → Fix applier
+  - Performance issues: Profiler agent → Optimization agent
+  - Git problems: History analyzer → Conflict resolver
 ```
 
-### Investigation Workflow
-
-```typescript
-async function investigateIssue(description: string) {
-  // 1. Parse and classify
-  const errorType = classifyError(description);
-  const patterns = findMatchingPatterns(description);
-
-  // 2. Gather context
-  const context = await gatherContext(errorType);
-
-  // 3. Apply Five Whys
-  const rootCause = await fiveWhysAnalysis(context);
-
-  // 4. Generate fixes
-  const solutions = generateSolutions(rootCause, patterns);
-
-  // 5. Apply and verify
-  for (const solution of solutions) {
-    if (await applySolution(solution)) {
-      return verifyFix(solution);
-    }
-  }
-}
-```
-
-### Five Whys Implementation
-
-```typescript
-async function fiveWhysAnalysis(context: ErrorContext) {
-  const whys = [];
-  let currentWhy = context.initialProblem;
-
-  for (let i = 0; i < 5; i++) {
-    const answer = await investigateWhy(currentWhy);
-    whys.push({ question: currentWhy, answer });
-
-    if (isRootCause(answer)) {
-      break;
-    }
-
-    currentWhy = `Why ${answer}?`;
-  }
-
-  return {
-    rootCause: whys[whys.length - 1].answer,
-    chain: whys,
-  };
-}
-```
-
-## Common Fix Patterns
-
-### Syntax Errors
-
-```bash
-/sc-fix "SyntaxError: Unexpected token"
-# → Locates syntax error
-# → Shows context
-# → Suggests correction
-# → Applies fix
-```
-
-### Module Issues
-
-```bash
-/sc-fix "Cannot find module 'express'"
-# → Checks package.json
-# → Verifies node_modules
-# → Runs npm install
-# → Clears cache if needed
-```
-
-### Git Conflicts
-
-```bash
-/sc-fix "merge conflicts in 3 files"
-# → Shows conflict markers
-# → Analyzes both versions
-# → Suggests resolution
-# → Applies chosen strategy
-```
-
-### Build Failures
-
-```bash
-/sc-fix "build failing with webpack error"
-# → Parses build output
-# → Identifies root cause
-# → Updates configuration
-# → Reruns build
-```
-
-## Advanced Features
-
-### Rollback Capability
-
-- Track changes made during fix
-- Create restore points
-- Enable quick rollback
-- Document rollback steps
-
-### Pattern Learning
-
-- Remember successful fixes
-- Build knowledge base
-- Suggest known solutions
-- Improve over time
-
-### Preventive Measures
-
-- Suggest code improvements
-- Add error handling
-- Improve logging
-- Create tests
-
-## Integration Points
-
-### With Other Commands
-
-- `/sc-understand`: Analyze before fixing
-- `/sc-test`: Verify fixes with tests
-- `/sc-improve`: Apply preventive improvements
-- `/sc-monitor`: Set up error tracking
-
-### With Development Tools
-
-- Git hooks for conflict prevention
-- ESLint for syntax checking
-- Test runners for verification
-- Monitoring for production issues
-
-## Prompt Structure
-
-```markdown
-@include .claude/prompts/base/minimal-context.md @include
-.claude/prompts/debug/error-patterns.md
-
-Given the error/issue: "[user description]"
+## Debugging Methodology
 
 1. Parse and classify the error
 2. Gather minimal necessary context
-3. Apply systematic investigation
-4. Generate and apply fixes
-5. Verify resolution
+3. Apply Five Whys analysis
+4. Generate targeted solutions
+5. Verify fix effectiveness
 
-@if has_stacktrace @include .claude/prompts/debug/stacktrace-analysis.md @endif
+## Best Practices
 
-@if has_logs @include .claude/prompts/debug/log-analysis.md @endif
-
-@if git_issue @include .claude/prompts/debug/git-recovery.md @endif
-```
-
-## Success Metrics
-
-- Quick error identification
-- Accurate root cause finding
-- Effective fix application
-- Minimal context loading
-- No regression introduction
-
-## Examples
-
-### Runtime Error Fix
-
-```
-User: /sc-fix "TypeError: Cannot read property 'name' of undefined"
-Assistant:
-*Parses error location*
-*Checks variable initialization*
-*Adds null check*
-*Verifies fix works*
-```
-
-### Build Error Resolution
-
-```
-User: /sc-fix "Module build failed: SassError: Can't find stylesheet"
-Assistant:
-*Checks import paths*
-*Verifies file existence*
-*Corrects path reference*
-*Rebuilds successfully*
-```
-
-### Performance Issue
-
-```
-User: /sc-fix "API endpoint taking 10+ seconds"
-Assistant:
-*Profiles endpoint*
-*Identifies N+1 query*
-*Implements eager loading*
-*Reduces to <500ms*
-```
-
-## Notes
-
-- Prioritizes understanding over quick fixes
-- Always verifies fixes work
-- Documents solutions for future reference
-- Suggests preventive measures
-- Learns from successful resolutions
+- Understand before fixing
+- Make minimal changes
+- Test fixes thoroughly
+- Document solutions
+- Prevent recurrence

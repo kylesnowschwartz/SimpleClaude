@@ -6,10 +6,15 @@
 
 ## Command Execution
 
-Execute: immediate. --plan→show plan first Legend: Generated based on symbols
-used in command Purpose: "[Action][Subject] in $ARGUMENTS"
+Executes immediately. Natural language controls behavior. Transforms:
+"$ARGUMENTS" into structured intent:
 
-[Main command description using $ARGUMENTS natural language input]
+- What: [extracted-target]
+- How: [detected-approach]
+- When: [execution-mode]
+
+[Main command description using semantic transformation of natural language
+input]
 
 @include shared/simpleclaude/core-patterns.yml#Evidence_Standards
 
