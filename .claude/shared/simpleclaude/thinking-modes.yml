@@ -1,0 +1,11 @@
+# SimpleClaude Thinking Mode Integration
+# Simple directive to enable thinking when arguments are provided
+
+thinking_mode_directive: |
+  When "$ARGUMENTS" is provided: Think step-by-step about the request before acting.
+  When "$ARGUMENTS" is empty: Display usage suggestions instead of processing.
+
+usage_suggestions: |
+  Usage: /[command] <natural language request>
+
+  This command understands natural language. Try describing what you want to accomplish.

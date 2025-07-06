@@ -12,6 +12,8 @@
 
 @include shared/simpleclaude/sub-agents.yml
 
+@include shared/simpleclaude/thinking-modes.yml
+
 @include shared/simpleclaude/workflows.yml
 
 ## Command Execution
