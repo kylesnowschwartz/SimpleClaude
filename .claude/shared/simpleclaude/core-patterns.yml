@@ -279,3 +279,710 @@ priorities:
   evidence_based: "All decisions backed by evidence | Transparent reasoning"
   efficiency: "Token optimization | Parallel operations | Smart caching"
   safety: "Checkpoint before risky ops | Validate inputs | Rollback capability"
+
+## Mode_Detection
+# Intelligent mode detection adapted from SuperClaude's proven patterns
+mode_detection:
+  watch_mode:
+    keywords:
+      primary: ["watch", "monitor", "observe", "track", "continuous"]
+      secondary: ["real-time", "live", "ongoing", "changes", "updates"]
+    natural_patterns:
+      - "watch for changes"
+      - "monitor the files"
+      - "keep an eye on"
+      - "track updates to"
+      - "continuously check"
+    behavior:
+      - "Enable continuous monitoring with real-time feedback"
+      - "Auto-refresh on file changes"
+      - "Provide incremental updates"
+      - "Maintain persistent state"
+    auto_activate:
+      - "File modification patterns detected"
+      - "Development workflow context"
+      - "Build/test commands with monitoring needs"
+
+  interactive_mode:
+    keywords:
+      primary: ["interactive", "step-by-step", "guided", "walkthrough"]
+      secondary: ["confirm", "approve", "check", "review", "manual"]
+    natural_patterns:
+      - "guide me through"
+      - "step by step"
+      - "let me review each"
+      - "ask before each change"
+      - "interactive process"
+    behavior:
+      - "Pause at decision points for user input"
+      - "Explain each step before execution"
+      - "Allow user to modify or skip steps"
+      - "Provide rollback options"
+    auto_activate:
+      - "High-risk operations detected"
+      - "User explicitly requests guidance"
+      - "Complex multi-step workflows"
+
+  planning_mode:
+    keywords:
+      primary: ["plan", "planning", "strategy", "approach", "design"]
+      secondary: ["blueprint", "roadmap", "outline", "proposal", "architecture"]
+    natural_patterns:
+      - "show me the plan"
+      - "what's your approach"
+      - "plan this out"
+      - "design first"
+      - "outline the steps"
+    behavior:
+      - "Generate comprehensive execution plan"
+      - "Use exit_plan_mode tool"
+      - "Wait for user approval"
+      - "Provide risk assessment"
+    auto_activate:
+      - "Complex architectural decisions"
+      - "Multi-system integrations"
+      - "Production deployments"
+
+  tdd_mode:
+    keywords:
+      primary: ["tdd", "test-driven", "test-first", "red-green"]
+      secondary: ["failing test", "make it pass", "refactor", "cycle"]
+    natural_patterns:
+      - "test driven development"
+      - "write the test first"
+      - "red green refactor"
+      - "failing test then code"
+      - "tdd approach"
+    behavior:
+      - "Write failing tests first"
+      - "Implement minimal code to pass"
+      - "Refactor for quality"
+      - "Maintain test coverage"
+    auto_activate:
+      - "New feature development"
+      - "Bug fixes with reproduction"
+      - "API endpoint creation"
+
+  magic_mode:
+    keywords:
+      primary: ["ui", "component", "frontend", "interface", "design"]
+      secondary: ["button", "form", "modal", "layout", "widget"]
+    natural_patterns:
+      - "create a UI component"
+      - "build the interface"
+      - "design a form"
+      - "make a dashboard"
+      - "frontend component"
+    behavior:
+      - "Enable Magic MCP server"
+      - "Generate UI components"
+      - "Use modern frameworks"
+      - "Include styling and interactions"
+    auto_activate:
+      - "React/Vue/Svelte file context"
+      - "UI-related keywords detected"
+      - "Component creation requests"
+
+  c7_mode:
+    keywords:
+      primary: ["library", "framework", "package", "module", "api"]
+      secondary: ["documentation", "usage", "examples", "reference", "guide"]
+    natural_patterns:
+      - "how to use [library]"
+      - "documentation for"
+      - "api reference"
+      - "library examples"
+      - "package usage"
+    behavior:
+      - "Enable Context7 MCP server"
+      - "Resolve library IDs"
+      - "Fetch documentation"
+      - "Provide code examples"
+    auto_activate:
+      - "Import statements detected"
+      - "Package installation context"
+      - "API integration tasks"
+
+  strict_mode:
+    keywords:
+      primary: ["strict", "rigorous", "thorough", "comprehensive", "exhaustive"]
+      secondary: ["validate", "verify", "ensure", "guarantee", "certify"]
+    natural_patterns:
+      - "be extra careful"
+      - "strict validation"
+      - "comprehensive testing"
+      - "zero tolerance"
+      - "production quality"
+    behavior:
+      - "Enhanced validation checks"
+      - "Comprehensive error handling"
+      - "Full test coverage required"
+      - "Security analysis included"
+    auto_activate:
+      - "Production environment detected"
+      - "Security-sensitive operations"
+      - "Financial or healthcare context"
+
+  safe_mode:
+    keywords:
+      primary: ["safe", "careful", "cautious", "secure", "protected"]
+      secondary: ["backup", "rollback", "undo", "recover", "restore"]
+    natural_patterns:
+      - "be careful with"
+      - "safe approach"
+      - "don't break anything"
+      - "cautious changes"
+      - "protective mode"
+    behavior:
+      - "Create automatic backups"
+      - "Implement rollback procedures"
+      - "Use dry-run by default"
+      - "Require explicit confirmations"
+    auto_activate:
+      - "Production data operations"
+      - "Database migrations"
+      - "System configuration changes"
+
+  complexity_assessment:
+    triggers:
+      simple:
+        - "Single file operation"
+        - "< 3 steps required"
+        - "Well-defined scope"
+        - "Standard patterns"
+      moderate:
+        - "Multi-file coordination"
+        - "3-10 steps required"
+        - "Some unknowns"
+        - "Integration needed"
+      complex:
+        - "System-wide changes"
+        - "> 10 steps required"
+        - "Many unknowns"
+        - "Research required"
+      critical:
+        - "Architecture decisions"
+        - "Breaking changes"
+        - "Security implications"
+        - "Performance critical"
+
+  mode_combination_rules:
+    compatible_combinations:
+      - "watch + interactive: Real-time guided development"
+      - "tdd + strict: Quality-first development"
+      - "planning + safe: Risk-aware execution"
+      - "c7 + magic: Documentation-driven UI development"
+    conflicting_modes:
+      - "safe + aggressive optimization"
+      - "interactive + batch processing"
+      - "watch + one-time operations"
+    priority_resolution:
+      - "User explicit flags override detection"
+      - "Safety modes take precedence"
+      - "Interactive overrides automatic"
+      - "Planning required for complex operations"
+
+  natural_language_processing:
+    intent_patterns:
+      exploratory: ["what if", "could we", "is it possible", "explore"]
+      decisive: ["implement", "create", "build", "fix", "deploy"]
+      investigative: ["why", "debug", "analyze", "understand", "trace"]
+      educational: ["explain", "teach", "show me how", "walkthrough"]
+
+    context_enhancement:
+      - "Previous command history influences mode"
+      - "Project type affects default modes"
+      - "Error context triggers safe/interactive"
+      - "Time pressure affects planning depth"
+
+  auto_activation_rules:
+    file_based:
+      "*.test.*|*.spec.*": "tdd mode suggested"
+      "*.tsx|*.jsx|*.vue": "magic mode available"
+      "*api*|*server*": "c7 mode for documentation"
+      "production*|prod*": "safe + strict modes"
+
+    error_based:
+      "ImportError|ModuleNotFound": "c7 mode required"
+      "Test failures": "tdd mode suggested"
+      "UI/UX issues": "magic mode recommended"
+      "Performance problems": "watch mode helpful"
+
+    scope_based:
+      "Single function": "Simple execution"
+      "Multiple files": "Planning suggested"
+      "Cross-system": "Interactive + planning"
+      "Production": "Safe + strict required"
+
+## Natural_Language_Mapping
+# Maps natural language expressions to specific tool usage patterns
+natural_language_mapping:
+  agent_invocation:
+    research_patterns:
+      triggers:
+        ["research", "investigate", "explore", "find out", "look into", "study"]
+      natural_expressions:
+        - "Can you research X for me?"
+        - "I need to understand how X works"
+        - "Find best practices for X"
+        - "Investigate the differences between X and Y"
+        - "Look into possible solutions for X"
+      tool_mapping: "zen__chat or zen__thinkdeep"
+      sub_agent_pattern: "Research sub-agent for comprehensive analysis"
+
+    analysis_patterns:
+      triggers:
+        ["analyze", "evaluate", "assess", "review", "examine", "inspect"]
+      natural_expressions:
+        - "Analyze this codebase architecture"
+        - "Can you review this implementation?"
+        - "Assess the performance implications"
+        - "Examine the security aspects"
+        - "Evaluate different approaches to X"
+      tool_mapping: "zen__analyze or zen__codereview"
+      sub_agent_pattern: "Analysis sub-agent for deep investigation"
+
+    debugging_patterns:
+      triggers: ["debug", "fix", "troubleshoot", "solve", "diagnose", "error"]
+      natural_expressions:
+        - "Help me debug this issue"
+        - "Why is X not working?"
+        - "Fix the error in Y"
+        - "Troubleshoot this problem"
+        - "Diagnose what's causing X"
+      tool_mapping: "zen__debug"
+      sub_agent_pattern: "Debug sub-agent for systematic investigation"
+
+    planning_patterns:
+      triggers:
+        ["plan", "design", "architect", "structure", "organize", "roadmap"]
+      natural_expressions:
+        - "Let's plan the implementation"
+        - "Design the architecture for X"
+        - "Create a roadmap for Y"
+        - "How should we structure this?"
+        - "Organize the development approach"
+      tool_mapping: "zen__planner or exit_plan_mode"
+      sub_agent_pattern: "Planning sub-agent for strategic thinking"
+
+    consensus_patterns:
+      triggers:
+        ["opinions", "perspectives", "compare", "pros and cons", "trade-offs"]
+      natural_expressions:
+        - "What are the pros and cons of X?"
+        - "Compare different approaches"
+        - "Get multiple perspectives on Y"
+        - "Trade-offs between A and B"
+        - "Should we use X or Y?"
+      tool_mapping: "zen__consensus"
+      sub_agent_pattern: "Consensus sub-agent for balanced analysis"
+
+  complexity_indicators:
+    simple_tasks:
+      patterns:
+        - "Add a [single feature]"
+        - "Fix [specific bug]"
+        - "Update [single file]"
+        - "Change [configuration]"
+        - "Rename [variable/function]"
+      approach: "Direct execution without sub-agents"
+
+    moderate_tasks:
+      patterns:
+        - "Implement [feature] with [requirements]"
+        - "Refactor [module/component]"
+        - "Add tests for [functionality]"
+        - "Integrate [external service]"
+        - "Optimize [specific area]"
+      approach: "TodoWrite() with structured steps"
+
+    complex_tasks:
+      patterns:
+        - "Build [entire system/feature]"
+        - "Redesign [architecture]"
+        - "Migrate from X to Y"
+        - "Performance optimization across [system]"
+        - "Implement [complex algorithm/pattern]"
+      approach: "Multiple sub-agents with TodoWrite() coordination"
+
+  intelligent_flag_detection:
+    ui_related:
+      keywords:
+        ["ui", "interface", "component", "frontend", "button", "form", "modal"]
+      implied_flags: ["--magic", "--ui"]
+      example_mappings:
+        "Create a login form": "--magic for UI generation"
+        "Build dashboard interface": "--ui --magic for complex UI"
+        "Design user profile component": "--magic with component patterns"
+
+    documentation_related:
+      keywords:
+        ["how to use", "documentation", "api reference", "examples", "guide"]
+      implied_flags: ["--c7", "--docs"]
+      example_mappings:
+        "How do I use React hooks?": "--c7 for React documentation"
+        "MongoDB query examples": "--c7 --docs for MongoDB guide"
+        "Express middleware documentation": "--c7 for Express API"
+
+    browser_automation:
+      keywords:
+        ["automate", "scrape", "e2e test", "browser", "screenshot", "crawl"]
+      implied_flags: ["--pup", "--browser"]
+      example_mappings:
+        "Automate form submission": "--pup for browser automation"
+        "E2E test user flow": "--browser --pup for testing"
+        "Scrape website data": "--pup for web scraping"
+
+    thinking_depth:
+      simple_request: "Default thinking mode"
+      complex_analysis: "--think for deeper analysis"
+      critical_decision: "--think-hard for thorough investigation"
+      architectural_design: "--ultrathink for maximum depth"
+
+  context_aware_responses:
+    project_type_detection:
+      web_app:
+        indicators:
+          [
+            "package.json with react/vue/angular",
+            "webpack.config",
+            "index.html",
+          ]
+        default_tools: ["magic-mcp for UI", "context7 for frameworks"]
+
+      api_service:
+        indicators:
+          ["express/fastapi/rails", "routes/controllers", "swagger/openapi"]
+        default_tools: ["context7 for documentation", "rest client for testing"]
+
+      cli_tool:
+        indicators: ["commander/argparse", "bin directory", "cli.js/cli.py"]
+        default_tools: ["standard library focus", "minimal dependencies"]
+
+      data_science:
+        indicators: ["jupyter notebooks", "pandas/numpy", "models directory"]
+        default_tools: ["notebook support", "visualization libraries"]
+
+    workflow_adaptation:
+      new_feature:
+        steps:
+          [
+            "Understand requirements",
+            "Plan implementation",
+            "Write tests",
+            "Implement",
+            "Verify",
+          ]
+        tools: ["planner", "tdd mode", "watch mode for development"]
+
+      bug_fix:
+        steps:
+          [
+            "Reproduce issue",
+            "Debug root cause",
+            "Implement fix",
+            "Add regression test",
+          ]
+        tools: ["debug mode", "minimal reproducible example", "test generation"]
+
+      refactoring:
+        steps:
+          [
+            "Analyze current code",
+            "Identify improvements",
+            "Plan changes",
+            "Refactor safely",
+          ]
+        tools: ["analyzer", "safe mode", "test coverage check"]
+
+      performance:
+        steps:
+          [
+            "Profile current performance",
+            "Identify bottlenecks",
+            "Optimize",
+            "Measure improvement",
+          ]
+        tools: ["analyzer", "benchmark tools", "watch mode for monitoring"]
+
+  conversational_understanding:
+    question_types:
+      exploratory:
+        patterns: ["What if", "Could we", "Is it possible", "What happens when"]
+        response_style: "Analytical with alternatives"
+        tool_preference: "chat or planner for exploration"
+
+      instructional:
+        patterns: ["How do I", "Show me", "Teach me", "Explain how"]
+        response_style: "Step-by-step guidance"
+        tool_preference: "interactive mode with examples"
+
+      decisive:
+        patterns: ["Implement", "Create", "Build", "Fix", "Make"]
+        response_style: "Action-oriented execution"
+        tool_preference: "Direct implementation with verification"
+
+      investigative:
+        patterns: ["Why does", "What causes", "Debug why", "Understand how"]
+        response_style: "Root cause analysis"
+        tool_preference: "debug or analyzer tools"
+
+    confidence_modulation:
+      high_confidence_indicators:
+        - "Standard library usage"
+        - "Common patterns"
+        - "Well-documented APIs"
+        - "Existing similar code in project"
+
+      low_confidence_indicators:
+        - "Experimental features"
+        - "Complex integrations"
+        - "Performance-critical code"
+        - "Security-sensitive operations"
+
+      response_adaptation:
+        high_confidence: "Direct implementation with validation"
+        medium_confidence: "Implementation with extensive testing"
+        low_confidence: "Research first, then careful implementation"
+
+  example_translations:
+    natural_to_formal:
+      - input: "Help me make this code faster"
+        interpretation: "Performance optimization request"
+        tools: "zen__analyze --performance, profiling, benchmarking"
+
+      - input: "Something's wrong with the login"
+        interpretation: "Debug authentication issue"
+        tools: "zen__debug, check auth flow, examine logs"
+
+      - input: "I need a dashboard for analytics"
+        interpretation: "UI component creation"
+        tools: "--magic for UI, zen__planner for architecture"
+
+      - input: "Should we use GraphQL or REST?"
+        interpretation: "Architectural decision requiring analysis"
+        tools: "zen__consensus, research both options"
+
+      - input: "Make sure this is secure"
+        interpretation: "Security audit request"
+        tools: "zen__secaudit, zen__codereview --security"
+
+      - input: "Set up testing for the payment module"
+        interpretation: "Test generation for critical component"
+        tools: "zen__testgen with high coverage, tdd mode"
+
+      - input: "The app crashes sometimes"
+        interpretation: "Intermittent bug investigation"
+        tools: "zen__debug, add logging, watch mode"
+
+      - input: "Document how this works"
+        interpretation: "Documentation generation request"
+        tools: "zen__docgen, analyze code flow first"
+
+## Compound_Detection
+# Advanced pattern detection for compound/sequential requests
+compound_detection:
+  multi_task_patterns:
+    sequential_indicators:
+      explicit_sequences:
+        - "first..., then..., finally..."
+        - "step 1:..., step 2:..., step 3:..."
+        - "start by..., after that..., lastly..."
+        - "begin with..., followed by..., end with..."
+        - "1)... 2)... 3)..."
+
+      implicit_sequences:
+        - "and also..."
+        - "plus..."
+        - "additionally..."
+        - "furthermore..."
+        - "as well as..."
+        - "along with..."
+        - "in addition..."
+
+      dependency_chains:
+        - "after you..., then..."
+        - "once X is done..."
+        - "when you finish..."
+        - "before doing Y..."
+        - "make sure X before Y"
+
+    parallel_indicators:
+      coordination_words:
+        - "while also..."
+        - "at the same time..."
+        - "simultaneously..."
+        - "in parallel..."
+        - "concurrently..."
+
+      independent_tasks:
+        - "separately..."
+        - "independently..."
+        - "on another note..."
+        - "unrelated but..."
+        - "also need..."
+
+  task_decomposition:
+    separation_strategies:
+      by_domain:
+        - "Frontend tasks vs Backend tasks"
+        - "Testing vs Implementation"
+        - "Documentation vs Code"
+        - "Research vs Execution"
+
+      by_dependency:
+        - "Prerequisites first"
+        - "Independent tasks parallel"
+        - "Dependent tasks sequential"
+        - "Critical path priority"
+
+      by_complexity:
+        - "Simple tasks immediate"
+        - "Complex tasks planned"
+        - "Unknown tasks researched"
+        - "Risky tasks careful"
+
+  execution_patterns:
+    sequential_execution:
+      pattern: "Tasks with dependencies"
+      approach: |
+        1. TodoWrite() with ordered steps
+        2. Complete each step before next
+        3. Update status after each
+        4. Handle failures gracefully
+      example: "Setup database, then create models, then add API endpoints"
+
+    parallel_execution:
+      pattern: "Independent tasks"
+      approach: |
+        1. Identify parallelizable work
+        2. Spawn sub-agents for each
+        3. Coordinate results
+        4. Merge outputs
+      example: "Update docs while running tests while fixing linting"
+
+    phased_execution:
+      pattern: "Grouped related tasks"
+      approach: |
+        1. Group by phase/milestone
+        2. Complete phase before next
+        3. Validate phase results
+        4. Checkpoint progress
+      example: "Phase 1: Research, Phase 2: Design, Phase 3: Implement"
+
+  natural_examples:
+    compound_requests:
+      - input: "Debug the login issue and then add remember me functionality"
+        decomposition:
+          task1: "Debug login issue"
+          task2: "Add remember me feature"
+          relationship: "Sequential - fix before enhance"
+
+      - input: "Refactor the user module, add tests, and update documentation"
+        decomposition:
+          task1: "Refactor user module"
+          task2: "Add comprehensive tests"
+          task3: "Update documentation"
+          relationship: "Sequential with validation"
+
+      - input: "Research React vs Vue, then build a prototype with the better one"
+        decomposition:
+          task1: "Research and compare frameworks"
+          task2: "Build prototype with chosen framework"
+          relationship: "Sequential with decision point"
+
+      - input: "Fix all the linting errors while I review the PR comments"
+        decomposition:
+          task1: "Fix linting errors"
+          task2: "Address PR feedback"
+          relationship: "Parallel - independent work"
+
+      - input: "Set up CI/CD, but first make sure all tests pass"
+        decomposition:
+          task1: "Ensure test suite passes"
+          task2: "Configure CI/CD pipeline"
+          relationship: "Sequential with prerequisite"
+
+  handling_strategies:
+    immediate_vs_planned:
+      immediate_execution:
+        when:
+          - "All tasks are simple"
+          - "Clear execution path"
+          - "No research needed"
+          - "Low risk operations"
+        approach: "Execute directly with progress updates"
+
+      planned_execution:
+        when:
+          - "Complex dependencies"
+          - "Unknown elements"
+          - "High risk changes"
+          - "Multi-system impact"
+        approach: "Use planner first, then execute"
+
+    progress_tracking:
+      methods:
+        - "TodoWrite() for all multi-step work"
+        - "Regular TodoRead() checks"
+        - "Status updates after each major step"
+        - "Checkpoint at phase boundaries"
+
+      communication:
+        - "Clear progress indicators"
+        - "Estimated time remaining"
+        - "Blockers identified early"
+        - "Success criteria defined"
+
+    error_handling:
+      cascade_prevention:
+        - "Validate prerequisites first"
+        - "Fail fast on critical errors"
+        - "Isolate independent failures"
+        - "Provide rollback options"
+
+      recovery_strategies:
+        - "Checkpoint before risky operations"
+        - "Atomic operations where possible"
+        - "Clear error messages"
+        - "Suggest remediation steps"
+
+  intelligence_rules:
+    auto_decomposition:
+      triggers:
+        - "More than 3 distinct actions mentioned"
+        - "Time sequencing words detected"
+        - "Multiple domain areas involved"
+        - "Conditional logic present"
+
+      actions:
+        - "Parse into discrete tasks"
+        - "Identify dependencies"
+        - "Determine execution order"
+        - "Assign to appropriate tools/agents"
+
+    optimization_opportunities:
+      parallelize_when:
+        - "No shared dependencies"
+        - "Different file sets"
+        - "Different domains"
+        - "Resource availability"
+
+      batch_when:
+        - "Similar operations"
+        - "Same tool usage"
+        - "Shared context"
+        - "Efficiency gains"
+
+    context_preservation:
+      between_tasks:
+        - "Maintain session state"
+        - "Pass relevant findings"
+        - "Update shared memory"
+        - "Preserve decision rationale"
+
+      across_agents:
+        - "Use Memory for coordination"
+        - "Document assumptions"
+        - "Share error patterns"
+        - "Synchronize on completion"
