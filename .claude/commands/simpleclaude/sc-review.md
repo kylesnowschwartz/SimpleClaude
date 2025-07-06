@@ -10,8 +10,6 @@
 
 @include shared/simpleclaude/modes.yml
 
-@include shared/simpleclaude/modes.yml
-
 @include shared/simpleclaude/workflows.yml
 
 ## Command Execution
