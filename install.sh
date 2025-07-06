@@ -173,7 +173,9 @@ file_hash() {
 # Install SimpleClaude commands
 echo -e "${YELLOW}Installing SimpleClaude commands...${NC}"
 if [[ -d "$SOURCE_DIR/commands/simpleclaude" ]]; then
-    mkdir -p "$TARGET_DIR/commands/simpleclaude"
+    if [[ "$DRY_RUN" = false ]]; then
+        mkdir -p "$TARGET_DIR/commands/simpleclaude"
+    fi
     
     updated_count=0
     added_count=0
@@ -225,7 +227,9 @@ fi
 # Install SimpleClaude shared directory
 echo -e "${YELLOW}Installing SimpleClaude shared patterns...${NC}"
 if [[ -d "$SOURCE_DIR/shared/simpleclaude" ]]; then
-    mkdir -p "$TARGET_DIR/shared/simpleclaude"
+    if [[ "$DRY_RUN" = false ]]; then
+        mkdir -p "$TARGET_DIR/shared/simpleclaude"
+    fi
     
     updated_count=0
     added_count=0
