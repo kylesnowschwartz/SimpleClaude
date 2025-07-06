@@ -1,10 +1,18 @@
-**Purpose**: Smart modification router for code improvements and system changes
+**Purpose**: Intelligently modify, improve, refactor, and optimize code with safety controls
 
 ---
 
-@include shared/simpleclaude/core-patterns.yml#Core_Philosophy
+@include shared/simpleclaude/context-detection.yml
+
+@include shared/simpleclaude/core-patterns.yml
 
 @include shared/simpleclaude/mode-detection.yml
+
+@include shared/simpleclaude/modes.yml
+
+@include shared/simpleclaude/modes.yml
+
+@include shared/simpleclaude/workflows.yml
 
 ## Command Execution
 
@@ -12,9 +20,9 @@ Executes immediately. Natural language controls behavior. Transforms: "$ARGUMENT
 
 - What: [extracted-target]
 - How: [detected-approach]
-- When: [execution-mode]
+- Mode: [execution-mode]
 
-Intelligently modifies, improves, refactors, migrates, or deploys code by transforming natural language into structured modification directives.
+Smart modification router that transforms natural language into structured improvement directives for performance optimization, refactoring, migration, and deployment tasks.
 
 ### Semantic Transformations
 
@@ -22,113 +30,37 @@ Intelligently modifies, improves, refactors, migrates, or deploys code by transf
 "improve performance" →
   What: current codebase performance bottlenecks
   How: profiling, optimization, caching, algorithm improvements
-  When: immediate with measurement validation
-  Mode: [standard]
+  Mode: implementer
 
 "carefully refactor the payment module" →
-  What: payment module requiring careful refactoring
+  What: payment module requiring safe refactoring
   How: backup first, extract methods, preserve behavior, extensive testing
-  When: safe mode with validation at each step
-  Mode: [safe, careful]
+  Mode: planner
+
+"quickly optimize database queries" →
+  What: database query performance
+  How: query analysis, indexing, caching strategies
+  Mode: implementer
+
+"migrate to latest React with tests" →
+  What: React framework upgrade
+  How: staged migration, compatibility testing, validation
+  Mode: tester
 ```
-
-### Mode Detection & Adaptation
-
-The command detects modes from natural language patterns:
-
-**Safe Mode** (safe, careful, cautious, secure)
-
-- Create backups before changes
-- Validate each modification step
-- Extensive testing after changes
-- Rollback capability
-
-**Quick Mode** (quick, fast, rapid, immediate)
-
-- Minimal validation overhead
-- Direct execution
-- Focus on speed
-- Basic testing only
-
-**Watch Mode** (watch, monitor, track, continuous)
-
-- Real-time file monitoring
-- Continuous metric tracking
-- Auto-rollback on issues
-- Live feedback during changes
-
-**Interactive Mode** (interactive, walkthrough, guide, step-by-step)
-
-- User approval at each step
-- Detailed explanations
-- Option to modify approach
-- Educational process
-
-**Mode Blending**
-
-```
-"carefully monitor performance improvements" →
-  Modes: [safe, watch]
-  Result: Safe changes with real-time monitoring
-```
-
-@include shared/simpleclaude/core-patterns.yml#Evidence_Standards
 
 Examples:
 
-- `/sc-modify improve performance` - Optimize code performance
-- `/sc-modify carefully refactor the payment module` - Safe refactoring with backups
-- `/sc-modify quickly fix the typo in README` - Immediate fix, minimal overhead
-- `/sc-modify monitor while optimizing database queries` - Real-time performance tracking
-- `/sc-modify walk me through upgrading React` - Interactive upgrade process
-
-## Smart Detection & Routing
-
-```yaml
-Improve/Optimize: [improve, optimize, performance, faster, speed up, enhance]
-  → Performance profiling, algorithm optimization, caching, query tuning
-
-Refactor: [refactor, cleanup, clean up, reorganize, simplify, reduce complexity]
-  → Code structure improvements, DRY principles, pattern extraction
-
-Migrate: [migrate, upgrade, update, convert, move to, switch to]
-  → Framework upgrades, language migrations, dependency updates, API versions
-
-Deploy: [deploy, release, ship, publish, push to production]
-  → Build process, environment configs, CI/CD, monitoring setup
-
-Cleanup: [cleanup, clean, remove unused, delete dead code, prune]
-  → Dead code removal, dependency pruning, file organization
-```
+- `/sc-modify improve performance` - Optimize code performance with profiling
+- `/sc-modify carefully refactor payment module` - Safe refactoring with backups
+- `/sc-modify quickly fix typo in README` - Immediate fix with minimal overhead
+- `/sc-modify migrate to React 18` - Framework upgrade with testing
 
 **Intelligent Context Detection:** Analyzes request intent | Identifies scope automatically | Chooses optimal approach | Evidence-based modifications | Detects modes from natural language patterns
 
-@include shared/simpleclaude/core-patterns.yml#Task_Management
-
-@include shared/simpleclaude/workflows.yml#Modify_Workflow
-
-@include shared/simpleclaude/core-patterns.yml#Output_Organization
-
 ## Core Workflows
 
-**Performance:** Profile first → Identify bottlenecks → Optimize algorithms → Measure improvements
+**Planner:** Analyze current state → Design improvement strategy → Create safety plan → Document changes
 
-**Refactoring:** Analyze patterns → Extract common code → Simplify structure → Verify behavior
+**Implementer:** Apply modifications → Run tests → Validate behavior → Measure improvements
 
-## Sub-Agent Delegation
-
-```yaml
-When: Large-scale refactoring | Multi-file migrations | Complex deployments
-How: Analyzer agent → Multiple modification agents → Validation agent
-Examples:
-  - Codebase-wide refactor: Pattern analysis → Parallel modifications
-  - Framework migration: Research agent → Staged migration agents
-```
-
-## Best Practices
-
-- Always preserve existing functionality
-- Create backups before major changes
-- Test incrementally during modifications
-- Provide rollback strategies
-- Document all significant changes
+**Tester:** Create test scenarios → Validate changes → Performance benchmarks → Regression testing
