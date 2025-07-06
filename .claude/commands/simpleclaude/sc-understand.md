@@ -1,124 +1,181 @@
-**Purpose**: Smart learning router for code understanding and analysis
+**Purpose**: Understand codebases through intelligent analysis and explanation
 
 ---
 
-@include shared/simpleclaude/core-patterns.yml#Core_Philosophy
+@include ../shared/simpleclaude/core-patterns.yml#Core_Philosophy @include
+../shared/simpleclaude/mode-detection.yml
 
 ## Command Execution
 
 Executes immediately. Natural language controls behavior. Transforms:
 "$ARGUMENTS" into structured intent:
 
-- What: [extracted-target]
-- How: [detected-approach]
-- When: [execution-mode]
+- What: [analysis-target]
+- How: [explanation-approach]
+- When: [analysis-mode]
 
-Provides intelligent code analysis, explanations, and understanding by
-transforming natural language queries into structured analytical directives.
+`sc-understand` provides intelligent code analysis and explanation by detecting
+intent from natural language. It adapts between educational explanations, visual
+representations, deep analysis, interactive exploration, or documentation lookup
+based on your request.
 
 ### Semantic Transformations
 
 ```
-"how authentication works" →
-  What: authentication system flow and components
-  How: trace execution paths, explain with examples
-  When: immediate educational mode
+"explain how authentication works in detail" →
+  What: authentication system
+  How: detailed explanation with examples
+  When: educational mode
+  Mode: [educational]
 
-"architecture" →
-  What: system design, component relationships
-  How: map structure, generate diagrams, identify patterns
-  When: immediate with visual output
+"show me the architecture visually" →
+  What: system architecture
+  How: generate diagrams and visual representations
+  When: visual mode
+  Mode: [visual]
 
-"estimate OAuth integration" →
-  What: OAuth implementation effort and complexity
-  How: analyze scope, dependencies, risks, timeline
-  When: immediate estimation mode
+"deep dive into the caching strategy" →
+  What: caching implementation
+  How: comprehensive analysis with patterns
+  When: deep analysis mode
+  Mode: [deep]
 
-"security risks --c7" →
-  What: potential vulnerabilities and threats
-  How: OWASP analysis, Context7 best practices
-  When: immediate with documentation lookup
+"walk me through the API structure" →
+  What: API endpoints and structure
+  How: guided Q&A exploration
+  When: interactive mode
+  Mode: [interactive]
+
+"look up React hooks documentation" →
+  What: React hooks reference
+  How: retrieve documentation
+  When: documentation mode
+  Mode: [c7]
 ```
 
-@include shared/simpleclaude/core-patterns.yml#Evidence_Standards
+### Mode Detection & Adaptation
+
+The command detects modes from natural language patterns:
+
+**Educational** (explain, teach me, in detail, how does)
+
+- Step-by-step explanations with examples
+- Analogies and real-world comparisons
+- Code snippets with detailed comments
+- Best practices and common pitfalls
+
+**Visual** (show, visualize, diagram, visually)
+
+- Architecture diagrams and flowcharts
+- Component relationship visualizations
+- Data flow representations
+- Interactive graph outputs when possible
+
+**Deep** (deep dive, comprehensive, thoroughly analyze)
+
+- Comprehensive codebase analysis
+- Design pattern identification
+- Performance characteristics and implications
+- Technical debt assessment
+
+**Interactive** (walk me through, guide me, explore together)
+
+- Guided Q&A exploration
+- Progressive disclosure of information
+- Interactive code walkthroughs
+- Hands-on learning approach
+
+**C7** (look up, documentation for, reference)
+
+- Quick documentation retrieval
+- API reference lookup
+- Framework-specific guidance
+- Version-specific information
+
+**Analysis** (analyze, assess, evaluate, understand)
+
+- Codebase metrics and statistics
+- Complexity analysis
+- Dependency mapping
+- Quality assessments
+
+**Mode Blending**
+
+```
+"explain the auth system visually with performance insights" →
+  Modes: [educational, visual, analysis]
+  Result: Diagrams with detailed explanations and performance metrics
+```
+
+@include ../shared/simpleclaude/core-patterns.yml#Evidence_Standards
 
 Examples:
 
-- `/sc-understand how authentication works` - Explain auth flow
-- `/sc-understand architecture` - System design overview
-- `/sc-understand this function --magic` - Visual explanation with diagrams
-- `/sc-understand estimate OAuth integration` - Effort estimation
-- `/sc-understand security risks --c7` - Security analysis with docs
+- `/understand explain how authentication works` - Step-by-step auth flow
+  explanation
+- `/understand show me the architecture` - Visual architecture diagrams
+- `/understand deep analysis of data pipeline` - Comprehensive pipeline
+  evaluation
+- `/understand walk me through the API` - Interactive API exploration
+- `/understand React hooks documentation` - Quick hook reference lookup
 
 ## Smart Detection & Routing
 
 ```yaml
-Explain/Teach: [explain, how does, what is, teach me, show me, walkthrough]
-  → Educational mode: examples, visualizations, step-by-step guidance
+Architecture: [architecture, structure, design, components]
+  → Visual diagrams with component relationships
 
-Analyze: [analyze, review, assess, evaluate, find issues, bottlenecks]
-  → Deep analysis: patterns, performance, security, quality metrics
+Performance: [performance, bottleneck, slow, optimize]
+  → Analysis with metrics and recommendations
 
-Architecture: [architecture, design, structure, components, system, flow]
-  → System overview: diagrams, relationships, patterns, boundaries
+Learning: [explain, teach, understand, how]
+  → Educational content with examples
 
-Estimate: [estimate, how long, effort, complexity, time needed]
-  → Effort analysis: scope, dependencies, risks, timeline
+Documentation: [docs, reference, lookup, api]
+  → Quick documentation retrieval
 
-Load/Index: [understand codebase, learn project, explore files]
-  → Progressive loading: smart context, parallel agents, caching
+Analysis: [analyze, evaluate, assess, metrics]
+  → Comprehensive codebase evaluation
 ```
 
-**Intelligent Depth Detection:** Quick overview (2min) | Standard analysis
-(10min) | Deep dive (30min) | Comprehensive (30min+)
+**Intelligent Context Detection:** Analyzes request intent | Identifies analysis
+scope | Chooses optimal explanation approach | Evidence-based understanding |
+Detects modes from natural language patterns
 
-**--watch:** Monitor code changes | Update understanding | Track evolution
-**--interactive:** Guided exploration | Q&A mode | Progressive learning
-**--visual:** Generate diagrams | Flowcharts | Architecture visualizations
+@include ../shared/simpleclaude/core-patterns.yml#Task_Management
 
-@include shared/simpleclaude/core-patterns.yml#Task_Management
+@include ../shared/simpleclaude/workflows.yml#Analysis_Workflow
 
-@include shared/simpleclaude/workflows.yml#Understand_Workflow
-
-@include shared/simpleclaude/core-patterns.yml#Output_Organization
+@include ../shared/simpleclaude/core-patterns.yml#Output_Organization
 
 ## Core Workflows
 
-**Learning:** Parse query → Detect expertise → Load context → Explain clearly →
-Provide examples
+**Educational:** Question Analysis → Context Gathering → Explanation Generation
+→ Example Creation → Learning Resources
 
-**Analysis:** Identify scope → Deploy analyzers → Gather metrics → Synthesize
-findings
+**Visual:** Architecture Scan → Relationship Mapping → Diagram Generation →
+Annotation → Interactive Output
 
-**Architecture:** Map components → Trace relationships → Identify patterns →
-Generate visuals
+**Deep Analysis:** Codebase Scan → Pattern Recognition → Metric Collection →
+Insight Generation → Recommendations
 
-**Estimation:** Analyze complexity → Identify dependencies → Assess risks →
-Calculate effort
+**Interactive:** Initial Question → Context Building → Guided Exploration → Q&A
+Loop → Summary
 
 ## Sub-Agent Delegation
 
 ```yaml
-When: Large codebases | Multi-aspect analysis | Parallel exploration
-How: Query router → Specialized analyzers → Result synthesis
+When: Complex multi-faceted analysis requests
+How: Parallel analysis with specialized agents
 Examples:
-  - Full codebase: Multiple file analyzers in parallel
-  - Security audit: Dedicated security analysis agent
-  - Performance review: Profiling and metrics agents
+  - "Full system analysis": Architecture + Performance + Security agents
+  - "Learning path": Educational + Interactive + Documentation agents
 ```
-
-## Educational Adaptation
-
-1. Auto-detects user expertise level
-2. Adjusts explanation depth accordingly
-3. Provides relevant examples
-4. Includes helpful visualizations
-5. Suggests learning paths
 
 ## Best Practices
 
-- Start with minimal context
-- Load progressively as needed
-- Cache analysis results
-- Provide actionable insights
-- Suggest next steps
+- Be specific about what you want to understand
+- Use natural language to guide mode selection
+- Start broad, then narrow focus based on results
+- Combine modes for comprehensive understanding
+- Export important findings for future reference

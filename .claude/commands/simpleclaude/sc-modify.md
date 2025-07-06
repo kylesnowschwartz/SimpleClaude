@@ -13,7 +13,6 @@ Executes immediately. Natural language controls behavior. Transforms:
 - What: [extracted-target]
 - How: [detected-approach]
 - When: [execution-mode]
-- Mode: [detected-modes]
 
 Intelligently modifies, improves, refactors, migrates, or deploys code by
 transforming natural language into structured modification directives.
@@ -32,24 +31,6 @@ transforming natural language into structured modification directives.
   How: backup first, extract methods, preserve behavior, extensive testing
   When: safe mode with validation at each step
   Mode: [safe, careful]
-
-"quickly fix the typo" →
-  What: identified typo in codebase
-  How: immediate correction, minimal validation
-  When: quick execution mode
-  Mode: [quick]
-
-"monitor while optimizing performance" →
-  What: performance optimization with continuous monitoring
-  How: profile, optimize, track metrics in real-time
-  When: watch mode with continuous feedback
-  Mode: [watch]
-
-"walk me through migrating to TypeScript" →
-  What: JavaScript to TypeScript migration
-  How: step-by-step conversion with explanations
-  When: interactive mode with user approval
-  Mode: [interactive]
 ```
 
 ### Mode Detection & Adaptation
@@ -90,14 +71,6 @@ The command detects modes from natural language patterns:
 "carefully monitor performance improvements" →
   Modes: [safe, watch]
   Result: Safe changes with real-time monitoring
-
-"quickly refactor with tests" →
-  Modes: [quick]
-  Result: Fast refactoring but maintains test coverage
-
-"interactively migrate the database" →
-  Modes: [interactive]
-  Result: Step-by-step migration with confirmations
 ```
 
 @include shared/simpleclaude/core-patterns.yml#Evidence_Standards
@@ -149,12 +122,6 @@ Measure improvements
 **Refactoring:** Analyze patterns → Extract common code → Simplify structure →
 Verify behavior
 
-**Migration:** Assess current state → Plan incremental steps → Execute safely →
-Validate thoroughly
-
-**Deployment:** Build artifacts → Configure environments → Execute deployment →
-Monitor health
-
 ## Sub-Agent Delegation
 
 ```yaml
@@ -163,21 +130,12 @@ How: Analyzer agent → Multiple modification agents → Validation agent
 Examples:
   - Codebase-wide refactor: Pattern analysis → Parallel modifications
   - Framework migration: Research agent → Staged migration agents
-  - Multi-service deploy: Parallel deployment agents
 ```
-
-## Safety & Validation
-
-1. Always preserve existing functionality
-2. Create backups before major changes
-3. Test incrementally during modifications
-4. Provide rollback strategies
-5. Document all significant changes
 
 ## Best Practices
 
-- Make minimal necessary changes
-- Follow existing code conventions
-- Maintain backward compatibility
-- Add tests for new patterns
-- Update documentation as needed
+- Always preserve existing functionality
+- Create backups before major changes
+- Test incrementally during modifications
+- Provide rollback strategies
+- Document all significant changes

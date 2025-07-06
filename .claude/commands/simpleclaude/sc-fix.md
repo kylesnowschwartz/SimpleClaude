@@ -1,124 +1,165 @@
-**Purpose**: Smart debugging router for systematic error resolution
+**Purpose**: Fix bugs, errors, and issues with intelligent debugging and error
+resolution
 
 ---
 
-@include shared/simpleclaude/core-patterns.yml#Core_Philosophy
+@include ../shared/simpleclaude/core-patterns.yml#Core_Philosophy @include
+../shared/simpleclaude/mode-detection.yml
 
 ## Command Execution
 
 Executes immediately. Natural language controls behavior. Transforms:
 "$ARGUMENTS" into structured intent:
 
-- What: [extracted-target]
-- How: [detected-approach]
-- When: [execution-mode]
+- What: [issue/bug to fix]
+- How: [fixing approach]
+- When: [execution mode]
 
-Systematically investigates, diagnoses, and fixes errors by transforming problem
-descriptions into structured debugging directives.
+Systematically investigates issues, applies fixes, and ensures code stability
+through various fixing strategies based on natural language patterns.
 
 ### Semantic Transformations
 
 ```
-"TypeError in user.js" →
-  What: runtime type error in user.js file
-  How: stack trace analysis, type validation, null checks
-  When: immediate with focused investigation
+"fix the login bug" →
+  What: authentication issue
+  How: quick patch
+  When: immediate
+  Mode: fast
 
-"failing tests" →
-  What: test suite failures across codebase
-  How: analyze test output, trace failures, fix root causes
-  When: immediate with test re-execution
+"carefully debug the memory leak" →
+  What: memory leak
+  How: systematic investigation
+  When: thorough analysis
+  Mode: debug
 
-"slow API response" →
-  What: API performance degradation
-  How: profiling, query analysis, caching opportunities
-  When: immediate with performance monitoring
+"walk me through fixing test failures" →
+  What: test failures
+  How: guided step-by-step
+  When: interactive
+  Mode: interactive
 
-"merge conflicts --interactive" →
-  What: git merge conflict resolution
-  How: analyze both branches, preserve intent, validate
-  When: interactive mode with user confirmation
+"safely patch the SQL injection" →
+  What: SQL injection vulnerability
+  How: careful with validation
+  When: with rollback capability
+  Mode: safe
 ```
 
-@include shared/simpleclaude/core-patterns.yml#Evidence_Standards
+### Mode Detection & Adaptation
+
+The command detects modes from natural language patterns:
+
+**Debug** (carefully, systematically, thoroughly)
+
+- Systematic investigation using Five Whys
+- Root cause analysis before fixing
+- Comprehensive testing of edge cases
+- Documentation of debugging process
+
+**Interactive** (walk me through, guide me, help me understand)
+
+- Step-by-step guided debugging
+- Asks clarifying questions
+- Explains each fix before applying
+- Confirms understanding at each step
+
+**Safe** (safely, carefully, with rollback)
+
+- Creates backup before changes
+- Validates fixes thoroughly
+- Automatic rollback on failure
+- Comprehensive test coverage
+
+**Watch** (monitor, watch, keep fixing)
+
+- Continuous monitoring for issues
+- Pattern recognition for recurring problems
+- Automated fix application
+- Alert on critical issues
+
+**Fast** (quickly, rapidly, just patch)
+
+- Quick patches for urgent issues
+- Minimal but effective fixes
+- Focus on immediate resolution
+- Basic validation only
+
+**Verbose** (detailed, explain, with analysis)
+
+- Detailed analysis and explanation
+- Step-by-step debugging output
+- Performance profiling
+- Memory usage tracking
+
+**Mode Blending**
+
+```
+"safely debug with detailed analysis" →
+  Modes: [safe, debug, verbose]
+  Result: Thorough investigation with backups and detailed output
+```
+
+@include ../shared/simpleclaude/core-patterns.yml#Evidence_Standards
 
 Examples:
 
-- `/sc-fix TypeError in user.js` - Fix runtime error
-- `/sc-fix failing tests` - Debug and fix test failures
-- `/sc-fix merge conflicts --interactive` - Resolve git conflicts
-- `/sc-fix slow API response` - Performance troubleshooting
-- `/sc-fix build error --c7` - Fix build with documentation help
+- `/fix authentication error` - Quick fix for login issues
+- `/fix carefully debug memory leak` - Systematic memory investigation
+- `/fix walk me through test failures` - Interactive guided debugging
 
 ## Smart Detection & Routing
 
 ```yaml
-Runtime Errors: [TypeError, ReferenceError, undefined, null, NaN]
-  → Stack trace analysis, variable tracing, null checks, type validation
+Authentication: [login, auth, JWT, token, session]
+  → Focuses on authentication flow and security
 
-Build/Deploy: [build failed, compile error, webpack, deployment, CI/CD]
-  → Config validation, dependency check, environment vars, build logs
+Performance: [slow, timeout, memory leak, bottleneck]
+  → Analyzes performance metrics and optimizations
 
-Git Issues: [merge conflict, detached HEAD, rebase failed, uncommitted]
-  → Conflict resolution, branch recovery, stash management, history fix
+Testing: [test failure, flaky, unit test, integration]
+  → Debugs test issues and improves coverage
 
-Performance: [slow, timeout, memory leak, high CPU, bottleneck]
-  → Profiling, query analysis, caching, algorithm optimization
+Security: [vulnerability, injection, XSS, CSRF]
+  → Patches security issues with validation
 
-Security/Auth: [authentication, permission denied, CORS, token, SSL]
-  → Auth flow tracing, permission audit, token validation, cert check
+Database: [migration, deadlock, query, connection]
+  → Resolves database-related issues
 ```
 
-**Five Whys Analysis:** Root cause investigation | Evidence gathering |
-Systematic approach | Prevention focus
+**Intelligent Context Detection:** Analyzes error patterns | Identifies root
+causes automatically | Chooses optimal fix strategy | Evidence-based debugging |
+Detects fix urgency from natural language
 
-**--watch:** Monitor error patterns | Real-time debugging | Auto-retry fixes
-**--interactive:** Step-by-step resolution | Explain fixes | User confirmation
-**--rollback:** Enable safe rollback | Track all changes | Quick recovery
+@include ../shared/simpleclaude/core-patterns.yml#Task_Management
 
-@include shared/simpleclaude/core-patterns.yml#Task_Management
+@include ../shared/simpleclaude/workflows.yml#Debug_Workflow
 
-@include shared/simpleclaude/workflows.yml#Fix_Workflow
-
-@include shared/simpleclaude/core-patterns.yml#Output_Organization
+@include ../shared/simpleclaude/core-patterns.yml#Output_Organization
 
 ## Core Workflows
 
-**Error Analysis:** Parse error → Extract context → Identify patterns → Find
-root cause
+**Investigation:** Reproduce → Analyze → Identify Root Cause → Fix
 
-**Investigation:** Trace execution → Check recent changes → Analyze dependencies
-→ Test hypotheses
+**Validation:** Apply Fix → Test → Verify → Document
 
-**Fix Application:** Generate solutions → Apply incrementally → Test each fix →
-Verify resolution
-
-**Prevention:** Add error handling → Improve logging → Create tests → Document
-solution
+**Monitoring:** Watch → Detect → Fix → Learn Patterns
 
 ## Sub-Agent Delegation
 
 ```yaml
-When: Complex debugging | Multi-system issues | Performance analysis
-How: Error parser → Investigation agents → Fix validation
+When: Complex multi-system issues requiring specialized knowledge
+How: Spawns specialized debugging agents for specific domains
 Examples:
-  - Production errors: Log analyzer → Code tracer → Fix applier
-  - Performance issues: Profiler agent → Optimization agent
-  - Git problems: History analyzer → Conflict resolver
+  - Database deadlock: Database specialist agent
+  - Memory leak: Performance analysis agent
+  - Security vulnerability: Security audit agent
 ```
-
-## Debugging Methodology
-
-1. Parse and classify the error
-2. Gather minimal necessary context
-3. Apply Five Whys analysis
-4. Generate targeted solutions
-5. Verify fix effectiveness
 
 ## Best Practices
 
-- Understand before fixing
-- Make minimal changes
-- Test fixes thoroughly
-- Document solutions
-- Prevent recurrence
+- Describe the issue clearly with specific error messages
+- Use appropriate mode language to guide fix approach
+- Include context about when the issue occurs
+- Always verify fixes work correctly
+- Document complex fixes for future reference

@@ -14,7 +14,6 @@ Executes immediately. Natural language controls behavior. Transforms:
 - What: [extracted-target]
 - How: [detected-approach]
 - When: [execution-mode]
-- Mode: [detected-modes]
 
 Smart creation router that consolidates spawn, task, build, design, document,
 and dev-setup functionality. Semantically transforms natural language into
@@ -110,34 +109,69 @@ Examples:
 - `/sc-create quickly prototype chat interface` - Rapid MVP with core features
 - `/sc-create meticulously test file upload API` - Comprehensive test coverage
 
-**Mode-Based Behavior:** Natural language triggers adaptive workflows | Combines
-modes for nuanced approaches | Context-aware execution
+## Smart Detection & Routing
 
-**Project/App:** Full scaffold with structure, config, dependencies | Git init |
-Complete test setup | README and documentation
+```yaml
+Project/App:
+  scaffold, app, project, application, boilerplate → Full scaffold with
+  structure, config, dependencies, Git init, tests, README
 
-**API/Backend:** Routes, validation, business logic | OpenAPI documentation |
-Integration tests | Error handling patterns
+API/Backend:
+  api, backend, rest, graphql, service, endpoint → Routes, validation, business
+  logic, OpenAPI docs, integration tests
 
-**Component/UI:** Pattern analysis from existing code | Styled components |
-State management | Unit tests | Storybook stories
+Component/UI:
+  component, ui, interface, widget, element, react, vue → Pattern analysis,
+  styled components, state management, unit tests
 
-**Documentation:** Code analysis | API extraction | Examples generation | Guide
-creation | Version management
+Documentation:
+  docs, document, guide, readme, manual → Code analysis, API extraction,
+  examples generation, version management
 
-**Architecture:** System design patterns | Service boundaries | API contracts |
-Deployment strategies | Scaling considerations
+Architecture:
+  architect, design, system, blueprint, structure → System design patterns,
+  service boundaries, API contracts, deployment strategies
+```
 
-**Intelligent Detection:** Automatically identifies creation type from
-$ARGUMENTS | Routes to planning when complex | Adapts approach based on project
-patterns and detected modes
-
-**Workflow Adaptation:** Mode detection influences every step | Careful mode
-adds validation layers | Quick mode streamlines processes | Magic mode enhances
-output quality
+**Intelligent Context Detection:** Analyzes request intent | Identifies scope
+automatically | Chooses optimal approach | Evidence-based modifications |
+Detects modes from natural language patterns
 
 @include shared/simpleclaude/core-patterns.yml#Task_Management
 
 @include shared/simpleclaude/workflows.yml#Creation_Workflow
 
 @include shared/simpleclaude/core-patterns.yml#Output_Organization
+
+## Core Workflows
+
+**Project Creation:** Analyze requirements → Generate structure → Setup config →
+Initialize Git → Create tests → Write documentation → Ready to develop
+
+**API Development:** Design endpoints → Implement routes → Add validation →
+Business logic → Error handling → Generate docs → Integration tests
+
+**Component Building:** Analyze patterns → Create structure → Implement logic →
+Add styling → State management → Unit tests → Usage examples
+
+**Documentation Flow:** Analyze codebase → Extract APIs → Generate examples →
+Create guides → Version tracking → Deploy docs
+
+## Sub-Agent Delegation
+
+```yaml
+When: Complex multi-part systems requiring specialized expertise
+How: TodoWrite for orchestration → Task for parallel execution
+Examples:
+  - "create e-commerce platform" → Frontend, Backend, Database, Auth agents
+  - "build microservice architecture" → Service agents for each domain
+  - "develop full-stack app with mobile" → Web, API, Mobile, DevOps agents
+```
+
+## Best Practices
+
+- Read existing patterns before creating new components
+- Use TodoWrite for complex multi-step creation processes
+- Leverage mode detection for nuanced approaches
+- Always validate against project conventions
+- Generate comprehensive tests matching detected mode intensity
