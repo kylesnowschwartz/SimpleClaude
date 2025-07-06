@@ -81,12 +81,28 @@
 
 **Status**: READY TO BEGIN
 
+### Critical Architecture Fix Needed 🚨
+
+**Sub-Agent Implementation Not to Spec**: The current commands don't properly utilize sub-agents for specialized tasks. This is causing:
+
+- Poor context engineering
+- Inefficient token management
+- Lack of task isolation
+
+**Required Rework**:
+
+- Refine TEMPLATE.md to enforce sub-agent spawning for specialized tasks
+- Update YAML configuration to support proper task delegation
+- Ensure each mode (Planner/Implementer/Tester) spawns appropriate sub-agents
+- Implement clear context boundaries between agents
+
 ### Immediate Next Steps
 
-1. **Deploy & Test**: Use SimpleClaude on actual projects
-2. **Gather Feedback**: What do users actually need?
-3. **Iterate Based on Usage**: Add features users request, not what we think they need
-4. **Quick Start Guide**: Create minimal documentation with real examples
+1. **Fix Sub-Agent Architecture**: Rework commands to properly spawn specialized agents
+2. **Deploy & Test**: Use SimpleClaude on actual projects
+3. **Gather Feedback**: What do users actually need?
+4. **Iterate Based on Usage**: Add features users request, not what we think they need
+5. **Quick Start Guide**: Create minimal documentation with real examples
 
 ### Future Phases (User-Driven)
 
@@ -96,7 +112,7 @@ These phases will be prioritized based on actual user feedback:
 
 Improve command behavior and user experience:
 
-- **Thinking Mode Integration**: When `sc-<command>` is run with arguments or `$ARGUMENTS`, automatically trigger Claude Code's thinking modes (see https://www.anthropic.com/engineering/claude-think-tool)
+- **Thinking Mode Integration**: When `sc-<command>` is run with arguments or `$ARGUMENTS`, automatically trigger Claude Code's thinking modes (see <https://www.anthropic.com/engineering/claude-think-tool>)
 - **Usage Suggestions**: When `sc-<command>` is run without arguments, output a short suggestion of how to use the command instead of processing empty input
 
 #### Optional: Missing Pattern Files
