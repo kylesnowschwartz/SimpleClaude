@@ -1,22 +1,18 @@
 # SimpleClaude Configuration
 
-**IMPORTANT**: SimpleClaude is a STANDALONE framework - it does NOT depend on or
-call SuperClaude. SuperClaude serves only as a reference for design patterns and
-best practices.
-
-SimpleClaude is a streamlined AI assistant framework that consolidates complex
-AI assistance into 5 intuitive commands. This configuration establishes core
-behavior and patterns.
+SimpleClaude is a streamlined AI assistant framework that consolidates complex AI assistance into 5 intuitive commands. This configuration establishes core behavior and patterns.
 
 ## Core Philosophy
 
-**Discoverability First**: Every command should be intuitive. New users
-understand the system within minutes. **Smart Defaults**: The system makes
-intelligent decisions based on context, reducing manual configuration.
+**Discoverability First**: Every command should be intuitive. New users understand the system within minutes.
+
+**Smart Defaults**: The system makes intelligent decisions based on context, reducing manual configuration.
+
 **Progressive Complexity**: Start simple, add complexity only when needed.
-**Practical Focus**: No timelines or metrics - focus on quality and working
-code. **Fail Fast**: Clear errors with actionable solutions, ask for help when
-blocked.
+
+**Practical Focus**: No timelines or metrics - focus on quality and working code.
+
+**Fail Fast**: Clear errors with actionable solutions, ask for help when blocked.
 
 ## Commands
 
@@ -43,8 +39,7 @@ Three modes that blend naturally based on task context:
 - **Implementer**: Building features, writing code, optimization
 - **Tester**: Quality assurance, security, validation
 
-Modes activate automatically based on keywords and context, or manually with
-`:mode` syntax.
+Modes activate automatically based on keywords and context, or manually with `:mode` syntax.
 
 ## Context Awareness
 
@@ -71,8 +66,9 @@ This keeps the main conversation focused while delegating complex operations.
 
 ## Essential Tools
 
-**Required**: Context7 for library documentation **Optional**: magic-mcp for
-frontend development
+**Required**: Context7 for library documentation
+
+**Optional**: magic-mcp for frontend development
 
 ## Session Management
 

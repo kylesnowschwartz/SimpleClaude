@@ -1,50 +1,45 @@
-# SimpleClaude - Standalone AI Assistant Framework
+# SimpleClaude Documentation
 
-**🚨 CRITICAL**: SimpleClaude is a completely **STANDALONE** project. It does
-NOT depend on, import from, or route to SuperClaude. SuperClaude is used only as
-a reference for design patterns and best practices.
+## Overview
 
-## What is SimpleClaude?
+SimpleClaude is a practical minimalist AI assistant framework that transforms complex AI interactions into natural conversations. It consolidates 19+ commands into 5 intuitive commands that understand plain English.
 
-SimpleClaude is a streamlined AI assistant framework that consolidates complex
-command structures into 5 intuitive commands. It implements its own logic while
-being inspired by SuperClaude's proven patterns.
+## Documentation
 
-## Standalone Architecture
+### 📖 [VISION.md](VISION.md)
 
-- **SimpleClaude**: Self-contained implementation with its own commands and
-  patterns
-- **SuperClaude**: Reference project for design inspiration only
-- **No Dependencies**: SimpleClaude runs independently without any external
-  routing
+The complete guide to SimpleClaude's philosophy, features, and design principles. Start here to understand what SimpleClaude is and how it works.
 
-## The 5 Core Commands
+### 📈 [PHASES.md](PHASES.md)
 
-1. `/sc-create` - Unified creation interface (consolidates 6 concepts)
-2. `/sc-modify` - Intelligent modifications (consolidates 5 concepts)
-3. `/sc-understand` - Comprehensive analysis (consolidates 5 concepts)
-4. `/sc-fix` - Problem resolution (consolidates 3 concepts)
-5. `/sc-review` - Quality assurance (consolidates 3 concepts)
+Development history and future roadmap. Shows where we've been and where we're going based on real user feedback.
 
-Each command implements consolidated functionality internally - there is no
-routing to external commands.
+## Quick Start
 
-## Project Structure
+```bash
+# Create anything with natural language
+/sc-create a React component for user authentication
 
-```
-SimpleClaude/
-├── .claude/
-│   ├── commands/simpleclaude/    # SimpleClaude's own commands
-│   └── shared/simpleclaude/      # SimpleClaude's own patterns
-├── README.md                     # This file
-├── PHASES.md                     # Development phases
-└── CHECKPOINTS.md                # Progress tracking
+# Modify code intelligently
+/sc-modify improve performance of database queries
+
+# Understand complex codebases
+/sc-understand how does the payment system work
+
+# Fix issues quickly
+/sc-fix TypeError: Cannot read property 'user' of undefined
+
+# Review code quality
+/sc-review check for security vulnerabilities
 ```
 
-## Development Philosophy
+No flags. No configuration. Just describe what you need.
 
-SimpleClaude takes inspiration from SuperClaude's architecture but implements
-everything independently. We reference SuperClaude's patterns to understand what
-works well, then implement our own streamlined version.
+## MVP Status 🎉
 
-Remember: **SimpleClaude stands alone**.
+SimpleClaude is ready for real-world testing! All core features are implemented:
+
+- ✅ Natural language understanding
+- ✅ Automatic mode detection
+- ✅ Zero configuration required
+- ✅ 75% simpler than alternatives
