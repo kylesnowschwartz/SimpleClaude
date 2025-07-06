@@ -73,6 +73,7 @@ core_modes:
         "ensure",
         "confirm",
         "quality",
+        "TDD",
       ]
     phrases:
       [
@@ -84,32 +85,6 @@ core_modes:
         "debug the issue",
         "fix the problem",
         "ensure quality",
-      ]
-
-## Workflow_Modifiers
-# Modifiers that affect how modes operate
-workflow_modifiers:
-  watch:
-    description: "Monitor and respond to changes continuously"
-    triggers:
-      [
-        "watch",
-        "monitor",
-        "observe",
-        "track",
-        "continuous",
-        "real-time",
-        "live",
-        "auto",
-      ]
-    phrases:
-      [
-        "watch for changes",
-        "monitor the files",
-        "keep an eye on",
-        "track updates",
-        "automatically update",
-        "continuous monitoring",
       ]
 
   interactive:
@@ -136,78 +111,9 @@ workflow_modifiers:
         "walk me through",
       ]
 
-  tdd:
-    description: "Test-driven development workflow"
-    triggers: ["tdd", "test-driven", "test-first", "red-green", "failing test"]
-    phrases:
-      [
-        "test driven development",
-        "write the test first",
-        "red green refactor",
-        "failing test first",
-        "test before code",
-      ]
-
-## Mode_Mapping
-# Maps old 8-mode system to new 3-mode system
-legacy_mode_mapping:
-  planning: planner
-  magic: implementer
-  c7: implementer
-  strict: tester
-  safe: tester
-  watch: watch # becomes modifier
-  interactive: interactive # becomes modifier
-  tdd: tdd # becomes modifier
-
-## Compatible_Combinations
-# Which modes and modifiers work well together
-compatible_combinations:
-  - [planner, interactive]
-  - [implementer, watch]
-  - [tester, interactive]
-  - [implementer, tdd]
-  - [tester, tdd]
-  - [any_mode, interactive]
-  - [any_mode, watch]
-
-## Context_Hints
-# File patterns that suggest specific modes
-context_hints:
-  test_files:
-    patterns: [".test.", ".spec.", "test/", "spec/", "__tests__/"]
-    suggest: [tester, tdd]
-
-  ui_files:
-    patterns: [".jsx", ".tsx", ".vue", ".svelte", ".component."]
-    suggest: [implementer]
-
-  config_files:
-    patterns: ["config.", "settings.", ".env", ".json", ".yaml", ".yml"]
-    suggest: [tester, interactive]
-
-  documentation:
-    patterns: [".md", ".rst", ".txt", "README", "CHANGELOG"]
-    suggest: [planner]
-
-  production:
-    patterns: ["prod", "production", "deploy", "release"]
-    suggest: [tester, interactive]
-
-  errors_present:
-    suggest: [tester, interactive]
-
-  new_feature:
-    patterns: ["feature", "new", "add", "create"]
-    suggest: [planner]
-
 ## Detection_Guidelines
 detection_guidelines:
   - Start with core mode detection (planner, implementer, tester)
-  - Add workflow modifiers that enhance the core mode
-  - Consider file context when suggesting modes
   - Default to planner for ambiguous requests
-  - Use tester mode when errors or quality concerns are present
   - Interactive modifier recommended for complex or risky operations
-  - Watch modifier useful for iterative development
   - TDD modifier enforces test-first approach
