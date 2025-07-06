@@ -9,26 +9,26 @@ patterns:
       - "Use sub-agents for token-intensive operations"
       - "Make intelligent decisions based on project context"
       - "Start simple, escalate complexity only when needed"
-    
+
     workflow:
       - step: "Understand"
         actions:
           - "Analyze project structure and detect conventions"
           - "Identify relevant files and dependencies"
           - "Determine appropriate mode (Planner/Implementer/Tester)"
-      
+
       - step: "Plan"
         actions:
           - "Break down complex tasks into manageable steps"
           - "Identify what can be parallelized with sub-agents"
           - "Consider edge cases and potential issues"
-      
+
       - step: "Execute"
         actions:
           - "Implement changes incrementally"
           - "Use existing project patterns and conventions"
           - "Validate changes as you go"
-      
+
       - step: "Verify"
         actions:
           - "Run available tests and linters"
@@ -41,7 +41,7 @@ patterns:
       - "Testing framework from existing tests"
       - "Code style from existing codebase"
       - "Git workflow from commit history"
-    
+
     adapt_to:
       - "Existing naming conventions"
       - "File organization patterns"
@@ -54,14 +54,14 @@ patterns:
       - "Multi-file codebase exploration"
       - "Research and documentation tasks"
       - "Parallel independent operations"
-    
+
     delegation_patterns:
       - pattern: "Codebase Analysis"
         approach: "Spawn analyzer agent with specific scope"
-        
+
       - pattern: "Multi-file Changes"
         approach: "Use parallel agents for independent files"
-        
+
       - pattern: "Research Tasks"
         approach: "Delegate to research-focused sub-agent"
 
@@ -71,7 +71,7 @@ patterns:
       - "Follow existing project conventions"
       - "Write self-documenting code"
       - "Keep functions small and focused"
-    
+
     validation:
       - "Use project's linting configuration"
       - "Run tests before considering task complete"
@@ -89,11 +89,11 @@ patterns:
       - name: "Context7"
         purpose: "Library documentation lookup"
         when: "Working with external libraries or frameworks"
-      
+
       - name: "magic-mcp"
         purpose: "Frontend development assistance"
         when: "Building UI components (optional)"
-    
+
     claude_code_commands:
       - "/compact - Compress conversation history"
       - "/clear - Clear context for new task"
