@@ -2,17 +2,17 @@
 
 ---
 
-@include shared/context-detection.yml
+@include shared/simpleclaude/context-detection.yml
 
-@include shared/core-patterns.yml
+@include shared/simpleclaude/core-patterns.yml
 
-@include shared/mode-detection.yml
+@include shared/simpleclaude/mode-detection.yml
 
-@include shared/modes.yml
+@include shared/simpleclaude/modes.yml
 
-@include shared/modes.yml
+@include shared/simpleclaude/modes.yml
 
-@include shared/workflows.yml
+@include shared/simpleclaude/workflows.yml
 
 ## Command Execution
 
