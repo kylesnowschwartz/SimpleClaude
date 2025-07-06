@@ -169,14 +169,14 @@ SimpleClaude makes SuperClaude more accessible through:
 - **Reduced commands** - 5 commands instead of 20+
 - **Direct delegation** - Pass work to SuperClaude unchanged
 
-### What SimpleClaude is NOT:
+### What SimpleClaude is NOT
 
 - Not a rewrite of SuperClaude
 - Not implementing complex logic
 - Not parsing natural language deeply
 - Not duplicating SuperClaude functionality
 
-### Implementation Pattern:
+### Implementation Pattern
 
 ```yaml
 # SimpleClaude command structure
@@ -185,7 +185,7 @@ appropriate SuperClaude command 4. Pass $ARGUMENTS directly 5. Let SuperClaude
 do the work
 ```
 
-### This insight fundamentally shapes all future phases.
+### This insight fundamentally shapes all future phases
 
 ---
 

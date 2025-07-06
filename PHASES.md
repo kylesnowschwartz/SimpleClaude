@@ -10,14 +10,14 @@
 
 **Status**: COMPLETED
 
-### Objectives:
+### Objectives
 
 - Create directory structure
 - Consolidate SuperClaude YAML templates
 - Create SIMPLE.md configuration
 - Establish foundation patterns
 
-### Deliverables:
+### Deliverables
 
 - SimpleClaude directory structure
 - 4 consolidated YAML files (from 24+ SuperClaude files)
@@ -30,28 +30,33 @@
 
 **Status**: PENDING
 
-### Objectives:
+### Objectives
 
-- Create 5 consolidated commands from 20 SuperClaude commands
-- Implement thin routing layers (under 100 lines each)
-- Simple keyword detection, not complex NLP
-- Direct pass-through to SuperClaude commands
+- Create 5 consolidated commands that implement functionality from 20
+  SuperClaude concepts
+- Keep commands concise (under 100 lines each)
+- Simple keyword detection to determine which internal workflow to execute
+- Implement consolidated logic inspired by SuperClaude patterns
 
-### Implementation Approach:
+### Implementation Approach
 
-- **SimpleClaude commands are routers, not reimplementations**
-- Each command should be mostly @include and routing logic
-- Use exact $ARGUMENTS pattern from SuperClaude
-- Let SuperClaude handle all complexity
-- Preserve SuperClaude's structure and patterns
+- **SimpleClaude is STANDALONE** - implements its own consolidated functionality
+- Each command uses @include for SimpleClaude's own patterns
+- Use $ARGUMENTS pattern inspired by SuperClaude
+- Consolidate complexity from multiple concepts into single commands
+- Reference SuperClaude's structure for inspiration only
 
-### Command Mapping:
+### Command Consolidation
 
-1. **`/sc-create`** - Routes to: spawn, task, build, design, document, dev-setup
-2. **`/sc-modify`** - Routes to: improve, migrate, cleanup, deploy, refactor
-3. **`/sc-understand`** - Routes to: load, analyze, explain, estimate, index
-4. **`/sc-fix`** - Routes to: troubleshoot, git fixes, error resolution
-5. **`/sc-review`** - Routes to: review, scan, test
+1. **`/sc-create`** - Consolidates concepts from: spawn, task, build, design,
+   document, dev-setup
+2. **`/sc-modify`** - Consolidates concepts from: improve, migrate, cleanup,
+   deploy, refactor
+3. **`/sc-understand`** - Consolidates concepts from: load, analyze, explain,
+   estimate, index
+4. **`/sc-fix`** - Consolidates concepts from: troubleshoot, git fixes, error
+   resolution
+5. **`/sc-review`** - Consolidates concepts from: review, scan, test
 
 ---
 
@@ -59,14 +64,14 @@
 
 **Status**: PENDING (Partially complete - modes.yml created)
 
-### Objectives:
+### Objectives
 
 - Implement mode selection logic
 - Create mode switching mechanism
 - Add auto-mode detection based on context
 - Test mode transitions
 
-### Modes:
+### Modes
 
 - **Planner**: Research-focused, asks questions, thorough
 - **Implementer**: Action-oriented, quick decisions
@@ -78,21 +83,21 @@
 
 **Status**: PENDING
 
-### Objectives:
+### Objectives
 
 - Replace complex flags with simple keyword detection
 - Pass natural language directly to SuperClaude
 - Create suggestion system for unclear requests
 - Use $ARGUMENTS pattern for pass-through
 
-### Implementation Approach:
+### Implementation Approach
 
 - **No complex parsing needed** - SuperClaude already handles NLP
 - Simple keyword matching to choose route
 - Pass full user input as $ARGUMENTS
 - Let SuperClaude's sophisticated parsing handle intent
 
-### Examples:
+### Examples
 
 - `/sc-create "secure REST API with tests"` → Routes to spawn/build with full
   text
@@ -105,14 +110,14 @@
 
 **Status**: PENDING
 
-### Objectives:
+### Objectives
 
 - Auto-detect project type (React, Python, etc.)
 - Identify testing frameworks
 - Detect code style from existing files
 - Implement smart defaults based on context
 
-### Detection Areas:
+### Detection Areas
 
 - Framework detection (package.json, requirements.txt)
 - Build tool identification
@@ -125,7 +130,7 @@
 
 **Status**: PARTIALLY COMPLETE (Basic version created)
 
-### Remaining:
+### Remaining
 
 - Add auto-generation of project.yml
 - Implement preference learning
@@ -138,7 +143,7 @@
 
 **Status**: PENDING
 
-### Objectives:
+### Objectives
 
 - Comprehensive testing of all commands
 - Create user guide with examples
@@ -146,7 +151,7 @@
 - Implement feedback collection
 - Performance benchmarking vs SuperClaude
 
-### Deliverables:
+### Deliverables
 
 - Test suite
 - User documentation
@@ -156,16 +161,22 @@
 
 ---
 
-## Implementation Strategy:
+## Implementation Strategy
 
-1. **Thin Routing Layer**: SimpleClaude is a router, not a rewrite
-2. **Preserve SuperClaude**: All complexity stays in SuperClaude
-3. **Simple Keyword Detection**: Basic pattern matching, not complex NLP
-4. **Direct Pass-Through**: Use $ARGUMENTS pattern exactly
-5. **Under 100 Lines**: Each command should be minimal
-6. **Progressive Enhancement**: Start simple, stay simple
+1. **Standalone Implementation**: SimpleClaude implements its own consolidated
+   logic
+2. **Reference SuperClaude**: Use as inspiration for patterns and best practices
+   only
+3. **Simple Keyword Detection**: Basic pattern matching to choose internal
+   workflow
+4. **$ARGUMENTS Pattern**: Inspired by SuperClaude but used internally
+5. **Under 100 Lines**: Each command should be concise and focused
+6. **Consolidation Focus**: Combine related concepts into unified commands
 
-## Success Metrics:
+**REMEMBER**: SimpleClaude is completely standalone - it does NOT call or depend
+on SuperClaude
+
+## Success Metrics
 
 - [ ] 80% reduction in command learning curve
 - [ ] 90% of SuperClaude functionality preserved

@@ -1,6 +1,14 @@
 # Simple-Claude: Streamlined AI Assistant Framework
 
-Create a modular AI assistant framework called "Simple-Claude" by refactoring and simplifying the existing SuperClaude system. This is NOT a ground-up rewrite - you should reuse as much of SuperClaude's proven code, YAML templates, and patterns as possible while making the interface more approachable for everyday developers.
+**CRITICAL CLARIFICATION**: SimpleClaude is a STANDALONE project that takes
+inspiration from SuperClaude but does NOT depend on it. SuperClaude is our
+reference for design patterns, but SimpleClaude implements its own consolidated
+functionality.
+
+Create a modular AI assistant framework called "Simple-Claude" by learning from
+SuperClaude's patterns and consolidating its concepts into a simpler, standalone
+system. This is NOT routing to SuperClaude - it's implementing consolidated
+versions of SuperClaude's functionality.
 
 ## Starting Point
 
@@ -9,38 +17,50 @@ You have access to the complete SuperClaude codebase including:
 - All YAML templates in `.claude/commands/shared/` and `.claude/shared/`
 - All 19 existing commands in `.claude/commands/superclaude/`
 - The @include reference system and template engine
-- Proven patterns for sub-agent orchestration, error handling, and MCP integration
+- Proven patterns for sub-agent orchestration, error handling, and MCP
+  integration
 
-Your task is to consolidate and simplify this existing functionality, NOT rebuild it.
+Your task is to consolidate and simplify this existing functionality, NOT
+rebuild it.
 
 ## Core Design Principles
 
-1. **Discoverability First**: Commands should be intuitive and self-documenting. A new user should understand what's available within minutes.
+1. **Discoverability First**: Commands should be intuitive and self-documenting.
+   A new user should understand what's available within minutes.
 
-2. **Fewer, More Flexible Commands**: Consolidate similar commands into versatile tools that adapt based on context rather than requiring explicit flags.
+2. **Fewer, More Flexible Commands**: Consolidate similar commands into
+   versatile tools that adapt based on context rather than requiring explicit
+   flags.
 
-3. **Smart Defaults**: The system should make intelligent decisions about approach based on context, reducing the need for manual flag selection.
+3. **Smart Defaults**: The system should make intelligent decisions about
+   approach based on context, reducing the need for manual flag selection.
 
-4. **Progressive Complexity**: Basic usage should require zero configuration, with advanced features available when needed.
+4. **Progressive Complexity**: Basic usage should require zero configuration,
+   with advanced features available when needed.
 
-5. **Preserve Core Strengths**: Maintain SuperClaude's evidence-based methodology, token optimization, and systematic approaches while simplifying the interface.
+5. **Preserve Core Strengths**: Maintain SuperClaude's evidence-based
+   methodology, token optimization, and systematic approaches while simplifying
+   the interface.
 
 ## Simplification Strategy
 
-From SuperClaude's 19 commands → 5-6 versatile commands
-From 9 personas → 3 adaptive modes  
-From flag combinations → natural language arguments
-From manual configuration → context-aware defaults
+From SuperClaude's 19 commands → 5-6 versatile commands From 9 personas → 3
+adaptive modes  
+From flag combinations → natural language arguments From manual configuration →
+context-aware defaults
 
-Keep: Evidence-based methodology, token efficiency through sub-agents, quality standards, @include system
+Keep: Evidence-based methodology, token efficiency through sub-agents, quality
+standards, @include system
 
 ## Command Architecture
 
 Consolidate SuperClaude's 19 commands into 5-6 core commands by:
 
-- `/create` - Merge: `/spawn` `/task` `/build`, `/design`, `/document` functionality
+- `/create` - Merge: `/spawn` `/task` `/build`, `/design`, `/document`
+  functionality
 - `/modify` - Merge: `/improve`, `/migrate`, `/cleanup` functionality
-- `/understand` - Merge: `/load /analyze`, `/explain`, `/troubleshoot`, `/estimate` functionality
+- `/understand` - Merge: `/load /analyze`, `/explain`, `/troubleshoot`,
+  `/estimate` functionality
 - `/fix` - Keep focused on: `/troubleshoot` (fix mode), error resolution
 - `/review` - Merge: `/review`, `/scan`, `/test` functionality
 
@@ -59,7 +79,8 @@ Each command should:
 Replace the 9-persona system with 3 flexible modes:
 
 - **Planner**: Research-focused, asks clarifying questions, thorough analysis
-- **Implementer**: Action-oriented, makes decisions quickly, focuses on implementation
+- **Implementer**: Action-oriented, makes decisions quickly, focuses on
+  implementation
 - **Tester**: Quality-focused, emphasizes best practices, QA, and security
 
 These modes should:
@@ -84,7 +105,8 @@ These modes should:
 3. **Merge command files** rather than creating new ones from scratch
 4. **Keep the @include system** exactly as it is - it already works perfectly
 5. **Consolidate personas** by grouping existing persona definitions
-6. **Simplify interfaces** by creating new routing commands that call existing logic
+6. **Simplify interfaces** by creating new routing commands that call existing
+   logic
 
 ### File Organization
 
@@ -118,24 +140,38 @@ This ensures:
 
 Leverage Claude Code's advanced capabilities:
 
-- **Sub-Agent Architecture**: Commands should heavily utilize the Task tool to spawn specialized sub-agents for token-intensive operations (file analysis, codebase exploration, research)
-- **Parallel Processing**: Use multiple sub-agents concurrently for independent tasks (e.g., analyzing different modules simultaneously)
-- **Context Isolation**: Each sub-agent operates in its own context window, preventing token overflow in the main conversation
-- **Result Aggregation**: Main agent synthesizes sub-agent findings into coherent responses
+- **Sub-Agent Architecture**: Commands should heavily utilize the Task tool to
+  spawn specialized sub-agents for token-intensive operations (file analysis,
+  codebase exploration, research)
+- **Parallel Processing**: Use multiple sub-agents concurrently for independent
+  tasks (e.g., analyzing different modules simultaneously)
+- **Context Isolation**: Each sub-agent operates in its own context window,
+  preventing token overflow in the main conversation
+- **Result Aggregation**: Main agent synthesizes sub-agent findings into
+  coherent responses
 
 ### Command Implementation Patterns
 
-Each command should intelligently delegate work to sub-agents for token-intensive operations, then synthesize results based on the active mode.
+Each command should intelligently delegate work to sub-agents for
+token-intensive operations, then synthesize results based on the active mode.
 
 ### Design Philosophy
 
 When simplicity conflicts with power, follow these principles:
 
-1. **Surface Simplicity, Deep Power**: Make the default path simple while keeping advanced capabilities accessible
-2. **Intelligent Escalation**: Start simple, but recognize when complexity is needed and guide users there
-3. **Context-Aware Defaults**: Use project structure, file types, and recent actions to make smart decisions
-4. **Learn from Usage**: Adapt to user preferences without requiring configuration
+1. **Surface Simplicity, Deep Power**: Make the default path simple while
+   keeping advanced capabilities accessible
+2. **Intelligent Escalation**: Start simple, but recognize when complexity is
+   needed and guide users there
+3. **Context-Aware Defaults**: Use project structure, file types, and recent
+   actions to make smart decisions
+4. **Learn from Usage**: Adapt to user preferences without requiring
+   configuration
 
-Remember: The goal is not to remove SuperClaude's power, but to make it more accessible. Simple-Claude should feel like a senior developer who knows when to keep things simple and when to dive deep.
+Remember: The goal is not to remove SuperClaude's power, but to make it more
+accessible. Simple-Claude should feel like a senior developer who knows when to
+keep things simple and when to dive deep.
 
-Focus on making AI assistance feel like a helpful colleague rather than a complex tool. Every interaction should feel natural and require minimal cognitive overhead to achieve the desired outcome.
+Focus on making AI assistance feel like a helpful colleague rather than a
+complex tool. Every interaction should feel natural and require minimal
+cognitive overhead to achieve the desired outcome.

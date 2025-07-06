@@ -2,48 +2,57 @@
 
 ---
 
-@include ../../superclaude/shared/universal-constants.yml#Universal_Legend
+@include shared/simpleclaude/core-patterns.yml#patterns
 
 ## Command Execution
 
 Execute: immediate. --plan→show plan first Legend: Generated based on symbols
 used in command Purpose: "Create $ARGUMENTS"
 
-Route creation requests in $ARGUMENTS to appropriate SuperClaude commands.
+SimpleClaude consolidates creation functionality from multiple commands into one
+intelligent interface.
 
-@include ../../superclaude/shared/flag-inheritance.yml#Universal_Always
+@include shared/simpleclaude/workflows.yml#workflows
 
 Examples:
 
-- `/sc-create REST API with authentication` → routes to build
-- `/sc-create user profile component` → routes to task
-- `/sc-create API documentation` → routes to document
-- `/sc-create microservice architecture` → routes to design
-- `/sc-create development environment` → routes to dev-setup
+- `/sc-create REST API with authentication` → builds complete API with auth
+- `/sc-create user profile component` → creates component with best practices
+- `/sc-create API documentation` → generates comprehensive docs
+- `/sc-create microservice architecture` → designs architecture patterns
+- `/sc-create development environment` → sets up complete dev environment
 
-**Smart Routing Logic:**
+**Creation Logic:**
+
+SimpleClaude analyzes $ARGUMENTS to determine what to create:
 
 ```
 IF $ARGUMENTS contains "project|app|application|platform|system|microservice"
-  → /scl-build $ARGUMENTS
+  → Execute full project creation workflow
+  → Include structure, dependencies, configuration
 
 ELSIF $ARGUMENTS contains "documentation|readme|spec|guide|docs"
-  → /scl-document $ARGUMENTS
+  → Execute documentation generation workflow
+  → Analyze code and create appropriate docs
 
 ELSIF $ARGUMENTS contains "architecture|design|schema|diagram|structure"
-  → /scl-design $ARGUMENTS
+  → Execute design workflow
+  → Create diagrams, patterns, structure
 
 ELSIF $ARGUMENTS contains "environment|setup|docker|ci/cd|pipeline|dev"
-  → /scl-dev-setup $ARGUMENTS
+  → Execute environment setup workflow
+  → Configure tools, dependencies, workflows
 
 ELSIF $ARGUMENTS contains "api|service|endpoint|route|controller"
-  → /scl-build --feature $ARGUMENTS
+  → Execute API/service creation workflow
+  → Include routes, controllers, tests
 
 ELSIF $ARGUMENTS contains "component|function|class|module|method"
-  → /scl-task $ARGUMENTS
+  → Execute code generation workflow
+  → Create clean, tested code
 
 ELSE
-  → /scl-task $ARGUMENTS  # Default for simple code creation
+  → Default to code generation workflow
 ```
 
 **Keyword Detection:**
@@ -63,8 +72,4 @@ ELSE
 - `--test` → include tests
 - `--tdd` → test-driven development
 
-@include
-../../superclaude/shared/execution-patterns.yml#Git_Integration_Patterns
-
-@include
-../../superclaude/shared/universal-constants.yml#Standard_Messages_Templates
+@include shared/simpleclaude/core-patterns.yml#git_conventions

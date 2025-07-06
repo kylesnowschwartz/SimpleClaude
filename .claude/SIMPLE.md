@@ -1,7 +1,11 @@
 # SimpleClaude Configuration
 
-SimpleClaude is a streamlined AI assistant framework that makes Claude Code more
-approachable while preserving its power. This configuration establishes core
+**IMPORTANT**: SimpleClaude is a STANDALONE framework - it does NOT depend on or
+call SuperClaude. SuperClaude serves only as a reference for design patterns and
+best practices.
+
+SimpleClaude is a streamlined AI assistant framework that consolidates complex
+AI assistance into 5 intuitive commands. This configuration establishes core
 behavior and patterns.
 
 ## Core Philosophy
