@@ -1,195 +1,391 @@
-# SimpleClaude Workflows - Common development workflows
-# Adapted for simplified command structure
+# SimpleClaude Workflows - Comprehensive workflow patterns
+# Organized by SimpleClaude commands with natural language support
 
-workflows:
-  planning:
-    approach: "Think before acting"
-    when_to_plan:
-      - "Complex multi-file changes"
-      - "Architectural decisions"
-      - "Breaking changes"
-      - "Unclear requirements"
+## Planning_and_Approach
+Planning_Philosophy:
+  approach: "Think before acting | Evidence-based decisions | Quality over speed"
+  when_to_plan:
+    - "Complex multi-file changes"
+    - "Architectural decisions"
+    - "Breaking changes"
+    - "Unclear requirements"
+    - "Cross-system integrations"
 
-    planning_structure:
-      understand:
-        - "Clarify requirements"
-        - "Identify constraints"
-        - "Research if needed"
+  planning_structure:
+    understand:
+      - "Clarify requirements through questions"
+      - "Identify constraints and dependencies"
+      - "Research with Context7 if needed"
+      - "Analyze existing patterns"
 
-      design:
-        - "Outline approach"
-        - "Consider alternatives"
-        - "Identify risks"
+    design:
+      - "Outline approach with rationale"
+      - "Consider alternatives and trade-offs"
+      - "Identify risks and mitigations"
+      - "Plan for edge cases"
 
-      breakdown:
-        - "List specific tasks"
-        - "Identify complexity and dependencies"
-        - "Define success criteria"
-        - "No timelines or metrics - focus on quality"
+    breakdown:
+      - "List specific tasks with clear boundaries"
+      - "Identify complexity and dependencies"
+      - "Define success criteria"
+      - "No timelines or metrics - focus on quality"
+      - "Use TodoWrite() for complex coordination"
 
-  feature_development:
+## Create_Workflow
+Development_Flow:
+  Parse_Intent: "Feature request→requirements | Enhancement→scope | New functionality→design"
+  Research_Phase: "C7 docs if needed | Existing patterns | Stack conventions | Best practices"
+  Implementation: "TDD if requested | Clean code | Evidence-based choices | Follow CLAUDE.md"
+  Validation: "Tests pass | Lint clean | Requirements met | Edge cases handled"
+  Git_Integration: "Feature branch | Atomic commits | Clear messages | PR ready"
+
+Feature_Patterns:
+  New_Feature:
     workflow:
       - step: "Understand requirements"
-        mode: "planner"
         actions:
-          - "Analyze user needs"
-          - "Check existing codebase"
+          - "Analyze user needs and context"
+          - "Check existing codebase patterns"
           - "Identify integration points"
+          - "Ask clarifying questions"
 
       - step: "Design solution"
-        mode: "planner"
         actions:
-          - "Architecture decisions"
-          - "API design if needed"
-          - "Consider edge cases"
+          - "Architecture decisions with rationale"
+          - "API design following project conventions"
+          - "Consider edge cases and error handling"
+          - "Plan test strategy"
 
-      - step: "Implement"
-        mode: "implementer"
+      - step: "Implement incrementally"
         actions:
-          - "Write clean code"
-          - "Follow project patterns"
-          - "Add necessary comments"
+          - "Write clean, maintainable code"
+          - "Follow project patterns and style"
+          - "Add meaningful comments"
+          - "Handle errors gracefully"
 
-      - step: "Test"
-        mode: "tester"
+      - step: "Test thoroughly"
         actions:
-          - "Write/update tests"
+          - "Write/update unit tests"
           - "Validate edge cases"
-          - "Check integration"
+          - "Check integration points"
+          - "Ensure coverage targets"
 
-  debugging:
+  Enhancement:
+    approach: "Analyze existing→plan changes→implement→validate→document"
+    considerations:
+      - "Backward compatibility"
+      - "Performance implications"
+      - "User experience impact"
+      - "Migration path if needed"
+
+  Refactor:
+    approach: "Identify issues→plan approach→incremental changes→verify"
+    focus:
+      - "Code smells and duplication"
+      - "Complexity reduction"
+      - "Performance improvements"
+      - "Maintainability gains"
+
+## Modify_Workflow
+Modification_Flow:
+  Parse_Intent: "Update request→scope | Refactor→approach | Optimization→targets"
+  Analysis: "Current implementation | Change impact | Dependencies | Side effects"
+  Implementation: "Incremental changes | Preserve functionality | Test continuously"
+  Validation: "No regressions | Improvements verified | Tests updated"
+
+Modification_Patterns:
+  Update_Existing:
+    - "Understand current implementation fully"
+    - "Plan minimal necessary changes"
+    - "Preserve existing functionality"
+    - "Update tests to match changes"
+    - "Document significant changes"
+
+  Refactor_Code:
     workflow:
-      - step: "Reproduce issue"
+      - step: "Identify opportunities"
         actions:
-          - "Understand expected vs actual behavior"
-          - "Create minimal reproduction"
-          - "Gather error details"
+          - "Find code smells systematically"
+          - "Identify duplication patterns"
+          - "Assess complexity metrics"
+          - "Note performance bottlenecks"
 
-      - step: "Investigate"
-        sub_agent_delegation:
-          - "Analyze error logs"
-          - "Trace execution flow"
-          - "Check related code"
-
-      - step: "Fix"
-        actions:
-          - "Implement minimal fix"
-          - "Validate fix works"
-          - "Check for regressions"
-
-      - step: "Prevent recurrence"
-        actions:
-          - "Add tests for the bug"
-          - "Update documentation"
-          - "Consider systemic improvements"
-
-  code_review:
-    workflow:
-      - step: "Understand changes"
-        actions:
-          - "Read PR description"
-          - "Check modified files"
-          - "Understand intent"
-
-      - step: "Review quality"
-        focus_areas:
-          - "Code clarity and style"
-          - "Performance implications"
-          - "Security considerations"
-          - "Test coverage"
-
-      - step: "Provide feedback"
-        approach:
-          - "Be constructive"
-          - "Suggest specific improvements"
-          - "Acknowledge good patterns"
-          - "Identify anti-patterns without judgment"
-          - "Focus on code, not coder"
-
-  refactoring:
-    workflow:
-      - step: "Identify specific opportunities"
-        mode: "planner"
-        actions:
-          - "Find code smells"
-          - "Identify duplication"
-          - "Assess complexity"
-
-      - step: "Plan changes"
+      - step: "Plan refactoring"
         considerations:
-          - "Maintain functionality"
+          - "Maintain all functionality"
           - "Improve maintainability"
-          - "Preserve performance"
+          - "Preserve or enhance performance"
+          - "Keep changes atomic"
 
-      - step: "Execute incrementally"
-        mode: "implementer"
+      - step: "Execute safely"
         approach:
-          - "Small, safe changes"
+          - "Small, verifiable changes"
           - "Test after each change"
-          - "Keep commits atomic"
+          - "Keep commits focused"
+          - "Ensure continuous integration"
 
-  research:
+  Optimize_Performance:
+    - "Profile first, optimize second"
+    - "Evidence-based improvements"
+    - "Measure impact objectively"
+    - "Document optimization rationale"
+
+## Understand_Workflow
+Learning_Flow:
+  Intent_Parse: "Concept explanation→depth | Code explanation→context | Architecture→patterns"
+  Approach: "Evidence-based teaching | Practical examples | Progressive depth | Clear structure"
+  Delivery: "Structured explanation | Code examples | Visual aids if helpful | Key takeaways"
+  Validation: "Understanding check | Follow-up ready | Context preserved | Actionable knowledge"
+
+Understanding_Patterns:
+  Concept_Explanation:
+    structure: "Definition→context→examples→application→implications"
+    depth_levels:
+      - "High-level overview for beginners"
+      - "Detailed explanation for practitioners"
+      - "Deep dive for experts"
+      - "Nuanced discussion for architects"
+
+  Code_Analysis:
+    structure: "Purpose→architecture→flow→patterns→trade-offs"
+    focus_areas:
+      - "Business logic and intent"
+      - "Technical implementation"
+      - "Design patterns used"
+      - "Performance characteristics"
+      - "Security considerations"
+
+  System_Architecture:
+    approach: "Goals→patterns→components→interactions→trade-offs"
+    deliverables:
+      - "Component relationships"
+      - "Data flow diagrams"
+      - "Sequence diagrams if complex"
+      - "Decision rationale"
+
+  Research_Tasks:
     workflow:
-      - step: "Define scope"
+      - step: "Define scope precisely"
         actions:
-          - "Clarify what to research"
+          - "Clarify research goals"
           - "Set success criteria"
-          - "Identify sources"
+          - "Identify key sources"
 
       - step: "Gather information"
         tools:
           - "Context7 for library docs"
           - "WebSearch for articles"
           - "Code analysis for patterns"
+          - "Community resources"
 
       - step: "Synthesize findings"
         outputs:
-          - "Key insights"
-          - "Recommendations"
-          - "Trade-offs"
+          - "Key insights summary"
+          - "Practical recommendations"
+          - "Trade-offs analysis"
+          - "Implementation guidance"
 
-  sub_agent_patterns:
-    when_to_use:
-      - "Analyzing large codebases"
-      - "Parallel file modifications"
-      - "Research while implementing"
-      - "Complex analysis tasks"
+## Fix_Workflow
+Debugging_Flow:
+  Error_Analysis: "Parse error→root cause | Stack trace→source | Symptoms→diagnosis"
+  Investigation: "TodoWrite() for complex | Read relevant code | Trace execution | Isolate issue"
+  Solution: "Evidence-based fix | Minimal change | Test edge cases | Prevent recurrence"
+  Validation: "Error resolved | Tests pass | No regressions | Root cause addressed"
 
-    delegation_examples:
-      - task: "Analyze all test files"
-        approach: "Spawn analyzer agent with test file scope"
+Fix_Patterns:
+  Runtime_Error:
+    workflow:
+      - step: "Reproduce reliably"
+        actions:
+          - "Understand expected behavior"
+          - "Create minimal reproduction"
+          - "Gather all error details"
+          - "Note environment factors"
 
-      - task: "Update multiple components"
-        approach: "Parallel agents for independent components"
+      - step: "Investigate systematically"
+        sub_agent_delegation:
+          - "Analyze error messages and logs"
+          - "Trace execution flow"
+          - "Check related code paths"
+          - "Identify root cause"
 
-      - task: "Research and implement"
-        approach: "Research agent + implementation agent"
+      - step: "Implement fix"
+        actions:
+          - "Apply minimal necessary fix"
+          - "Validate fix resolves issue"
+          - "Check for side effects"
+          - "Test edge cases"
 
-    coordination:
-      - "Clear task boundaries"
-      - "Specific success criteria"
-      - "Synthesize results in main agent"
+      - step: "Prevent recurrence"
+        actions:
+          - "Add regression tests"
+          - "Update error handling"
+          - "Document known issues"
+          - "Consider systemic improvements"
 
-  error_handling:
-    principles:
-      - "Fail fast with clear messages"
-      - "Provide actionable solutions"
-      - "Learn from failures"
-      - "Ask for help when blocked"
-      - "Never hide or ignore errors"
+  Logic_Bug:
+    approach: "Reproduce→understand flow→identify flaw→correct→verify"
+    focus:
+      - "Business logic accuracy"
+      - "Edge case handling"
+      - "State management"
+      - "Race conditions"
 
-    common_scenarios:
-      missing_dependencies:
-        - "Detect from error message"
+  Performance_Issue:
+    approach: "Profile→identify bottleneck→optimize→measure improvement"
+    tools:
+      - "Performance profilers"
+      - "Metrics and benchmarks"
+      - "Load testing"
+      - "Resource monitoring"
+
+## Review_Workflow
+Analysis_Flow:
+  Scope_Detection: "Code review→quality | Security audit→vulnerabilities | Performance→bottlenecks"
+  Multi_Dimensional: "Quality & correctness & security & performance & maintainability"
+  Evidence_Based: "Objective metrics | Standards compliance | Best practices | Industry patterns"
+  Reporting: "Issues by severity | Actionable fixes | Positive findings | Improvement roadmap"
+
+Review_Types:
+  Code_Quality:
+    focus_areas:
+      - "Naming clarity and consistency"
+      - "Function/class organization"
+      - "DRY principle adherence"
+      - "Complexity management"
+      - "Maintainability factors"
+      - "Documentation completeness"
+
+    workflow:
+      - step: "Understand context"
+        actions:
+          - "Read PR/commit description"
+          - "Review modified files"
+          - "Understand change intent"
+          - "Check related issues"
+
+      - step: "Analyze systematically"
+        approach:
+          - "Code structure and organization"
+          - "Logic correctness"
+          - "Error handling"
+          - "Test coverage"
+          - "Performance implications"
+
+      - step: "Provide feedback"
+        principles:
+          - "Be specific and constructive"
+          - "Suggest concrete improvements"
+          - "Acknowledge good patterns"
+          - "Explain the 'why' behind suggestions"
+          - "Prioritize by impact"
+
+  Security_Audit:
+    checklist: "OWASP Top 10 | Auth/AuthZ | Input validation | Encryption | Dependencies"
+    approach:
+      - "Systematic vulnerability scanning"
+      - "Configuration review"
+      - "Dependency analysis"
+      - "Access control verification"
+      - "Data protection assessment"
+
+  Performance_Review:
+    analysis: "Algorithm complexity | Database queries | Caching strategy | Resource usage"
+    metrics:
+      - "Time complexity analysis"
+      - "Space complexity"
+      - "I/O operations"
+      - "Network calls"
+      - "Concurrency issues"
+
+  Architecture_Review:
+    evaluation: "Design patterns | Component coupling | Scalability | Maintainability | Testability"
+    considerations:
+      - "SOLID principles"
+      - "Domain boundaries"
+      - "Integration points"
+      - "Future extensibility"
+      - "Technical debt"
+
+## Sub_Agent_Patterns
+Delegation_Strategy:
+  when_to_use:
+    - "Analyzing large codebases systematically"
+    - "Parallel file modifications"
+    - "Research while implementing"
+    - "Complex multi-faceted analysis"
+    - "Performance optimization tasks"
+
+  delegation_examples:
+    - task: "Analyze all test files"
+      approach: "Spawn analyzer agent with test file scope"
+      coordination: "Synthesize findings in main agent"
+
+    - task: "Update multiple components"
+      approach: "Parallel agents for independent components"
+      coordination: "Merge changes atomically"
+
+    - task: "Research and implement"
+      approach: "Research agent + implementation agent"
+      coordination: "Research informs implementation"
+
+    - task: "Security audit"
+      approach: "Specialized security agent"
+      coordination: "Aggregate vulnerabilities by severity"
+
+  coordination_principles:
+    - "Clear task boundaries and ownership"
+    - "Specific success criteria per agent"
+    - "Efficient result synthesis"
+    - "Avoid overlapping responsibilities"
+    - "Use TodoWrite() for complex coordination"
+
+## Error_Handling
+Error_Philosophy:
+  principles:
+    - "Fail fast with clear messages"
+    - "Provide actionable solutions"
+    - "Learn from failures systematically"
+    - "Ask for help when blocked"
+    - "Never hide or suppress errors"
+    - "Document error patterns"
+
+  common_scenarios:
+    missing_dependencies:
+      detection: "Parse error messages for package names"
+      response:
+        - "Identify exact missing package"
         - "Suggest installation command"
         - "Verify after installation"
+        - "Update documentation"
 
-      test_failures:
-        - "Identify failing tests"
-        - "Understand failure reason"
-        - "Fix code or update tests"
+    test_failures:
+      approach:
+        - "Identify all failing tests"
+        - "Understand failure reasons"
+        - "Fix code or update tests appropriately"
+        - "Verify no new failures introduced"
 
-      linting_errors:
-        - "Run linter to see issues"
+    linting_errors:
+      workflow:
+        - "Run linter to see all issues"
         - "Fix formatting/style issues"
-        - "Validate fixes"
+        - "Address code quality warnings"
+        - "Validate all fixes"
+
+    build_failures:
+      diagnosis:
+        - "Check error logs thoroughly"
+        - "Verify environment setup"
+        - "Check dependency versions"
+        - "Test incremental builds"
+
+    integration_issues:
+      resolution:
+        - "Verify API contracts"
+        - "Check data formats"
+        - "Validate authentication"
+        - "Test error scenarios"
+## Command_Specific_Workflow
+# This section is dynamically included based on the active command
+# Each command template references the appropriate workflow section above

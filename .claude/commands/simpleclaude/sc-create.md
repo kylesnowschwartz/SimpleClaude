@@ -2,74 +2,87 @@
 
 ---
 
-@include shared/simpleclaude/core-patterns.yml#patterns
+## Command: /sc-create $ARGUMENTS
 
-## Command Execution
+Creates anything from components to complete systems using intelligent workflow
+detection.
 
-Execute: immediate. --plan→show plan first Legend: Generated based on symbols
-used in command Purpose: "Create $ARGUMENTS"
+## Smart Detection & Routing
 
-SimpleClaude consolidates creation functionality from multiple commands into one
-intelligent interface.
+```yaml
+Project/App: [project, app, application, platform, system, microservice]
+  → Full scaffold: structure, config, dependencies, tests, README
 
-@include shared/simpleclaude/workflows.yml#workflows
+API/Backend: [api, REST, GraphQL, endpoint, route, controller, backend]
+  → Complete API: routes, validation, business logic, OpenAPI docs, tests
 
+Component/UI: [component, UI, interface, frontend, page, view, widget]
+  → Smart generation: follows patterns, includes styles, state, props, tests
+
+Documentation: [documentation, readme, docs, guide, manual, spec]
+  → Analyzes code → generates appropriate format with examples
+
+Architecture: [architecture, design, schema, diagram, structure]
+  → System design: patterns, diagrams, service boundaries, contracts
+
+DevOps: [environment, setup, docker, CI/CD, pipeline, deploy]
+  → Full automation: containers, configs, scripts, workflows
+
+Code: [function, class, module, method, utility, helper]
+  → Clean code with tests, follows project conventions
+```
+
+## Examples That Show The Magic
+
+```bash
+/sc-create user authentication API
+→ Builds complete REST API with JWT auth, validation, tests, OpenAPI docs
+
+/sc-create e-commerce platform with Stripe
+→ Scaffolds full app: API, database, payments, frontend, tests, deployment
+
+/sc-create react component for user profile
+→ Analyzes existing patterns → generates component, styles, state, tests
+
+/sc-create API documentation
+→ Scans codebase → generates OpenAPI spec, examples, auth guide
+
+/sc-create microservice architecture
+→ Designs service boundaries, API contracts, deployment strategy
+```
+
+## Core Workflows
+
+**Project**: Analyze stack → Structure → Dependencies → Git init → Tests →
+README
+
+**API**: Design endpoints → Routes → Validation → Logic → Docs → Tests
+
+**Component**: Check patterns → Generate → Style → State → Test → Index
+
+**Documentation**: Analyze code → Extract APIs → Format → Examples → Guides
+
+## Sub-Agent Delegation
+
+```yaml
+When: Complex multi-part tasks | Parallel work | Specialized expertise
+How: Research → Design → Build | Multiple builders in parallel
 Examples:
-
-- `/sc-create REST API with authentication` → builds complete API with auth
-- `/sc-create user profile component` → creates component with best practices
-- `/sc-create API documentation` → generates comprehensive docs
-- `/sc-create microservice architecture` → designs architecture patterns
-- `/sc-create development environment` → sets up complete dev environment
-
-**Creation Logic:**
-
-SimpleClaude analyzes $ARGUMENTS to determine what to create:
-
-```
-IF $ARGUMENTS contains "project|app|application|platform|system|microservice"
-  → Execute full project creation workflow
-  → Include structure, dependencies, configuration
-
-ELSIF $ARGUMENTS contains "documentation|readme|spec|guide|docs"
-  → Execute documentation generation workflow
-  → Analyze code and create appropriate docs
-
-ELSIF $ARGUMENTS contains "architecture|design|schema|diagram|structure"
-  → Execute design workflow
-  → Create diagrams, patterns, structure
-
-ELSIF $ARGUMENTS contains "environment|setup|docker|ci/cd|pipeline|dev"
-  → Execute environment setup workflow
-  → Configure tools, dependencies, workflows
-
-ELSIF $ARGUMENTS contains "api|service|endpoint|route|controller"
-  → Execute API/service creation workflow
-  → Include routes, controllers, tests
-
-ELSIF $ARGUMENTS contains "component|function|class|module|method"
-  → Execute code generation workflow
-  → Create clean, tested code
-
-ELSE
-  → Default to code generation workflow
+  - OAuth: Research agent → Builder agent → Test agent
+  - Multiple APIs: Parallel builder agents
+  - System design: Architecture → Documentation
 ```
 
-**Keyword Detection:**
+## Flags
 
-- **Build**: project, app, application, microservice, platform, system
-- **Document**: documentation, readme, spec, guide, docs, manual
-- **Design**: architecture, design, schema, diagram, structure, flow
-- **Setup**: environment, setup, docker, ci/cd, pipeline, infrastructure
-- **Feature**: api, service, endpoint, backend, frontend, full-stack
-- **Task**: component, function, class, module, method, utility
+- `--plan` Show plan first | `--test` Include tests | `--tdd` Test-driven
+- `--magic` UI generation | `--minimal` Simplest version | `--style` Match
+  existing
 
-**Pass-through Flags:** All flags are passed through unmodified:
+## Best Practices
 
-- `--magic` → UI generation
-- `--c7` → documentation lookup
-- `--plan` → show plan first
-- `--test` → include tests
-- `--tdd` → test-driven development
-
-@include shared/simpleclaude/core-patterns.yml#git_conventions
+1. Be specific about what to create
+2. SimpleClaude analyzes context and patterns
+3. Always includes tests and documentation
+4. Follows existing project conventions
+5. Asks clarifying questions when ambiguous

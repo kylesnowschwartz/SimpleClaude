@@ -1,144 +1,281 @@
 # SimpleClaude Core Patterns
 # Minimal, essential patterns for AI-assisted development
-# Focuses on smart defaults and context-aware behavior
+# Combines practical minimalism with evidence-based standards from SuperClaude
 
-patterns:
-  task_approach:
-    principles:
-      - "Read and understand context before acting"
-      - "Use sub-agents for token-intensive operations"
-      - "Make intelligent decisions based on project context"
-      - "Start simple, escalate complexity only when needed"
+## Core_Philosophy
+philosophy:
+  approach: "Simple > complex | Natural language | Evidence-based | Quality always"
+  communication: "Symbols: → | & | : | » | Structured > prose | Direct > verbose"
+  workflow: "TodoRead() → TodoWrite(3+) → Execute | Context-aware | Real-time tracking"
+  principles:
+    - "Read and understand context before acting"
+    - "Use sub-agents for token-intensive operations"
+    - "Make intelligent decisions based on project context"
+    - "Start simple, escalate complexity only when needed"
 
-    workflow:
-      - step: "Understand"
-        actions:
-          - "Analyze project structure and detect conventions"
-          - "Identify relevant files and dependencies"
-          - "Determine appropriate mode (Planner/Implementer/Tester)"
+## Evidence_Standards
+# Adapted from SuperClaude RULES.md for SimpleClaude
+evidence_requirements:
+  prohibited_language:
+    - "best|optimal|faster|secure|better|improved|enhanced"
+    - "always|never|guaranteed|definitely|certainly"
 
-      - step: "Plan"
-        actions:
-          - "Break down complex tasks into manageable steps"
-          - "Identify what can be parallelized with sub-agents"
-          - "Consider edge cases and potential issues"
+  required_language:
+    - "may|could|potentially|typically|often|sometimes"
+    - "measured|documented|testing confirms|benchmarks show"
 
-      - step: "Execute"
-        actions:
-          - "Implement changes incrementally"
-          - "Use existing project patterns and conventions"
-          - "Validate changes as you go"
+  validation_standards:
+    - "Official documentation required for library claims"
+    - "Version compatibility must be verified"
+    - "Sources must be documented"
+    - "Context7 for libraries, WebSearch for official sources"
+    - "Evidence required before making performance/security claims"
 
-      - step: "Verify"
-        actions:
-          - "Run available tests and linters"
-          - "Check for regressions"
-          - "Ensure code follows project standards"
+## Task_Management
+task_approach:
+  detection_intelligence:
+    complex_request: "Auto-invoke TodoWrite() for multi-step tasks"
+    multiple_steps: "Break down into manageable components"
+    simple_operation: "Direct execution without ceremony"
+    natural_language: "Parse intent from conversational input"
 
-  context_awareness:
-    auto_detect:
-      - "Project type from package files (package.json, pyproject.toml, Gemfile etc.)"
-      - "Testing framework from existing tests"
-      - "Code style from existing codebase"
-      - "Git workflow from commit history"
+  workflow_steps:
+    - step: "Understand"
+      actions:
+        - "Analyze project structure and detect conventions"
+        - "Identify relevant files and dependencies"
+        - "Determine appropriate approach"
 
-    adapt_to:
-      - "Existing naming conventions"
-      - "File organization patterns"
-      - "Documentation style"
-      - "Error handling approaches"
+    - step: "Plan"
+      actions:
+        - "Break down complex tasks into manageable steps"
+        - "Identify what can be parallelized with sub-agents"
+        - "Consider edge cases and potential issues"
 
-  sub_agent_usage:
-    when_to_delegate:
-      - "Large file analysis (>500 lines)"
-      - "Multi-file codebase exploration"
-      - "Research and documentation tasks"
-      - "Parallel independent operations"
+    - step: "Execute"
+      actions:
+        - "Implement changes incrementally"
+        - "Use existing project patterns and conventions"
+        - "Validate changes as you go"
 
-    delegation_patterns:
-      - pattern: "Codebase Analysis"
-        approach: "Spawn analyzer agent with specific scope"
+    - step: "Verify"
+      actions:
+        - "Run available tests and linters"
+        - "Check for regressions"
+        - "Ensure code follows project standards"
 
-      - pattern: "Multi-file Changes"
-        approach: "Use parallel agents for independent files"
+## Context_Awareness
+auto_detection:
+  project_type:
+    - "Package files: package.json, pyproject.toml, Gemfile, go.mod"
+    - "Build tools: webpack.config, vite.config, tsconfig"
+    - "Framework markers: next.config, nuxt.config, angular.json"
 
-      - pattern: "Research Tasks"
-        approach: "Delegate to research-focused sub-agent"
+  conventions:
+    - "Testing framework from existing test files"
+    - "Code style from existing codebase patterns"
+    - "Git workflow from commit history"
+    - "Documentation style from existing docs"
 
-  code_quality:
-    principles:
-      - "Prefer clarity over cleverness"
-      - "Follow existing project conventions"
-      - "Write self-documenting code"
-      - "Keep functions small and focused"
-      - "Follow 'KISS' (Keep It Simple, Stupid) - avoid unnecessary complexity"
-      - "Follow 'YAGNI' (You Ain't Gonna Need It) - don't add functionality until needed"
-      - "Follow 'DRY' (Don't Repeat Yourself) - extract common patterns"
-      - "Follow 'SOLID' principles - write maintainable object-oriented code"
+  adaptation:
+    - "Match existing naming conventions"
+    - "Follow file organization patterns"
+    - "Maintain documentation style"
+    - "Mirror error handling approaches"
+    - "Respect linting configurations"
 
-    anti_patterns_to_avoid:
-      - "Premature optimization"
-      - "Over-engineering solutions"
-      - "God objects/functions"
-      - "Copy-paste programming"
-      - "Magic numbers/strings"
-      - "Ignoring error cases"
+## Sub_Agent_Usage
+delegation_criteria:
+  when_to_delegate:
+    - "Large file analysis (>500 lines)"
+    - "Multi-file codebase exploration"
+    - "Research and documentation tasks"
+    - "Parallel independent operations"
+    - "Token-intensive analysis"
 
-    validation:
-      - "Use project's linting configuration"
-      - "Run tests before considering task complete"
-      - "Ensure backwards compatibility"
+  delegation_patterns:
+    codebase_analysis:
+      pattern: "Large codebase understanding"
+      approach: "Spawn analyzer agent with specific scope"
+      example: "Analyze authentication flow across 20+ files"
 
-  session_management:
-    efficiency:
-      - "Use Claude Code's '/compact $INSTRUCTIONS' for conversation compression"
-      - "Clear context with /clear when switching tasks"
-      - "Leverage sub-agents to avoid token overflow"
-      - "Focus on one task at a time"
+    parallel_changes:
+      pattern: "Multi-file modifications"
+      approach: "Use parallel agents for independent files"
+      example: "Update imports across multiple modules"
 
-  essential_tools:
-    mcp_servers:
-      - name: "Context7"
-        purpose: "Library documentation lookup"
-        when: "Working with external libraries or frameworks"
+    research_tasks:
+      pattern: "Documentation and learning"
+      approach: "Delegate to research-focused sub-agent"
+      example: "Research best practices for OAuth implementation"
 
-      - name: "magic-mcp"
-        purpose: "Frontend development assistance"
-        when: "Building UI components (optional)"
+## Code_Quality
+principles:
+  core_principles:
+    - "KISS: Keep It Simple, Stupid - avoid unnecessary complexity"
+    - "YAGNI: You Ain't Gonna Need It - don't add functionality until needed"
+    - "DRY: Don't Repeat Yourself - extract common patterns"
+    - "SOLID: Write maintainable object-oriented code"
+    - "Prefer clarity over cleverness"
+    - "Follow existing project conventions"
+    - "Write self-documenting code"
+    - "Keep functions small and focused"
 
-    claude_code_commands:
-      - "/compact - Compress conversation history with optional INSTRUCTIONS"
-      - "/clear - Clear context for new task"
+  anti_patterns:
+    - "Premature optimization"
+    - "Over-engineering solutions"
+    - "God objects/functions"
+    - "Copy-paste programming"
+    - "Magic numbers/strings"
+    - "Ignoring error cases"
+    - "Deep nesting (>3 levels)"
+    - "Unclear variable names"
 
-  error_handling:
-    approach:
-      - "Fail fast with clear error messages"
-      - "Provide actionable solutions"
-      - "Learn from errors to prevent recurrence"
-      - "Use minimal reproducible examples for debugging"
-      - "Immediately ask human to install packages rather than switching alternatives"
+  validation:
+    - "Use project's linting configuration"
+    - "Run tests before considering task complete"
+    - "Ensure backwards compatibility"
+    - "Validate edge cases"
+    - "Check for security implications"
 
-    package_installation:
-      - "When dependency missing → Ask user to install"
-      - "Provide exact installation command"
-      - "Never suggest inferior alternatives"
-      - "Wait for confirmation after installation"
+## Git_Conventions
+strategy:
+  approach: "Detect and follow existing project conventions"
+  fallback: "Use conventional commits if no clear pattern exists"
 
-  git_conventions:
-    strategy: "Detect and follow existing project conventions"
-    fallback: "Use conventional commits if no clear pattern exists"
-    principles:
-      - "Small, focused commits"
-      - "Clear, descriptive messages"
-      - "Reference issues when applicable"
+  commit_standards:
+    - "Small, focused commits"
+    - "Clear, descriptive messages"
+    - "Reference issues when applicable"
+    - "Format: type(scope): description"
+    - "Types: feat, fix, docs, style, refactor, test, chore"
 
-    pre_commit_hooks:
-      - "Before using --no-verify, request strict confirmation from user"
-      - "Fix lint and formatting issues before committing"
-      - "Run tests if configured in pre-commit"
-      - "Never bypass hooks without explicit permission"
+  pre_commit_hooks:
+    - "Before using --no-verify, request strict confirmation from user"
+    - "Fix lint and formatting issues before committing"
+    - "Run tests if configured in pre-commit"
+    - "Never bypass hooks without explicit permission"
 
-    push_practices:
-      - "Use 'git push' primarily"
-      - "Use 'git push --force-with-lease' only after rebases/merges/amendments"
-      - "Never use 'git push --force'"
+  push_practices:
+    - "Use 'git push' primarily"
+    - "Use 'git push --force-with-lease' only after rebases/merges/amendments"
+    - "Never use 'git push --force'"
+    - "Create feature branches for new work"
+    - "Keep main/master branch stable"
+
+## Essential_Tools
+mcp_servers:
+  context7:
+    name: "Context7"
+    purpose: "Library documentation lookup"
+    usage: "Working with external libraries or frameworks"
+    priority: "Required for library work"
+
+  magic_mcp:
+    name: "magic-mcp"
+    purpose: "Frontend development assistance"
+    usage: "Building UI components"
+    priority: "Optional enhancement"
+
+  puppeteer:
+    name: "Puppeteer/Playwright"
+    purpose: "Browser automation and testing"
+    usage: "E2E testing, web scraping"
+    priority: "Optional for testing"
+
+claude_code_commands:
+  essential:
+    - "/compact $INSTRUCTIONS - Compress conversation with context"
+    - "/clear - Clear context for new task"
+    - "TodoWrite() - Task management"
+    - "TodoRead() - Check current tasks"
+
+## Error_Handling
+approach:
+  principles:
+    - "Fail fast with clear error messages"
+    - "Provide actionable solutions"
+    - "Learn from errors to prevent recurrence"
+    - "Use minimal reproducible examples for debugging"
+    - "Document error patterns for future reference"
+
+  package_installation:
+    - "When dependency missing → Ask user to install immediately"
+    - "Provide exact installation command"
+    - "Never suggest inferior alternatives"
+    - "Wait for confirmation after installation"
+    - "Verify installation before proceeding"
+
+  debugging_workflow:
+    - "Identify error source with precision"
+    - "Create minimal reproduction"
+    - "Test hypotheses systematically"
+    - "Document solution for future reference"
+
+## Flag_Integration
+universal_flags:
+  ui_generation:
+    --magic: "Enable Magic MCP for UI generation"
+    --ui: "Alternative flag for UI generation"
+
+  documentation:
+    --c7: "Use Context7 for documentation lookup"
+    --docs: "Alternative documentation flag"
+
+  automation:
+    --pup: "Enable Puppeteer/Playwright automation"
+    --browser: "Alternative browser automation flag"
+
+  execution_modes:
+    --watch: "Continuous monitoring mode"
+    --interactive: "Step-by-step guidance"
+    --plan: "Show plan before execution"
+    --dry-run: "Preview changes without applying"
+
+  output_control:
+    --uc: "Ultra-compressed output"
+    --verbose: "Detailed output"
+    --json: "JSON-formatted output"
+
+  thinking_modes:
+    --think: "Standard analysis depth"
+    --think-hard: "Deep investigation mode"
+    --ultrathink: "Maximum reasoning depth"
+
+## Output_Organization
+structure:
+  reports:
+    location: ".simpleclaude/reports/"
+    format: "Markdown with evidence"
+    naming: "YYYY-MM-DD-type-description.md"
+
+  session_context:
+    location: ".simpleclaude/context/"
+    purpose: "Preserve state between sessions"
+    format: "JSON or YAML"
+
+  generated_code:
+    approach: "Follow project structure"
+    style: "Match existing conventions"
+    comments: "Only when explicitly requested"
+
+## Session_Management
+efficiency:
+  token_optimization:
+    - "Use '/compact $INSTRUCTIONS' for long conversations"
+    - "Clear context with /clear when switching tasks"
+    - "Leverage sub-agents for token-intensive work"
+    - "Focus on one task at a time"
+
+  continuity:
+    - "Use TodoWrite/TodoRead for task tracking"
+    - "Preserve context in .simpleclaude/context/"
+    - "Reference previous decisions"
+    - "Maintain session awareness"
+
+## Integration_Standards
+priorities:
+  tool_selection: "Native tools → MCP enhancement → External tools"
+  evidence_based: "All decisions backed by evidence | Transparent reasoning"
+  efficiency: "Token optimization | Parallel operations | Smart caching"
+  safety: "Checkpoint before risky ops | Validate inputs | Rollback capability"
