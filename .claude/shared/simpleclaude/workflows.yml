@@ -1,0 +1,273 @@
+# SimpleClaude Workflows - Key workflow patterns
+# Consolidated from: planning-mode, task-management-patterns, research-patterns
+
+## Planning Workflows
+
+```yaml
+Planning_Control:
+  Universal_Flag: "--plan"
+  Behavior: "Show detailed plan before execution"
+  Default: "Execute immediately unless --plan specified"
+  
+  Plan_Structure:
+    Overview: "What will be done and why"
+    Steps: "Detailed breakdown of actions"
+    Risks: "Potential issues and mitigation"
+    Outcomes: "Expected results and deliverables"
+    
+  User_Flow:
+    1: "User adds --plan to any command"
+    2: "System generates detailed plan"
+    3: "User reviews and approves/rejects"
+    4: "Execution proceeds only if approved"
+```
+
+## Task Management
+
+```yaml
+Task_Complexity_Triggers:
+  Auto_TodoList:
+    Multiple_Files: "3+ files to modify"
+    Long_Duration: "Estimated >15 minutes"
+    Complex_Operations: "Multi-step workflows"
+    High_Risk: "Production changes, data operations"
+    
+  Manual_Control:
+    Force_Todos: "Use TodoWrite explicitly"
+    Skip_Todos: "Simple, single-file operations"
+    
+Todo_Lifecycle:
+  Creation:
+    - "Identify all required steps"
+    - "Set logical dependencies"
+    - "Assign priorities (high/medium/low)"
+    
+  Execution:
+    - "Mark current task in_progress"
+    - "Complete tasks sequentially"
+    - "Update progress continuously"
+    
+  Best_Practices:
+    - "One in_progress task at a time"
+    - "Clear, actionable descriptions"
+    - "Update immediately on completion"
+```
+
+## Research Requirements
+
+```yaml
+Mandatory_Research:
+  External_Libraries:
+    Trigger: "Any non-relative import detected"
+    Process:
+      1: "Detect library reference"
+      2: "Check Context7 for documentation"
+      3: "Fallback to WebSearch if needed"
+      4: "Extract usage patterns"
+      5: "Cite sources in code"
+    Block_If: "No documentation found"
+    
+  UI_Components:
+    Trigger: "Component keywords detected"
+    Process:
+      1: "Check existing codebase"
+      2: "Search Magic components"
+      3: "Research accessibility patterns"
+      4: "Implement with citations"
+    
+  API_Integration:
+    Trigger: "External service integration"
+    Process:
+      1: "Find official documentation"
+      2: "Understand authentication"
+      3: "Check rate limits"
+      4: "Review error handling"
+      5: "Document integration"
+
+Research_Quality:
+  Confidence_Requirements:
+    Minimum: "90% confidence to proceed"
+    Sources: "Official docs preferred"
+    Citations: "Required for all external patterns"
+    
+  Blocked_Phrases:
+    Never_Use: ["might work", "probably", "I think", "typically"]
+    Always_Use: ["Documentation states", "According to", "Verified in"]
+```
+
+## Common Development Workflows
+
+```yaml
+Feature_Development:
+  Planning_Phase:
+    Mode: "Planner"
+    Actions:
+      - "Analyze requirements"
+      - "Research patterns"
+      - "Design architecture"
+      - "Create task list"
+    
+  Implementation_Phase:
+    Mode: "Implementer"
+    Actions:
+      - "Set up structure"
+      - "Implement features"
+      - "Optimize performance"
+      - "Document code"
+    
+  Testing_Phase:
+    Mode: "Tester"
+    Actions:
+      - "Write tests"
+      - "Check coverage"
+      - "Security review"
+      - "Validate quality"
+
+Bug_Investigation:
+  Analysis:
+    Mode: "Planner"
+    Steps:
+      - "Reproduce issue"
+      - "Gather evidence"
+      - "Form hypothesis"
+      - "Identify root cause"
+    
+  Resolution:
+    Mode: "Implementer"
+    Steps:
+      - "Implement fix"
+      - "Add regression tests"
+      - "Update documentation"
+      
+  Verification:
+    Mode: "Tester"
+    Steps:
+      - "Verify fix works"
+      - "Check side effects"
+      - "Validate no regressions"
+
+Code_Review:
+  Preparation:
+    - "Understand context"
+    - "Review requirements"
+    - "Check standards"
+    
+  Analysis:
+    Mode: "Planner + Tester"
+    Focus:
+      - "Architecture alignment"
+      - "Security implications"
+      - "Performance impact"
+      - "Maintainability"
+    
+  Feedback:
+    - "Specific, actionable comments"
+    - "Suggest improvements"
+    - "Acknowledge good patterns"
+```
+
+## Workflow Patterns
+
+```yaml
+Sequential_Workflows:
+  Standard_Flow: "Plan → Build → Test → Deploy"
+  Quick_Fix: "Analyze → Fix → Verify"
+  Research_Heavy: "Research → Design → Implement"
+  
+Parallel_Workflows:
+  Frontend_Backend: "UI and API development simultaneously"
+  Test_Development: "TDD with parallel test writing"
+  Documentation: "Code and docs together"
+  
+Iterative_Workflows:
+  Agile_Sprint:
+    - "Plan sprint goals"
+    - "Daily implementation"
+    - "Continuous testing"
+    - "Sprint review"
+    
+  Continuous_Improvement:
+    - "Identify bottleneck"
+    - "Implement solution"
+    - "Measure impact"
+    - "Iterate if needed"
+```
+
+## Integration Patterns
+
+```yaml
+Command_Chaining:
+  Analysis_To_Action:
+    Example: "/analyze --code → /improve --quality"
+    Context: "Analysis results inform improvements"
+    
+  Build_To_Test:
+    Example: "/build --feature → /test --coverage"
+    Context: "Immediate validation of new code"
+    
+  Research_To_Build:
+    Example: "Research patterns → /build --component"
+    Context: "Evidence-based implementation"
+
+Context_Preservation:
+  Between_Commands:
+    - "Share results automatically"
+    - "Maintain task context"
+    - "Track dependencies"
+    
+  Session_Management:
+    - "Save progress regularly"
+    - "Resume from checkpoints"
+    - "Preserve decision history"
+
+Workflow_Optimization:
+  Caching: "Reuse research and analysis"
+  Parallelization: "Independent tasks simultaneously"
+  Automation: "Common sequences as shortcuts"
+```
+
+## Best Practices
+
+```yaml
+Planning_Best_Practices:
+  Always_Plan_When:
+    - "Working on production systems"
+    - "Making architectural changes"
+    - "Uncertain about approach"
+    - "High-risk operations"
+    
+  Plan_Contents:
+    - "Clear objectives"
+    - "Concrete steps"
+    - "Risk assessment"
+    - "Success criteria"
+
+Task_Best_Practices:
+  Use_Todos_When:
+    - "Multiple related changes"
+    - "Long-running operations"
+    - "Need progress tracking"
+    - "Complex dependencies"
+    
+  Todo_Guidelines:
+    - "Atomic, single-purpose tasks"
+    - "Clear completion criteria"
+    - "Logical ordering"
+    - "Regular updates"
+
+Research_Best_Practices:
+  Always_Research:
+    - "External libraries"
+    - "New frameworks"
+    - "Security patterns"
+    - "Performance optimizations"
+    
+  Quality_Standards:
+    - "Official sources first"
+    - "Recent documentation"
+    - "Working examples"
+    - "Clear citations"
+```
+
+---
+*SimpleClaude Workflows v1.0 - Streamlined development workflows*
