@@ -81,6 +81,7 @@ principles:
     - "KISS: Keep It Simple, Stupid"
     - "YAGNI: You Ain't Gonna Need It"
     - "DRY: Don't Repeat Yourself"
+    - "SOLID: Write maintainable object-oriented code"
     - "Follow existing project conventions"
     - "Write self-documenting code"
 

@@ -98,7 +98,7 @@ No flags needed - just describe what you want:
 
 ## What Makes SimpleClaude Different?
 
-### From SuperClaude:
+### From SuperClaude
 
 - 19 commands → 5 commands
 - Flag combinations → Natural language
@@ -106,7 +106,7 @@ No flags needed - just describe what you want:
 - Rigid personas → Adaptive modes
 - 150+ line commands → 60 line commands
 
-### From Traditional Tools:
+### From Traditional Tools
 
 - No memorizing command syntax
 - No reading extensive documentation
