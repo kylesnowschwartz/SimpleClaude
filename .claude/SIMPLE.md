@@ -1,97 +1,89 @@
-# Simple-Claude Configuration
+# SimpleClaude Configuration
 
-Simple-Claude streamlines AI assistance with intelligent defaults and natural language commands.
+SimpleClaude is a streamlined AI assistant framework that makes Claude Code more approachable while preserving its power. This configuration establishes core behavior and patterns.
 
-## Quick Start
-```bash
-# Basic usage - auto-detects context
-/sc-understand              # Analyzes current directory
-/sc-create "user auth"       # Creates with smart defaults
-/sc-fix                      # Finds and fixes issues
-/sc-review                   # Reviews code quality
-/sc-modify "add logging"     # Modifies existing code
-```
+## Core Philosophy
 
-## Commands (5 total)
+**Discoverability First**: Every command should be intuitive. New users understand the system within minutes.
+**Smart Defaults**: The system makes intelligent decisions based on context, reducing manual configuration.
+**Progressive Complexity**: Start simple, add complexity only when needed.
 
-### `/sc-create` - Build new functionality
-Merges: spawn, task, build, design, document, dev-setup
-```bash
-/sc-create "REST API"        # Auto-detects framework
-/sc-create "UI component"    # Uses project conventions
-/sc-create :planner "auth"   # Force planner mode
-```
+## Commands
 
-### `/sc-modify` - Change existing code
-Merges: improve, migrate, cleanup, deploy, refactor
-```bash
-/sc-modify "add error handling"
-/sc-modify "upgrade to v3"
-/sc-modify :tester "security"   # Focus on security
-```
+SimpleClaude consolidates functionality into 5 versatile commands:
 
-### `/sc-understand` - Analyze and explain
-Merges: load, analyze, explain, estimate
-```bash
-/sc-understand               # Full analysis
-/sc-understand "auth flow"   # Specific analysis
-/sc-understand :planner      # Deep research mode
-```
+- `/sc-create` - Build new features, components, or systems
+- `/sc-modify` - Improve, refactor, or migrate existing code  
+- `/sc-understand` - Analyze, explain, or explore codebases
+- `/sc-fix` - Debug issues and resolve errors
+- `/sc-review` - Review code, security, or quality
 
-### `/sc-fix` - Resolve issues
-Focused on: troubleshoot, error resolution, git fixes
-```bash
-/sc-fix                      # Auto-detect issues
-/sc-fix "type errors"        # Specific fixes
-/sc-fix :implementer         # Quick fix mode
-```
+Each command:
+- Auto-detects context (file types, frameworks, patterns)
+- Uses natural language arguments
+- Adapts behavior based on project conventions
+- Delegates token-intensive work to sub-agents
 
-### `/sc-review` - Validate quality
-Merges: review, scan, test
-```bash
-/sc-review                   # Comprehensive review
-/sc-review "security"        # Focused review
-/sc-review :tester           # Thorough validation
-```
+## Adaptive Modes
 
-## Modes (3 adaptive)
+Three modes that blend naturally based on task context:
 
-**Auto-selected based on context, override with `:mode`**
+- **Planner**: Strategic thinking, architecture, analysis
+- **Implementer**: Building features, writing code, optimization
+- **Tester**: Quality assurance, security, validation
 
-- **:planner** - Research-first, asks questions, thorough analysis
-- **:implementer** - Action-oriented, quick decisions, builds fast  
-- **:tester** - Quality-focused, security-aware, best practices
+Modes activate automatically based on keywords and context, or manually with `:mode` syntax.
 
-## Smart Defaults
+## Context Awareness
 
-Simple-Claude auto-detects:
-- Project type (React, Node, Python, etc.)
-- Testing framework (Jest, pytest, etc.)
-- Code style (from existing files)
-- Build tools (npm, pip, cargo, etc.)
-- Git workflow (branching strategy)
+SimpleClaude automatically detects:
+- Project type and framework
+- Existing code conventions
+- Testing patterns
+- Git workflow
+- Documentation style
 
-## Configuration
+This enables intelligent adaptation without configuration.
 
-### Project Settings (Optional)
-```yaml
-# .claude/project.yml (auto-generated on first use)
-preferences:
-  default_mode: implementer    # planner|implementer|tester
-  auto_test: true             # Run tests after changes
-  style_guide: "existing"     # existing|strict|relaxed
-```
+## Sub-Agent Architecture
 
-### Advanced Usage
-- Natural language overrides any defaults
-- Combines multiple concerns: `/sc-create "secure API with tests"`
-- Chain commands: `/sc-understand` → `/sc-modify` → `/sc-review`
+Commands leverage Claude Code's Task tool for:
+- Large file analysis
+- Parallel operations
+- Research tasks
+- Token-intensive work
 
-## Philosophy
-- **Start simple** - Basic commands work immediately
-- **Smart escalation** - Complexity when needed
-- **Context aware** - Learns from your codebase
-- **Evidence-based** - Maintains SuperClaude's rigor
+This keeps the main conversation focused while delegating complex operations.
 
----
-*Simple-Claude v1.0 - Making AI assistance feel natural*
+## Essential Tools
+
+**Required**: Context7 for library documentation
+**Optional**: magic-mcp for frontend development
+
+## Session Management
+
+- `/compact` - Compress conversation when needed
+- `/clear` - Clear context between tasks
+- Focus on one task at a time
+- Use sub-agents to prevent token overflow
+
+## Workflow Patterns
+
+Common workflows are built-in:
+- Feature development
+- Debugging  
+- Code review
+- Refactoring
+- Research
+
+Each workflow adapts to your project's patterns.
+
+## Getting Started
+
+1. SimpleClaude works immediately - no setup required
+2. It learns from your project structure
+3. Commands understand natural language
+4. Modes blend automatically
+5. Sub-agents handle complexity
+
+The goal: Make AI assistance feel like a helpful colleague, not a complex tool.

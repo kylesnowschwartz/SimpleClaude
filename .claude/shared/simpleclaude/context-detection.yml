@@ -1,251 +1,109 @@
 # Context Detection - Smart defaults and auto-configuration
-# Consolidated from: loading-config, reference-patterns, architecture-patterns
+# Detects project context and adapts behavior accordingly
 
-## Smart Loading Strategy
-
-```yaml
-Core_Loading:
-  Always_Load:
-    Files: ["CLAUDE.md", "RULES.md"] 
-    Size: "~2000 tokens base"
-    Purpose: "Essential behavior and rules"
-    
-  On_Demand:
-    Modes: "Load modes.yml when mode-specific behavior needed"
-    Workflows: "Load workflows.yml for complex operations"
-    Patterns: "Load architecture patterns as needed"
-    
-  Optimization:
-    Cache: "Keep recently used patterns in memory"
-    Compress: "Auto-enable --uc when context >70%"
-    Cleanup: "Remove unused patterns when space needed"
-```
-
-## Context Auto-Detection
-
-```yaml
-Library_Detection:
-  Import_Patterns:
-    JavaScript: 'import .* from ["''][^./]'
-    Python: 'from \w+ import|\import \w+'
-    Go: 'import \([''][\w/]+'
-    
-  Auto_Actions:
-    Detected: "→ Load research patterns"
-    Research: "→ Context7 documentation lookup"
-    Fallback: "→ WebSearch if C7 unavailable"
-    
-UI_Component_Detection:
-  Keywords: ["button", "form", "modal", "table", "chart", "nav"]
-  File_Extensions: ["*.tsx", "*.jsx", "*.vue"]
-  
-  Auto_Actions:
-    Detected: "→ Load UI patterns"
-    Search: "→ Magic component builder"
-    Patterns: "→ Accessibility guidelines"
-    
-Architecture_Detection:
-  Keywords: ["microservice", "api", "database", "cache", "queue"]
-  Patterns: ["system design", "scalability", "architecture"]
-  
-  Auto_Actions:
-    Detected: "→ Load architecture patterns"
-    Analysis: "→ Sequential thinking mode"
-    Documentation: "→ DDD/API patterns"
-```
-
-## Intelligent Defaults
-
-```yaml
-Command_Defaults:
-  /analyze:
-    Mode: "Planner"
-    MCP: "Sequential for deep analysis"
-    Patterns: "Load investigation patterns"
-    
-  /build:
-    Mode: "Implementer"
-    MCP: "Context7 for libs, Magic for UI"
-    Patterns: "Load relevant tech patterns"
-    
-  /test:
-    Mode: "Tester"
-    MCP: "Context7 for frameworks"
-    Patterns: "Load testing patterns"
-    
-  /troubleshoot:
-    Mode: "Planner"
-    MCP: "Sequential for root cause"
-    Patterns: "Load debugging patterns"
-
-File_Type_Defaults:
-  Frontend_Files:
-    Extensions: ["*.tsx", "*.jsx", "*.vue", "*.css"]
-    Mode: "Implementer (frontend focus)"
-    MCP: "Magic for components"
-    
-  Backend_Files:
-    Extensions: ["*.py", "*.go", "*.java", "*api*"]
-    Mode: "Implementer (backend focus)"
-    MCP: "Context7 for frameworks"
-    
-  Test_Files:
-    Extensions: ["*.test.*", "*.spec.*"]
-    Mode: "Tester"
-    MCP: "Context7 for test frameworks"
-    
-  Config_Files:
-    Extensions: ["*.yml", "*.json", "*.env"]
-    Mode: "Planner"
-    Patterns: "Configuration best practices"
-```
-
-## Workflow Detection
-
-```yaml
-Multi_File_Operations:
-  Threshold: "3+ files"
-  Auto_Enable:
-    - "TodoList for coordination"
-    - "Progress tracking"
-    - "Checkpoint creation"
-    
-Complex_Commands:
-  Indicators:
-    - "Multiple targets specified"
-    - "Chained operations (&&)"
-    - "High-risk flags (--prod, --force)"
-    
-  Auto_Enable:
-    - "Planning mode suggestion"
-    - "Risk assessment"
-    - "Confirmation prompts"
-    
-Long_Running_Operations:
-  Threshold: ">5 minutes estimated"
-  Auto_Enable:
-    - "Progress indicators"
-    - "Checkpoint creation"
-    - "Background monitoring"
-```
-
-## Performance Optimization
-
-```yaml
-Token_Management:
-  Thresholds:
-    Green: "<50% context used"
-    Yellow: "50-70% context used"
-    Red: ">70% context used"
-    
-  Auto_Adjustments:
-    Yellow_Zone:
-      - "Enable compression for outputs"
-      - "Remove unused patterns"
-      - "Cache frequent operations"
+context_detection:
+  project_type:
+    detection_files:
+      javascript:
+        indicators: ["package.json", "node_modules"]
+        frameworks:
+          react: ["react in dependencies", "*.jsx files", "*.tsx files"]
+          vue: ["vue in dependencies", "*.vue files"]
+          angular: ["@angular in dependencies"]
+          next: ["next in dependencies", "pages directory"]
       
-    Red_Zone:
-      - "Force --uc mode"
-      - "Minimal pattern loading"
-      - "Aggressive cleanup"
+      python:
+        indicators: ["requirements.txt", "pyproject.toml", "setup.py", "Pipfile"]
+        frameworks:
+          django: ["django in dependencies", "manage.py"]
+          flask: ["flask in dependencies"]
+          fastapi: ["fastapi in dependencies"]
       
-Loading_Performance:
-  Strategies:
-    Lazy: "Load only when needed"
-    Predictive: "Preload likely patterns"
-    Cached: "Keep frequent patterns ready"
-    
-  Optimization:
-    - "Batch related pattern loads"
-    - "Compress large patterns"
-    - "Stream parsing for big files"
-```
-
-## Project Type Detection
-
-```yaml
-Project_Recognition:
-  React_Project:
-    Indicators: ["package.json w/ react", "*.tsx files", "src/components"]
-    Defaults:
-      Mode: "Implementer"
-      MCP: "Magic + Context7"
-      Patterns: "React best practices"
+      go:
+        indicators: ["go.mod", "go.sum"]
       
-  Python_API:
-    Indicators: ["requirements.txt", "*.py", "api/", "flask/django"]
-    Defaults:
-      Mode: "Implementer"
-      MCP: "Context7"
-      Patterns: "API design patterns"
+      rust:
+        indicators: ["Cargo.toml", "Cargo.lock"]
+    
+    auto_configure:
+      - "Detect package manager (npm, yarn, pnpm, pip, poetry)"
+      - "Identify testing framework from existing tests"
+      - "Recognize build tools and scripts"
+      - "Adapt to existing file organization"
+
+  code_style:
+    detection_strategy:
+      - "Analyze existing code for patterns"
+      - "Check for linter configurations (.eslintrc, .prettierrc, etc.)"
+      - "Detect indentation (spaces vs tabs, size)"
+      - "Identify naming conventions (camelCase, snake_case, etc.)"
+    
+    adapt_to:
+      - "Variable and function naming patterns"
+      - "File and directory naming conventions"
+      - "Import organization style"
+      - "Comment and documentation format"
+
+  git_workflow:
+    detection_points:
+      - "Analyze recent commit messages for patterns"
+      - "Check for .gitmessage template"
+      - "Identify branch naming conventions"
+      - "Detect PR/MR workflow patterns"
+    
+    fallback: "Use conventional commits if no clear pattern"
+
+  library_usage:
+    detection_patterns:
+      javascript: 
+        - pattern: 'import .* from ["''][^./]'
+          action: "Note external dependency"
+        - pattern: 'require\(["''][^./]'
+          action: "Note CommonJS dependency"
       
-  Go_Service:
-    Indicators: ["go.mod", "*.go", "cmd/", "internal/"]
-    Defaults:
-      Mode: "Implementer"
-      MCP: "Context7"
-      Patterns: "Go idioms"
+      python:
+        - pattern: 'from \w+ import'
+          action: "Note Python import"
+        - pattern: 'import \w+'
+          action: "Note Python module"
+    
+    auto_actions:
+      - "When external library detected → Consider Context7 lookup"
+      - "When UI framework detected → Consider magic-mcp for components"
+      - "Cache commonly used library patterns"
+
+  task_context:
+    indicators:
+      architecture_task:
+        - "Keywords: design, architecture, system, scale"
+        - "Questions about structure or organization"
+        - "Planning new features or systems"
       
-  General_Project:
-    Defaults:
-      Mode: "Based on command"
-      MCP: "Based on detection"
-      Patterns: "Load as needed"
-```
-
-## Adaptive Behavior
-
-```yaml
-Learning_Patterns:
-  Track:
-    - "Common command sequences"
-    - "Frequently used patterns"
-    - "User preferences"
-    - "Success rates"
+      implementation_task:
+        - "Keywords: build, create, implement, add, fix"
+        - "Specific feature requests"
+        - "Bug fixes or enhancements"
+      
+      quality_task:
+        - "Keywords: test, review, security, validate"
+        - "Code review requests"
+        - "Quality or security concerns"
     
-  Adapt:
-    - "Preload common patterns"
-    - "Suggest useful workflows"
-    - "Optimize for user style"
-    - "Cache successful approaches"
-    
-Session_Intelligence:
-  Remember:
-    - "Current project type"
-    - "Active workflows"
-    - "Recent operations"
-    - "User corrections"
-    
-  Apply:
-    - "Maintain context between commands"
-    - "Suggest next logical steps"
-    - "Avoid repeated mistakes"
-    - "Build on previous work"
-```
+    mode_activation:
+      - "Architecture task → Activate planner mode"
+      - "Implementation task → Activate implementer mode"
+      - "Quality task → Activate tester mode"
+      - "Mixed indicators → Blend modes appropriately"
 
-## Integration Rules
-
-```yaml
-Override_Hierarchy:
-  1_User_Flags: "Explicit flags always win"
-  2_Command_Context: "Command-specific defaults"
-  3_File_Detection: "Based on current files"
-  4_Project_Type: "General project settings"
-  5_Base_Defaults: "SimpleClaude defaults"
-  
-Conflict_Resolution:
-  Multiple_Signals:
-    Rule: "Most specific wins"
-    Example: "Test file in React project → Tester mode"
+  smart_defaults:
+    principles:
+      - "Detect rather than dictate"
+      - "Adapt to existing patterns"
+      - "Learn from corrections"
+      - "Start minimal, add as needed"
     
-  Ambiguous_Context:
-    Rule: "Ask user for clarification"
-    Example: "Both frontend and backend files → Which focus?"
-    
-  Performance_vs_Features:
-    Rule: "Preserve functionality, warn about performance"
-    Example: "High context but need patterns → Load with warning"
-```
-
----
-*Context Detection v1.0 - Smart defaults for SimpleClaude*
+    examples:
+      - "If React detected → Assume JSX, component patterns"
+      - "If tests exist → Match existing test style"
+      - "If CI/CD exists → Respect existing pipeline"
+      - "If docs exist → Follow documentation format"

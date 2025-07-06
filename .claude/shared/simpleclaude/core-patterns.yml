@@ -1,184 +1,115 @@
-# Core Patterns - Essential patterns for SimpleClaude
-# Consolidated from: universal-constants, system-config, execution-patterns, quality-patterns
+# SimpleClaude Core Patterns
+# Minimal, essential patterns for AI-assisted development
+# Focuses on smart defaults and context-aware behavior
 
-## Universal Legend & Symbols
-# Essential symbols and abbreviations used throughout SimpleClaude
+patterns:
+  task_approach:
+    principles:
+      - "Read and understand context before acting"
+      - "Use sub-agents for token-intensive operations"
+      - "Make intelligent decisions based on project context"
+      - "Start simple, escalate complexity only when needed"
+    
+    workflow:
+      - step: "Understand"
+        actions:
+          - "Analyze project structure and detect conventions"
+          - "Identify relevant files and dependencies"
+          - "Determine appropriate mode (Planner/Implementer/Tester)"
+      
+      - step: "Plan"
+        actions:
+          - "Break down complex tasks into manageable steps"
+          - "Identify what can be parallelized with sub-agents"
+          - "Consider edge cases and potential issues"
+      
+      - step: "Execute"
+        actions:
+          - "Implement changes incrementally"
+          - "Use existing project patterns and conventions"
+          - "Validate changes as you go"
+      
+      - step: "Verify"
+        actions:
+          - "Run available tests and linters"
+          - "Check for regressions"
+          - "Ensure code follows project standards"
 
- | Symbol   | Meaning        |     | Abbrev   | Meaning         |
- | -------- | ---------      | --- | -------- | ---------       |
- | →        | leads to       |     | cfg      | configuration   |
- | &        | and/with       |     | impl     | implementation  |
- | w/       | with           |     | perf     | performance     |
- | @        | at/located     |     | val      | validation      |
- | ∴        | therefore      |     | req      | requirements    |
- | ∵        | because        |     | deps     | dependencies    |
- | ✅       | success        |     | env      | environment     |
- | ❌       | failure        |     | err      | error           |
- | ⚠        | warning        |     | ctx      | context         |
- | ℹ        | information    |     | exec     | execution       |
- | 🔄       | retry/progress |     | H/M/L    | High/Medium/Low |
+  context_awareness:
+    auto_detect:
+      - "Project type from package files (package.json, pyproject.toml, etc.)"
+      - "Testing framework from existing tests"
+      - "Code style from existing codebase"
+      - "Git workflow from commit history"
+    
+    adapt_to:
+      - "Existing naming conventions"
+      - "File organization patterns"
+      - "Documentation style"
+      - "Error handling approaches"
 
-## Standard Paths & Conventions
+  sub_agent_usage:
+    when_to_delegate:
+      - "Large file analysis (>500 lines)"
+      - "Multi-file codebase exploration"
+      - "Research and documentation tasks"
+      - "Parallel independent operations"
+    
+    delegation_patterns:
+      - pattern: "Codebase Analysis"
+        approach: "Spawn analyzer agent with specific scope"
+        
+      - pattern: "Multi-file Changes"
+        approach: "Use parallel agents for independent files"
+        
+      - pattern: "Research Tasks"
+        approach: "Delegate to research-focused sub-agent"
 
-```yaml
-Project_Paths:
-  Claude_Config: ".claude/"
-  Commands: ".claude/commands/"
-  Shared: ".claude/shared/"
+  code_quality:
+    principles:
+      - "Prefer clarity over cleverness"
+      - "Follow existing project conventions"
+      - "Write self-documenting code"
+      - "Keep functions small and focused"
+    
+    validation:
+      - "Use project's linting configuration"
+      - "Run tests before considering task complete"
+      - "Ensure backwards compatibility"
 
-Documentation:
-  Reports: ".claudedocs/reports/"
-  Tasks: ".claudedocs/tasks/"
-  Checkpoints: ".claudedocs/checkpoints/"
+  session_management:
+    efficiency:
+      - "Use Claude Code's /compact for conversation compression"
+      - "Clear context with /clear when switching tasks"
+      - "Leverage sub-agents to avoid token overflow"
+      - "Focus on one task at a time"
 
-Git_Conventions:
-  Branch_Format: "feature/{task-id}-{description}"
-  Commit_Types: ["feat", "fix", "docs", "refactor", "test", "chore"]
+  essential_tools:
+    mcp_servers:
+      - name: "Context7"
+        purpose: "Library documentation lookup"
+        when: "Working with external libraries or frameworks"
+      
+      - name: "magic-mcp"
+        purpose: "Frontend development assistance"
+        when: "Building UI components (optional)"
+    
+    claude_code_commands:
+      - "/compact - Compress conversation history"
+      - "/clear - Clear context for new task"
+      - "/undo - Revert last changes"
 
-File_Extensions:
-  Code: [".js", ".ts", ".tsx", ".jsx", ".py", ".go"]
-  Config: [".json", ".yml", ".yaml", ".env"]
-  Docs: [".md", ".txt"]
-```
+  error_handling:
+    approach:
+      - "Fail fast with clear error messages"
+      - "Provide actionable solutions"
+      - "Learn from errors to prevent recurrence"
+      - "Use minimal reproducible examples for debugging"
 
-## Session & Execution Lifecycle
-
-```yaml
-Session_Management:
-  Context_Control:
-    Warning_Threshold: "70% context usage"
-    Critical_Threshold: "85% context usage"
-    Auto_Cleanup: "Remove unused context when needed"
-
-  Recovery_Points:
-    Auto_Save: "Before risky operations"
-    Checkpoints: "Major state changes"
-    Session_Restore: "Resume from last checkpoint"
-
-Execution_Lifecycle:
-  Pre_Execution:
-    Validation: ["Check prerequisites", "Verify permissions"]
-    Risk_Assessment: ["Data loss potential", "Scope of changes"]
-    Planning: "Use --plan flag for detailed preview"
-
-  During_Execution:
-    Progress_Monitoring: "Track operation status"
-    Error_Handling: "Retry transient errors, fail gracefully"
-    Resource_Management: "Monitor performance & limits"
-
-  Post_Execution:
-    Verification: "Confirm expected outcomes"
-    Cleanup: "Remove temporary resources"
-    Reporting: "Generate success/failure summary"
-```
-
-## Quality & Validation Framework
-
-```yaml
-Severity_Levels:
-  CRITICAL:
-    Definition: "Data loss, security breach, production failure"
-    Response: "Immediate stop, rollback if possible"
-    Examples: ["Delete production data", "Expose secrets"]
-
-  HIGH:
-    Definition: "Build failure, test failure, major issues"
-    Response: "Stop workflow, require user intervention"
-    Examples: ["Syntax errors", "Failed tests", "Missing deps"]
-
-  MEDIUM:
-    Definition: "Warnings, performance issues, quality concerns"
-    Response: "Continue with warning, log for review"
-    Examples: ["Slow operations", "Code smells", "Large files"]
-
-  LOW:
-    Definition: "Info messages, suggestions, minor issues"
-    Response: "Note in output, continue normally"
-    Examples: ["Style violations", "Optional improvements"]
-
-Error_Handling:
-  Transient_Errors:
-    Strategy: "Retry with exponential backoff"
-    Max_Retries: 3
-    Examples: ["Network timeout", "Resource busy", "Rate limit"]
-
-  Permanent_Errors:
-    Strategy: "Fail immediately with clear guidance"
-    Examples: ["Syntax error", "Permission denied", "Not found"]
-
-  Recovery_Strategies:
-    Automatic: ["Retry patterns", "Fallback options", "Cache usage"]
-    Manual: ["User guidance", "Alternative approaches", "Fix steps"]
-```
-
-## MCP Server Integration
-
-```yaml
-MCP_Servers:
-  Context7:
-    Purpose: "Library documentation and code examples"
-    Best_For: ["API usage", "Framework patterns", "Library docs"]
-    Flags: ["--c7", "--no-c7"]
-
-  Sequential:
-    Purpose: "Step-by-step complex problem solving"
-    Best_For: ["Architecture", "Debugging", "Root cause analysis"]
-    Flags: ["--seq", "--no-seq"]
-
-  Magic:
-    Purpose: "UI component generation"
-    Best_For: ["React/Vue components", "UI patterns"]
-    Flags: ["--magic", "--no-magic"]
-
-  Control_Flags:
-    Combined: ["--all-mcp", "--no-mcp"]
-    Priority: "User flags > Auto-detection > Defaults"
-
-Auto_Detection:
-  Library_Imports: "→ Context7 for documentation"
-  Complex_Problems: "→ Sequential for analysis"
-  UI_Components: "→ Magic for generation"
-  Override: "User flags always take precedence"
-```
-
-## Git Integration Standards
-
-```yaml
-Git_Safety:
-  Before_Commit:
-    - "Review staged changes"
-    - "Check for secrets/credentials"
-    - "Run tests if available"
-
-  Commit_Standards:
-    Format: "{type}: {description}"
-    Co_Author: "Co-Authored-By: Claude"
-    Types: ["feat", "fix", "docs", "refactor", "test", "chore"]
-
-  Branch_Strategy:
-    Feature: "feature/{description}"
-    Bugfix: "bugfix/{description}"
-    Protection: "No direct push to main"
-```
-
-## Performance & Token Management
-
-```yaml
-Token_Optimization:
-  Context_Budget:
-    Base_Load: "~1000 tokens (core patterns)"
-    Warning: "At 70% usage"
-    Critical: "At 85% usage"
-
-  Efficiency_Strategies:
-    Compression: "Use --uc flag when context high"
-    Caching: "Reuse previous results"
-    Selective_Loading: "Load only needed patterns"
-
-Performance_Monitoring:
-  Track: ["Operation duration", "Token usage", "Error rates"]
-  Optimize: ["Cache frequently used", "Compress output", "Batch operations"]
-```
-
----
-*Core Patterns v1.0 - Essential SimpleClaude patterns*
+  git_conventions:
+    strategy: "Detect and follow existing project conventions"
+    fallback: "Use conventional commits if no clear pattern exists"
+    principles:
+      - "Small, focused commits"
+      - "Clear, descriptive messages"
+      - "Reference issues when applicable"

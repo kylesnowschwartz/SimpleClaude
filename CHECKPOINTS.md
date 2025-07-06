@@ -33,6 +33,24 @@ Foundation established for creating 5 consolidated commands that route to existi
 
 ---
 
+## Core Patterns Update ✅
+**Completed: 2025-07-06**
+
+### Key Improvements:
+- ✅ Created properly formatted YAML without markdown-style tables
+- ✅ Removed out-of-scope references (reports/tasks/checkpoints folders)
+- ✅ Git conventions now detect existing patterns vs being prescriptive
+- ✅ Removed hardcoded file extensions - inferred from project
+- ✅ Corrected session management to use Claude Code commands (/compact, /clear)
+- ✅ Listed only essential MCP servers (Context7 required, magic-mcp optional)
+- ✅ Removed compression flags - focus on sub-agent delegation
+- ✅ Emphasized context-aware behavior over hardcoded rules
+
+### Format Decision:
+Stayed with YAML to maintain compatibility with SuperClaude's @include system and existing template infrastructure.
+
+---
+
 ## Future Checkpoints:
 - [ ] Phase 2: Consolidate Commands
 - [ ] Phase 3: Natural Language Processing

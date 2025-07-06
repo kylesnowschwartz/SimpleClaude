@@ -1,100 +1,53 @@
 # SimpleClaude Shared Patterns
 
-This directory contains the consolidated YAML patterns for SimpleClaude, streamlined from SuperClaude's extensive pattern library.
+This directory contains the core patterns and configurations for SimpleClaude.
 
-## Files Overview
+## Files
 
-### 1. `core-patterns.yml`
+### core-patterns.yml
+Essential patterns for AI-assisted development. This file has been simplified from SuperClaude to focus on:
+- Smart defaults over explicit configuration
+- Context-aware behavior instead of hardcoded rules
+- Minimal essential patterns rather than exhaustive lists
 
-Essential patterns that are frequently referenced across all commands:
+Key improvements from feedback:
+- Proper YAML syntax (no markdown tables)
+- Removed out-of-scope references (reports/tasks/checkpoints)
+- Git conventions detect existing patterns instead of being prescriptive
+- No hardcoded file extensions - inferred from project
+- Correct Claude Code commands (/compact, /clear)
+- Only essential MCP servers listed (Context7 required, magic-mcp optional)
+- Focus on sub-agent delegation over compression flags
 
-- **Universal Legend**: Common symbols and abbreviations
-- **Standard Paths**: Project structure and conventions
-- **Session Management**: Context control and recovery
-- **Execution Lifecycle**: Pre/during/post execution patterns
-- **Quality Framework**: Severity levels and error handling
-- **MCP Integration**: Server configuration and auto-detection
-- **Git Standards**: Safety checks and commit conventions
-- **Performance**: Token optimization strategies
+### modes.yml
+Defines the three adaptive modes (Planner, Implementer, Tester) that replace SuperClaude's 9 personas. Features:
+- Proper YAML structure without markdown formatting
+- Natural mode blending based on task context
+- Clear activation triggers and manual override syntax
+- Combines best aspects of multiple SuperClaude personas
 
-### 2. `modes.yml`
+### workflows.yml
+Common development workflows adapted for SimpleClaude's simplified command structure. Includes:
+- Feature development lifecycle
+- Debugging approaches
+- Code review patterns
+- Refactoring workflows
+- Sub-agent delegation patterns
+- Error handling strategies
 
-Simplified from 9 personas to 3 focused modes:
+### context-detection.yml
+Patterns for auto-detecting project context and conventions. Features:
+- Project type detection from package files
+- Framework identification
+- Code style inference
+- Git workflow detection
+- Smart defaults based on context
+- Library usage patterns
 
-- **Planner Mode**: Analysis, architecture, and education
-  - Combines: architect, analyzer, mentor personas
-  - Focus: Understanding before implementation
-- **Implementer Mode**: Building and optimization
-  - Combines: frontend, backend, refactorer, performance personas
-  - Focus: Quality implementation
-- **Tester Mode**: Validation and security
-  - Combines: qa, security, validation-focused analyzer personas
-  - Focus: Quality assurance and security
+## Design Philosophy
 
-### 3. `workflows.yml`
-
-Key workflow patterns for common development tasks:
-
-- **Planning Workflows**: Using --plan flag effectively
-- **Task Management**: When to use TodoLists
-- **Research Requirements**: Mandatory research patterns
-- **Development Workflows**: Feature dev, bug fixing, code review
-- **Workflow Patterns**: Sequential, parallel, iterative approaches
-- **Best Practices**: Guidelines for each workflow type
-
-### 4. `context-detection.yml`
-
-Smart defaults and auto-configuration:
-
-- **Smart Loading**: What to load when
-- **Auto-Detection**: Library, UI, architecture patterns
-- **Intelligent Defaults**: Command and file-type defaults
-- **Workflow Detection**: Multi-file and complex operations
-- **Performance**: Token management strategies
-- **Project Recognition**: Framework-specific defaults
-- **Adaptive Behavior**: Learning from usage patterns
-
-## Usage in Commands
-
-Commands can reference these patterns using the @include syntax:
-
-```yaml
-# In a command file:
-@include simpleclaude/core-patterns.yml#Universal_Legend
-@include simpleclaude/modes.yml#Planner_Mode
-@include simpleclaude/workflows.yml#Feature_Development
-@include simpleclaude/context-detection.yml#Library_Detection
-```
-
-## Design Principles
-
-1. **Simplicity**: Reduced from 20+ files to 4 focused files
-2. **Clarity**: Clear organization and naming
-3. **Efficiency**: Optimized for token usage
-4. **Compatibility**: Maintains @include syntax from SuperClaude
-5. **Focus**: Only the most commonly used patterns
-
-## Migration from SuperClaude
-
-| SuperClaude File             | SimpleClaude Location |
-| ---------------------------- | --------------------- |
-| universal-constants.yml      | core-patterns.yml     |
-| system-config.yml            | core-patterns.yml     |
-| execution-patterns.yml       | core-patterns.yml     |
-| quality-patterns.yml         | core-patterns.yml     |
-| superclaude-personas.yml     | modes.yml             |
-| planning-mode.yml            | workflows.yml         |
-| task-management-patterns.yml | workflows.yml         |
-| research-patterns.yml        | workflows.yml         |
-| loading-config.yml           | context-detection.yml |
-| reference-patterns.yml       | context-detection.yml |
-| architecture-patterns.yml    | context-detection.yml |
-
-## Benefits
-
-- **Reduced Complexity**: From 20+ files to 4 consolidated files
-- **Faster Loading**: ~80% reduction in pattern loading time
-- **Clearer Mental Model**: 3 modes instead of 9 personas
-- **Better Organization**: Logical grouping of related patterns
-- **Maintained Power**: All essential functionality preserved
-
+SimpleClaude patterns prioritize:
+1. **Discoverability** - Patterns should be self-evident
+2. **Adaptability** - Detect and follow existing conventions
+3. **Efficiency** - Use sub-agents for token-intensive work
+4. **Simplicity** - Start simple, add complexity only when needed
