@@ -1,0 +1,464 @@
+# SimpleClaude Mode Detection Module
+# Shared detection logic for command modules to parse natural language and detect modes
+# @include: ../simpleclaude/mode-detection.yml
+
+## Detection_Logic
+detection_logic:
+  parse_natural_language:
+    description: "Extract mode indicators from natural language input"
+    implementation: |
+      function detectModes(input) {
+        const modes = [];
+        const confidence = {};
+        const lowerInput = input.toLowerCase();
+        
+        // Direct flag detection (highest priority)
+        if (input.includes('--')) {
+          const flagMatches = input.match(/--[\w-]+/g) || [];
+          flagMatches.forEach(flag => {
+            const mode = mapFlagToMode(flag);
+            if (mode) {
+              modes.push(mode);
+              confidence[mode] = 1.0; // Direct flag = 100% confidence
+            }
+          });
+        }
+        
+        // Natural language pattern matching
+        for (const [mode, patterns] of Object.entries(modePatterns)) {
+          let score = 0;
+          let matches = 0;
+          
+          // Check primary keywords
+          patterns.keywords.primary.forEach(keyword => {
+            if (lowerInput.includes(keyword)) {
+              score += 0.4;
+              matches++;
+            }
+          });
+          
+          // Check secondary keywords
+          patterns.keywords.secondary.forEach(keyword => {
+            if (lowerInput.includes(keyword)) {
+              score += 0.2;
+              matches++;
+            }
+          });
+          
+          // Check natural patterns
+          patterns.natural_patterns.forEach(pattern => {
+            if (lowerInput.includes(pattern)) {
+              score += 0.5;
+              matches++;
+            }
+          });
+          
+          // Store confidence if meaningful match
+          if (matches > 0) {
+            confidence[mode] = Math.min(score, 1.0);
+            if (score >= 0.3) modes.push(mode); // 30% threshold
+          }
+        }
+        
+        return { modes, confidence };
+      }
+
+  keyword_mapping:
+    description: "Maps keywords and patterns to specific modes"
+    patterns:
+      watch_mode:
+        keywords:
+          primary: ["watch", "monitor", "observe", "track", "continuous"]
+          secondary: ["real-time", "live", "ongoing", "changes", "updates"]
+        natural_patterns:
+          - "watch for changes"
+          - "monitor the files"
+          - "keep an eye on"
+          - "track updates"
+
+      interactive_mode:
+        keywords:
+          primary: ["interactive", "step-by-step", "guided", "walkthrough"]
+          secondary: ["confirm", "approve", "check", "review", "manual"]
+        natural_patterns:
+          - "guide me through"
+          - "step by step"
+          - "let me review"
+          - "ask before"
+
+      planning_mode:
+        keywords:
+          primary: ["plan", "planning", "strategy", "approach", "design"]
+          secondary: ["blueprint", "roadmap", "outline", "proposal"]
+        natural_patterns:
+          - "show me the plan"
+          - "plan this out"
+          - "design first"
+          - "outline the steps"
+
+      tdd_mode:
+        keywords:
+          primary: ["tdd", "test-driven", "test-first", "red-green"]
+          secondary: ["failing test", "make it pass", "refactor"]
+        natural_patterns:
+          - "test driven development"
+          - "write the test first"
+          - "red green refactor"
+
+      magic_mode:
+        keywords:
+          primary: ["ui", "component", "frontend", "interface", "design"]
+          secondary: ["button", "form", "modal", "layout", "widget"]
+        natural_patterns:
+          - "create a UI"
+          - "build the interface"
+          - "design a form"
+          - "frontend component"
+
+      c7_mode:
+        keywords:
+          primary: ["library", "framework", "package", "module", "api"]
+          secondary: ["documentation", "usage", "examples", "reference"]
+        natural_patterns:
+          - "how to use"
+          - "documentation for"
+          - "api reference"
+          - "library examples"
+
+      strict_mode:
+        keywords:
+          primary: ["strict", "rigorous", "thorough", "comprehensive"]
+          secondary: ["validate", "verify", "ensure", "guarantee"]
+        natural_patterns:
+          - "be extra careful"
+          - "strict validation"
+          - "comprehensive testing"
+          - "production quality"
+
+      safe_mode:
+        keywords:
+          primary: ["safe", "careful", "cautious", "secure", "protected"]
+          secondary: ["backup", "rollback", "undo", "recover"]
+        natural_patterns:
+          - "be careful with"
+          - "safe approach"
+          - "don't break"
+          - "cautious changes"
+
+## Mode_Scoring
+mode_scoring:
+  confidence_calculation:
+    description: "Calculate confidence scores for detected modes"
+    algorithm: |
+      function calculateConfidence(input, context) {
+        const baseScores = detectModes(input);
+        const adjustedScores = {};
+        
+        // Apply context adjustments
+        for (const [mode, score] of Object.entries(baseScores.confidence)) {
+          let adjusted = score;
+          
+          // Project type boost
+          if (context.projectType && modeProjectBoost[mode]?.[context.projectType]) {
+            adjusted *= modeProjectBoost[mode][context.projectType];
+          }
+          
+          // File context boost
+          if (context.currentFile && modeFileBoost[mode]) {
+            const filePatterns = modeFileBoost[mode];
+            if (filePatterns.some(pattern => context.currentFile.match(pattern))) {
+              adjusted *= 1.2; // 20% boost
+            }
+          }
+          
+          // Error state boost
+          if (context.hasErrors && ['safe_mode', 'interactive_mode'].includes(mode)) {
+            adjusted *= 1.5; // 50% boost for safety in error conditions
+          }
+          
+          // Complexity boost
+          if (context.complexity === 'high' && ['planning_mode', 'strict_mode'].includes(mode)) {
+            adjusted *= 1.3; // 30% boost for planning in complex scenarios
+          }
+          
+          adjustedScores[mode] = Math.min(adjusted, 1.0);
+        }
+        
+        return adjustedScores;
+      }
+
+  threshold_rules:
+    activation_thresholds:
+      high_confidence: 0.7 # Activate mode automatically
+      medium_confidence: 0.5 # Suggest mode to user
+      low_confidence: 0.3 # Consider but don't suggest
+      ignore: 0.3 # Below this, ignore the mode
+
+    conflict_resolution:
+      description: "Handle conflicting mode detections"
+      rules:
+        - "User explicit flags override all detection"
+        - "Safety modes (safe, strict) take precedence"
+        - "Interactive overrides automatic modes"
+        - "Higher confidence wins in conflicts"
+        - "Compatible modes can combine"
+
+    compatible_combinations:
+      - ["watch_mode", "interactive_mode"]
+      - ["tdd_mode", "strict_mode"]
+      - ["planning_mode", "safe_mode"]
+      - ["c7_mode", "magic_mode"]
+      - ["strict_mode", "safe_mode"]
+
+## Context_Enhancement
+context_enhancement:
+  project_type_detection:
+    description: "Detect project type to enhance mode selection"
+    indicators:
+      web_app:
+        files: ["package.json", "index.html", "app.jsx", "App.vue"]
+        keywords: ["react", "vue", "angular", "svelte"]
+        mode_boost:
+          magic_mode: 1.3
+          c7_mode: 1.2
+
+      api_service:
+        files: ["server.js", "app.py", "main.go", "routes/"]
+        keywords: ["express", "fastapi", "gin", "rails"]
+        mode_boost:
+          c7_mode: 1.4
+          strict_mode: 1.2
+
+      cli_tool:
+        files: ["cli.js", "main.py", "cmd/", "bin/"]
+        keywords: ["commander", "argparse", "cobra", "click"]
+        mode_boost:
+          planning_mode: 1.2
+          interactive_mode: 1.1
+
+      test_suite:
+        files: ["test/", "spec/", "*.test.*", "*.spec.*"]
+        keywords: ["jest", "mocha", "pytest", "rspec"]
+        mode_boost:
+          tdd_mode: 1.5
+          strict_mode: 1.3
+
+  file_context_patterns:
+    description: "File patterns that boost certain modes"
+    patterns:
+      test_files:
+        pattern: "\\.(test|spec)\\.(js|ts|py|rb)$"
+        boost_modes: ["tdd_mode"]
+
+      ui_files:
+        pattern: "\\.(jsx|tsx|vue|svelte)$"
+        boost_modes: ["magic_mode"]
+
+      config_files:
+        pattern: "(config|settings|env)\\.(js|json|yaml|toml)$"
+        boost_modes: ["safe_mode", "strict_mode"]
+
+      production_files:
+        pattern: "(prod|production)"
+        boost_modes: ["safe_mode", "strict_mode", "interactive_mode"]
+
+  error_context_detection:
+    description: "Detect error conditions that affect mode selection"
+    indicators:
+      - "Exception or Error in recent output"
+      - "Test failures detected"
+      - "Build failures present"
+      - "Lint errors found"
+
+    mode_adjustments:
+      on_error:
+        boost: ["safe_mode", "interactive_mode", "strict_mode"]
+        reduce: ["watch_mode"]
+
+      on_test_failure:
+        boost: ["tdd_mode", "strict_mode"]
+        suggest: "Fix tests before proceeding"
+
+## Result_Format
+result_format:
+  detection_result:
+    description: "Standard format for mode detection results"
+    structure: |
+      {
+        "detected_modes": [
+          {
+            "mode": "planning_mode",
+            "confidence": 0.85,
+            "source": "natural_language",
+            "triggers": ["plan this out", "design first"]
+          }
+        ],
+        "recommended_mode": "planning_mode",
+        "compatible_modes": ["safe_mode", "interactive_mode"],
+        "context_factors": {
+          "project_type": "web_app",
+          "complexity": "high",
+          "has_errors": false
+        },
+        "suggestions": [
+          "Consider using --interactive for step-by-step guidance",
+          "Planning mode recommended due to task complexity"
+        ]
+      }
+
+  mode_activation:
+    description: "Information needed to activate a detected mode"
+    fields:
+      mode_name: "The canonical mode name"
+      activation_flags: "CLI flags to activate this mode"
+      behavior_changes: "How this mode changes execution"
+      tool_preferences: "Preferred tools in this mode"
+      validation_requirements: "Extra validation in this mode"
+
+  compound_result:
+    description: "Format for compound/multi-mode detection"
+    structure: |
+      {
+        "primary_mode": "tdd_mode",
+        "secondary_modes": ["strict_mode", "watch_mode"],
+        "execution_order": ["tdd_mode", "strict_mode", "watch_mode"],
+        "mode_interactions": {
+          "tdd_strict": "Enhanced test coverage requirements",
+          "tdd_watch": "Auto-run tests on file changes"
+        }
+      }
+
+## Usage_Examples
+usage_examples:
+  basic_usage:
+    description: "How commands include and use this module"
+    example: |
+      # In a command YAML file:
+      include:
+        - "@include: ../shared/simpleclaude/mode-detection.yml"
+
+      command:
+        name: "build"
+        detection:
+          - use: "detection_logic.parse_natural_language"
+          - apply: "mode_scoring.confidence_calculation"
+          - enhance: "context_enhancement.project_type_detection"
+          - format: "result_format.detection_result"
+
+  integration_patterns:
+    simple_detection: |
+      # Quick mode check for simple commands
+      const modes = detectModes(userInput);
+      if (modes.includes('watch_mode')) {
+        enableFileWatching();
+      }
+
+    full_detection: |
+      # Complete detection with context
+      const context = {
+        projectType: detectProjectType(),
+        currentFile: getCurrentFile(),
+        hasErrors: checkForErrors(),
+        complexity: assessComplexity()
+      };
+
+      const result = performFullDetection(userInput, context);
+      applyModes(result.recommended_mode, result.compatible_modes);
+
+    compound_handling: |
+      # Handle multiple detected modes
+      const compound = detectCompoundModes(userInput);
+      for (const mode of compound.execution_order) {
+        await activateMode(mode, compound.mode_interactions);
+      }
+
+  custom_patterns:
+    description: "How to extend with command-specific patterns"
+    example: |
+      # Command can add its own patterns
+      const customPatterns = {
+        turbo_mode: {
+          keywords: {
+            primary: ["turbo", "fast", "quick"],
+            secondary: ["speed", "rapid", "accelerate"]
+          },
+          natural_patterns: ["make it fast", "turbo mode", "quick build"]
+        }
+      };
+
+      // Merge with base patterns
+      const allPatterns = { ...basePatterns, ...customPatterns };
+
+## Flag_Mapping
+flag_mapping:
+  description: "Maps CLI flags to mode names"
+  mappings:
+    "--watch": "watch_mode"
+    "--interactive": "interactive_mode"
+    "--plan": "planning_mode"
+    "--tdd": "tdd_mode"
+    "--magic": "magic_mode"
+    "--ui": "magic_mode"
+    "--c7": "c7_mode"
+    "--docs": "c7_mode"
+    "--strict": "strict_mode"
+    "--safe": "safe_mode"
+    "--dry-run": "safe_mode"
+    "--think": "standard_thinking"
+    "--think-hard": "deep_thinking"
+    "--ultrathink": "maximum_thinking"
+
+## Utility_Functions
+utility_functions:
+  helpers: |
+    // Extract flags from input
+    function extractFlags(input) {
+      return (input.match(/--[\w-]+/g) || []).map(f => f.toLowerCase());
+    }
+
+    // Check if modes are compatible
+    function areModesCompatible(mode1, mode2) {
+      const incompatible = {
+        'safe_mode': ['aggressive_mode'],
+        'interactive_mode': ['batch_mode'],
+        'watch_mode': ['one_time_mode']
+      };
+      
+      return !(incompatible[mode1]?.includes(mode2) || 
+               incompatible[mode2]?.includes(mode1));
+    }
+
+    // Get mode priority for conflict resolution
+    function getModePriority(mode) {
+      const priorities = {
+        'safe_mode': 100,
+        'strict_mode': 90,
+        'interactive_mode': 80,
+        'planning_mode': 70,
+        'tdd_mode': 60,
+        'watch_mode': 50,
+        'magic_mode': 40,
+        'c7_mode': 30
+      };
+      return priorities[mode] || 0;
+    }
+
+    // Suggest modes based on task description
+    function suggestModes(taskDescription) {
+      const suggestions = [];
+      const lower = taskDescription.toLowerCase();
+      
+      if (lower.includes('ui') || lower.includes('component')) {
+        suggestions.push('Consider --magic for UI generation');
+      }
+      
+      if (lower.includes('test') || lower.includes('spec')) {
+        suggestions.push('Consider --tdd for test-driven development');
+      }
+      
+      if (lower.includes('production') || lower.includes('deploy')) {
+        suggestions.push('Consider --safe --strict for production safety');
+      }
+      
+      return suggestions;
+    }

@@ -2,7 +2,8 @@
 
 ---
 
-@include shared/simpleclaude/core-patterns.yml#Core_Philosophy
+@include shared/simpleclaude/core-patterns.yml#Core_Philosophy @include
+shared/simpleclaude/mode-detection.yml
 
 ## Command Execution
 
@@ -12,6 +13,7 @@ Executes immediately. Natural language controls behavior. Transforms:
 - What: [extracted-target]
 - How: [detected-approach]
 - When: [execution-mode]
+- Mode: [detected-modes]
 
 Intelligently modifies, improves, refactors, migrates, or deploys code by
 transforming natural language into structured modification directives.
@@ -23,21 +25,79 @@ transforming natural language into structured modification directives.
   What: current codebase performance bottlenecks
   How: profiling, optimization, caching, algorithm improvements
   When: immediate with measurement validation
+  Mode: [standard]
 
-"refactor this messy function" →
-  What: identified complex/problematic function
-  How: extract methods, simplify logic, improve naming
-  When: immediate with behavior preservation
+"carefully refactor the payment module" →
+  What: payment module requiring careful refactoring
+  How: backup first, extract methods, preserve behavior, extensive testing
+  When: safe mode with validation at each step
+  Mode: [safe, careful]
 
-"migrate to TypeScript --plan" →
-  What: JavaScript codebase requiring type safety
-  How: incremental migration strategy, type definitions
-  When: planned mode - show migration steps first
+"quickly fix the typo" →
+  What: identified typo in codebase
+  How: immediate correction, minimal validation
+  When: quick execution mode
+  Mode: [quick]
 
-"cleanup unused code" →
-  What: dead code, unused dependencies, orphaned files
-  How: static analysis, dependency graph, safe removal
-  When: immediate with --safe mode implied
+"monitor while optimizing performance" →
+  What: performance optimization with continuous monitoring
+  How: profile, optimize, track metrics in real-time
+  When: watch mode with continuous feedback
+  Mode: [watch]
+
+"walk me through migrating to TypeScript" →
+  What: JavaScript to TypeScript migration
+  How: step-by-step conversion with explanations
+  When: interactive mode with user approval
+  Mode: [interactive]
+```
+
+### Mode Detection & Adaptation
+
+The command detects modes from natural language patterns:
+
+**Safe Mode** (safe, careful, cautious, secure)
+
+- Create backups before changes
+- Validate each modification step
+- Extensive testing after changes
+- Rollback capability
+
+**Quick Mode** (quick, fast, rapid, immediate)
+
+- Minimal validation overhead
+- Direct execution
+- Focus on speed
+- Basic testing only
+
+**Watch Mode** (watch, monitor, track, continuous)
+
+- Real-time file monitoring
+- Continuous metric tracking
+- Auto-rollback on issues
+- Live feedback during changes
+
+**Interactive Mode** (interactive, walkthrough, guide, step-by-step)
+
+- User approval at each step
+- Detailed explanations
+- Option to modify approach
+- Educational process
+
+**Mode Blending**
+
+```
+"carefully monitor performance improvements" →
+  Modes: [safe, watch]
+  Result: Safe changes with real-time monitoring
+
+"quickly refactor with tests" →
+  Modes: [quick]
+  Result: Fast refactoring but maintains test coverage
+
+"interactively migrate the database" →
+  Modes: [interactive]
+  Result: Step-by-step migration with confirmations
 ```
 
 @include shared/simpleclaude/core-patterns.yml#Evidence_Standards
@@ -45,10 +105,12 @@ transforming natural language into structured modification directives.
 Examples:
 
 - `/sc-modify improve performance` - Optimize code performance
-- `/sc-modify refactor this messy function` - Clean up code structure
-- `/sc-modify migrate to TypeScript --plan` - Show migration plan first
-- `/sc-modify deploy to production --magic` - Deploy with UI dashboard
-- `/sc-modify cleanup unused code` - Remove dead code and dependencies
+- `/sc-modify carefully refactor the payment module` - Safe refactoring with
+  backups
+- `/sc-modify quickly fix the typo in README` - Immediate fix, minimal overhead
+- `/sc-modify monitor while optimizing database queries` - Real-time performance
+  tracking
+- `/sc-modify walk me through upgrading React` - Interactive upgrade process
 
 ## Smart Detection & Routing
 
@@ -70,12 +132,8 @@ Cleanup: [cleanup, clean, remove unused, delete dead code, prune]
 ```
 
 **Intelligent Context Detection:** Analyzes request intent | Identifies scope
-automatically | Chooses optimal approach | Evidence-based modifications
-
-**--watch:** Monitor changes continuously | Real-time impact tracking |
-Auto-rollback on issues **--interactive:** Step-by-step modifications | Approval
-at each stage | Explain changes **--safe:** Conservative mode | Preserve all
-functionality | Extensive testing
+automatically | Chooses optimal approach | Evidence-based modifications |
+Detects modes from natural language patterns
 
 @include shared/simpleclaude/core-patterns.yml#Task_Management
 

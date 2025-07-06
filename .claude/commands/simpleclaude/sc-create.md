@@ -3,7 +3,8 @@ intelligent routing
 
 ---
 
-@include shared/simpleclaude/core-patterns.yml#Core_Philosophy
+@include shared/simpleclaude/core-patterns.yml#Core_Philosophy @include
+shared/simpleclaude/mode-detection.yml
 
 ## Command Execution
 
@@ -13,6 +14,7 @@ Executes immediately. Natural language controls behavior. Transforms:
 - What: [extracted-target]
 - How: [detected-approach]
 - When: [execution-mode]
+- Mode: [detected-modes]
 
 Smart creation router that consolidates spawn, task, build, design, document,
 and dev-setup functionality. Semantically transforms natural language into
@@ -25,21 +27,73 @@ structured creation directives.
   What: REST API with authentication endpoints
   How: JWT tokens, validation, tests, documentation
   When: immediate execution with progressive building
+  Mode: [standard]
 
-"plan for payment system" →
+"carefully plan a payment system" →
   What: payment processing system architecture
-  How: design-first approach with comprehensive planning
-  When: planned mode - design then optional build
+  How: meticulous design-first approach with comprehensive planning
+  When: planned mode with careful attention
+  Mode: [careful, plan]
 
-"react hooks with tests" →
+"quickly prototype react hooks with tests" →
   What: custom React hooks library
-  How: pattern analysis, unit tests, TypeScript types
-  When: immediate with test-driven development
+  How: rapid iteration, unit tests, minimal setup
+  When: immediate with fast prototyping
+  Mode: [quick]
 
-"--magic dashboard UI" →
+"magic dashboard UI with animations" →
   What: interactive dashboard interface
-  How: modern UI patterns, responsive design, animations
+  How: modern UI patterns, responsive design, smooth animations
   When: immediate with visual generation mode
+  Mode: [magic]
+```
+
+### Mode Detection & Adaptation
+
+The command detects modes from natural language patterns:
+
+**Careful Mode** (careful, meticulous, thorough)
+
+- Comprehensive analysis before implementation
+- Detailed error handling and edge cases
+- Extended test coverage
+- Thorough documentation
+
+**Quick Mode** (quick, fast, rapid, prototype)
+
+- Minimal viable implementation
+- Focus on core functionality
+- Basic tests only
+- Concise documentation
+
+**Plan Mode** (plan, design, architect, blueprint)
+
+- Design-first approach
+- Architecture documentation
+- TodoWrite for implementation steps
+- Option to proceed with build
+
+**Magic Mode** (magic, amazing, beautiful)
+
+- Enhanced UI/UX features
+- Modern patterns and animations
+- Visual polish and interactions
+- Creative solutions
+
+**Mode Blending**
+
+```
+"carefully create a magic dashboard" →
+  Modes: [careful, magic]
+  Result: Beautiful UI with thorough testing and documentation
+
+"quickly plan API endpoints" →
+  Modes: [quick, plan]
+  Result: Rapid architectural sketch with key decisions
+
+"meticulously test payment integration" →
+  Modes: [careful]
+  Result: Comprehensive test suite with edge cases
 ```
 
 @include shared/simpleclaude/core-patterns.yml#Evidence_Standards
@@ -47,15 +101,17 @@ structured creation directives.
 Examples:
 
 - `/sc-create user auth API` - Builds complete REST API with JWT, tests, docs
-- `/sc-create --magic dashboard UI` - Generates full UI with modern patterns
-- `/sc-create --c7 react hooks` - Creates hooks with Context7 best practices
+- `/sc-create magic dashboard UI` - Generates full UI with modern patterns
+- `/sc-create react hooks with best practices` - Creates hooks using project
+  patterns
 - `/sc-create plan for payment system` - Routes to planning workflow first
-- `/sc-create --plan microservice architecture` - Shows design plan before
-  building
+- `/sc-create carefully architect microservice system` - Thorough design with
+  detailed specs
+- `/sc-create quickly prototype chat interface` - Rapid MVP with core features
+- `/sc-create meticulously test file upload API` - Comprehensive test coverage
 
-**Planning Mode:** Detects "plan", "design", "architect" keywords | Creates
-comprehensive design docs | TodoWrite for implementation steps | Can proceed to
-build after approval
+**Mode-Based Behavior:** Natural language triggers adaptive workflows | Combines
+modes for nuanced approaches | Context-aware execution
 
 **Project/App:** Full scaffold with structure, config, dependencies | Git init |
 Complete test setup | README and documentation
@@ -74,11 +130,11 @@ Deployment strategies | Scaling considerations
 
 **Intelligent Detection:** Automatically identifies creation type from
 $ARGUMENTS | Routes to planning when complex | Adapts approach based on project
-patterns
+patterns and detected modes
 
-**--watch:** Monitor creation progress | Auto-adjust on errors | Real-time
-feedback **--interactive:** Step-by-step guidance | User confirmation at key
-points | Progressive refinement
+**Workflow Adaptation:** Mode detection influences every step | Careful mode
+adds validation layers | Quick mode streamlines processes | Magic mode enhances
+output quality
 
 @include shared/simpleclaude/core-patterns.yml#Task_Management
 
