@@ -142,11 +142,6 @@ if [[ "$CREATE_BACKUP" = true ]] && [[ "$DRY_RUN" = false ]]; then
         cp -r "$TARGET_DIR/shared/simpleclaude" "$BACKUP_DIR/shared-simpleclaude"
     fi
     
-    # Backup SIMPLE.md if it exists
-    if [[ -f "$TARGET_DIR/SIMPLE.md" ]]; then
-        echo "  Backing up SIMPLE.md..."
-        cp "$TARGET_DIR/SIMPLE.md" "$BACKUP_DIR/SIMPLE.md"
-    fi
     
     echo -e "${GREEN}Backup created at: $BACKUP_DIR${NC}"
     echo ""
@@ -278,39 +273,6 @@ else
     echo -e "${RED}  Warning: No SimpleClaude shared patterns found in source${NC}"
 fi
 
-# Install SIMPLE.md (only if it doesn't exist or user confirms)
-echo -e "${YELLOW}Checking SIMPLE.md configuration...${NC}"
-if [[ -f "$SOURCE_DIR/SIMPLE.md" ]]; then
-    target_simple="$TARGET_DIR/SIMPLE.md"
-    
-    if [[ -f "$target_simple" ]]; then
-        # File exists, check if it's different
-        source_hash=$(file_hash "$SOURCE_DIR/SIMPLE.md")
-        target_hash=$(file_hash "$target_simple")
-        
-        if [[ "$source_hash" != "$target_hash" ]]; then
-            if [[ "$DRY_RUN" = true ]]; then
-                echo "    Would create: SIMPLE.md.new (preserving your customizations)"
-            else
-                cp "$SOURCE_DIR/SIMPLE.md" "$target_simple.new"
-                echo "    Created: SIMPLE.md.new (your customizations preserved)"
-                echo -e "${BLUE}    To review changes: diff SIMPLE.md SIMPLE.md.new${NC}"
-            fi
-        else
-            echo "    SIMPLE.md is up to date"
-        fi
-    else
-        # New file
-        if [[ "$DRY_RUN" = true ]]; then
-            echo "    Would add: SIMPLE.md"
-        else
-            cp "$SOURCE_DIR/SIMPLE.md" "$target_simple"
-            echo "    Added: SIMPLE.md"
-        fi
-    fi
-else
-    echo -e "${RED}  Warning: No SIMPLE.md found in source${NC}"
-fi
 
 # Final summary
 echo ""
@@ -322,7 +284,6 @@ else
     echo ""
     echo -e "${BLUE}SimpleClaude has been installed while preserving:${NC}"
     echo "  • Your custom commands and patterns"
-    echo "  • Any customizations to SIMPLE.md"
     echo "  • All other Claude configuration files"
     echo ""
     if [[ "$CREATE_BACKUP" = true ]]; then
@@ -332,9 +293,6 @@ else
         echo -e "${BLUE}To restore if needed:${NC}"
         echo "  cp -r $BACKUP_DIR/commands-simpleclaude/* $TARGET_DIR/commands/simpleclaude/"
         echo "  cp -r $BACKUP_DIR/shared-simpleclaude/* $TARGET_DIR/shared/simpleclaude/"
-        if [[ -f "$BACKUP_DIR/SIMPLE.md" ]]; then
-            echo "  cp $BACKUP_DIR/SIMPLE.md $TARGET_DIR/SIMPLE.md"
-        fi
     fi
     echo ""
     echo -e "${GREEN}Try a command:${NC} /sc-create a React component"

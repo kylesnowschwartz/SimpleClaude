@@ -49,7 +49,6 @@ SimpleClaude/
 ├── .claude/
 │   ├── commands/simpleclaude/    # 5 natural language commands
 │   ├── shared/simpleclaude/      # Shared patterns and modes
-│   └── SIMPLE.md                 # Main configuration
 ├── docs/                         # Documentation
 ├── install.sh                    # Installation/update script
 └── README.md                     # This file

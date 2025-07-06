@@ -18,7 +18,8 @@
 
 ## Command Execution
 
-**If "$ARGUMENTS" is empty**: Display usage suggestions and stop. **If "$ARGUMENTS" has content**: Think step-by-step, then execute.
+**If "$ARGUMENTS" is empty**: Display usage suggestions and stop.  
+**If "$ARGUMENTS" has content**: Think step-by-step, then execute.
 
 Transforms: "$ARGUMENTS" into structured intent:
 
