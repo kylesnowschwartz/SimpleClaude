@@ -1,0 +1,23 @@
+# SimpleClaude Core Includes
+# This file aggregates all shared components for DRY command definitions
+
+# Context detection patterns for project analysis
+@include shared/simpleclaude/context-detection.yml
+
+# Core development patterns and principles
+@include shared/simpleclaude/core-patterns.yml
+
+# Mode detection based on request analysis
+@include shared/simpleclaude/mode-detection.yml
+
+# Three adaptive modes: planner, implementer, tester
+@include shared/simpleclaude/modes.yml
+
+# Sub-agent architecture for parallel processing
+@include shared/simpleclaude/sub-agents.yml
+
+# Thinking mode configurations
+@include shared/simpleclaude/thinking-modes.yml
+
+# Common development workflows
+@include shared/simpleclaude/workflows.yml

@@ -9,6 +9,9 @@ explore_first_principle: |
   • Use sub-agents early, especially at conversation start
   • Only implement after thorough exploration
 
+mcp_tools_directive: |
+  MCP tool calls should be done within sub-agents for token context management
+
 sub_agent_types:
   researcher:
     purpose: "Analysis specialist - explores WITHOUT writing code"
