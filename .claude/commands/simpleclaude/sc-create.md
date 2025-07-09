@@ -18,7 +18,7 @@ Transforms: "$ARGUMENTS" into structured intent:
 
 **Auto-Spawning:** Spawns specialized sub-agents for parallel task execution.
 
-Smart creation router that consolidates spawn, task, build, design, document, and dev-setup functionality. Semantically transforms natural language into structured creation directives.
+Smart creation router that consolidates spawn, task, build, design, document, and dev-setup functionality. Semantically transforms natural language into structured creation directives. Build exactly to user specifications without refactoring or unasked for enhancements.
 
 ### Semantic Transformations
 
