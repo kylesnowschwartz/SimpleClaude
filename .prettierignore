@@ -1,2 +1,2 @@
 # Ignore SimpleClaude includes file as it uses custom @include syntax
-.claude/shared/simpleclaude/includes.yml
+.claude/shared/simpleclaude/includes.md
