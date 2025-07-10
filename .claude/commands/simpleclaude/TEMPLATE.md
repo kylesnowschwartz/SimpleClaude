@@ -2,7 +2,7 @@
 
 ---
 
-@include shared/simpleclaude/includes.yml
+@include shared/simpleclaude/includes.md
 
 ## Command Execution
 

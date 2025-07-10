@@ -74,17 +74,17 @@ test_includes() {
   echo "-------------------------------------"
 
   run_claude_test \
-    "Can you see the content from this include directive: @include shared/simpleclaude/includes.yml" \
-    "includes.yml" \
+    "Can you see the content from this include directive: @include shared/simpleclaude/includes.md" \
+    "includes.md" \
     "Basic @include recognition"
 
   run_claude_test \
-    "When you process @include shared/simpleclaude/includes.yml, can you see the actual content from the nested includes like the MCP tools directive from sub-agents.yml?" \
+    "When you process @include shared/simpleclaude/includes.md, can you see the actual content from the nested includes like the MCP tools directive from sub-agents.yml?" \
     "mcp_tools_directive" \
     "Nested @include resolution"
 
   run_claude_test \
-    "In the SimpleClaude system loaded via @include shared/simpleclaude/includes.yml, what are the 4 sub-agent types defined?" \
+    "In the SimpleClaude system loaded via @include shared/simpleclaude/includes.md, what are the 4 sub-agent types defined?" \
     "researcher.*coder" \
     "Access to deeply nested content"
 
