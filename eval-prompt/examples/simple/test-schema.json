@@ -1,0 +1,20 @@
+{
+  "properties": {
+    "title": {
+      "type": "string"
+    },
+    "keywords": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "category": {
+      "type": "string",
+      "enum": ["nature", "technology", "people", "abstract"]
+    },
+    "isActive": {
+      "type": "boolean"
+    }
+  }
+}
