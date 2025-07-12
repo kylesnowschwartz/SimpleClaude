@@ -130,26 +130,6 @@ else
 fi
 echo ""
 
-# Create backups
-if [[ "$CREATE_BACKUP" = true ]] && [[ "$DRY_RUN" = false ]]; then
-  BACKUP_DIR="$TARGET_DIR/backups/simpleclaude-install-$TIMESTAMP"
-  echo -e "${YELLOW}Creating backup...${NC}"
-
-  mkdir -p "$BACKUP_DIR"
-
-  # Backup existing SimpleClaude components
-  backup_directory "commands/simpleclaude" "commands-simpleclaude"
-  backup_directory "shared/simpleclaude" "shared-simpleclaude"
-
-  # Backup extras directory if installing extras
-  if [[ "$INSTALL_EXTRAS" = true ]]; then
-    backup_directory "commands/extras" "commands-extras"
-  fi
-
-  echo -e "${GREEN}Backup created at: $BACKUP_DIR${NC}"
-  echo ""
-fi
-
 # Function: file_hash
 # Description: Get SHA256 hash of a file
 # Parameters: $1 - file path
@@ -255,6 +235,26 @@ install_directory() {
     echo -e "${RED}  Warning: $warning_msg${NC}"
   fi
 }
+
+# Create backups
+if [[ "$CREATE_BACKUP" = true ]] && [[ "$DRY_RUN" = false ]]; then
+  BACKUP_DIR="$TARGET_DIR/backups/simpleclaude-install-$TIMESTAMP"
+  echo -e "${YELLOW}Creating backup...${NC}"
+
+  mkdir -p "$BACKUP_DIR"
+
+  # Backup existing SimpleClaude components
+  backup_directory "commands/simpleclaude" "commands-simpleclaude"
+  backup_directory "shared/simpleclaude" "shared-simpleclaude"
+
+  # Backup extras directory if installing extras
+  if [[ "$INSTALL_EXTRAS" = true ]]; then
+    backup_directory "commands/extras" "commands-extras"
+  fi
+
+  echo -e "${GREEN}Backup created at: $BACKUP_DIR${NC}"
+  echo ""
+fi
 
 # Install SimpleClaude commands
 install_directory "commands/simpleclaude" "commands/simpleclaude" "*.md" "commands" "No SimpleClaude commands found in source"
