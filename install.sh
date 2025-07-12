@@ -40,12 +40,14 @@ Options:
     --execute          Actually perform the installation (default: dry-run)
     --no-backup        Skip backup creation (not recommended)
     --dry-run          Show what would be installed without making changes (default)
+    --extras           Also install commands/extras directory (experimental commands)
     --verbose, -v      Show detailed output
     --help             Show this help message
 
 Examples:
     $0                                    # Preview changes (dry-run)
     $0 --execute                         # Actually install to ~/.claude
+    $0 --execute --extras                # Install including experimental commands
     $0 --target ~/code/dotfiles/claude   # Preview installation to custom location
     $0 --target ~/code/dotfiles/claude --execute  # Install to custom location
 
@@ -56,6 +58,7 @@ EOF
 TARGET_DIR="$DEFAULT_TARGET"
 CREATE_BACKUP=true
 DRY_RUN=true  # Default to dry-run for safety
+INSTALL_EXTRAS=false
 VERBOSE=false
 
 while [[ $# -gt 0 ]]; do
@@ -74,6 +77,10 @@ while [[ $# -gt 0 ]]; do
             ;;
         --execute)
             DRY_RUN=false
+            shift
+            ;;
+        --extras)
+            INSTALL_EXTRAS=true
             shift
             ;;
         --verbose|-v)
@@ -140,6 +147,12 @@ if [[ "$CREATE_BACKUP" = true ]] && [[ "$DRY_RUN" = false ]]; then
     if [[ -d "$TARGET_DIR/shared/simpleclaude" ]]; then
         echo "  Backing up shared/simpleclaude..."
         cp -r "$TARGET_DIR/shared/simpleclaude" "$BACKUP_DIR/shared-simpleclaude"
+    fi
+    
+    # Backup extras directory if installing extras
+    if [[ "$INSTALL_EXTRAS" = true ]] && [[ -d "$TARGET_DIR/commands/extras" ]]; then
+        echo "  Backing up commands/extras..."
+        cp -r "$TARGET_DIR/commands/extras" "$BACKUP_DIR/commands-extras"
     fi
     
     
@@ -273,6 +286,62 @@ else
     echo -e "${RED}  Warning: No SimpleClaude shared patterns found in source${NC}"
 fi
 
+# Install SimpleClaude extras commands (optional)
+if [[ "$INSTALL_EXTRAS" = true ]]; then
+    echo -e "${YELLOW}Installing SimpleClaude extras commands...${NC}"
+    if [[ -d "$SOURCE_DIR/commands/extras" ]]; then
+        if [[ "$DRY_RUN" = false ]]; then
+            mkdir -p "$TARGET_DIR/commands/extras"
+        fi
+        
+        updated_count=0
+        added_count=0
+        unchanged_count=0
+        
+        for file in "$SOURCE_DIR/commands/extras"/*.md; do
+            if [[ -f "$file" ]]; then
+                basename_file=$(basename "$file")
+                target_file="$TARGET_DIR/commands/extras/$basename_file"
+                
+                if [[ -f "$target_file" ]]; then
+                    # File exists, check if it's different
+                    source_hash=$(file_hash "$file")
+                    target_hash=$(file_hash "$target_file")
+                    
+                    if [[ "$source_hash" != "$target_hash" ]]; then
+                        if [[ "$DRY_RUN" = true ]]; then
+                            echo "    Would update: $basename_file"
+                        else
+                            cp "$file" "$target_file"
+                            echo "    Updated: $basename_file"
+                        fi
+                        ((updated_count++))
+                    else
+                        if [[ "$VERBOSE" = true ]]; then
+                            echo "    Unchanged: $basename_file"
+                        fi
+                        ((unchanged_count++))
+                    fi
+                else
+                    # New file
+                    if [[ "$DRY_RUN" = true ]]; then
+                        echo "    Would add: $basename_file"
+                    else
+                        cp "$file" "$target_file"
+                        echo "    Added: $basename_file"
+                    fi
+                    ((added_count++))
+                fi
+            fi
+        done
+        
+        # Summary
+        echo -e "${GREEN}  Extras: $added_count new, $updated_count updated, $unchanged_count unchanged${NC}"
+    else
+        echo -e "${RED}  Warning: No SimpleClaude extras found in source${NC}"
+    fi
+fi
+
 
 # Final summary
 echo ""
@@ -293,7 +362,14 @@ else
         echo -e "${BLUE}To restore if needed:${NC}"
         echo "  cp -r $BACKUP_DIR/commands-simpleclaude/* $TARGET_DIR/commands/simpleclaude/"
         echo "  cp -r $BACKUP_DIR/shared-simpleclaude/* $TARGET_DIR/shared/simpleclaude/"
+        if [[ "$INSTALL_EXTRAS" = true ]]; then
+            echo "  cp -r $BACKUP_DIR/commands-extras/* $TARGET_DIR/commands/extras/"
+        fi
     fi
     echo ""
-    echo -e "${GREEN}Try a command:${NC} /sc-create a React component"
+    if [[ "$INSTALL_EXTRAS" = true ]]; then
+        echo -e "${GREEN}Try a command:${NC} /sc-create a React component or /eastereggs"
+    else
+        echo -e "${GREEN}Try a command:${NC} /sc-create a React component"
+    fi
 fi
