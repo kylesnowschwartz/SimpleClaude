@@ -4,7 +4,8 @@ This file provides guidance to [Claude Code](https://github.com/anthropics/claud
 
 ## Critical Rules
 
-- NEVER modify `.claude/` directory without explicit user permission - it's the template source
+- **important** `.claude/` is the template source for SimpleClaude's commands
+- Feature additions: ALWAYS wait for user feedback - no speculative features
 - Command changes: update TEMPLATE.md first, then apply to all 5 core-commands (sc-create, sc-modify, sc-understand, sc-fix, sc-review)
 - Maintain consistency across all commands - no deviations from template unless instructed otherwise
 
@@ -24,6 +25,4 @@ This file provides guidance to [Claude Code](https://github.com/anthropics/claud
 ## Development Workflow
 
 - Test changes: try commands with real examples before committing
-- Documentation: update docs/PHASES.md for completed work only
 - Commits: use conventional format (feat:, fix:, docs:, refactor:)
-- Feature additions: wait for user feedback - no speculative features
