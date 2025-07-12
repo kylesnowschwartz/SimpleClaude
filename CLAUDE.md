@@ -22,7 +22,15 @@ This file provides guidance to [Claude Code](https://github.com/anthropics/claud
 - Token-efficient through shared YAML patterns loaded via @include directives
 - Sub-agent architecture spawns specialized assistants per task
 
+## Versioning
+
+- Current version: 0.2.0 (beta)
+- Version file: `VERSION` (single line with semantic version)
+- Release process: update VERSION → commit → tag → push
+- Version badge in README.md must match VERSION file
+
 ## Development Workflow
 
 - Test changes: try commands with real examples before committing
 - Commits: use conventional format (feat:, fix:, docs:, refactor:)
+- Update VERSION file and README badge for releases
