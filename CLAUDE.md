@@ -24,13 +24,13 @@ This file provides guidance to [Claude Code](https://github.com/anthropics/claud
 
 ## Versioning
 
-- Current version: 0.2.0 (beta)
-- Version file: `VERSION` (single line with semantic version)
-- Release process: update VERSION → commit → tag → push
-- Version badge in README.md must match VERSION file
+- Current version: 0.2.1 (beta)
+- Follow [SemVer](https://semver.org/): fix = patch, feat = minor, breaking = major
+- **Assess each commit: does it warrant a release?** Bug fixes and new features should trigger releases
+- Release process: update README badge → commit → `git tag vX.X.X` → push with tags
 
 ## Development Workflow
 
 - Test changes: try commands with real examples before committing
 - Commits: use conventional format (feat:, fix:, docs:, refactor:)
-- Update VERSION file and README badge for releases
+- Consider release for meaningful changes following SemVer practices
