@@ -71,36 +71,49 @@ context_detection:
       javascript:
         - pattern: 'import .* from ["''][^./]'
           action: "Note external dependency"
+          validation: "check_package_json"
         - pattern: 'require\(["''][^./]'
           action: "Note CommonJS dependency"
+          validation: "check_package_json"
 
       python:
         - pattern: 'from \w+ import'
           action: "Note Python import"
+          validation: "check_requirements"
         - pattern: 'import \w+'
           action: "Note Python module"
+          validation: "check_requirements"
+
+    evidence_validation:
+      validation_workflow:
+        step_1_local: "Check if library exists in project dependencies"
+        step_2_context7: "If unknown → Trigger Context7 lookup automatically"
+        step_3_user: "If Context7 fails → Ask user to confirm or research manually"
+
+      user_prompts:
+        unknown_library: "🔍 Unknown library detected: {library_name}. Let me look this up with Context7..."
+        context7_failed: "❌ Context7 couldn't find docs for {library_name}. Should I proceed anyway? (y/n)"
+        validation_success: "✅ {library_name} verified via {source}"
 
     auto_actions:
-      - "When external library detected → Consider Context7 lookup"
+      - "When external library detected → Run evidence_validation workflow"
       - "When UI framework detected → Consider magic-mcp for components"
-      - "Cache commonly used library patterns"
+      - "Cache validation results for session"
 
-  task_context:
-    indicators:
-      architecture_task:
-        - "Keywords: design, architecture, system, scale"
-        - "Questions about structure or organization"
-        - "Planning new features or systems"
+  task_context_investigation:
+    architecture_signals:
+      keywords: ["design", "architecture", "system", "scale"]
+      investigation: "Check for config files, examine project structure"
+      commands:
+        - "find . -name '*.config.*' -o -name 'docker*' -o -name '*compose*'"
+        - "ls -la # Look for architectural indicators"
 
-      implementation_task:
-        - "Keywords: build, create, implement, add, fix"
-        - "Specific feature requests"
-        - "Bug fixes or enhancements"
-
-      quality_task:
-        - "Keywords: test, review, security, validate"
-        - "Code review requests"
-        - "Quality or security concerns"
+    implementation_signals:
+      keywords: ["build", "create", "implement", "add"]
+      investigation: "Check existing patterns and dependencies"
+      command_examples:
+        - "grep -r 'import.*from' . --include='*.js' | head -10"
+        - "find . -name 'package.json' -exec cat {} \\;"
 
     mode_activation:
       - "Architecture task → Activate planner mode"

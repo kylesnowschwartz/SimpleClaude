@@ -50,11 +50,9 @@ synthesis_rules:
   - "Security concerns take precedence"
   - "Sub-agents receive minimal context, no conversation history"
 
-sub_agent_execution_pattern:
-  steps: 1. "Analyze the request and create implementation plan"
-    2. "Spawn specialized sub agents using natural language coordination"
-    3. "Coordinate sub-agent work without micromanaging"
-    4. "Synthesize results from all sub-agents into cohesive output"
+sub_agent_coordination:
+  workflow: "Analyze → Plan → Delegate → Synthesize"
+  guidance: "Adapt sequence based on task complexity"
 
 mode_specifics:
   planner: "Researchers gather evidence → analysis → comprehensive planning"

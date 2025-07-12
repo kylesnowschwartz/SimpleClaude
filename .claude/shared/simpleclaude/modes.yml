@@ -122,15 +122,3 @@ mode_selection:
   manual_override:
     syntax: "/command :mode_name"
     example: "/sc-create :planner design authentication system"
-
-  blending:
-    principle: "Modes blend naturally based on task needs"
-    examples:
-      - task: "Create secure API"
-        blend: "Implementer (70%) + Tester (30%)"
-
-      - task: "Debug performance issue"
-        blend: "Planner (50%) + Implementer (50%)"
-
-      - task: "Architecture review"
-        blend: "Planner (60%) + Tester (40%)"
