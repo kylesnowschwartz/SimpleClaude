@@ -8,7 +8,7 @@ A practical minimalist AI assistant framework that transforms complex AI interac
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/SimpleClaude.git
+git clone https://github.com/kylesnowschwartz/SimpleClaude.git
 cd SimpleClaude
 
 # Preview what will be installed (dry-run by default)
