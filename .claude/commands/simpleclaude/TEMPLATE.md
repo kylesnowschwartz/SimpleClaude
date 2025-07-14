@@ -36,4 +36,6 @@ Examples:
 
 ## Core Workflows
 
-**[Workflow 1]:** Sub-agents → [Step 1] → [Step 2] → [Step 3] → Synthesis **[Workflow 2]:** Sub-agents → [Step 1] → [Step 2] → [Step 3] → Synthesis
+**[Workflow 1]:** Sub-agents → [Step 1] → [Step 2] → [Step 3] → Synthesis  
+**[Workflow 2]:** Sub-agents → [Step 1] → [Step 2] → [Step 3] → Synthesis  
+**[Workflow 3]:** Sub-agents → [Step 1] → [Step 2] → [Step 3] → Synthesis

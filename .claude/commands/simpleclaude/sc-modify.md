@@ -55,4 +55,6 @@ Examples:
 
 ## Core Workflows
 
-**Planner:** Sub-agents → Analyze current state → Design improvement strategy → Create safety plan → Document changes **Implementer:** Sub-agents → Apply modifications → Run tests → Validate behavior → Measure improvements **Tester:** Sub-agents → Create test scenarios → Validate changes → Performance benchmarks → Regression testing
+**Planner:** Sub-agents → Analyze current state → Design improvement strategy → Create safety plan → Document changes  
+**Implementer:** Sub-agents → Apply modifications → Run tests → Validate behavior → Measure improvements  
+**Tester:** Sub-agents → Create test scenarios → Validate changes → Performance benchmarks → Regression testing

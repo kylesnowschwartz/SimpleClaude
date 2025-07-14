@@ -55,4 +55,6 @@ Examples:
 
 ## Core Workflows
 
-**Planner:** Sub-agents → Define analysis scope → Gather context → Create explanation strategy → Structure learning path **Implementer:** Sub-agents → Analyze codebase → Generate explanations → Create visualizations → Provide examples **Tester:** Sub-agents → Validate understanding → Create scenarios → Test knowledge → Identify gaps
+**Planner:** Sub-agents → Define analysis scope → Gather context → Create explanation strategy → Structure learning path  
+**Implementer:** Sub-agents → Analyze codebase → Generate explanations → Create visualizations → Provide examples  
+**Tester:** Sub-agents → Validate understanding → Create scenarios → Test knowledge → Identify gaps

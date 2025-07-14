@@ -55,4 +55,6 @@ Examples:
 
 ## Core Workflows
 
-**Planner:** Sub-agents → Analyze error → Investigate root cause → Design fix strategy → Create safety plan **Implementer:** Sub-agents → Apply fix → Run tests → Validate solution → Deploy with monitoring **Tester:** Sub-agents → Reproduce issue → Create test cases → Verify fix → Prevent regression
+**Planner:** Sub-agents → Analyze error → Investigate root cause → Design fix strategy → Create safety plan  
+**Implementer:** Sub-agents → Apply fix → Run tests → Validate solution → Deploy with monitoring  
+**Tester:** Sub-agents → Reproduce issue → Create test cases → Verify fix → Prevent regression

@@ -55,4 +55,6 @@ Examples:
 
 ## Core Workflows
 
-**Planner:** Sub-agents → Analyze requirements → Design architecture → Create plan → Generate docs **Implementer:** Sub-agents → Read patterns → Build solution → Add tests → Validate → Deploy ready **Tester:** Sub-agents → Analyze functionality → Create scenarios → Implement validation → Verify coverage
+**Planner:** Sub-agents → Analyze requirements → Design architecture → Create plan → Generate docs  
+**Implementer:** Sub-agents → Read patterns → Build solution → Add tests → Validate → Deploy ready  
+**Tester:** Sub-agents → Analyze functionality → Create scenarios → Implement validation → Verify coverage
