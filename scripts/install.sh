@@ -2,7 +2,7 @@
 
 # SimpleClaude Install Script
 # Installs/updates SimpleClaude commands and shared files with backups
-# Preserves all user customizations and data
+# Backs up all existing commands and data
 
 set -e          # Exit on error
 set -o pipefail # Exit on pipe failure

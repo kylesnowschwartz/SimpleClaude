@@ -12,7 +12,7 @@ This file provides guidance to [Claude Code](https://github.com/anthropics/claud
 ## Build Commands
 
 - Test installation: `./install.sh` (dry-run by default)
-- Install: `./install.sh --execute` (preserves user customizations)
+- Install: `./install.sh --execute` (Backs up existing configuration)
 - No build/compile steps - SimpleClaude is pure configuration
 
 ## Architecture

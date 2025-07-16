@@ -30,7 +30,7 @@ git pull
 # Update dependencies
 npm install --include=dev
 
-# Update SimpleClaude (preserves your customizations)
+# Update SimpleClaude (Backs up existing configuration)
 ./install.sh --execute
 ```
 
