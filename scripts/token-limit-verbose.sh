@@ -19,7 +19,7 @@ RESET='\033[0m'
 
 # Function to extract token data from npm output
 get_token_data() {
-  npm run token-check-verbose 2>/dev/null | grep -A 999999 '^\[' | jq -r '.[] |
+  npm run token-check-verbose 2>/dev/null | grep -A 999999 '^\[' | jq -r 'sort_by(.files[0] | split("/") | .[-1]) | .[] |
         .files[0] as $file |
         "\($file | split("/") | .[-1])\t\(.tokenCount)\t\(.tokenLimit)\t$\(.cost | . * 1000 | round / 1000)"'
 }
@@ -33,6 +33,16 @@ AWK_SCRIPT='{
         # Check if tokens exceed limit
         tokens = int($2)
         limit = int($3)
+        cost = $4
+
+        # Remove $ sign and convert to number for totaling
+        gsub(/\$/, "", cost)
+        cost_num = cost + 0
+
+        # Track totals
+        total_tokens += tokens
+        total_limit += limit
+        total_cost += cost_num
 
         if (tokens > limit) {
             # Red for over limit
@@ -43,6 +53,19 @@ AWK_SCRIPT='{
         }
 
         printf "| %-25s | %s%6s%s | %6s | %8s |\n", $1, token_color, $2, reset, $3, $4
+    }
+}
+END {
+    if (total_tokens > 0) {
+        # Print separator matching the header separator format
+        printf "|%s|%s|%s|%s|\n", \
+            "---------------------------", \
+            "--------", \
+            "--------", \
+            "----------"
+
+        # Format total cost with $ sign, matching the other rows
+        printf "| %-25s | %6d | %6d | %8s |\n", "TOTAL", total_tokens, total_limit, "$" sprintf("%.3f", total_cost)
     }
 }'
 
