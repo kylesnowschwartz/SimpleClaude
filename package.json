@@ -5,7 +5,7 @@
   "scripts": {
     "token-check": "npx token-limit --config token-limit.config.ts",
     "token-check-verbose": "npx token-limit --json --config token-limit-per-file.config.ts",
-    "token-commands": "npx token-limit .claude/commands/**/*.md --limit 10k --model claude-sonnet-4",
+    "token-commands": "npx token-limit --config token-limit-commands.config.ts",
     "token-shared": "npx token-limit .claude/shared/**/*.yml --limit 5k --model claude-sonnet-4"
   },
   "devDependencies": {
