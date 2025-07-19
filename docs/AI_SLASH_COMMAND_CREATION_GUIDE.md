@@ -69,7 +69,7 @@ This format makes it easy to understand how the command interprets various input
 
 ### Essential SimpleClaude Patterns
 
-- **Always include**: `@include shared/simpleclaude/includes.md`
+- **Always include**: `@.claude/shared/simpleclaude/includes.md`
 - **Always check**: "If $ARGUMENTS is empty" logic
 - **Always transform**: Natural language → structured intent
 - **Always mention**: Auto-spawning sub-agents
