@@ -12,9 +12,8 @@ TOKENS_SEP_WIDTH=$((TOKENS_WIDTH + 2))
 LIMIT_SEP_WIDTH=$((LIMIT_WIDTH + 2))
 COST_SEP_WIDTH=$((COST_WIDTH + 2))
 
-# Color codes
-GREEN='\033[0;32m'
-RED='\033[0;31m'
+# Formatting codes
+BOLD='\033[1m'
 RESET='\033[0m'
 
 # Function to extract token data from npm output
@@ -88,7 +87,7 @@ echo ""
   # Print data
   get_token_data
 } | column -t -s $'\t' | while IFS= read -r line; do
-  # Apply color coding and formatting
+  # Apply clean formatting
   if [[ $line == *"File"* ]]; then
     # Header line
     echo "$line"
@@ -97,18 +96,9 @@ echo ""
     # Separator before total
     echo "$(echo "$line" | sed 's/./─/g')"
     # Total line in bold
-    echo -e "\033[1m$line\033[0m"
+    echo -e "${BOLD}$line${RESET}"
   else
-    # Data line - apply green color to token numbers (all are within limits)
-    tokens=$(echo "$line" | awk '{print $2}')
-    limit=$(echo "$line" | awk '{print $3}')
-    
-    if [[ $tokens -gt $limit ]]; then
-      # Red for over limit
-      echo "$line" | sed "s/\b$tokens\b/${RED}$tokens${RESET}/"
-    else
-      # Green for within limit  
-      echo "$line" | sed "s/\b$tokens\b/${GREEN}$tokens${RESET}/"
-    fi
+    # Data line - clean output without color coding
+    echo "$line"
   fi
 done
