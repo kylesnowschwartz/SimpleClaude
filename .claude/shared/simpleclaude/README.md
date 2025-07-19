@@ -1,61 +1,69 @@
-# SimpleClaude Shared Patterns
+# SimpleClaude Framework Documentation
 
-This directory contains the core patterns and configurations for SimpleClaude.
+This directory contains the core framework documentation for SimpleClaude's AI-assisted development patterns.
 
-## Files
+## Framework Structure
 
-### core-patterns.yml
+### 00_core_principles.md
 
-Essential patterns for AI-assisted development. Features actionable investigation guidance:
+Fundamental operational guidelines that establish the foundation for all SimpleClaude interactions:
 
-- Smart defaults over explicit configuration
-- Context-aware behavior with executable commands
-- Investigation-driven complexity assessment
-- Evidence-based validation standards
+- Quality-first development approach
+- Context-aware adaptation patterns
+- Evidence-based decision making
+- Token-efficient communication strategies
 
-Key architectural principles:
+### 01_orchestration.md
 
-- Investigation prompts over false precision
-- Bash commands for concrete assessment
-- Delegation criteria with measurable thresholds
-- Evidence requirements with specific tool triggers
+Four-mode adaptive system that replaces complex persona hierarchies:
 
-### modes.yml
-
-Defines the three adaptive modes (Planner, Implementer, Tester) that replace SuperClaude's 9 personas. Features:
-
-- Proper YAML structure without markdown formatting
+- **Understand Mode**: Initial analysis and comprehension
+- **Planner Mode**: Strategic decomposition and analysis
+- **Implementer Mode**: Execution-focused development
+- **Tester Mode**: Validation and quality assurance
 - Natural mode blending based on task context
-- Clear activation triggers and manual override syntax
-- Combines best aspects of multiple SuperClaude personas
 
-### workflows.yml
+### 02_workflows_and_patterns.md
 
-Common development workflows adapted for SimpleClaude's simplified command structure. Includes:
+Implementation patterns and guidance for effective agent execution:
 
-- Feature development lifecycle
-- Debugging approaches
-- Code review patterns
-- Refactoring workflows
+- Project context detection workflow
+- Task complexity assessment criteria
 - Sub-agent delegation patterns
-- Error handling strategies
+- Tool integration strategies
+- Error handling approaches
 
-### context-detection.yml
+### 03_sub_agent_delegation.md
 
-Patterns for auto-detecting project context and conventions. Features:
+Token-efficient delegation through specialized agents for parallel processing:
 
-- Project type detection from package files
-- Framework identification
-- Code style inference
-- Git workflow detection
-- Smart defaults based on context
-- Evidence-based library validation with Context7 integration
+- Sub-agent types and responsibilities
+- Spawning patterns with template variables
+- Coordination and synthesis rules
+- Mode-specific integration guidance
+
+### includes.md
+
+Shared include directives and template variables for cross-document consistency.
 
 ## Design Philosophy
 
-SimpleClaude patterns prioritize:
+SimpleClaude's framework prioritizes:
 
-1. **Discoverability** - Patterns should be self-evident
-2. **Adaptability** - Detect and follow existing conventions
-3. **Efficiency** - Use sub-agents for token-intensive work
-4. **Simplicity** - Start simple, add complexity only when needed
+1. **Natural Language Over Structure** - Semantic documentation that LLMs process efficiently
+2. **Token Efficiency** - Streamlined patterns optimized for context priming
+3. **Adaptive Behavior** - Context-aware responses over rigid rules
+4. **Separation of Concerns** - Focused documentation with clear boundaries
+5. **Template Flexibility** - Variable patterns for dynamic content adaptation
+
+## Framework Benefits
+
+- **Simplified Architecture**: 4 adaptive modes replace 9 rigid personas
+- **Better Token Management**: Sub-agent delegation for parallel processing
+- **Enhanced Context Detection**: Automatic project pattern recognition
+- **Flexible Patterns**: Template variables enable context-specific adaptation
+- **Evidence-Based Validation**: Context7 and tool integration for verification
+
+## Usage
+
+This framework is designed for front-loading LLM context to enable effective AI-assisted software development. Each document contributes specific guidance while maintaining overall architectural coherence.
