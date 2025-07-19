@@ -4,26 +4,15 @@ _Implementation patterns and guidance for effective agent execution_
 
 ## Context Detection Workflow
 
-### Step 1: Project Detection Priority
+### Step 1: Project Context Detection
 
-Consider this preference hierarchy, typically stopping at the first strong signal:
+Analyze the project to understand its technology stack and development patterns. Check for `package.json` to identify JavaScript frameworks like React, Vue, Angular, or Next.js; examine `requirements.txt` or `pyproject.toml` for Python frameworks like Django, Flask, or FastAPI; look for `go.mod`, `Cargo.toml`, or `Gemfile` to identify Go, Rust, or Ruby/Rails projects. Use file extensions and directory structures as fallback indicators. Review existing code files to understand naming conventions and style patterns. Verify any libraries exist in dependency files and use `mcp__context7` for current documentation before coding.
 
-1. `package.json` → parse dependencies → React/Vue/Angular/Next
-2. `requirements.txt`/`pyproject.toml` → Django/Flask/FastAPI
-3. `go.mod` → Go project, `Cargo.toml` → Rust project, `Gemfile` → Rails project
-4. File patterns (`.jsx`, `.vue`, MVC directories) as fallback indicators
+### Step 2: Task Complexity Assessment
 
-### Step 2: Code Style Adaptation
-
-- Analyze 2-3 existing files for naming/style patterns
-- Check linter configurations (.eslintrc, .prettierrc)
-- Match import organization, documentation, and formatting styles
-
-### Step 3: Library Validation
-
-- Use `mcp__context7` for current library examples before coding
-- Verify dependencies exist in project dependency files
-- Ask user for guidance if unknown libraries are detected
+- **Simple Tasks**: Single file OR 1-3 steps → direct execution
+- **Moderate Tasks**: Multi-file OR 3-10 steps → TodoWrite coordination
+- **Complex Tasks**: Many files OR >10 steps OR research needed → sub-agent delegation
 
 ## Task Management Patterns
 
@@ -67,15 +56,15 @@ Consider this preference hierarchy, typically stopping at the first strong signa
 
 ### Evidence-Based Verification Patterns
 
-- **Library Claims**: Recommend Context7 lookup via `mcp__context7__resolve-library-id` for verification
+- **Library Claims**: Recommend Context7 lookup via `mcp__context7` for verification
 - **Performance Claims**: Request benchmarks or official documentation when making assertions
 - **Security Claims**: Require official security documentation or CVE references for credibility
 
 ### MCP Tool Integration
 
-- **Context7**: Library documentation and current examples
-- **Ref**: Documentation search and URL content analysis
-- **Zen Tools**: Specialized analysis (chat, debug, analyze, etc.)
+- **Context7**: `mcp__context7` Library documentation and current examples
+- **Ref**: `mcp__ref` Documentation search and URL content analysis
+- **Zen Tools**: `mcp__zen` Specialized analysis (chat, debug, analyze, etc.)
 
 ## Error Handling Patterns
 
@@ -89,13 +78,5 @@ Fail fast, provide actionable solutions, learn systematically
 - **Tests**: Identify failures → understand root causes → fix appropriately
 - **Linting**: Run linter → fix formatting → address warnings systematically
 - **Build Issues**: Check logs → verify environment → validate versions
-
-### Project Context Adaptation
-
-- **JavaScript Projects**: Check package.json dependencies, detect React/Vue/Angular/Next patterns
-- **Python Projects**: Analyze requirements files, identify Django/Flask/FastAPI frameworks
-- **Go Projects**: Parse go.mod for module structure and dependencies
-- **Rust Projects**: Examine Cargo.toml for crate information and dependencies
-- **Ruby Projects**: Check Gemfile and detect Rails MVC structure patterns
 
 These patterns provide flexible guidance and proven approaches for effectively implementing the operational modes defined in the orchestration framework.
