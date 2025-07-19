@@ -41,7 +41,6 @@ Options:
     --no-backup        Skip backup creation (not recommended)
     --dry-run          Show what would be installed without making changes (default)
     --extras           Also install commands/extras directory (experimental commands)
-    --verbose, -v      Show detailed output
     --help             Show this help message
 
 Examples:
@@ -59,7 +58,6 @@ TARGET_DIR="$DEFAULT_TARGET"
 CREATE_BACKUP=true
 DRY_RUN=true # Default to dry-run for safety
 INSTALL_EXTRAS=false
-VERBOSE=false
 
 while [[ $# -gt 0 ]]; do
   case $1 in
@@ -81,10 +79,6 @@ while [[ $# -gt 0 ]]; do
     ;;
   --extras)
     INSTALL_EXTRAS=true
-    shift
-    ;;
-  --verbose | -v)
-    VERBOSE=true
     shift
     ;;
   --help | -h)
@@ -211,9 +205,7 @@ install_directory() {
             fi
             ((updated_count++))
           else
-            if [[ "$VERBOSE" = true ]]; then
-              echo "    Unchanged: $basename_file"
-            fi
+            echo "    Unchanged: $basename_file"
             ((unchanged_count++))
           fi
         else
@@ -278,6 +270,8 @@ if [[ -f "$SOURCE_DIR/shared/simpleclaude/includes.md" ]]; then
       cp "$source_file" "$target_file"
       echo "    Added: includes.md"
     fi
+  else
+    echo "    Unchanged: includes.md"
   fi
 fi
 
