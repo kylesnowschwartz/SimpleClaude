@@ -59,10 +59,6 @@ SimpleClaude uses [token-limit](https://github.com/azat-io/token-limit) to monit
 ```bash
 # Check all token limits
 npm run token-check
-
-# Check specific patterns
-npm run token-commands    # Commands only
-npm run token-shared      # Shared patterns only
 ```
 
 ### Development Workflow
@@ -96,5 +92,3 @@ SimpleClaude follows a user-driven development approach:
 1. Test the commands in real projects
 2. Report issues with specific use cases
 3. Suggest improvements based on actual needs
-
-We build based on real usage, not theoretical features.
