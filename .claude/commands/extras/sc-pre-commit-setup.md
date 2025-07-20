@@ -15,6 +15,31 @@ Intelligent pre-commit configuration system that analyzes existing setups and re
 **Auto-Spawning:** Spawns specialized sub-agents for parallel task execution.  
 **Context Detection:** Analyze existing configuration → Detect project type and file patterns → Select appropriate hooks → Generate enhanced configuration → Install pre-commit
 
+## Core Principle: Use Standard Battle-Tested Configurations
+
+**CRITICAL**: Always use official remote repository hooks from well-maintained sources. NEVER create custom local implementations unless absolutely necessary for project-specific requirements.
+
+### Standard Hook Sources (Preferred)
+
+- `https://github.com/pre-commit/pre-commit-hooks` - Core file hygiene and validation hooks
+- `https://github.com/koalaman/shellcheck-precommit` - Shell script analysis
+- `https://github.com/mvdan/sh` - Shell script formatting
+- `https://github.com/igorshubovych/markdownlint-cli` - Markdown linting
+
+### Why Standard Hooks Are Better
+
+- **Environment Isolation**: Pre-commit manages hook dependencies automatically
+- **Version Management**: Stable, tested versions with clear upgrade paths
+- **Community Maintenance**: Regular updates and bug fixes from maintainers
+- **Reliability**: Battle-tested across thousands of repositories
+- **Documentation**: Comprehensive docs and community support
+
+### Avoid Local Implementations
+
+- `repo: local` hooks should be used sparingly and only for truly project-specific needs
+- Never use local implementations for standard tools like shellcheck, shfmt, markdownlint
+- Local hooks require system-wide tool installation and are more brittle
+
 ## Dotfiles-Specific Hook Categories
 
 ### File Hygiene Hooks
