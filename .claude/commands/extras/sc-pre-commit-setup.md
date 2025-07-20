@@ -1,44 +1,18 @@
 **Purpose**: Intelligently setup and enhance pre-commit configurations for any repository with context-aware analysis
 
----
+Intelligent pre-commit configuration system that analyzes existing setups and repository characteristics to create or enhance `.pre-commit-config.yaml` with appropriate hooks, preserving customizations while adding missing essential validations.
 
-@.claude/shared/simpleclaude/includes.md
+---
 
 ## Command Execution
 
-**Default behavior (no arguments)**: Analyze existing pre-commit configuration, install hooks, and validate setup.  
-**With arguments**: Transform arguments into structured intent and execute specific actions.
-
-When run without arguments, automatically performs:
-
-- Analyze existing `.pre-commit-config.yaml` configuration
+- Analyze existing @.pre-commit-config.yaml configuration
+- Analyze existing @.git/hooks/pre-commit configuration
 - Install pre-commit hooks if not already installed
 - Run validation tests on all files
 - Display status and recommendations
 
-**Auto-Spawning:** Spawns specialized sub-agents for parallel task execution.
-
-Intelligent pre-commit configuration system that analyzes existing setups and repository characteristics to create or enhance `.pre-commit-config.yaml` with appropriate hooks, preserving customizations while adding missing essential validations.
-
-### Semantic Transformations
-
-```
-"setup pre-commit" →
-  What: intelligent pre-commit configuration analysis and setup
-  How: analyze existing config, detect project type, enhance with appropriate hooks
-  Mode: implementer
-
-"enhance existing pre-commit" →
-  What: improve existing pre-commit configuration with missing hooks
-  How: preserve current setup, add recommended enhancements based on project analysis
-  Mode: implementer
-
-"analyze pre-commit config" →
-  What: comprehensive analysis of current pre-commit setup
-  How: evaluate existing hooks, versions, performance, suggest optimizations
-  Mode: planner
-```
-
+**Auto-Spawning:** Spawns specialized sub-agents for parallel task execution.  
 **Context Detection:** Analyze existing configuration → Detect project type and file patterns → Select appropriate hooks → Generate enhanced configuration → Install pre-commit
 
 ## Dotfiles-Specific Hook Categories
@@ -105,7 +79,7 @@ fail_fast: false
 
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.2.0
+    rev: v5.0.0
     hooks:
       - id: trailing-whitespace
         exclude: '\.md$'
@@ -131,6 +105,11 @@ repos:
         stages: [pre-commit]
       - id: check-symlinks
         stages: [pre-commit]
+      - id: detect-private-key
+        stages: [pre-commit]
+      - id: check-ast
+        types: [python]
+        stages: [pre-commit]
 
   - repo: https://github.com/koalaman/shellcheck-precommit
     rev: v0.10.0
@@ -151,16 +130,6 @@ repos:
     hooks:
       - id: markdownlint
         args: [--fix]
-        stages: [pre-commit]
-
-  # Additional security and validation hooks
-  - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.6.0
-    hooks:
-      - id: detect-private-key
-        stages: [pre-commit]
-      - id: check-ast
-        types: [python]
         stages: [pre-commit]
 ```
 
