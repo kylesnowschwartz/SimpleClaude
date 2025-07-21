@@ -2,7 +2,14 @@
 
 ---
 
-Prepare by reading the includes in: @shared/simpleclaude/includes.md
+**CRITICAL DO NOT SKIP** Use the Read() tool to load content framework from:
+
+<framework files>
+$HOME/.claude/shared/simpleclaude/00_core_principles.md  
+$HOME/.claude/shared/simpleclaude/01_orchestration.md  
+$HOME/.claude/shared/simpleclaude/02_workflows_and_patterns.md  
+$HOME/.claude/shared/simpleclaude/03_sub_agent_delegation.md
+</framework files>
 
 ## Command Execution
 
