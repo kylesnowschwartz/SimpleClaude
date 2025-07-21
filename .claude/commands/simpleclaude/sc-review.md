@@ -2,7 +2,7 @@
 
 ---
 
-@.claude/shared/simpleclaude/includes.md
+@shared/simpleclaude/includes.md
 
 ## Command Execution
 
