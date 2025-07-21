@@ -35,11 +35,11 @@ This ambiguity leads to:
 
 Different intents require fundamentally different validation approaches:
 
-| Intent             | Testing Focus                                      | Risk Profile                     |
-| ------------------ | -------------------------------------------------- | -------------------------------- |
-| Add functionality  | New feature validation + focused regression        | Medium - contained to new paths  |
+| Intent | Testing Focus | Risk Profile |
+| --- | --- | --- |
+| Add functionality | New feature validation + focused regression | Medium - contained to new paths |
 | Refactor structure | Behavioral preservation via characterization tests | High - systemic behavior changes |
-| Fix bugs           | Specific bug resolution + regression prevention    | Medium - targeted correction     |
+| Fix bugs | Specific bug resolution + regression prevention | Medium - targeted correction |
 
 ## Proposed Solutions
 
@@ -125,14 +125,14 @@ sc-modify: "improve error handling" # Auto-detect intent
 
 ## Decision Framework
 
-### Stay with 5-Command Structure If:
+### Stay with 5-Command Structure If
 
 - Intent detection accuracy reaches >90%
 - User confusion about categorization is minimal
 - Testing strategy adaptation works reliably
 - Minimalism benefits outweigh precision costs
 
-### Consider 6-Command Evolution If:
+### Consider 6-Command Evolution If
 
 - Intent detection remains unreliable
 - Users consistently struggle with ambiguous operations
@@ -174,4 +174,3 @@ The goal is to achieve the reliability and precision benefits identified in the 
 
 _Document created: 2025-07-19_  
 _Analysis contributors: Claude (primary), Zen AI (external consultation)_
-

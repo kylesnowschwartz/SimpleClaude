@@ -188,13 +188,16 @@ install_directory() {
 
     for file in "$source_path"/$file_pattern; do
       if [[ -f "$file" ]]; then
-        local basename_file=$(basename "$file")
+        local basename_file
+        basename_file=$(basename "$file")
         local target_file="$target_path/$basename_file"
 
         if [[ -f "$target_file" ]]; then
           # File exists, check if it's different
-          local source_hash=$(file_hash "$file")
-          local target_hash=$(file_hash "$target_file")
+          local source_hash
+          local target_hash
+          source_hash=$(file_hash "$file")
+          target_hash=$(file_hash "$target_file")
 
           if [[ "$source_hash" != "$target_hash" ]]; then
             if [[ "$DRY_RUN" = true ]]; then
@@ -254,15 +257,15 @@ install_directory "commands/simpleclaude" "commands/simpleclaude" "*.md" "comman
 # Install SimpleClaude shared framework files (core numbered files)
 install_directory "shared/simpleclaude" "shared/simpleclaude" "[0-9]*.md" "framework" "No SimpleClaude shared framework found in source"
 
-# Install includes.md 
+# Install includes.md
 if [[ -f "$SOURCE_DIR/shared/simpleclaude/includes.md" ]]; then
   source_file="$SOURCE_DIR/shared/simpleclaude/includes.md"
   target_file="$TARGET_DIR/shared/simpleclaude/includes.md"
-  
+
   if [[ "$DRY_RUN" = false ]]; then
     mkdir -p "$TARGET_DIR/shared/simpleclaude"
   fi
-  
+
   if [[ ! -f "$target_file" ]] || [[ "$(file_hash "$source_file")" != "$(file_hash "$target_file")" ]]; then
     if [[ "$DRY_RUN" = true ]]; then
       echo "    Would add: includes.md"

@@ -1,16 +1,6 @@
 #!/bin/bash
 
-# Column width configuration
-FILE_WIDTH=25
-TOKENS_WIDTH=6
-LIMIT_WIDTH=6
-COST_WIDTH=8
-
-# Calculate separator widths (includes spaces and pipes)
-FILE_SEP_WIDTH=$((FILE_WIDTH + 2))
-TOKENS_SEP_WIDTH=$((TOKENS_WIDTH + 2))
-LIMIT_SEP_WIDTH=$((LIMIT_WIDTH + 2))
-COST_SEP_WIDTH=$((COST_WIDTH + 2))
+# Script uses column -t for automatic alignment
 
 # Formatting codes
 BOLD='\033[1m'
@@ -18,62 +8,18 @@ RESET='\033[0m'
 
 # Function to extract token data from npm output
 get_token_data() {
-  local temp_data=$(npx token-limit --config shared-simpleclaude-token-limit.config.ts --json 2>&1 | grep -A 999999 '^\[')
-  
+  local temp_data
+  temp_data=$(npx token-limit --config shared-simpleclaude-token-limit.config.ts --json 2>&1 | grep -A 999999 '^\[')
+
   # Output individual files
   echo "$temp_data" | jq -r 'sort_by(.name) | .[] |
         select(.name | test("\\(shared\\)|\\(commands\\)|\\(extras\\)")) |
         "\(.name)\t\(.tokenCount)\t\(.tokenLimit)\t$\(.cost | . * 1000 | round / 1000)"'
-  
+
   # Calculate and output totals
   echo "$temp_data" | jq -r '[.[] | select(.name | test("\\(shared\\)|\\(commands\\)|\\(extras\\)"))] |
         "TOTAL\t\(map(.tokenCount) | add)\t\(map(.tokenLimit) | add)\t$\(map(.cost) | add | . * 1000 | round / 1000)"'
 }
-
-# AWK configuration
-FIELD_SEPARATOR='\t'
-AWK_SCRIPT='{
-    if (NR <= 2) {
-        print $0
-    } else {
-        # Check if tokens exceed limit
-        tokens = int($2)
-        limit = int($3)
-        cost = $4
-
-        # Remove $ sign and convert to number for totaling
-        gsub(/\$/, "", cost)
-        cost_num = cost + 0
-
-        # Track totals
-        total_tokens += tokens
-        total_limit += limit
-        total_cost += cost_num
-
-        if (tokens > limit) {
-            # Red for over limit
-            token_color = red
-        } else {
-            # Green for within limit
-            token_color = green
-        }
-
-        printf "| %-25s | %s%6s%s | %6s | %8s |\n", $1, token_color, $2, reset, $3, $4
-    }
-}
-END {
-    if (total_tokens > 0) {
-        # Print separator matching the header separator format
-        printf "|%s|%s|%s|%s|\n", \
-            "---------------------------", \
-            "--------", \
-            "--------", \
-            "----------"
-
-        # Format total cost with $ sign, matching the other rows
-        printf "| %-25s | %6d | %6d | %8s |\n", "TOTAL", total_tokens, total_limit, "$" sprintf("%.3f", total_cost)
-    }
-}'
 
 # Run token-check and parse JSON output into aligned table
 echo "# Token Usage Report"
@@ -83,7 +29,7 @@ echo ""
 {
   # Print header
   echo -e "File\tTokens\tLimit\tCost"
-  
+
   # Print data
   get_token_data
 } | column -t -s $'\t' | while IFS= read -r line; do
@@ -91,7 +37,7 @@ echo ""
   if [[ $line == *"File"* ]]; then
     # Header line
     echo "$line"
-    echo "$(echo "$line" | sed 's/./─/g')"  # Unicode horizontal line
+    echo "$(echo "$line" | sed 's/./─/g')" # Unicode horizontal line
   elif [[ $line == *"TOTAL"* ]]; then
     # Separator before total
     echo "$(echo "$line" | sed 's/./─/g')"
