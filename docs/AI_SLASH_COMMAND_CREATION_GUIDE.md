@@ -23,7 +23,7 @@ find .claude -name "*.yml" -type f
 grep -E "pattern" existing_commands.md
 ```
 
-**What works**: Using multiple search strategies when initial paths fail (e.g., when `includes.md` isn't where expected).
+**What works**: Using multiple search strategies when initial paths fail (e.g., when framework files aren't where expected).
 
 ### 3. Structure First, Content Second
 
@@ -69,7 +69,7 @@ This format makes it easy to understand how the command interprets various input
 
 ### Essential SimpleClaude Patterns
 
-- **Always include**: `@.claude/shared/simpleclaude/includes.md`
+- **Always load**: Framework files from $HOME/.claude/shared/simpleclaude/ 
 - **Always check**: "If $ARGUMENTS is empty" logic
 - **Always transform**: Natural language → structured intent
 - **Always mention**: Auto-spawning sub-agents

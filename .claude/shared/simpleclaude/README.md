@@ -42,9 +42,6 @@ Token-efficient delegation through specialized agents for parallel processing:
 - Coordination and synthesis rules
 - Mode-specific integration guidance
 
-### includes.md
-
-Shared include directives and template variables for cross-document consistency.
 
 ## Design Philosophy
 

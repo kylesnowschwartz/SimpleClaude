@@ -68,25 +68,25 @@ run_claude_test() {
   fi
 }
 
-# Test suite for nested includes
-test_includes() {
-  echo -e "${MAGENTA}Testing Nested @include Functionality${NC}"
+# Test suite for framework loading
+test_framework() {
+  echo -e "${MAGENTA}Testing Framework File Loading${NC}"
   echo "-------------------------------------"
 
   run_claude_test \
-    "Can you see the content from this include directive: @.claude/shared/simpleclaude/includes.md" \
-    "includes.md" \
-    "Basic @include recognition"
+    "Can you see the content from the framework files loaded via explicit paths?" \
+    "core_principles\|orchestration" \
+    "Basic framework file recognition"
 
   run_claude_test \
-    "When you process @.claude/shared/simpleclaude/includes.md, can you see the actual content from the nested includes like the MCP tools directive from sub-agents.yml?" \
-    "mcp_tools_directive" \
-    "Nested @include resolution"
-
-  run_claude_test \
-    "In the SimpleClaude system loaded via @.claude/shared/simpleclaude/includes.md, what are the 4 sub-agent types defined?" \
+    "When you process the framework files, can you see the sub-agent delegation patterns?" \
     "researcher.*coder" \
-    "Access to deeply nested content"
+    "Framework content access"
+
+  run_claude_test \
+    "In the SimpleClaude system loaded via framework files, what are the 4 operational modes defined?" \
+    "Understanding.*Planning.*Execution.*Verification" \
+    "Access to operational modes"
 
   echo ""
 }
@@ -176,12 +176,12 @@ test_command() {
 # Main test runner
 case "$TEST_TYPE" in
 "all")
-  test_includes
+  test_framework
   test_sc_create
   test_sc_understand
   ;;
-"includes")
-  test_includes
+"framework")
+  test_framework
   ;;
 "sc-create")
   test_sc_create
@@ -202,7 +202,7 @@ case "$TEST_TYPE" in
     echo ""
     echo "Available test types:"
     echo "  all          - Run all tests"
-    echo "  includes     - Test nested @include functionality"
+    echo "  framework    - Test framework file functionality"
     echo "  sc-create    - Test sc-create command"
     echo "  sc-understand - Test sc-understand command"
     echo "  custom       - Run a custom test"
@@ -210,7 +210,7 @@ case "$TEST_TYPE" in
     echo ""
     echo "Examples:"
     echo "  $0"
-    echo "  $0 includes"
+    echo "  $0 framework"
     echo "  $0 sc-fix"
     echo "  $0 custom \"What is 2+2?\" \"4\""
     exit 1
@@ -228,7 +228,7 @@ if [ "$TEST_TYPE" = "all" ]; then
   echo ""
   echo "Tips for using this test framework:"
   echo -e "${BLUE}1. Test specific functionality:${NC}"
-  echo "   ./test-commands.sh includes"
+  echo "   ./test-commands.sh framework"
   echo ""
   echo -e "${BLUE}2. Test any command:${NC}"
   echo "   ./test-commands.sh sc-modify"

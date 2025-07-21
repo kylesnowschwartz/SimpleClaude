@@ -184,8 +184,8 @@ You can also manually test specific includes:
 # Test single include
 claude -p --output-format json "Can you see @include shared/simpleclaude/modes.yml"
 
-# Test nested include resolution
-claude -p --output-format json "What's in the mcp_tools_directive from includes.md?"
+# Test framework loading
+claude -p --output-format json "What framework files are loaded from the SimpleClaude system?"
 
 # Test command functionality
 claude -p "Using sc-understand command structure, analyze this: explain authentication"
