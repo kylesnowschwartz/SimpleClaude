@@ -1,6 +1,6 @@
 {
   "name": "simpleclaude",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "A practical minimalist AI assistant framework",
   "scripts": {
     "token-check": "npx token-limit --config shared-simpleclaude-token-limit.config.ts"
