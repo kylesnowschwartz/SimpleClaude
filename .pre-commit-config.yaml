@@ -1,0 +1,57 @@
+# SimpleClaude Pre-commit Configuration
+# Auto-generated for detected languages: Shell/Bash, Markdown, JSON, TypeScript
+# Optimized for documentation-heavy AI assistant framework
+default_install_hook_types: [pre-commit]
+default_stages: [pre-commit]
+fail_fast: false
+
+repos:
+  # Core file hygiene (Essential - Priority 1)
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+        exclude: '\.md$' # Preserve markdown formatting
+      - id: end-of-file-fixer
+      - id: check-merge-conflict
+      - id: check-added-large-files
+        args: [--maxkb=2048] # Allow larger docs/assets
+      - id: check-yaml
+      - id: check-json
+      - id: check-case-conflict
+      - id: mixed-line-ending
+      - id: check-executables-have-shebangs
+      - id: check-symlinks
+      - id: detect-private-key
+
+  # Shell script quality assurance (Priority 2)
+  - repo: https://github.com/koalaman/shellcheck-precommit
+    rev: v0.10.0
+    hooks:
+      - id: shellcheck
+        args: [--severity=warning] # Pragmatic level for scripts
+        files: \.(sh|bash)$
+
+  # Shell script formatting (Priority 2)
+  - repo: https://github.com/scop/pre-commit-shfmt
+    rev: v3.12.0-2
+    hooks:
+      - id: shfmt
+        args: [-w, -i, "2"] # 2-space indentation
+        files: \.(sh|bash)$
+
+  # Documentation quality (Priority 3 - Optimized for SimpleClaude)
+  - repo: https://github.com/igorshubovych/markdownlint-cli
+    rev: v0.45.0
+    hooks:
+      - id: markdownlint
+        args: [
+            --fix,
+            --disable,
+            MD013, # Line length - disabled for technical content
+            MD041, # First line H1 - disabled for command docs
+            MD026, # Trailing punctuation - disabled for "Variables:"
+            MD012, # Multiple blank lines - disabled for visual spacing
+            MD024, # Duplicate headings - disabled for structured docs
+          ]
+        files: \.md$
