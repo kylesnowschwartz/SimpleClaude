@@ -33,12 +33,12 @@ const individualConfigs = allMarkdownFiles.map(file => {
 
   // Create unique name based on path structure
   let uniqueName = filename
-  if (parent === 'simpleclaude' && grandparent === 'shared') {
-    uniqueName = `${filename} (shared)`
-  } else if (parent === 'simpleclaude' && grandparent === 'commands') {
+  if (parent === 'simpleclaude' && grandparent === 'commands') {
     uniqueName = `${filename} (commands)`
   } else if (parent === 'extras') {
     uniqueName = `${filename} (extras)`
+  } else if (parent === 'agents') {
+    uniqueName = `${filename} (agent)`
   } else {
     uniqueName = `${filename} (${parent})`
   }
@@ -53,16 +53,10 @@ const individualConfigs = allMarkdownFiles.map(file => {
 
 const combinedConfigs = [
   {
-    name: 'Shared Framework Core (00-03)',
+    name: 'Agent Files (All)',
     model: 'claude-sonnet-4' as const,
-    path: ['.claude/shared/simpleclaude/0*.md'],
-    limit: '3k' as const,
-  },
-  {
-    name: 'Shared Framework Complete',
-    model: 'claude-sonnet-4' as const,
-    path: ['.claude/shared/simpleclaude/*.md'],
-    limit: '5k' as const,
+    path: ['.claude/agents/*.md'],
+    limit: '6k' as const,
   },
   {
     name: 'Core Commands',
@@ -81,6 +75,12 @@ const combinedConfigs = [
     model: 'claude-sonnet-4' as const,
     path: ['.claude/commands/**/*.md'],
     limit: '12k' as const,
+  },
+  {
+    name: 'Agent-Based SimpleClaude',
+    model: 'claude-sonnet-4' as const,
+    path: ['.claude/agents/*.md', '.claude/commands/**/*.md'],
+    limit: '18k' as const,
   },
   {
     name: 'Complete SimpleClaude',

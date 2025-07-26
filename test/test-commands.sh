@@ -68,25 +68,25 @@ run_claude_test() {
   fi
 }
 
-# Test suite for framework loading
-test_framework() {
-  echo -e "${MAGENTA}Testing Framework File Loading${NC}"
+# Test suite for agent system loading
+test_agents() {
+  echo -e "${MAGENTA}Testing Agent System Loading${NC}"
   echo "-------------------------------------"
 
   run_claude_test \
-    "Can you see the content from the framework files loaded via explicit paths?" \
-    "core_principles\|orchestration" \
-    "Basic framework file recognition"
+    "Can you see the SimpleClaude agent files? List the available specialist agents." \
+    "implementation-specialist\|research-analyst\|system-architect" \
+    "Basic agent file recognition"
 
   run_claude_test \
-    "When you process the framework files, can you see the sub-agent delegation patterns?" \
-    "researcher.*coder" \
-    "Framework content access"
+    "When you process the agent files, can you see the different specialist roles?" \
+    "Implementation Specialist\|Research Analyst" \
+    "Agent content access"
 
   run_claude_test \
-    "In the SimpleClaude system loaded via framework files, what are the 4 operational modes defined?" \
-    "Understanding.*Planning.*Execution.*Verification" \
-    "Access to operational modes"
+    "In the agent-based SimpleClaude system, what principles does the implementation-specialist follow?" \
+    "KISS\|YAGNI\|DRY" \
+    "Access to agent-specific principles"
 
   echo ""
 }
@@ -173,12 +173,39 @@ test_command() {
   echo ""
 }
 
+# Test suite for legacy framework loading (for backward compatibility)
+test_framework() {
+  echo -e "${MAGENTA}Testing Legacy Framework File Loading${NC}"
+  echo "-------------------------------------"
+
+  run_claude_test \
+    "Can you see the content from the legacy framework files loaded via explicit paths?" \
+    "core_principles\|orchestration" \
+    "Basic framework file recognition"
+
+  run_claude_test \
+    "When you process the legacy framework files, can you see the sub-agent delegation patterns?" \
+    "researcher.*coder" \
+    "Framework content access"
+
+  run_claude_test \
+    "In the SimpleClaude system loaded via framework files, what are the 4 operational modes defined?" \
+    "Understanding.*Planning.*Execution.*Verification" \
+    "Access to operational modes"
+
+  echo ""
+}
+
 # Main test runner
 case "$TEST_TYPE" in
 "all")
+  test_agents
   test_framework
   test_sc_create
   test_sc_understand
+  ;;
+"agents")
+  test_agents
   ;;
 "framework")
   test_framework
@@ -202,7 +229,8 @@ case "$TEST_TYPE" in
     echo ""
     echo "Available test types:"
     echo "  all          - Run all tests"
-    echo "  framework    - Test framework file functionality"
+    echo "  agents       - Test agent system functionality"
+    echo "  framework    - Test legacy framework file functionality"
     echo "  sc-create    - Test sc-create command"
     echo "  sc-understand - Test sc-understand command"
     echo "  custom       - Run a custom test"
@@ -210,6 +238,7 @@ case "$TEST_TYPE" in
     echo ""
     echo "Examples:"
     echo "  $0"
+    echo "  $0 agents"
     echo "  $0 framework"
     echo "  $0 sc-fix"
     echo "  $0 custom \"What is 2+2?\" \"4\""
@@ -228,7 +257,8 @@ if [ "$TEST_TYPE" = "all" ]; then
   echo ""
   echo "Tips for using this test framework:"
   echo -e "${BLUE}1. Test specific functionality:${NC}"
-  echo "   ./test-commands.sh framework"
+  echo "   ./test-commands.sh agents       # Test agent system"
+  echo "   ./test-commands.sh framework    # Test legacy framework"
   echo ""
   echo -e "${BLUE}2. Test any command:${NC}"
   echo "   ./test-commands.sh sc-modify"

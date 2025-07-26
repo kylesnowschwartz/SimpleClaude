@@ -11,14 +11,18 @@ get_token_data() {
   local temp_data
   temp_data=$(npx token-limit --config shared-simpleclaude-token-limit.config.ts --json 2>&1 | grep -A 999999 '^\[')
 
-  # Output individual files
-  echo "$temp_data" | jq -r 'sort_by(.name) | .[] |
-        select(.name | test("\\(shared\\)|\\(commands\\)|\\(extras\\)")) |
-        "\(.name)\t\(.tokenCount)\t\(.tokenLimit)\t$\(.cost | . * 1000 | round / 1000)"'
+  # Output individual files (including agents)
+  echo "$temp_data" | jq -r '
+    sort_by(.name) | .[] |
+    select(.name | contains("(agent)") or contains("(shared)") or contains("(commands)") or contains("(extras)")) |
+    "\(.name)\t\(.tokenCount)\t\(.tokenLimit)\t$\(.cost | . * 1000 | round / 1000)"
+  '
 
-  # Calculate and output totals
-  echo "$temp_data" | jq -r '[.[] | select(.name | test("\\(shared\\)|\\(commands\\)|\\(extras\\)"))] |
-        "TOTAL\t\(map(.tokenCount) | add)\t\(map(.tokenLimit) | add)\t$\(map(.cost) | add | . * 1000 | round / 1000)"'
+  # Calculate and output totals (including agents)
+  echo "$temp_data" | jq -r '
+    [.[] | select(.name | contains("(agent)") or contains("(shared)") or contains("(commands)") or contains("(extras)"))] |
+    "TOTAL\t\(map(.tokenCount) | add)\t\(map(.tokenLimit) | add)\t$\(map(.cost) | add | . * 1000 | round / 1000)"
+  '
 }
 
 # Run token-check and parse JSON output into aligned table
