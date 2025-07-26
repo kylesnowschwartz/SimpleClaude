@@ -6,18 +6,14 @@
 
 Based on request complexity and intent, delegate to specialized agents using Task() calls:
 
-**Context Analysis**: `Task("context-analyzer", "analyze project structure and identify discovery targets")`  
-**Strategic Planning**: `Task("system-architect", "create systematic discovery plan and search patterns")`  
-**Implementation**: `Task("implementation-specialist", "execute feature discovery and extract hidden functionality")`  
-**Quality Validation**: `Task("validation-review-specialist", "verify discovered features and document findings")`
+**MVP Easter Egg Discovery Set**:
 
-**Supporting Specialists**:
+- `Task("context-analyzer", "analyze codebase structure and identify potential hidden features")`
+- `Task("research-analyst", "investigate undocumented patterns and hidden functionality")`
+- `Task("debugging-specialist", "trace execution paths and discover hidden debug modes")`
+- `Task("documentation-specialist", "document discovered features and categorize findings")`
 
-- `Task("research-analyst", "investigate codebase patterns and documentation gaps")`
-- `Task("debugging-specialist", "trace hidden code paths and debug flags")`
-- `Task("documentation-specialist", "organize and categorize discovered features")`
-
-**Execution Strategy**: For complex discovery tasks, spawn multiple agents simultaneously for independent search streams.
+**Execution Strategy**: For complex discovery tasks, spawn agents simultaneously for parallel investigation streams focusing on discovery, investigation, and documentation rather than implementation.
 
 ## Command Execution
 

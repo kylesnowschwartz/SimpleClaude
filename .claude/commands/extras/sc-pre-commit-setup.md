@@ -6,18 +6,14 @@
 
 Based on request complexity and intent, delegate to specialized agents using Task() calls:
 
-**Context Analysis**: `Task("context-analyzer", "analyze repository structure and detect project languages")`  
-**Strategic Planning**: `Task("system-architect", "create pre-commit configuration plan based on repository analysis")`  
-**Implementation**: `Task("implementation-specialist", "generate and install pre-commit configuration following plan")`  
-**Quality Validation**: `Task("validation-review-specialist", "verify pre-commit setup works correctly and meets requirements")`
+**MVP Agent Set for Pre-commit Setup**:
 
-**Supporting Specialists**:
+- `Task("context-analyzer", "analyze repository structure and detect project languages")`
+- `Task("research-analyst", "research current pre-commit hook versions and best practices")`  
+- `Task("implementation-specialist", "generate and install pre-commit configuration")`
+- `Task("validation-review-specialist", "validate configuration works and runs successfully")`
 
-- `Task("research-analyst", "research current pre-commit hook versions and best practices")`
-- `Task("debugging-specialist", "troubleshoot pre-commit installation and configuration issues")`
-- `Task("documentation-specialist", "generate pre-commit configuration documentation and usage guides")`
-
-**Execution Strategy**: For complex setups, spawn multiple agents simultaneously for parallel repository analysis, version research, and configuration generation.
+**Execution Strategy**: Sequential workflow - context analysis → research → implementation → validation. Use parallel execution for research and analysis phases when appropriate.
 
 ## Command Execution
 
