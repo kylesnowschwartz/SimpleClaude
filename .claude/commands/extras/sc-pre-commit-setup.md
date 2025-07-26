@@ -2,31 +2,60 @@
 
 ---
 
-**CRITICAL DO NOT SKIP** Use the Read() tool to load content framework from:
+## Agent Orchestration
 
-<framework files>
-$HOME/.claude/shared/simpleclaude/00_core_principles.md  
-$HOME/.claude/shared/simpleclaude/01_orchestration.md  
-$HOME/.claude/shared/simpleclaude/02_workflows_and_patterns.md  
-$HOME/.claude/shared/simpleclaude/03_sub_agent_delegation.md
-</framework files>
+Based on request complexity and intent, delegate to specialized agents using Task() calls:
+
+**Context Analysis**: `Task("context-analyzer", "analyze repository structure and detect project languages")`  
+**Strategic Planning**: `Task("system-architect", "create pre-commit configuration plan based on repository analysis")`  
+**Implementation**: `Task("implementation-specialist", "generate and install pre-commit configuration following plan")`  
+**Quality Validation**: `Task("validation-review-specialist", "verify pre-commit setup works correctly and meets requirements")`
+
+**Supporting Specialists**:
+
+- `Task("research-analyst", "research current pre-commit hook versions and best practices")`
+- `Task("debugging-specialist", "troubleshoot pre-commit installation and configuration issues")`
+- `Task("documentation-specialist", "generate pre-commit configuration documentation and usage guides")`
+
+**Execution Strategy**: For complex setups, spawn multiple agents simultaneously for parallel repository analysis, version research, and configuration generation.
 
 ## Command Execution
 
-Ultrathink step-by-step, then execute.
+**If "{{ARGUMENTS}}" is empty**: Display pre-commit setup options and repository analysis suggestions.  
+**If "{{ARGUMENTS}}" has content**: Think step-by-step, then execute.
 
-- What: [repository-analysis]
-- How: [automated-research-and-setup]
+Transforms: "{{ARGUMENTS}}" into structured intent:
+
+- What: [repository-analysis-and-setup]
+- How: [automated-research-and-configuration]
 - Mode: [progressive-validation]
-- Agents: [research-specialist, configuration-generator, validator]
+- Agents: [specialized Task() agents for research, configuration, and validation]
 
-**Auto-Spawning:** Spawns specialized sub-agents for parallel research, configuration, and validation.
+**Auto-Spawning:** Spawns specialized agents via Task() calls for parallel execution of research, configuration, and validation.
+
+### Semantic Transformations
+
+Transforms natural language pre-commit requests into structured repository analysis and automated configuration:
+
+```
+"setup pre-commit for this project" → What: [full-setup] | How: [auto-detect-and-configure] | Mode: [comprehensive-validation]
+"update pre-commit hooks" → What: [version-updates] | How: [research-and-upgrade] | Mode: [incremental-validation]
+"fix pre-commit configuration" → What: [repair-config] | How: [analyze-and-fix] | Mode: [targeted-validation]
+```
+
+Examples:
+
+- `/sc-pre-commit-setup` - Analyze repository and setup comprehensive pre-commit configuration
+- `/sc-pre-commit-setup update versions` - Research and update all hook versions to latest
+- `/sc-pre-commit-setup python project` - Setup Python-specific pre-commit hooks with best practices
+
+**Context Detection:** Repository analysis → Language detection → Hook research → Configuration generation → Validation
 
 ## Core Workflows
 
-**Research-First Setup:** Sub-agents → Repository Analysis → Version Research → Configuration Generation → Validation  
-**Language-Targeted:** Sub-agents → Language Detection → Hook Research → Specialized Configuration → Testing  
-**Update & Repair:** Sub-agents → Current Config Analysis → Version Research → Incremental Updates → Validation
+**Research-First Setup:** Agents → Repository Analysis → Version Research → Configuration Generation → Validation  
+**Language-Targeted:** Agents → Language Detection → Hook Research → Specialized Configuration → Testing  
+**Update & Repair:** Agents → Current Config Analysis → Version Research → Incremental Updates → Validation
 
 ## Research & Configuration Protocol
 

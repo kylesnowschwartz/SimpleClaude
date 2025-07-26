@@ -2,28 +2,36 @@
 
 ---
 
-**CRITICAL DO NOT SKIP** Use the Read() tool to load content framework from:
+## Agent Orchestration
 
-<framework files>
-$HOME/.claude/shared/simpleclaude/00_core_principles.md  
-$HOME/.claude/shared/simpleclaude/01_orchestration.md  
-$HOME/.claude/shared/simpleclaude/02_workflows_and_patterns.md  
-$HOME/.claude/shared/simpleclaude/03_sub_agent_delegation.md
-</framework files>
+Based on request complexity and intent, delegate to specialized agents using Task() calls:
+
+**Context Analysis**: `Task("context-analyzer", "analyze project structure and identify discovery targets")`  
+**Strategic Planning**: `Task("system-architect", "create systematic discovery plan and search patterns")`  
+**Implementation**: `Task("implementation-specialist", "execute feature discovery and extract hidden functionality")`  
+**Quality Validation**: `Task("validation-review-specialist", "verify discovered features and document findings")`
+
+**Supporting Specialists**:
+
+- `Task("research-analyst", "investigate codebase patterns and documentation gaps")`
+- `Task("debugging-specialist", "trace hidden code paths and debug flags")`
+- `Task("documentation-specialist", "organize and categorize discovered features")`
+
+**Execution Strategy**: For complex discovery tasks, spawn multiple agents simultaneously for independent search streams.
 
 ## Command Execution
 
-**If "$ARGUMENTS" is empty**: Display usage suggestions and stop.  
-**If "$ARGUMENTS" has content**: Think step-by-step, then execute.
+**If "{{ARGUMENTS}}" is empty**: Display usage suggestions and stop.  
+**If "{{ARGUMENTS}}" has content**: Think step-by-step, then execute.
 
-Transforms: "$ARGUMENTS" into structured intent:
+Transforms: "{{ARGUMENTS}}" into structured intent:
 
 - What: [extracted-target]
 - How: [detected-approach]
 - Mode: [execution-mode]
-- Agents: [auto-spawned sub-agents]
+- Agents: [specialized Task() agents]
 
-**Auto-Spawning:** Spawns specialized sub-agents for parallel task execution.
+**Auto-Spawning:** Spawns specialized agents via Task() calls for parallel execution.
 
 Intelligent discovery router that transforms natural language queries into systematic searches for hidden features, undocumented capabilities, and clever implementations that aren't explicitly documented.
 
@@ -62,6 +70,6 @@ Examples:
 
 ## Core Workflows
 
-**Planner:** Sub-agents → Ingest README/docs → Map documented features → Identify search patterns → Plan discovery strategy  
-**Implementer:** Sub-agents → Search codebase → Extract hidden features → Analyze implementations → Categorize findings  
-**Tester:** Sub-agents → Validate discoveries → Test feature combinations → Document edge cases → Verify functionality
+**Planner:** Agents → Ingest README/docs → Map documented features → Identify search patterns → Plan discovery strategy  
+**Implementer:** Agents → Search codebase → Extract hidden features → Analyze implementations → Categorize findings  
+**Tester:** Agents → Validate discoveries → Test feature combinations → Document edge cases → Verify functionality
