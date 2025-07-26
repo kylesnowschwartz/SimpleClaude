@@ -2,7 +2,7 @@
 
 ## Overview
 
-SimpleClaude is a practical minimalist AI assistant framework that transforms complex AI interactions into natural conversations. It consolidates 19+ commands into 5 intuitive commands that understand plain English.
+SimpleClaude is a practical minimalist AI assistant framework that transforms complex AI interactions into natural conversations through specialized agents. It consolidates 19+ commands into 5 intuitive commands that understand plain English.
 
 ## Documentation
 
@@ -35,10 +35,13 @@ Development history and future roadmap. Shows where we've been and where we're g
 
 No flags. No configuration. Just describe what you need.
 
-## MVP Status 🎉
+## Agent Architecture Complete! 🎉
 
-SimpleClaude is ready for real-world testing! All core features are implemented:
+SimpleClaude's agent-based architecture is ready for real-world testing! All core features are implemented:
 
 - ✅ Natural language understanding
-- ✅ Automatic mode detection
+- ✅ Automatic mode detection  
 - ✅ Zero configuration required
+- ✅ **Specialized agent system**: 7 focused agents handle specific tasks
+- ✅ **Token efficiency**: Isolated agent contexts prevent bloat
+- ✅ **Clean Task() delegation**: Commands orchestrate, agents execute

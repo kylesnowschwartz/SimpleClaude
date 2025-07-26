@@ -2,7 +2,7 @@
 
 ## Testing Commands with Claude -p
 
-SimpleClaude provides a comprehensive testing framework for validating command functionality using Claude's headless mode (`claude -p`). This allows automated testing of command behavior, @include directives, and custom prompts.
+SimpleClaude provides a comprehensive testing framework for validating command functionality using Claude's headless mode (`claude -p`). This allows automated testing of command behavior, agent delegation, and specialized task execution.
 
 ### Quick Start
 
@@ -11,7 +11,7 @@ SimpleClaude provides a comprehensive testing framework for validating command f
 ./test-commands.sh
 
 # Test specific functionality
-./test-commands.sh includes        # Test nested @includes
+./test-commands.sh agents          # Test agent delegation
 ./test-commands.sh sc-create      # Test sc-create command
 ./test-commands.sh sc-understand  # Test sc-understand command
 
@@ -22,26 +22,26 @@ SimpleClaude provides a comprehensive testing framework for validating command f
 
 # Run custom tests
 ./test-commands.sh custom "What is 2+2?" "4"
-./test-commands.sh custom "Explain @include directives" "include"
+./test-commands.sh custom "Test agent spawning" "Task"
 ```
 
 ### What the Test Checks
 
-1. **Basic @include Recognition**
-   - Verifies Claude Code recognizes and processes @include directives
-2. **Nested @include Resolution**
+1. **Agent Delegation**
+   - Verifies commands properly spawn specialized agents via Task() calls
+2. **Agent Functionality**
 
-   - Confirms nested includes (includes within includes) are properly resolved
-   - Specifically checks if MCP tools directive from sub-agents.yml is accessible
+   - Confirms agents have access to their specialized contexts
+   - Specifically checks if agent definitions are properly accessible
 
 3. **Command Structure Test**
 
-   - Tests if commands properly load all includes and can use mode detection
+   - Tests if commands properly delegate to agents and use mode detection
    - Uses sc-understand command as example
 
-4. **Specific Nested Content Access**
-   - Verifies access to deeply nested content (sub-agent types)
-   - Ensures all 7 included YAML files are properly loaded
+4. **Agent Specialization**
+   - Verifies access to specialized agent functionality
+   - Ensures all 7 agent types are properly defined and accessible
 
 ### Understanding claude -p
 
@@ -99,13 +99,13 @@ run_claude_test \
     "Sub-agent detection"
 ```
 
-3. **Include Resolution**
+3. **Agent Resolution**
 
 ```bash
 run_claude_test \
-    "Can you see @include shared/simpleclaude/modes.yml?" \
-    "planner.*implementer.*tester" \
-    "Include file access"
+    "Can you see agent specialists available?" \
+    "implementation.*research.*validation" \
+    "Agent access test"
 ```
 
 ### Expected Output
@@ -115,11 +115,11 @@ SimpleClaude Command Testing Framework
 ======================================
 Test mode: all
 
-Testing Nested @include Functionality
--------------------------------------
-Basic @include recognition... ✓ Basic @include recognition
-Nested @include resolution... ✓ Nested @include resolution
-Access to deeply nested content... ✓ Access to deeply nested content
+Testing Agent Architecture
+-------------------------
+Agent delegation recognition... ✓ Agent delegation recognition
+Specialized agent resolution... ✓ Specialized agent resolution
+Access to agent functionality... ✓ Access to agent functionality
 
 Testing sc-create Command
 -------------------------
@@ -138,10 +138,10 @@ Test run complete!
 
 ### When to Run This Test
 
-- After modifying the include structure
-- When adding new shared YAML files
+- After modifying the agent architecture
+- When adding new specialized agents
 - Before major releases
-- If Claude Code updates might affect @include behavior
+- If Claude Code updates might affect agent delegation
 
 ### Test Requirements
 
@@ -162,30 +162,30 @@ If tests fail:
 2. **Verify File Structure**
 
    ```bash
-   ls -la .claude/shared/simpleclaude/
+   ls -la .claude/agents/
    ls -la .claude/commands/simpleclaude/
    ```
 
 3. **Test Individual Includes**
 
    ```bash
-   claude -p "Show content of @include shared/simpleclaude/sub-agents.yml"
+   claude -p "List available agent specialists"
    ```
 
 4. **Check for Syntax Errors**
-   - Ensure all YAML files are valid
-   - Verify @include paths are correct
+   - Ensure all agent files are valid
+   - Verify agent definitions are correct
 
 ### Manual Testing
 
-You can also manually test specific includes:
+You can also manually test specific agents:
 
 ```bash
-# Test single include
-claude -p --output-format json "Can you see @include shared/simpleclaude/modes.yml"
+# Test agent access
+claude -p --output-format json "List available SimpleClaude agent specialists"
 
-# Test framework loading
-claude -p --output-format json "What framework files are loaded from the SimpleClaude system?"
+# Test agent loading
+claude -p --output-format json "What agent files are available in the SimpleClaude system?"
 
 # Test command functionality
 claude -p "Using sc-understand command structure, analyze this: explain authentication"
