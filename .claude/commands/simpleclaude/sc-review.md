@@ -6,18 +6,12 @@
 
 Based on request complexity and intent, delegate to specialized agents using Task() calls:
 
-**Context Analysis**: `Task("context-analyzer", "analyze codebase structure and review requirements")`  
-**Strategic Planning**: `Task("system-architect", "create comprehensive review plan based on analysis")`  
-**Implementation**: `Task("validation-review-specialist", "execute thorough code review and analysis")`  
-**Quality Validation**: `Task("validation-review-specialist", "verify review completeness and accuracy")`
+**Context Analysis**: `Task("context-analyzer", "analyze codebase structure and review scope requirements")`  
+**Review Planning**: `Task("system-architect", "assess architectural decisions and create focused review strategy")`  
+**Code Review Execution**: `Task("validation-review-specialist", "conduct thorough code quality and standards assessment")`  
+**Security Analysis**: `Task("research-analyst", "investigate security vulnerabilities and compliance with best practices")`
 
-**Supporting Specialists**:
-
-- `Task("research-analyst", "investigate security patterns and best practices")`
-- `Task("debugging-specialist", "identify potential bugs and code issues")`
-- `Task("documentation-specialist", "assess documentation quality and completeness")`
-
-**Execution Strategy**: For complex reviews, spawn multiple agents simultaneously for independent analysis streams (security, performance, architecture, testing).
+**Execution Strategy**: For comprehensive reviews, spawn specialized agents for parallel analysis streams (code quality, security assessment, architectural review, performance validation).
 
 ## Command Execution
 

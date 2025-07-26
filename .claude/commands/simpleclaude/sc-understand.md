@@ -7,17 +7,17 @@
 Based on request complexity and intent, delegate to specialized agents using Task() calls:
 
 **Context Analysis**: `Task("context-analyzer", "analyze codebase structure and understanding requirements")`  
-**Strategic Planning**: `Task("system-architect", "create analysis plan based on codebase complexity")`  
-**Implementation**: `Task("research-analyst", "investigate and analyze code without implementation")`  
-**Quality Validation**: `Task("documentation-specialist", "create explanations and knowledge synthesis")`
+**Research & Investigation**: `Task("research-analyst", "investigate patterns, libraries, and implementation approaches")`  
+**Knowledge Synthesis**: `Task("documentation-specialist", "synthesize findings into clear explanations and documentation")`  
+**Understanding Validation**: `Task("knowledge-validator", "confirm understanding accuracy and identify gaps")`
 
 **Supporting Specialists**:
 
-- `Task("research-analyst", "investigate and analyze code patterns and architecture")`
-- `Task("debugging-specialist", "analyze code flow and potential issues for understanding")`
-- `Task("documentation-specialist", "create comprehensive explanations and documentation")`
+- `Task("pattern-analyst", "identify and explain architectural patterns and design decisions")`
+- `Task("flow-tracer", "map execution flows and data transformations for comprehension")`
+- `Task("concept-explainer", "break down complex concepts into understandable components")`
 
-**Execution Strategy**: For complex analysis tasks, spawn multiple agents simultaneously for independent analysis streams.
+**Execution Strategy**: For complex understanding tasks, spawn agents in sequence: Context → Research → Synthesis → Validation, with parallel specialists for deep analysis.
 
 ## Command Execution
 

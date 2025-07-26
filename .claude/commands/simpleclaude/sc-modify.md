@@ -6,18 +6,12 @@
 
 Based on request complexity and intent, delegate to specialized agents using Task() calls:
 
-**Context Analysis**: `Task("context-analyzer", "analyze current code structure and modification requirements")`  
-**Strategic Planning**: `Task("system-architect", "create safe modification plan with rollback strategy")`  
-**Implementation**: `Task("implementation-specialist", "execute modifications with testing and validation")`  
-**Quality Validation**: `Task("validation-review-specialist", "verify modifications maintain behavior and improve quality")`
+**Context Analysis**: `Task("context-analyzer", "analyze existing code structure, dependencies, and modification impact scope")`  
+**Modification Planning**: `Task("system-architect", "design safe modification strategy with rollback plan and dependency mapping")`  
+**Safe Implementation**: `Task("implementation-specialist", "execute modifications with incremental changes and continuous validation")`  
+**Regression Testing**: `Task("validation-specialist", "verify modifications preserve existing behavior and improve target metrics")`
 
-**Supporting Specialists**:
-
-- `Task("research-analyst", "investigate optimization patterns and best practices")`
-- `Task("debugging-specialist", "identify and resolve issues during modification")`
-- `Task("documentation-specialist", "update documentation to reflect changes")`
-
-**Execution Strategy**: For complex modifications, spawn multiple agents simultaneously for independent work streams like refactoring, testing, and performance validation.
+**Execution Strategy**: For complex modifications, spawn agents in sequence for safety (context → planning → implementation → validation) or parallel for independent modification streams.
 
 ## Command Execution
 

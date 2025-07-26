@@ -6,18 +6,17 @@
 
 Based on request complexity and intent, delegate to specialized agents using Task() calls:
 
-**Context Analysis**: `Task("context-analyzer", "analyze project structure and requirements")`  
-**Strategic Planning**: `Task("system-architect", "create implementation plan based on analysis")`  
-**Implementation**: `Task("implementation-specialist", "implement solution following plan")`  
-**Quality Validation**: `Task("validation-review-specialist", "verify implementation meets requirements")`
+**Core Creation Workflow**:
+- `Task("context-analyzer", "analyze project structure and identify integration points")`  
+- `Task("system-architect", "design component architecture and implementation plan")`  
+- `Task("implementation-specialist", "build solution following established patterns")`  
+- `Task("validation-specialist", "verify implementation integrates and functions correctly")`
 
-**Supporting Specialists**:
+**Creation-Specific Specialists** (spawn as needed):
+- `Task("pattern-analyst", "identify and apply existing project patterns and conventions")`
+- `Task("integration-specialist", "ensure new component integrates with existing system")`
 
-- `Task("research-analyst", "investigate and analyze without code implementation")`
-- `Task("debugging-specialist", "systematic root cause analysis and troubleshooting")`
-- `Task("documentation-specialist", "create documentation and knowledge synthesis")`
-
-**Execution Strategy**: For complex tasks, spawn multiple agents simultaneously for independent work streams.
+**Execution Strategy**: Spawn agents sequentially for dependent tasks, simultaneously for independent creation streams.
 
 ## Command Execution
 

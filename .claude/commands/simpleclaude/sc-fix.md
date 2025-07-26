@@ -6,18 +6,17 @@
 
 Based on request complexity and intent, delegate to specialized agents using Task() calls:
 
-**Context Analysis**: `Task("context-analyzer", "analyze error context and codebase structure")`  
-**Strategic Planning**: `Task("system-architect", "create debugging strategy and fix plan")`  
-**Implementation**: `Task("implementation-specialist", "implement solution following debugging plan")`  
-**Quality Validation**: `Task("validation-review-specialist", "verify fix resolves issue without side effects")`
+**Error Analysis**: `Task("context-analyzer", "analyze error context, stack traces, and affected code paths")`  
+**Root Cause Investigation**: `Task("debugging-specialist", "systematic root cause analysis and issue reproduction")`  
+**Fix Implementation**: `Task("implementation-specialist", "implement targeted fix following debugging findings")`  
+**Regression Validation**: `Task("validation-specialist", "verify fix resolves issue and prevents regression")`
 
-**Supporting Specialists**:
+**Supporting Specialists** (use only when specifically needed):
 
-- `Task("research-analyst", "investigate error patterns and best practices without implementation")`
-- `Task("debugging-specialist", "systematic root cause analysis and troubleshooting")`
-- `Task("documentation-specialist", "document debugging process and prevention strategies")`
+- `Task("research-analyst", "investigate error patterns and debugging best practices")` - for complex/unfamiliar errors
+- `Task("test-specialist", "create comprehensive test cases for the fix")` - for critical system fixes
 
-**Execution Strategy**: For complex bugs, spawn multiple agents simultaneously for independent investigation streams.
+**Execution Strategy**: For complex bugs, spawn debugging-specialist and context-analyzer simultaneously for parallel investigation, then sequence implementation and validation.
 
 ## Command Execution
 
