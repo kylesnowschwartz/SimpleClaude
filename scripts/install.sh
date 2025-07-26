@@ -240,7 +240,7 @@ if [[ "$CREATE_BACKUP" = true ]] && [[ "$DRY_RUN" = false ]]; then
 
   # Backup existing SimpleClaude components
   backup_directory "commands/simpleclaude" "commands-simpleclaude"
-  backup_directory "shared/simpleclaude" "shared-simpleclaude"
+  backup_directory "agents" "agents"
 
   # Backup extras directory if installing extras
   if [[ "$INSTALL_EXTRAS" = true ]]; then
@@ -254,8 +254,8 @@ fi
 # Install SimpleClaude commands
 install_directory "commands/simpleclaude" "commands/simpleclaude" "*.md" "commands" "No SimpleClaude commands found in source"
 
-# Install SimpleClaude shared framework files (core numbered files)
-install_directory "shared/simpleclaude" "shared/simpleclaude" "[0-9]*.md" "framework" "No SimpleClaude shared framework found in source"
+# Install SimpleClaude agent files
+install_directory "agents" "agents" "*.md" "agents" "No SimpleClaude agents found in source"
 
 # Install SimpleClaude extras commands (optional)
 if [[ "$INSTALL_EXTRAS" = true ]]; then
@@ -280,7 +280,7 @@ else
     echo ""
     echo -e "${BLUE}To restore if needed:${NC}"
     echo "  cp -r $BACKUP_DIR/commands-simpleclaude/* $TARGET_DIR/commands/simpleclaude/"
-    echo "  cp -r $BACKUP_DIR/shared-simpleclaude/* $TARGET_DIR/shared/simpleclaude/"
+    echo "  cp -r $BACKUP_DIR/agents/* $TARGET_DIR/agents/"
     if [[ "$INSTALL_EXTRAS" = true ]]; then
       echo "  cp -r $BACKUP_DIR/commands-extras/* $TARGET_DIR/commands/extras/"
     fi
