@@ -9,12 +9,12 @@ Based on request complexity and intent, delegate to specialized agents using Tas
 **Error Analysis**: `Task("context-analyzer", "analyze error context, stack traces, and affected code paths")`  
 **Root Cause Investigation**: `Task("debugging-specialist", "systematic root cause analysis and issue reproduction")`  
 **Fix Implementation**: `Task("implementation-specialist", "implement targeted fix following debugging findings")`  
-**Regression Validation**: `Task("validation-specialist", "verify fix resolves issue and prevents regression")`
+**Regression Validation**: `Task("validation-review-specialist", "verify fix resolves issue and prevents regression")`
 
 **Supporting Specialists** (use only when specifically needed):
 
 - `Task("research-analyst", "investigate error patterns and debugging best practices")` - for complex/unfamiliar errors
-- `Task("test-specialist", "create comprehensive test cases for the fix")` - for critical system fixes
+- `Task("documentation-specialist", "document fix and create prevention guidelines")` - for critical system fixes
 
 **Execution Strategy**: For complex bugs, spawn debugging-specialist and context-analyzer simultaneously for parallel investigation, then sequence implementation and validation.
 

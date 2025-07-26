@@ -9,13 +9,13 @@ Based on request complexity and intent, delegate to specialized agents using Tas
 **Context Analysis**: `Task("context-analyzer", "analyze codebase structure and understanding requirements")`  
 **Research & Investigation**: `Task("research-analyst", "investigate patterns, libraries, and implementation approaches")`  
 **Knowledge Synthesis**: `Task("documentation-specialist", "synthesize findings into clear explanations and documentation")`  
-**Understanding Validation**: `Task("knowledge-validator", "confirm understanding accuracy and identify gaps")`
+**Understanding Validation**: `Task("validation-review-specialist", "confirm understanding accuracy and identify gaps")`
 
 **Supporting Specialists**:
 
-- `Task("pattern-analyst", "identify and explain architectural patterns and design decisions")`
-- `Task("flow-tracer", "map execution flows and data transformations for comprehension")`
-- `Task("concept-explainer", "break down complex concepts into understandable components")`
+- `Task("system-architect", "identify and explain architectural patterns and design decisions")`
+- `Task("debugging-specialist", "trace execution flows and analyze code behavior for comprehension")`
+- `Task("implementation-specialist", "break down complex implementations into understandable components")`
 
 **Execution Strategy**: For complex understanding tasks, spawn agents in sequence: Context → Research → Synthesis → Validation, with parallel specialists for deep analysis.
 

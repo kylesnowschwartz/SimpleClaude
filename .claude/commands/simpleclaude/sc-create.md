@@ -10,11 +10,11 @@ Based on request complexity and intent, delegate to specialized agents using Tas
 - `Task("context-analyzer", "analyze project structure and identify integration points")`  
 - `Task("system-architect", "design component architecture and implementation plan")`  
 - `Task("implementation-specialist", "build solution following established patterns")`  
-- `Task("validation-specialist", "verify implementation integrates and functions correctly")`
+- `Task("validation-review-specialist", "verify implementation integrates and functions correctly")`
 
-**Creation-Specific Specialists** (spawn as needed):
-- `Task("pattern-analyst", "identify and apply existing project patterns and conventions")`
-- `Task("integration-specialist", "ensure new component integrates with existing system")`
+**Additional Specialists** (spawn as needed):
+- `Task("research-analyst", "research best practices and existing patterns for the component")`
+- `Task("documentation-specialist", "create comprehensive documentation for the new component")`
 
 **Execution Strategy**: Spawn agents sequentially for dependent tasks, simultaneously for independent creation streams.
 
