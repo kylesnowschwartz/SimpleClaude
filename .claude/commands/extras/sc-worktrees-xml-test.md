@@ -166,7 +166,7 @@ git worktree prune                            # Clean up stale references
 - Clean up completed <completed_worktrees>${COMPLETED_WORKTREES}</completed_worktrees> regularly
 
 <additional_instructions>
-${ADDITIONAL USER INPUT}
+{{ADDITIONAL_USER_INPUT}}
 </additional_instructions>
 
 ---

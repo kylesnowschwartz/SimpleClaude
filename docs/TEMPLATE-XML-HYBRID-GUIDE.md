@@ -36,7 +36,14 @@ ${ADDITIONAL USER INPUT}
 </additional_instructions>
 ```
 
-## XML Variable Patterns
+## Syntax Standards
+
+### Variable Syntax Convention
+- **Command Arguments**: `{{ARGUMENTS}}` (main command input)
+- **Additional User Input**: `{{ADDITIONAL_USER_INPUT}}` (free-form appended content)
+- **Contextual XML Variables**: `${VARIABLE_NAME}` (structured arguments in context)
+
+### XML Variable Patterns
 
 ### Contextual Integration
 ```markdown
