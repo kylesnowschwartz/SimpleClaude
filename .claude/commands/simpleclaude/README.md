@@ -10,7 +10,7 @@ This directory contains the 5 core SimpleClaude commands that transform natural 
 
 ## Framework Integration
 
-Each command leverages the SimpleClaude framework from `@shared/simpleclaude/`:
+Each command leverages specialized agents from `@agents/`:
 
 - **Core Principles**: Quality-first development with evidence-based validation
 - **Four-Mode System**: Adaptive Understand/Planner/Implementer/Tester modes based on context
