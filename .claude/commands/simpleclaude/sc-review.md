@@ -2,14 +2,22 @@
 
 ---
 
-**CRITICAL DO NOT SKIP** Use the Read() tool to load content framework from:
+## Agent Orchestration
 
-<framework files>
-$HOME/.claude/shared/simpleclaude/00_core_principles.md  
-$HOME/.claude/shared/simpleclaude/01_orchestration.md  
-$HOME/.claude/shared/simpleclaude/02_workflows_and_patterns.md  
-$HOME/.claude/shared/simpleclaude/03_sub_agent_delegation.md
-</framework files>
+Based on request complexity and intent, delegate to specialized agents using Task() calls:
+
+**Context Analysis**: `Task("context-analyzer", "analyze codebase structure and review requirements")`  
+**Strategic Planning**: `Task("system-architect", "create comprehensive review plan based on analysis")`  
+**Implementation**: `Task("validation-review-specialist", "execute thorough code review and analysis")`  
+**Quality Validation**: `Task("validation-review-specialist", "verify review completeness and accuracy")`
+
+**Supporting Specialists**:
+
+- `Task("research-analyst", "investigate security patterns and best practices")`
+- `Task("debugging-specialist", "identify potential bugs and code issues")`
+- `Task("documentation-specialist", "assess documentation quality and completeness")`
+
+**Execution Strategy**: For complex reviews, spawn multiple agents simultaneously for independent analysis streams (security, performance, architecture, testing).
 
 ## Command Execution
 
@@ -21,9 +29,9 @@ Transforms: "{{ARGUMENTS}}" into structured intent:
 - What: [extracted-target]
 - How: [detected-approach]
 - Mode: [execution-mode]
-- Agents: [auto-spawned sub-agents]
+- Agents: [specialized Task() agents]
 
-**Auto-Spawning:** Spawns specialized sub-agents for parallel task execution.
+**Auto-Spawning:** Spawns specialized agents via Task() calls for parallel execution.
 
 Comprehensive review router that transforms natural language into structured expert analysis for security, performance, architecture, and code quality assessment. Includes GitHub Pull Request integration for automated PR reviews.
 
@@ -82,11 +90,11 @@ Examples:
 - `/sc-review test coverage gaps` - Test suite analysis and improvements
 - `/sc-review architecture patterns` - Design pattern and structure evaluation
 
-**Context Detection:** Review request analysis → PR/code target identification → Focus areas identification → Review approach → Multiple concerns detection → Sub-agent spawning
+**Context Detection:** Review request analysis → PR/code target identification → Focus areas identification → Review approach → Multiple concerns detection → Agent spawning
 
 ## Core Workflows
 
-**Planner:** Sub-agents → Define review scope → Identify risk areas → Create review strategy → Generate checklists  
-**Implementer:** Sub-agents → Execute review → Analyze code quality → Generate feedback → Provide recommendations  
-**Tester:** Sub-agents → Validate functionality → Check test coverage → Identify edge cases → Verify compliance  
-**PR Reviewer:** Sub-agents → Fetch PR data → Analyze diff → Generate structured review → Provide actionable feedback
+**Comprehensive Analysis:** Agents → Define review scope → Identify risk areas → Execute multi-stream analysis → Synthesis  
+**PR Review:** Agents → Fetch PR data → Analyze code changes → Security/performance assessment → Structured feedback  
+**Security Review:** Agents → OWASP analysis → Vulnerability scanning → Threat assessment → Mitigation recommendations  
+**Performance Review:** Agents → Bottleneck analysis → Resource usage assessment → Optimization opportunities → Performance report

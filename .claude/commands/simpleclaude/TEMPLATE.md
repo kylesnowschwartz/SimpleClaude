@@ -2,14 +2,22 @@
 
 ---
 
-**CRITICAL DO NOT SKIP** Use the Read() tool to load content framework from:
+## Agent Orchestration
 
-<framework files>
-$HOME/.claude/shared/simpleclaude/00_core_principles.md  
-$HOME/.claude/shared/simpleclaude/01_orchestration.md  
-$HOME/.claude/shared/simpleclaude/02_workflows_and_patterns.md  
-$HOME/.claude/shared/simpleclaude/03_sub_agent_delegation.md
-</framework files>
+Based on request complexity and intent, delegate to specialized agents using Task() calls:
+
+**Context Analysis**: `Task("context-analyzer", "analyze project structure and requirements")`  
+**Strategic Planning**: `Task("system-architect", "create implementation plan based on analysis")`  
+**Implementation**: `Task("implementation-specialist", "implement solution following plan")`  
+**Quality Validation**: `Task("validation-review-specialist", "verify implementation meets requirements")`
+
+**Supporting Specialists**:
+
+- `Task("research-analyst", "investigate and analyze without code implementation")`
+- `Task("debugging-specialist", "systematic root cause analysis and troubleshooting")`
+- `Task("documentation-specialist", "create documentation and knowledge synthesis")`
+
+**Execution Strategy**: For complex tasks, spawn multiple agents simultaneously for independent work streams.
 
 ## Command Execution
 
@@ -21,9 +29,9 @@ Transforms: "{{ARGUMENTS}}" into structured intent:
 - What: [extracted-target]
 - How: [detected-approach]
 - Mode: [execution-mode]
-- Agents: [auto-spawned sub-agents]
+- Agents: [specialized Task() agents]
 
-**Auto-Spawning:** Spawns specialized sub-agents for parallel task execution.
+**Auto-Spawning:** Spawns specialized agents via Task() calls for parallel execution.
 
 ### Semantic Transformations
 
@@ -39,10 +47,10 @@ Examples:
 - `/[command] [natural language]` - [What it does]
 - `/[command] [different natural language]` - [Different behavior]
 
-**Context Detection:** Request analysis → Scope identification → Approach selection → Mode detection → Sub-agent spawning
+**Context Detection:** Request analysis → Scope identification → Approach selection → Mode detection → Agent spawning
 
 ## Core Workflows
 
-**[Workflow 1]:** Sub-agents → [Step 1] → [Step 2] → [Step 3] → Synthesis  
-**[Workflow 2]:** Sub-agents → [Step 1] → [Step 2] → [Step 3] → Synthesis  
-**[Workflow 3]:** Sub-agents → [Step 1] → [Step 2] → [Step 3] → Synthesis
+**[Workflow 1]:** Agents → [Step 1] → [Step 2] → [Step 3] → Synthesis  
+**[Workflow 2]:** Agents → [Step 1] → [Step 2] → [Step 3] → Synthesis  
+**[Workflow 3]:** Agents → [Step 1] → [Step 2] → [Step 3] → Synthesis

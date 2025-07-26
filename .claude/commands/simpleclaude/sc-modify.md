@@ -2,14 +2,22 @@
 
 ---
 
-**CRITICAL DO NOT SKIP** Use the Read() tool to load content framework from:
+## Agent Orchestration
 
-<framework files>
-$HOME/.claude/shared/simpleclaude/00_core_principles.md  
-$HOME/.claude/shared/simpleclaude/01_orchestration.md  
-$HOME/.claude/shared/simpleclaude/02_workflows_and_patterns.md  
-$HOME/.claude/shared/simpleclaude/03_sub_agent_delegation.md
-</framework files>
+Based on request complexity and intent, delegate to specialized agents using Task() calls:
+
+**Context Analysis**: `Task("context-analyzer", "analyze current code structure and modification requirements")`  
+**Strategic Planning**: `Task("system-architect", "create safe modification plan with rollback strategy")`  
+**Implementation**: `Task("implementation-specialist", "execute modifications with testing and validation")`  
+**Quality Validation**: `Task("validation-review-specialist", "verify modifications maintain behavior and improve quality")`
+
+**Supporting Specialists**:
+
+- `Task("research-analyst", "investigate optimization patterns and best practices")`
+- `Task("debugging-specialist", "identify and resolve issues during modification")`
+- `Task("documentation-specialist", "update documentation to reflect changes")`
+
+**Execution Strategy**: For complex modifications, spawn multiple agents simultaneously for independent work streams like refactoring, testing, and performance validation.
 
 ## Command Execution
 
@@ -21,9 +29,9 @@ Transforms: "{{ARGUMENTS}}" into structured intent:
 - What: [extracted-target]
 - How: [detected-approach]
 - Mode: [execution-mode]
-- Agents: [auto-spawned sub-agents]
+- Agents: [specialized Task() agents]
 
-**Auto-Spawning:** Spawns specialized sub-agents for parallel task execution.
+**Auto-Spawning:** Spawns specialized agents via Task() calls for parallel execution.
 
 Smart modification router that transforms natural language into structured improvement directives for performance optimization, refactoring, migration, and deployment tasks.
 
@@ -58,10 +66,10 @@ Examples:
 - `/sc-modify quickly fix typo in README` - Immediate fix with minimal overhead
 - `/sc-modify migrate to React 18` - Framework upgrade with testing
 
-**Context Detection:** Request analysis → Scope identification → Approach selection → Mode detection → Sub-agent spawning
+**Context Detection:** Request analysis → Scope identification → Approach selection → Mode detection → Agent spawning
 
 ## Core Workflows
 
-**Planner:** Sub-agents → Analyze current state → Design improvement strategy → Create safety plan → Document changes  
-**Implementer:** Sub-agents → Apply modifications → Run tests → Validate behavior → Measure improvements  
-**Tester:** Sub-agents → Create test scenarios → Validate changes → Performance benchmarks → Regression testing
+**Planner:** Agents → Analyze current state → Design improvement strategy → Create safety plan → Document changes  
+**Implementer:** Agents → Apply modifications → Run tests → Validate behavior → Measure improvements  
+**Tester:** Agents → Create test scenarios → Validate changes → Performance benchmarks → Regression testing
