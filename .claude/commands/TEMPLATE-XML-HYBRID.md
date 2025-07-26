@@ -20,35 +20,35 @@ Task("implementation-specialist", "implement solution using embedded best practi
 
 ## Command Execution
 
-**If "{{ARGUMENTS}}" is empty**: Display [usage/overview information].
-**If "{{ARGUMENTS}}" has content**: Think step-by-step, then execute.
+**If user provides no arguments**: Display [usage/overview information].
+**If user provides arguments**: Think step-by-step, then execute using contextual XML integration.
 
-Transforms: "{{ARGUMENTS}}" into structured intent:
+Transforms user input into structured intent with contextual variables:
 
-- What: [extracted-target]
-- How: [detected-approach]
-- Mode: [execution-mode]
-- Agents: [specialized Task() agents for structured execution]
+- What: [extracted-target] → `<target>${TARGET}</target>`
+- How: [detected-approach] → `<approach>${APPROACH}</approach>`
+- Mode: [execution-mode] → `<mode>${MODE}</mode>`
+- Agents: [specialized Task() agents with contextual XML arguments]
 
-**Auto-Spawning:** Spawns specialized agents via Task() calls for [execution pattern].
+**Auto-Spawning:** Spawns specialized agents via Task() calls with contextually integrated arguments.
 
 ### Semantic Transformations
 
-Transforms natural language requests into structured [domain] analysis and automated [action]:
+Transforms natural language requests into contextually integrated XML variables:
 
 ```
-"[example user request]" → What: [structured-what] | How: [structured-how] | Mode: [structured-mode]
-"[example user request]" → What: [structured-what] | How: [structured-how] | Mode: [structured-mode]
-"[example user request]" → What: [structured-what] | How: [structured-how] | Mode: [structured-mode]
+"[example user request]" → <target>${TARGET}</target> | <approach>${APPROACH}</approach> | <mode>${MODE}</mode>
+"[specific request with args]" → <specific_arg>${SPECIFIC_ARG}</specific_arg> | <context>${CONTEXT}</context>
+"[complex request]" → <primary_target>${PRIMARY_TARGET}</primary_target> | <options>${OPTIONS}</options>
 ```
 
 Examples:
 
-- `/[command-name]` - [Default behavior with educational content]
-- `/[command-name] [example-args]` - [Specific behavior with contextual arguments]
-- `/[command-name] [example-args]` - [Another specific behavior]
+- `/[command-name]` - Educational mode with current status display
+- `/[command-name] setup <project_type>${PROJECT_TYPE}</project_type>` - Comprehensive setup with contextual integration
+- `/[command-name] create <item_name>${ITEM_NAME}</item_name>` - Targeted creation with specific context
 
-**Context Detection:** [Detection pipeline with structured arguments integrated]
+**Context Detection:** Analysis pipeline with XML variables contextually integrated throughout instructions
 
 ## Core Workflows
 
@@ -175,7 +175,7 @@ cd <target_directory>${TARGET_DIRECTORY}</target_directory>
 - Clean up completed <cleanup_items>${CLEANUP_ITEMS}</cleanup_items> regularly
 
 <additional_instructions>
-{{ADDITIONAL_USER_INPUT}}
+${ADDITIONAL_USER_INPUT}
 </additional_instructions>
 
 ---

@@ -38,10 +38,10 @@ ${ADDITIONAL USER INPUT}
 
 ## Syntax Standards
 
-### Variable Syntax Convention
-- **Command Arguments**: `{{ARGUMENTS}}` (main command input)
-- **Additional User Input**: `{{ADDITIONAL_USER_INPUT}}` (free-form appended content)
-- **Contextual XML Variables**: `${VARIABLE_NAME}` (structured arguments in context)
+### Variable Syntax Convention (Research-Based Best Practice)
+- **Structured Arguments**: `${VARIABLE_NAME}` - contextually integrated using XML tags
+- **Free-form User Input**: `${ADDITIONAL_USER_INPUT}` - placed at end for recency bias
+- **Eliminates**: `{{ARGUMENTS}}` pattern in favor of contextual XML integration
 
 ### XML Variable Patterns
 
@@ -65,13 +65,15 @@ git worktree add <worktree_path>${WORKTREE_PATH}</worktree_path> -b <branch_name
 git worktree add ${PATH} -b ${BRANCH}
 ```
 
-## Benefits of This Approach
+## Benefits of This Research-Based Approach
 
-1. **Reduced Cognitive Load**: Arguments appear where they're used
+1. **Reduced Cognitive Load**: Arguments appear where they're used (contextual integration)
 2. **Improved Clarity**: XML tags make variable purpose explicit
-3. **Better Performance**: Follows Anthropic's documented best practices
+3. **Better Performance**: Follows Anthropic's documented best practices exactly
 4. **Maintainable**: Clear separation between structure and content
 5. **Faster Execution**: Embedded documentation eliminates research delays
+6. **Eliminates {{ARGUMENTS}} Pattern**: Replaces generic argument handling with contextual XML integration
+7. **Leverages Recency Bias**: Free-form input at end gets proper attention weighting
 
 ## Migration Guidelines
 

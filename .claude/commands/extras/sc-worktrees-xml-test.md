@@ -15,17 +15,17 @@ Based on request complexity and intent, delegate to specialized agents using Tas
 
 ## Command Execution
 
-**If "{{ARGUMENTS}}" is empty**: Display git-worktrees overview, current worktree status, and educational content.
-**If "{{ARGUMENTS}}" has content**: Think step-by-step, then execute.
+**If user provides no arguments**: Display git-worktrees overview, current worktree status, and educational content.
+**If user provides arguments**: Think step-by-step, then execute using contextual XML integration.
 
-Transforms: "{{ARGUMENTS}}" into structured intent:
+Transforms user input into structured intent with contextual variables:
 
-- What: [worktree-operation-and-education]
-- How: [automated-setup-with-learning]
-- Mode: [educational-implementation]
-- Agents: [specialized Task() agents for analysis and setup]
+- What: [worktree-operation-and-education] → `<operation>${OPERATION}</operation>`
+- How: [automated-setup-with-learning] → `<setup_approach>${SETUP_APPROACH}</setup_approach>`
+- Mode: [educational-implementation] → `<implementation_mode>${IMPLEMENTATION_MODE}</implementation_mode>`
+- Agents: [specialized Task() agents with contextual XML arguments]
 
-**Auto-Spawning:** Spawns specialized agents via Task() calls for parallel worktree analysis and implementation.
+**Auto-Spawning:** Spawns specialized agents via Task() calls with contextually integrated worktree arguments.
 
 ### Semantic Transformations
 
@@ -166,7 +166,7 @@ git worktree prune                            # Clean up stale references
 - Clean up completed <completed_worktrees>${COMPLETED_WORKTREES}</completed_worktrees> regularly
 
 <additional_instructions>
-{{ADDITIONAL_USER_INPUT}}
+${ADDITIONAL_USER_INPUT}
 </additional_instructions>
 
 ---
