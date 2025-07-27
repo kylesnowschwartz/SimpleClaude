@@ -1,60 +1,83 @@
+# sc-understand: Understand Codebases Through Intelligent Analysis
+
 **Purpose**: Understand codebases through intelligent analysis, explanation, and documentation
 
----
+## Agent Orchestration and Deployment Strategy
 
-## Agent Orchestration
+**Efficiency First:** Handle tasks directly when possible. Use agents only when genuinely needed for:
 
-Based on request complexity and intent, delegate to specialized agents using Task() calls:
+- Option 1: Multi-faceted analysis requiring different perspectives
+- Option 2: Complex architectural understanding beyond surface level
+- Option 3: Parallel investigation of multiple system components
+- Option 4: Deep knowledge synthesis requiring specialized expertise
 
-**Context Analysis**: `Task("context-analyzer", "analyze codebase structure and understanding requirements")`  
-**Research & Investigation**: `Task("research-analyst", "investigate patterns, libraries, and implementation approaches")`  
-**Knowledge Synthesis**: `Task("documentation-specialist", "synthesize findings into clear explanations and documentation")`  
-**Understanding Validation**: `Task("validation-review-specialist", "confirm understanding accuracy and identify gaps")`
+**Smart Selection Process:**
 
-**Supporting Specialists**:
+1. Assess: Can I explain this code directly without agents?
+2. If agents needed: Which specific understanding capabilities does this require?
+3. Deploy minimal viable agent set for the identified understanding needs
 
-- `Task("system-architect", "identify and explain architectural patterns and design decisions")`
-- `Task("debugging-specialist", "trace execution flows and analyze code behavior for comprehension")`
-- `Task("implementation-specialist", "break down complex implementations into understandable components")`
+**Available Specialized Agents**
 
-**Execution Strategy**: For complex understanding tasks, spawn agents in sequence: Context → Research → Synthesis → Validation, with parallel specialists for deep analysis.
+- `context-analyzer` - analyze codebase structure and understanding requirements
+- `debugging-specialist` - trace execution flows and analyze code behavior for comprehension
+- `documentation-specialist` - synthesize findings into clear explanations and documentation
+- `implementation-specialist` - break down complex implementations into understandable components
+- `research-analyst` - investigate patterns, libraries, and implementation approaches
+- `system-architect` - identify and explain architectural patterns and design decisions
+- `validation-review-specialist` - confirm understanding accuracy and identify gaps
 
-## Command Execution
+**Processing Pipeline**: **Request Analysis** → **Scope Identification** → **Approach Selection** → **Agent Spawning** → **Parallel Execution** → **Result Synthesis**
 
-**If "{{ARGUMENTS}}" is empty**: Display usage suggestions and stop.  
-**If "{{ARGUMENTS}}" has content**: Think step-by-step, then execute.
-
-Transforms: "{{ARGUMENTS}}" into structured intent:
-
-- What: [extracted-target]
-- How: [detected-approach]
-- Mode: [execution-mode]
-- Agents: [specialized Task() agents]
-
-**Auto-Spawning:** Spawns specialized agents via Task() calls for parallel execution.
+## Semantic Transformation into Structured Intent
 
 Intelligent analysis router that transforms natural language into structured understanding approaches for code explanation, architecture visualization, and knowledge extraction.
 
-### Semantic Transformations
+**Command Execution:**
 
-```
-"explain how authentication works" → What: authentication system flow and components | How: step-by-step explanation with examples | Mode: analysis
-"show me the architecture visually" → What: system architecture and component relationships | How: generate diagrams and visual representations | Mode: visualization
-"analyze performance bottlenecks" → What: system performance characteristics | How: comprehensive analysis with metrics | Mode: investigation
-"test my understanding of the API" → What: API structure and endpoint validation | How: interactive Q&A and scenario testing | Mode: validation
-```
+**If "${arguments}" is empty**: Display usage suggestions and stop.  
+**If "${arguments}" has content**: Think step-by-step, then execute.
 
-Examples:
+Transforms: "${arguments}" into structured intent:
 
-- `/sc-understand authentication flow` - Step-by-step auth explanation with diagrams
-- `/sc-understand architecture patterns` - Visual system design analysis
-- `/sc-understand performance metrics` - Comprehensive performance breakdown
-- `/sc-understand API testing scenarios` - Interactive API exploration and validation
+- What: [extracted-target]
+- How: [detected-approach]
+- Agents: [specialized Task() agents]
 
-**Context Detection:** Request analysis → Analysis scope → Explanation approach → Mode detection → Agent spawning
+### Transformation Examples
 
-## Core Workflows
+<example>
+<input>${arguments} = explain how authentication works</input>
+<what>authentication system flow and components</what>
+<how>step-by-step explanation with examples and flow diagrams</how>
+<agents>context-analyzer → research-analyst → documentation-specialist</agents>
+<output>comprehensive authentication flow documentation with visual diagrams</output>
+</example>
 
-**Analysis:** Agents → Define understanding scope → Gather codebase context → Create explanation strategy → Structure learning path  
-**Visualization:** Agents → Analyze system architecture → Generate diagrams → Create visual representations → Provide interactive examples  
-**Validation:** Agents → Validate explanations → Create test scenarios → Verify understanding → Identify knowledge gaps
+<example>
+<input>${arguments} = show me the architecture visually</input>
+<what>system architecture and component relationships</what>
+<how>generate diagrams and visual representations with mermaid/ASCII art</how>
+<agents>context-analyzer → system-architect → documentation-specialist</agents>
+<output>architectural diagrams showing system structure and interactions</output>
+</example>
+
+<example>
+<input>${arguments} = analyze performance bottlenecks</input>
+<what>system performance characteristics and potential issues</what>
+<how>comprehensive analysis with metrics and optimization suggestions</how>
+<agents>context-analyzer → research-analyst → debugging-specialist → documentation-specialist</agents>
+<output>performance analysis report with identified bottlenecks and recommendations</output>
+</example>
+
+<example>
+<input>${arguments} = what does this function do</input>
+<what>single function purpose and behavior</what>
+<how>direct code reading and explanation without agent overhead</how>
+<agents>none - handled directly for efficiency</agents>
+<output>concise explanation of function purpose, parameters, and return value</output>
+</example>
+
+---
+
+**User Request**: ${arguments}

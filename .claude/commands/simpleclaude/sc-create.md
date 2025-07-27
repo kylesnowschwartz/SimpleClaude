@@ -1,74 +1,83 @@
+# sc-create: Create Anything from Components to Complete Systems
+
 **Purpose**: Create anything from components to complete systems with intelligent routing
 
----
+## Agent Orchestration and Deployment Strategy
 
-## Agent Orchestration
+**Efficiency First:** Handle tasks directly when possible. Use agents only when genuinely needed for:
 
-Based on request complexity and intent, delegate to specialized agents using Task() calls:
+- Option 1: Multi-component systems requiring coordinated architecture
+- Option 2: Complex implementations beyond single-file scope
+- Option 3: Parallel creation of interdependent components
+- Option 4: Design-first approaches requiring careful planning
 
-**Core Creation Workflow**:
-- `Task("context-analyzer", "analyze project structure and identify integration points")`  
-- `Task("system-architect", "design component architecture and implementation plan")`  
-- `Task("implementation-specialist", "build solution following established patterns")`  
-- `Task("validation-review-specialist", "verify implementation integrates and functions correctly")`
+**Smart Selection Process:**
 
-**Additional Specialists** (spawn as needed):
-- `Task("research-analyst", "research best practices and existing patterns for the component")`
-- `Task("documentation-specialist", "create comprehensive documentation for the new component")`
+1. Assess: Can I create this component directly without agents?
+2. If agents needed: Which specific creation capabilities does this require?
+3. Deploy minimal viable agent set for the identified creation needs
 
-**Execution Strategy**: Spawn agents sequentially for dependent tasks, simultaneously for independent creation streams.
+**Available Specialized Agents**
 
-## Command Execution
+- `context-analyzer` - analyze project structure and identify integration points
+- `debugging-specialist` - troubleshoot integration issues during creation
+- `documentation-specialist` - create comprehensive documentation for new components
+- `implementation-specialist` - build solution following established patterns
+- `research-analyst` - research best practices and existing patterns
+- `system-architect` - design component architecture and implementation plan
+- `validation-review-specialist` - verify implementation integrates correctly
 
-**If "{{ARGUMENTS}}" is empty**: Display usage suggestions and stop.  
-**If "{{ARGUMENTS}}" has content**: Think step-by-step, then execute.
+**Processing Pipeline**: **Request Analysis** → **Scope Identification** → **Approach Selection** → **Agent Spawning** → **Parallel Execution** → **Result Synthesis**
 
-Transforms: "{{ARGUMENTS}}" into structured intent:
+## Semantic Transformation into Structured Intent
+
+Smart creation router that consolidates spawn, task, build, design, document, and dev-setup functionality. Transforms natural language into structured creation directives. Build exactly to user specifications without refactoring or unasked for enhancements.
+
+**Command Execution:**
+
+**If "${arguments}" is empty**: Display usage suggestions and stop.  
+**If "${arguments}" has content**: Think step-by-step, then execute.
+
+Transforms: "${arguments}" into structured intent:
 
 - What: [extracted-target]
 - How: [detected-approach]
-- Mode: [execution-mode]
 - Agents: [specialized Task() agents]
 
-**Auto-Spawning:** Spawns specialized agents via Task() calls for parallel execution.
+### Transformation Examples
 
-Smart creation router that consolidates spawn, task, build, design, document, and dev-setup functionality. Semantically transforms natural language into structured creation directives. Build exactly to user specifications without refactoring or unasked for enhancements.
+<example>
+<input>${arguments} = user auth API</input>
+<what>REST API with authentication endpoints</what>
+<how>implement JWT tokens, validation middleware, tests, and documentation</how>
+<agents>context-analyzer → system-architect → implementation-specialist → validation-review-specialist</agents>
+<output>complete authentication API with login/register endpoints, JWT handling, and tests</output>
+</example>
 
-### Semantic Transformations
+<example>
+<input>${arguments} = carefully plan a payment system</input>
+<what>payment processing system architecture</what>
+<how>meticulous design-first approach with comprehensive planning and risk analysis</how>
+<agents>research-analyst → system-architect → documentation-specialist</agents>
+<output>detailed architecture document with payment flow diagrams and implementation plan</output>
+</example>
 
-```
-"user auth API" →
-  What: REST API with authentication endpoints
-  How: JWT tokens, validation, tests, documentation
-  Mode: implementer
+<example>
+<input>${arguments} = react button component</input>
+<what>simple React button component</what>
+<how>create component following existing patterns without overhead</how>
+<agents>none - handled directly for efficiency</agents>
+<output>functional React button component with props and basic styling</output>
+</example>
 
-"carefully plan a payment system" →
-  What: payment processing system architecture
-  How: meticulous design-first approach with comprehensive planning
-  Mode: planner
+<example>
+<input>${arguments} = magic dashboard UI with animations</input>
+<what>interactive dashboard interface with animated elements</what>
+<how>modern UI patterns, responsive design, smooth CSS/JS animations</how>
+<agents>context-analyzer → implementation-specialist → validation-review-specialist</agents>
+<output>complete dashboard UI with charts, widgets, and smooth animations</output>
+</example>
 
-"quickly prototype react hooks with tests" →
-  What: custom React hooks library
-  How: rapid iteration, unit tests, minimal setup
-  Mode: implementer
+---
 
-"magic dashboard UI with animations" →
-  What: interactive dashboard interface
-  How: modern UI patterns, responsive design, smooth animations
-  Mode: implementer
-```
-
-Examples:
-
-- `/sc-create user auth API` - Builds complete REST API with JWT, tests, docs
-- `/sc-create plan for payment system` - Creates comprehensive architecture plan
-- `/sc-create react hooks with best practices` - Develops hooks using project patterns
-- `/sc-create magic dashboard UI` - Generates full UI with modern patterns
-
-**Context Detection:** Request analysis → Scope identification → Approach selection → Mode detection → Agent spawning
-
-## Core Workflows
-
-**Planner:** Agents → Analyze requirements → Design architecture → Create plan → Generate docs  
-**Implementer:** Agents → Read patterns → Build solution → Add tests → Validate → Deploy ready  
-**Tester:** Agents → Analyze functionality → Create scenarios → Implement validation → Verify coverage
+**User Request**: ${arguments}

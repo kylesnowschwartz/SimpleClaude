@@ -1,69 +1,83 @@
+# sc-modify: Intelligently Modify and Optimize Code
+
 **Purpose**: Intelligently modify, improve, refactor, and optimize code with safety controls
 
----
+## Agent Orchestration and Deployment Strategy
 
-## Agent Orchestration
+**Efficiency First:** Handle tasks directly when possible. Use agents only when genuinely needed for:
 
-Based on request complexity and intent, delegate to specialized agents using Task() calls:
+- Option 1: Complex refactoring affecting multiple system components
+- Option 2: Performance optimization requiring deep analysis
+- Option 3: Framework migrations with compatibility concerns
+- Option 4: Modifications requiring rollback strategies
 
-**Context Analysis**: `Task("context-analyzer", "analyze existing code structure, dependencies, and modification impact scope")`  
-**Modification Planning**: `Task("system-architect", "design safe modification strategy with rollback plan and dependency mapping")`  
-**Safe Implementation**: `Task("implementation-specialist", "execute modifications with incremental changes and continuous validation")`  
-**Regression Testing**: `Task("validation-review-specialist", "verify modifications preserve existing behavior and improve target metrics")`
+**Smart Selection Process:**
 
-**Execution Strategy**: For complex modifications, spawn agents in sequence for safety (context → planning → implementation → validation) or parallel for independent modification streams.
+1. Assess: Can I apply this modification directly without agents?
+2. If agents needed: Which specific modification capabilities does this require?
+3. Deploy minimal viable agent set for the identified modification needs
 
-## Command Execution
+**Available Specialized Agents**
 
-**If "{{ARGUMENTS}}" is empty**: Display usage suggestions and stop.  
-**If "{{ARGUMENTS}}" has content**: Think step-by-step, then execute.
+- `context-analyzer` - analyze existing code structure and modification impact scope
+- `debugging-specialist` - identify root causes for performance or behavioral issues
+- `documentation-specialist` - update documentation to reflect modifications
+- `implementation-specialist` - execute modifications with incremental validation
+- `research-analyst` - research migration paths and optimization strategies
+- `system-architect` - design safe modification strategy with rollback plans
+- `validation-review-specialist` - verify modifications preserve existing behavior
 
-Transforms: "{{ARGUMENTS}}" into structured intent:
+**Processing Pipeline**: **Request Analysis** → **Scope Identification** → **Approach Selection** → **Agent Spawning** → **Parallel Execution** → **Result Synthesis**
 
-- What: [extracted-target]
-- How: [detected-approach]
-- Mode: [execution-mode]
-- Agents: [specialized Task() agents]
-
-**Auto-Spawning:** Spawns specialized agents via Task() calls for parallel execution.
+## Semantic Transformation into Structured Intent
 
 Smart modification router that transforms natural language into structured improvement directives for performance optimization, refactoring, migration, and deployment tasks.
 
-### Semantic Transformations
+**Command Execution:**
 
-```
-"improve performance" →
-  What: current codebase performance bottlenecks
-  How: profiling, optimization, caching, algorithm improvements
-  Mode: implementer
+**If "${arguments}" is empty**: Display usage suggestions and stop.  
+**If "${arguments}" has content**: Think step-by-step, then execute.
 
-"carefully refactor the payment module" →
-  What: payment module requiring safe refactoring
-  How: backup first, extract methods, preserve behavior, extensive testing
-  Mode: planner
+Transforms: "${arguments}" into structured intent:
 
-"quickly optimize database queries" →
-  What: database query performance
-  How: query analysis, indexing, caching strategies
-  Mode: implementer
+- What: [extracted-target]
+- How: [detected-approach]
+- Agents: [specialized Task() agents]
 
-"migrate to latest React with tests" →
-  What: React framework upgrade
-  How: staged migration, compatibility testing, validation
-  Mode: tester
-```
+### Transformation Examples
 
-Examples:
+<example>
+<input>${arguments} = improve performance</input>
+<what>current codebase performance bottlenecks</what>
+<how>profiling, optimization, caching, algorithm improvements</how>
+<agents>context-analyzer → research-analyst → implementation-specialist → validation-review-specialist</agents>
+<output>optimized code with performance metrics showing improvements</output>
+</example>
 
-- `/sc-modify improve performance` - Optimize code performance with profiling
-- `/sc-modify carefully refactor payment module` - Safe refactoring with backups
-- `/sc-modify quickly fix typo in README` - Immediate fix with minimal overhead
-- `/sc-modify migrate to React 18` - Framework upgrade with testing
+<example>
+<input>${arguments} = carefully refactor the payment module</input>
+<what>payment module requiring safe refactoring</what>
+<how>backup first, extract methods, preserve behavior, extensive testing</how>
+<agents>context-analyzer → system-architect → implementation-specialist → validation-review-specialist</agents>
+<output>refactored payment module with improved structure and full test coverage</output>
+</example>
 
-**Context Detection:** Request analysis → Scope identification → Approach selection → Mode detection → Agent spawning
+<example>
+<input>${arguments} = fix typo in README</input>
+<what>simple text correction in documentation</what>
+<how>direct edit without complex analysis</how>
+<agents>none - handled directly for efficiency</agents>
+<output>corrected README file</output>
+</example>
 
-## Core Workflows
+<example>
+<input>${arguments} = migrate to latest React with tests</input>
+<what>React framework upgrade</what>
+<how>staged migration, compatibility testing, validation</how>
+<agents>research-analyst → system-architect → implementation-specialist → validation-review-specialist</agents>
+<output>upgraded React codebase with migration guide and passing tests</output>
+</example>
 
-**Planner:** Agents → Analyze current state → Design improvement strategy → Create safety plan → Document changes  
-**Implementer:** Agents → Apply modifications → Run tests → Validate behavior → Measure improvements  
-**Tester:** Agents → Create test scenarios → Validate changes → Performance benchmarks → Regression testing
+---
+
+**User Request**: ${arguments}
