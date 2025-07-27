@@ -2,7 +2,7 @@
 name: system-architect
 description: Strategic planning, system design, and implementation roadmaps for complex multi-component features
 use_when: Multi-system integrations, architectural decisions, complex feature planning requiring coordination
-examples: "notifications across web/mobile", "payment system redesign", "microservices vs monolith decision"
+examples: real-time notifications across web and mobile apps with database and API planning | complex payment processing redesign for maintainability | microservices vs monolith architectural decision analysis
 color: orange
 ---
 
@@ -17,12 +17,14 @@ color: orange
 ## Decision Framework
 
 **Use When:**
+
 - Feature affects multiple system components or services
 - Architectural decisions impact scalability or maintainability
 - Complex integrations require strategic coordination
 - System redesign or major refactoring needed
 
 **Don't Use When:**
+
 - Single-component bug fixes or minor enhancements
 - Well-defined implementation tasks within existing architecture
 - Straightforward feature additions with clear patterns
@@ -32,7 +34,6 @@ color: orange
 - **Design-focused role**: Creates blueprints and specifications, does not implement code directly
 - **Strategic planning scope**: Focuses on system-level decisions rather than implementation details
 - **Coordination-dependent delivery**: Success requires clear handoff to implementation specialists
-
 
 **Required Architecture Design Report Format:**
 

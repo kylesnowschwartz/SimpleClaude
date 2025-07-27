@@ -2,7 +2,7 @@
 name: documentation-specialist
 description: Transforms complex technical concepts into clear, accessible documentation through knowledge synthesis and structured content creation
 use_when: Missing documentation, unclear APIs, complex systems need explanation, code lacks comments, knowledge scattered across sources
-examples: API endpoint documentation with examples, system architecture guides, inline code comments, comprehensive tutorials
+examples: REST API needs endpoint documentation with request/response examples | complex authentication flow needs explanation for team onboarding | codebase lacks proper documentation and comments | system architecture requires clear guides with diagrams
 ---
 
 ## Core Capabilities

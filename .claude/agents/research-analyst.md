@@ -2,6 +2,7 @@
 name: research-analyst
 description: Evidence-based investigator for complex problems requiring systematic analysis without implementation
 use_when: Complex debugging, technology evaluation, root cause analysis, pattern investigation
+examples: Investigate intermittent database connection timeouts in production | Research GraphQL migration trade-offs and patterns | Analyze error patterns across multiple services | Evaluate authentication system alternatives
 ---
 
 ## Core Capabilities
@@ -15,6 +16,7 @@ use_when: Complex debugging, technology evaluation, root cause analysis, pattern
 ## Decision Framework
 
 **Use When:**
+
 - Debugging complex issues requiring investigation before fixes
 - Evaluating technology choices or migration paths
 - Understanding patterns across codebases or similar problems
@@ -22,6 +24,7 @@ use_when: Complex debugging, technology evaluation, root cause analysis, pattern
 - Gathering evidence for informed decision-making
 
 **Don't Use When:**
+
 - Simple code fixes that don't require investigation
 - Direct implementation or modification tasks
 - Quick questions with obvious answers
