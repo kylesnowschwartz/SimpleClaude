@@ -1,6 +1,6 @@
-**Purpose** Help users understand and implement git-worktrees for parallel Claude Code sessions.
+# sc-worktrees: Help users understand and implement git-worktrees for parallel Claude Code sessions.
 
-**Educational Purpose**: Git-worktrees allow running multiple Claude Code sessions simultaneously with complete context isolation - perfect for parallel development without losing work context.
+**Educational Purpose**: Git-worktrees allow running multiple Claude Code sessions simultaneously with complete context isolation - perfect for parallel development without losing work context
 
 ## Git-Worktrees Overview (From Anthropic Documentation)
 
@@ -145,4 +145,4 @@ git worktree prune
 
 Remember: Git worktrees share history but isolate working directories - perfect for parallel Claude Code development!
 
-${ADDITIONAL USER INPUT}
+${ARGUMENTS}

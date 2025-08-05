@@ -1,4 +1,4 @@
-**Purpose**: Discover undocumented features, hidden flags, and clever implementations throughout the codebase
+# sc-eastereggs: Discover undocumented features, hidden flags, and clever implementations throughout the codebase
 
 ---
 
