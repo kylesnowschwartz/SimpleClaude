@@ -4,6 +4,24 @@
 **Auto-Spawning:** Spawns specialized agents via Task() calls for parallel execution of research, configuration, and validation.
 **Context Detection:** Repository analysis → Language detection → Hook research → Configuration generation → Validation
 
+## Quick Reference for AI Agents
+
+### Essential Commands
+1. **Repository Analysis**: `basename "$(git rev-parse --show-toplevel)"` + language detection
+2. **Version Research**: `gh api repos/pre-commit/pre-commit-hooks/releases/latest`
+3. **Hook Installation**: `pre-commit install`
+4. **Configuration Test**: `pre-commit validate-config`
+5. **Full Validation**: `pre-commit run --all-files`
+
+### Critical Success Path
+1. Generate base configuration → 2. Add language-specific hooks → 3. Test incrementally → 4. Install wrapper if needed → 5. Final validation
+
+### Common Failures & Solutions
+- **YAML syntax errors**: Use `pre-commit validate-config` to identify issues
+- **Hook repository not found**: Use `pre-commit try-repo <url>` to verify accessibility  
+- **Performance issues**: Add file filters or remove problematic hooks
+- **Staging issues**: Implement staging-aware wrapper for file-modifying hooks
+
 ## Research & Configuration Protocol
 
 <repository_analysis> Use TodoWrite to track this systematic analysis:
@@ -122,7 +140,7 @@
            args: ['--fix=lf']  # Force LF line endings (EditorConfig standard)
          - id: check-merge-conflict
          - id: check-added-large-files
-           args: [--maxkb=2084]
+           args: [--maxkb=1024]  # 1MB limit for reasonable file sizes
          - id: check-yaml
          - id: check-json
          - id: check-case-conflict  # Case sensitivity for cross-platform compatibility
@@ -130,7 +148,66 @@
          - id: detect-private-key  # Security requirement
    ```
 
-2. **Language-Specific Addition Logic**
+2. **Complete Example Configuration**
+
+   ```yaml
+   # `.pre-commit-config.yaml` - Complete Working Example
+   # Global Configuration
+   default_install_hook_types: [pre-commit]
+   default_stages: [pre-commit]
+   fail_fast: false
+   
+   repos:
+     # Standard pre-commit hooks for file hygiene and basic validation
+     - repo: https://github.com/pre-commit/pre-commit-hooks
+       rev: v5.0.0
+       hooks:
+         - id: trailing-whitespace
+           exclude: '\.md$'
+         - id: end-of-file-fixer
+         - id: check-merge-conflict
+         - id: check-added-large-files
+           args: [--maxkb=1024]
+         - id: check-yaml
+         - id: check-json
+         - id: check-toml
+         - id: check-case-conflict
+         - id: mixed-line-ending
+         - id: check-executables-have-shebangs
+         - id: check-symlinks
+         - id: detect-private-key
+   
+     # Shell script quality assurance
+     - repo: https://github.com/koalaman/shellcheck-precommit
+       rev: v0.10.0
+       hooks:
+         - id: shellcheck
+           args: [--severity=warning]
+   
+     # Shell script formatting (EditorConfig compliant: 2-space indentation)
+     - repo: https://github.com/scop/pre-commit-shfmt
+       rev: v3.12.0-2
+       hooks:
+         - id: shfmt
+           args: [-w, -i, "2"]  # Matches EditorConfig 2-space default
+   
+     # Documentation hooks (Priority 3 - Optional)
+     - repo: https://github.com/igorshubovych/markdownlint-cli
+       rev: v0.45.0
+       hooks:
+         - id: markdownlint
+           args: [
+               --fix,
+               --disable,
+               MD013, # Line length (disabled for long technical content)
+               MD041, # First line H1 (disabled for purpose/command docs) 
+               MD026, # Trailing punctuation in headings (disabled for "Variables:")
+               MD012, # Multiple blank lines (disabled for visual spacing)
+             ]
+           # Note: Preserves trailing whitespace in .md files per EditorConfig
+   ```
+
+3. **Language-Specific Addition Logic**
 
    **Critical**: Configure language-specific hooks to match EditorConfig indentation standards:
    
@@ -160,42 +237,107 @@
          - id: go-fmt  # Uses tabs by default
      ```
    
-   - **JavaScript/TypeScript**: 2-space indentation (EditorConfig default)
-   - **Documentation (.md files)**: Add markdownlint with pragmatic exclusions for technical docs
+   - **JavaScript/TypeScript detected**: Add Prettier for formatting
+     **Detection**: Check if `prettier` exists in `package.json` devDependencies
+     **Action**: Add local hook configuration:
+     ```yaml
+     # JavaScript/TypeScript formatting (EditorConfig compliant: 2-space)
+     - repo: local
+       hooks:
+         - id: prettier
+           name: prettier
+           entry: npx prettier --write
+           language: node
+           files: \.(js|jsx|ts|tsx|css|json|yaml|yml)$
+           # Requires prettier in package.json devDependencies
+     ```
+     **Fallback**: If prettier not installed, skip with warning message
+   
+   - **Documentation (.md files) detected**: Add markdownlint with fix capability
+     **Action**: Add comprehensive markdownlint configuration:
+     ```yaml
+     # Documentation linting and formatting
+     - repo: https://github.com/igorshubovych/markdownlint-cli
+       rev: v0.41.0  # Use latest from GitHub API research
+       hooks:
+         - id: markdownlint-fix
+           args: [
+             --disable,
+             MD013, # Line length (disabled for technical content)
+             MD041, # First line H1 (disabled for command docs)
+             MD026, # Trailing punctuation (disabled for "Variables:")
+             MD012, # Multiple blank lines (visual spacing)
+           ]
+           # Automatically fixes issues while preserving content intent
+     ```
 
-3. **Validation After Each Addition**
+4. **Validation After Each Addition**
    - Test configuration: `pre-commit run --files <sample-file>`
    - If hook fails: investigate, fix, or remove with documented reasoning
    - Ensure minimal working configuration always available
 
 </configuration_generation>
 
-<progressive_validation> Systematic testing with rollback capability:
+## Progressive Validation Protocol
 
-1. **Installation Verification**
+### Step 1: Installation Verification
+1. **Check pre-commit availability**: `pre-commit --version`
+   - **Expected**: Version number displayed
+   - **If fails**: Install pre-commit via `pip install pre-commit`
 
-   - `pre-commit --version` (verify tool availability)
-   - `pre-commit install` (hook installation)
-   - `pre-commit validate-config` (configuration syntax)
+2. **Install hooks**: `pre-commit install`
+   - **Expected**: "pre-commit installed at .git/hooks/pre-commit"
+   - **If fails**: Check git repository status and permissions
 
-2. **Incremental Hook Testing**
+3. **Validate configuration**: `pre-commit validate-config`
+   - **Expected**: No errors, configuration valid
+   - **If fails**: Fix YAML syntax errors before proceeding
 
-   - Test core hooks first: `pre-commit run trailing-whitespace --all-files`
-   - Add language-specific hooks one category at a time
-   - Roll back to last working configuration on failure
+### Step 2: Incremental Hook Testing
+1. **Test core hygiene hooks first**:
+   ```bash
+   pre-commit run trailing-whitespace --all-files
+   pre-commit run end-of-file-fixer --all-files
+   pre-commit run check-merge-conflict --all-files
+   ```
+   - **Action**: Fix any issues found
+   - **Backup**: `cp .pre-commit-config.yaml .pre-commit-config.yaml.bak` before adding language hooks
 
-3. **Performance Validation**
+2. **Add language-specific hooks one at a time**:
+   - **Test each addition**: `pre-commit run <new-hook-id> --all-files`
+   - **If hook fails**: Remove from config, restore backup, document failure
+   - **If hook succeeds**: Create new backup with working configuration
 
-   - Measure hook execution time on representative files
-   - Adjust configuration if hooks take >10 seconds
-   - Document any performance considerations
+### Step 3: Performance Validation
+1. **Measure execution time**:
+   ```bash
+   time pre-commit run --all-files
+   ```
+   - **Target**: < 10 seconds total execution
+   - **If slower**: Investigate specific hooks, add file filters, or remove problematic hooks
 
-4. **Final Integration Test**
-   - `pre-commit run --all-files` (comprehensive test)
-   - Simulate actual commit workflow
-   - Generate human-readable summary of active hooks
+2. **Test on representative files**:
+   - Create sample files for each detected language
+   - Run hooks on samples to verify behavior
+   - Remove test files after validation
 
-</progressive_validation>
+### Step 4: Final Integration Test
+1. **Comprehensive validation**:
+   ```bash
+   pre-commit run --all-files
+   ```
+   - **Expected**: All hooks pass or make expected fixes
+   - **Action**: Commit any auto-formatting changes
+
+2. **Simulate commit workflow**:
+   ```bash
+   echo "test change" >> README.md
+   git add README.md
+   git commit -m "Test pre-commit integration"
+   ```
+   - **Expected**: Hooks run successfully, commit proceeds or fails appropriately
+
+3. **Generate summary report**: Document active hooks, their purpose, and any configuration notes
 
 ## Success Criteria & Human QA
 
@@ -221,68 +363,93 @@
 
 ## Staging-Aware Hook Wrapper Implementation
 
-**Internal AI Agent Instructions**: When setting up pre-commit frameworks, automatically detect if staging preservation is required and implement wrapper solution. The pre-commit framework intentionally doesn't preserve original staging context (maintainer design philosophy: "pre-commit takes a strong stance on never modifying the staging area"). This creates a critical workflow issue where auto-formatting hooks (shfmt, markdownlint --fix, trailing-whitespace, end-of-file-fixer) cause retry mechanisms to stage ALL modified files instead of preserving the user's original commit intent. **Detection Criteria**: Implement wrapper when configuration contains any auto-formatting hooks that modify files in-place. Check for hooks with `--fix` arguments, formatters like `shfmt`, `black`, `prettier`, or file hygiene hooks like `trailing-whitespace` and `end-of-file-fixer`. **Wrapper Implementation**: After successful `pre-commit install`, replace the generated `.git/hooks/pre-commit` with the staging-aware wrapper. Preserve the original pre-commit framework configuration while adding staging intelligence. **Wrapper Script**: Use this complete implementation: `#!/usr/bin/env bash` followed by staging capture logic `original_staged_files=$(git diff --cached --name-only --diff-filter=ACM $against)` where `$against` handles initial commits via `git rev-parse --verify HEAD >/dev/null 2>&1` check. Execute original pre-commit framework with preserved arguments and environment. On exit code 1 (file modifications detected), reset staging completely with `git reset HEAD --quiet`, then restore only originally staged files using `echo "$original_staged_files" | while IFS= read -r file; do [ -f "$file" ] && git add "$file"; done`. Exit success (code 0) to indicate files are properly staged with modifications. **Integration with Progressive Validation**: After implementing wrapper, add validation step `git add test-file.md && git commit --dry-run -m "Test staging preservation"` to confirm wrapper preserves staging intent. Test mixed staging scenarios where some files are staged and others unstaged, verify only originally staged files are committed after auto-formatting. **Validation Protocol**: Create test files with formatting issues, stage only subset of files, run commit process, verify unstaged files remain unstaged while staged files include formatting modifications. **Error Recovery**: If wrapper causes issues, restore original pre-commit hook from backup and fall back to standard framework behavior. Document any compatibility issues with specific hook configurations. **Performance Considerations**: Wrapper adds minimal overhead (single git command for staging capture and restoration). Monitor pre-commit execution time to ensure sub-10 second performance target is maintained. **Implementation Context**: This addresses GitHub issues #806 and #1817 in pre-commit repository where users repeatedly request automatic re-staging functionality that maintainers reject by design. The wrapper solution provides this functionality while respecting framework architecture and maintaining compatibility with all existing hook configurations and validation procedures.
+**Purpose**: Preserve user's original staging intent when auto-formatting hooks modify files in-place.
 
-<example_configuration>
+### Step 1: Detection Criteria
+**When to implement**: Configuration contains ANY of these file-modifying hooks:
+- Formatters: `shfmt`, `black`, `prettier`, `go-fmt`
+- Fix hooks: `markdownlint-fix`, hooks with `--fix` arguments  
+- File hygiene: `trailing-whitespace`, `end-of-file-fixer`
 
-```yaml
-# `.pre-commit-config.yaml`
-# Global Configuration
-default_install_hook_types: [pre-commit]
-default_stages: [pre-commit]
-fail_fast: false
+### Step 2: Wrapper Implementation
+**After** `pre-commit install` completes successfully:
 
-repos:
-  # Standard pre-commit hooks for file hygiene and basic validation
-  - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v5.0.0
-    hooks:
-      - id: trailing-whitespace
-        exclude: '\.md$'
-      - id: end-of-file-fixer
-      - id: check-merge-conflict
-      - id: check-added-large-files
-        args: [--maxkb=1024]
-      - id: check-yaml
-      - id: check-json
-      - id: check-toml
-      - id: check-case-conflict
-      - id: mixed-line-ending
-      - id: check-executables-have-shebangs
-      - id: check-symlinks
-      - id: detect-private-key
+1. **Backup original hook**:
+   ```bash
+   mv .git/hooks/pre-commit .git/hooks/pre-commit.original
+   ```
 
-  # Shell script quality assurance
-  - repo: https://github.com/koalaman/shellcheck-precommit
-    rev: v0.10.0
-    hooks:
-      - id: shellcheck
-        args: [--severity=warning]
+2. **Create wrapper script** at `.git/hooks/pre-commit`:
+   ```bash
+   #!/usr/bin/env bash
+   # Staging-aware pre-commit wrapper
+   
+   # Determine against-ref for initial commits
+   if git rev-parse --verify HEAD >/dev/null 2>&1; then
+     against="HEAD"
+   else
+     against=$(git hash-object -t tree /dev/null)
+   fi
+   
+   # Capture originally staged files
+   original_staged_files=$(git diff --cached --name-only --diff-filter=ACM "$against")
+   
+   # Run original pre-commit hooks
+   "$(dirname "$0")/pre-commit.original" "$@"
+   exit_code=$?
+   
+   # Handle different exit codes
+   case $exit_code in
+     0) exit 0 ;;  # Success - proceed with commit
+     1) # Files were modified - re-stage only original files
+        git reset HEAD --quiet
+        if [ -n "$original_staged_files" ]; then
+          echo "$original_staged_files" | while IFS= read -r file; do
+            [ -f "$file" ] && git add "$file"
+          done
+        fi
+        echo "Files auto-formatted and re-staged. Please review and commit again."
+        exit 0
+        ;;
+     *) exit $exit_code ;;  # Other errors - block commit
+   esac
+   ```
 
-  # Shell script formatting (EditorConfig compliant: 2-space indentation)
-  - repo: https://github.com/scop/pre-commit-shfmt
-    rev: v3.12.0-2
-    hooks:
-      - id: shfmt
-        args: [-w, -i, "2"]  # Matches EditorConfig 2-space default
+3. **Make executable**:
+   ```bash
+   chmod +x .git/hooks/pre-commit
+   ```
 
-  # Documentation hooks (Priority 3 - Optional)
-  - repo: https://github.com/igorshubovych/markdownlint-cli
-    rev: v0.45.0
-    hooks:
-      - id: markdownlint
-        args: [
-            --fix,
-            --disable,
-            MD013, # Line length (disabled for long technical content)
-            MD041, # First line H1 (disabled for purpose/command docs) 
-            MD026, # Trailing punctuation in headings (disabled for "Variables:")
-            MD012, # Multiple blank lines (disabled for visual spacing)
-          ]
-        # Note: Preserves trailing whitespace in .md files per EditorConfig
-```
+### Step 3: Validation Protocol
+1. **Create test scenario**:
+   ```bash
+   echo "hello " > test-format.txt  # Trailing space
+   echo "clean content" > clean.txt
+   git add test-format.txt clean.txt
+   ```
 
-</example_configuration>
+2. **Test wrapper behavior**:
+   ```bash
+   git commit -m "Test staging preservation"
+   ```
+
+3. **Expected outcome**: 
+   - Commit fails with formatting message
+   - Both files remain staged with formatting applied
+   - Any unstaged files remain unstaged
+
+4. **Cleanup test**:
+   ```bash
+   git reset HEAD test-format.txt clean.txt
+   rm test-format.txt clean.txt
+   ```
+
+### Step 4: Error Recovery
+**If wrapper causes issues**:
+1. Restore original: `mv .git/hooks/pre-commit.original .git/hooks/pre-commit`
+2. Document failure in setup summary
+3. Continue with standard pre-commit behavior
+
 
 ---
 
@@ -313,6 +480,39 @@ repos:
 2. **Git Workflow**: Compatible with Delta, auto-rebase, commit templates
 3. **Performance**: Sub-10 second execution for fast development workflow
 4. **Language-Specific**: Python (4-space), Go (tabs), Shell (2-space), others (2-space)
+
+---
+
+## Agent Execution Checklist
+
+### Prerequisites Verification
+- [ ] Git repository exists: `git rev-parse --git-dir`
+- [ ] Pre-commit tool available: `pre-commit --version` 
+- [ ] GitHub CLI available: `gh --version` (for research)
+- [ ] Package manifests readable for language detection
+
+### Core Workflow
+- [ ] 1. Extract repository name and detect languages
+- [ ] 2. Research latest hook versions via GitHub API
+- [ ] 3. Generate base configuration with EditorConfig standards
+- [ ] 4. Add language-specific hooks with proper indentation settings
+- [ ] 5. Test configuration incrementally with rollback capability
+- [ ] 6. Install staging-aware wrapper if file-modifying hooks detected
+- [ ] 7. Perform final validation with actual commit simulation
+
+### Success Validation
+- [ ] `.pre-commit-config.yaml` exists and validates
+- [ ] `pre-commit install` completes without errors
+- [ ] All hooks execute in < 10 seconds
+- [ ] EditorConfig standards enforced (LF endings, proper indentation)
+- [ ] Staging behavior preserves user intent
+- [ ] Test commit workflow succeeds
+
+### Error Recovery Actions
+- [ ] Configuration backup created before each major change
+- [ ] Failed hooks documented with reasons
+- [ ] Fallback to minimal working configuration if needed
+- [ ] Staging wrapper can be disabled if causing issues
 
 ---
 
