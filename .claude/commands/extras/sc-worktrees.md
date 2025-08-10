@@ -1,94 +1,26 @@
-# sc-worktrees: Help users understand and implement git-worktrees for parallel Claude Code sessions.
+# sc-worktrees: Git Worktrees for Parallel Claude Code Sessions
 
-**Educational Purpose**: Git-worktrees allow running multiple Claude Code sessions simultaneously with complete context isolation - perfect for parallel development without losing work context
+Git worktrees let you work on multiple branches simultaneously in separate directories. Perfect for parallel Claude Code sessions without losing context.
 
-## Git-Worktrees Overview (From Anthropic Documentation)
+## Quick Start
 
-**Source**: https://docs.anthropic.com/en/docs/claude-code/common-workflows#run-parallel-claude-code-sessions-with-git-worktrees
-
-Git worktrees allow checking out multiple branches from the same repository into separate directories. Each worktree has an isolated working directory while sharing the same Git history. This enables:
-
-- Parallel work on multiple tasks simultaneously
-- Complete code isolation between Claude Code instances
-- No interference between different development contexts
-- Preserved context when switching between tasks
-
-## Implementation Instructions
-
-**If user provides no arguments**: Display current worktree status and educational overview.
-
-**If user provides arguments**: Follow these steps based on their request:
-
-### 1. Repository Assessment
-
-Check current repository state:
+**Create a new worktree:**
 
 ```bash
-git status --porcelain        # Verify clean working directory
-git worktree list            # Show existing worktrees
-claude --version             # Verify Claude Code available
-```
-
-### 2. Create Worktrees Based on Request
-
-**For new feature development:**
-
-```bash
-git worktree add ../project-feature-name -b feature-name
-cd ../project-feature-name
-# Reinitialize dependencies
-npm install  # or pip install -r requirements.txt, etc.
+git worktree add tree/feature-name -b feature-name
+cd tree/feature-name
 claude
 ```
 
-**For existing branch:**
+**Create worktree for existing branch:**
 
 ```bash
-git worktree add ../project-existing-branch existing-branch
-cd ../project-existing-branch
-# Setup development environment
+git worktree add tree/existing-branch existing-branch
+cd tree/existing-branch
 claude
 ```
 
-**For code review:**
-
-```bash
-git worktree add ../project-review -b review/pr-123
-cd ../project-review
-git pull origin pull/123/head
-claude
-```
-
-### 3. Validate Setup
-
-Confirm everything works:
-
-- Navigate to new worktree directory
-- Verify Claude Code starts successfully
-- Test basic operations (file editing, git commands)
-- Demonstrate parallel session capability
-
-## Common Usage Patterns
-
-**Parallel Development:**
-
-- Main work continues in original directory
-- Bug fixes or features developed in separate worktrees
-- Each Claude session maintains independent context
-
-**Experimental Work:**
-
-- Create worktree for risky changes
-- If successful: merge back to main
-- If failed: simply remove worktree without affecting main work
-
-**Long-running Features:**
-
-- Keep feature development in dedicated worktree
-- Switch between tasks without losing context
-- Merge when feature complete
-
-## Management Commands
+## Essential Commands
 
 **List all worktrees:**
 
@@ -96,11 +28,11 @@ Confirm everything works:
 git worktree list
 ```
 
-**Remove completed worktree:**
+**Remove finished worktree:**
 
 ```bash
-git worktree remove ../project-feature-completed
-git branch -d feature-completed  # Clean up branch if desired
+git worktree remove tree/feature-name
+git branch -d feature-name  # optional: delete branch
 ```
 
 **Clean up stale references:**
@@ -109,40 +41,44 @@ git branch -d feature-completed  # Clean up branch if desired
 git worktree prune
 ```
 
-## Best Practices
+## Directory Structure
 
-1. **Naming**: Use descriptive directory names like `../project-feature-auth`
-2. **Organization**: Keep worktrees in parallel structure to main repo
-3. **Dependencies**: Run `npm install` or equivalent in each new worktree
-4. **Cleanup**: Remove worktrees when features are complete
-5. **Git Database**: All worktrees share the same `.git` database (space efficient)
+```
+YourProject/
+├── .git/
+├── src/
+├── .gitignore          # add: /tree/
+└── tree/
+    ├── feature-auth/
+    └── hotfix-123/
+```
 
-## Benefits for Claude Code Users
+## Usage Examples
 
-**Context Preservation**: Each worktree maintains its own Claude Code context and conversation history.
+**Parallel development:**
 
-**Parallel Sessions**: Work on multiple tasks simultaneously:
+- Terminal 1: `cd ~/project && claude` (main)
+- Terminal 2: `cd ~/project/tree/feature && claude` (feature)
+- Terminal 3: `cd ~/project/tree/hotfix && claude` (urgent fix)
 
-- Terminal 1: `cd ~/project && claude` (main development)
-- Terminal 2: `cd ../project-feature-a && claude` (feature work)
-- Terminal 3: `cd ../project-hotfix && claude` (urgent fixes)
+**Code review:**
 
-**No Context Loss**: Switch between tasks without losing your place or starting fresh conversations.
+```bash
+git worktree add tree/review -b review/pr-123
+cd tree/review
+git pull origin pull/123/head
+claude
+```
 
-## Troubleshooting
+## Setup Notes
 
-**If worktree creation fails:**
+1. Add `/tree/` to `.gitignore`
+2. Run `npm install` (or equivalent) in each new worktree
+3. Each worktree maintains separate Claude Code context
+4. All worktrees share the same `.git` database
 
-- Ensure working directory is clean (`git status`)
-- Check that branch name doesn't already exist
-- Verify sufficient disk space
+**If no $ARGUMENTS are provided** Instruct the user on how to manually create and verify their own worktrees and worktree status
 
-**If Claude Code doesn't work in worktree:**
-
-- Confirm Claude Code is in PATH: `claude --version`
-- Check file permissions in worktree directory
-- Verify git operations work: `git status`
-
-Remember: Git worktrees share history but isolate working directories - perfect for parallel Claude Code development!
+**If $ARGUMENTS are provided** Help the user fulfill their request asking any necessary clarifying questions
 
 ${ARGUMENTS}
