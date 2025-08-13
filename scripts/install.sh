@@ -206,10 +206,10 @@ install_directory() {
               cp "$file" "$target_file"
               echo "    Updated: $basename_file"
             fi
-            ((updated_count++))
+            ((updated_count++)) || true
           else
             echo "    Unchanged: $basename_file"
-            ((unchanged_count++))
+            ((unchanged_count++)) || true
           fi
         else
           # New file
@@ -219,7 +219,7 @@ install_directory() {
             cp "$file" "$target_file"
             echo "    Added: $basename_file"
           fi
-          ((added_count++))
+          ((added_count++)) || true
         fi
       fi
     done
