@@ -40,10 +40,10 @@ git pull
 
 ## Architecture
 
-SimpleClaude uses a **specialized agent architecture** for maximum efficiency:
+SimpleClaude uses a **lightweight agent architecture** for maximum efficiency:
 
 - **5 Core Commands**: Natural language interfaces that understand plain English
-- **7 Specialized Agents**: Context-specific assistants spawned via `Task()` calls
+- **5 Specialized Agents**: Context-specific assistants spawned via `Task()` calls
 - **Token-Efficient Design**: Agents work in isolation with focused context
 - **Clean Separation**: Commands orchestrate, agents execute specialized tasks
 
@@ -51,15 +51,13 @@ SimpleClaude uses a **specialized agent architecture** for maximum efficiency:
 
 Each command automatically spawns appropriate agents:
 
-- `context-analyzer` - Understand project structure and patterns
-- `system-architect` - Design solutions and create implementation plans  
-- `implementation-specialist` - Write code following established patterns
-- `validation-review-specialist` - Verify quality and requirements
-- `research-analyst` - Investigate and analyze without code changes
-- `debugging-specialist` - Systematic troubleshooting and root cause analysis
-- `documentation-specialist` - Create documentation and knowledge synthesis
+- `context-analyzer` - Maps project structure, technology stack, and existing patterns
+- `context7-documentation-specialist` - Retrieves current, accurate documentation for libraries and frameworks
+- `repo-documentation-finder` - Finds up-to-date documentation from official GitHub repositories
+- `test-runner` - Runs tests and analyzes failures without making fixes
+- `web-search-researcher` - Searches web for current information and research
 
-This replaces the previous shared framework system with cleaner, more maintainable specialized agents.
+This lightweight approach replaces previous heavyweight framework systems with focused, token-efficient specialized agents.
 
 ## Documentation
 
@@ -82,7 +80,7 @@ SimpleClaude/
 ├── .claude/
 │   ├── commands/simpleclaude/    # 5 natural language commands
 │   ├── commands/extras/          # Optional experimental commands
-│   └── agents/                   # Specialized agent definitions
+│   └── agents/                   # Lightweight agent definitions
 ├── docs/                         # Documentation
 ├── install.sh                    # Installation/update script
 └── README.md                     # This file

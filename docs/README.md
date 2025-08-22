@@ -10,9 +10,9 @@ SimpleClaude is a practical minimalist AI assistant framework that transforms co
 
 The complete guide to SimpleClaude's philosophy, features, and design principles. Start here to understand what SimpleClaude is and how it works.
 
-### 📈 [PHASES.md](PHASES.md)
+### 🧪 [TESTING.md](TESTING.md)
 
-Development history and future roadmap. Shows where we've been and where we're going based on real user feedback.
+Testing guidelines and validation approaches for SimpleClaude development.
 
 ## Quick Start
 
@@ -42,6 +42,6 @@ SimpleClaude's agent-based architecture is ready for real-world testing! All cor
 - ✅ Natural language understanding
 - ✅ Automatic mode detection  
 - ✅ Zero configuration required
-- ✅ **Specialized agent system**: 7 focused agents handle specific tasks
+- ✅ **Lightweight agent system**: 5 focused agents handle specific tasks
 - ✅ **Token efficiency**: Isolated agent contexts prevent bloat
 - ✅ **Clean Task() delegation**: Commands orchestrate, agents execute
