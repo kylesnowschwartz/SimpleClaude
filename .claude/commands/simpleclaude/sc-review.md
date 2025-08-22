@@ -20,12 +20,10 @@
 **Available Specialized Agents**
 
 - `context-analyzer` - analyze codebase structure and review scope requirements
-- `debugging-specialist` - identify potential bugs and edge cases in code
-- `documentation-specialist` - assess documentation quality and completeness
-- `implementation-specialist` - evaluate implementation patterns and practices
-- `research-analyst` - investigate security vulnerabilities and best practices
-- `system-architect` - assess architectural decisions and design patterns
-- `validation-review-specialist` - conduct thorough code quality assessment
+- `context7-documentation-specialist` - assess documentation quality and completeness
+- `repo-documentation-finder` - investigate best practices from official repositories
+- `test-runner` - analyze test coverage and identify testing gaps
+- `web-search-researcher` - research security vulnerabilities and quality standards
 
 **Processing Pipeline**: **Request Analysis** → **Scope Identification** → **Approach Selection** → **Agent Spawning** → **Parallel Execution** → **Result Synthesis**
 
@@ -74,7 +72,7 @@ Transforms: "${arguments}" into structured intent:
 <input>${arguments} = strictly review the authentication module</input>
 <what>authentication module security and quality audit</what>
 <how>zero-tolerance comprehensive analysis with security focus</how>
-<agents>context-analyzer → research-analyst → validation-review-specialist → system-architect</agents>
+<agents>context-analyzer → web-search-researcher → test-runner</agents>
 <output>detailed security audit report with vulnerabilities and recommendations</output>
 </example>
 
@@ -90,7 +88,7 @@ Transforms: "${arguments}" into structured intent:
 <input>${arguments} = review performance bottlenecks</input>
 <what>system performance analysis and optimization opportunities</what>
 <how>profiling, complexity analysis, and optimization recommendations</how>
-<agents>context-analyzer → debugging-specialist → validation-review-specialist</agents>
+<agents>context-analyzer → test-runner</agents>
 <output>performance analysis report with bottlenecks and optimization strategies</output>
 </example>
 
