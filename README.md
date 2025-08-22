@@ -11,9 +11,6 @@ A practical minimalist AI assistant framework that transforms complex AI interac
 git clone https://github.com/kylesnowschwartz/SimpleClaude.git
 cd SimpleClaude
 
-# Install dependencies
-npm install --include=dev
-
 # Preview what will be installed (dry-run by default)
 ./install.sh
 
@@ -26,9 +23,6 @@ npm install --include=dev
 ```bash
 # Pull latest changes
 git pull
-
-# Update dependencies
-npm install --include=dev
 
 # Update SimpleClaude (Backs up existing configuration)
 ./install.sh --execute
@@ -75,21 +69,11 @@ This replaces the previous shared framework system with cleaner, more maintainab
 
 ## Development
 
-### Token Limit Monitoring
-
-SimpleClaude uses [token-limit](https://github.com/azat-io/token-limit) to monitor token usage across commands and specialized agents:
-
-```bash
-# Check all token limits
-npm run token-check
-```
-
 ### Development Workflow
 
 1. **Make changes** to `.claude/commands/` or `.claude/agents/`
-2. **Check token limits** with `npm run token-check`
-3. **Test commands** in real projects
-4. **Update documentation** if needed
+2. **Test commands** in real projects
+3. **Update documentation** if needed
 
 ### Project Structure
 
@@ -101,7 +85,6 @@ SimpleClaude/
 │   └── agents/                   # Specialized agent definitions
 ├── docs/                         # Documentation
 ├── install.sh                    # Installation/update script
-├── token-limit.config.ts         # Token monitoring configuration
 └── README.md                     # This file
 ```
 
