@@ -20,12 +20,10 @@
 **Available Specialized Agents**
 
 - `context-analyzer` - analyze project structure and requirements
-- `debugging-specialist` - systematic root cause analysis and troubleshooting
-- `documentation-specialist` - create documentation and knowledge synthesis
-- `implementation-specialist` - implement solution following plan
-- `research-analyst` - investigate and analyze without code implementation
-- `system-architect` - create implementation plan based on analysis
-- `validation-review-specialist` - verify implementation meets requirements
+- `context7-documentation-specialist` - create documentation and knowledge synthesis
+- `repo-documentation-finder` - investigate best practices from official repositories
+- `test-runner` - run tests and verify implementation meets requirements
+- `web-search-researcher` - research current best practices and solutions
 
 **Processing Pipeline**: **Request Analysis** → **Scope Identification** → **Approach Selection** → **Agent Spawning** → **Parallel Execution** → **Result Synthesis**
 

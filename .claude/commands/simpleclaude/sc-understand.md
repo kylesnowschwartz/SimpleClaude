@@ -20,12 +20,10 @@
 **Available Specialized Agents**
 
 - `context-analyzer` - analyze codebase structure and understanding requirements
-- `debugging-specialist` - trace execution flows and analyze code behavior for comprehension
-- `documentation-specialist` - synthesize findings into clear explanations and documentation
-- `implementation-specialist` - break down complex implementations into understandable components
-- `research-analyst` - investigate patterns, libraries, and implementation approaches
-- `system-architect` - identify and explain architectural patterns and design decisions
-- `validation-review-specialist` - confirm understanding accuracy and identify gaps
+- `context7-documentation-specialist` - synthesize findings into clear explanations and documentation
+- `repo-documentation-finder` - investigate patterns and implementation approaches from official sources
+- `test-runner` - analyze test coverage and validate understanding accuracy
+- `web-search-researcher` - research libraries and architectural patterns
 
 **Processing Pipeline**: **Request Analysis** → **Scope Identification** → **Approach Selection** → **Agent Spawning** → **Parallel Execution** → **Result Synthesis**
 
@@ -50,7 +48,7 @@ Transforms: "${arguments}" into structured intent:
 <input>${arguments} = explain how authentication works</input>
 <what>authentication system flow and components</what>
 <how>step-by-step explanation with examples and flow diagrams</how>
-<agents>context-analyzer → research-analyst → documentation-specialist</agents>
+<agents>context-analyzer → web-search-researcher → context7-documentation-specialist</agents>
 <output>comprehensive authentication flow documentation with visual diagrams</output>
 </example>
 
@@ -58,7 +56,7 @@ Transforms: "${arguments}" into structured intent:
 <input>${arguments} = show me the architecture visually</input>
 <what>system architecture and component relationships</what>
 <how>generate diagrams and visual representations with mermaid/ASCII art</how>
-<agents>context-analyzer → system-architect → documentation-specialist</agents>
+<agents>context-analyzer → context7-documentation-specialist</agents>
 <output>architectural diagrams showing system structure and interactions</output>
 </example>
 
@@ -66,7 +64,7 @@ Transforms: "${arguments}" into structured intent:
 <input>${arguments} = analyze performance bottlenecks</input>
 <what>system performance characteristics and potential issues</what>
 <how>comprehensive analysis with metrics and optimization suggestions</how>
-<agents>context-analyzer → research-analyst → debugging-specialist → documentation-specialist</agents>
+<agents>context-analyzer → web-search-researcher → context7-documentation-specialist</agents>
 <output>performance analysis report with identified bottlenecks and recommendations</output>
 </example>
 

@@ -20,12 +20,10 @@
 **Available Specialized Agents**
 
 - `context-analyzer` - analyze error context, stack traces, and affected code paths
-- `debugging-specialist` - systematic root cause analysis and issue reproduction
-- `documentation-specialist` - document fix and create prevention guidelines
-- `implementation-specialist` - implement targeted fix following debugging findings
-- `research-analyst` - investigate error patterns and debugging best practices
-- `system-architect` - design comprehensive fix strategy for systemic issues
-- `validation-review-specialist` - verify fix resolves issue and prevents regression
+- `context7-documentation-specialist` - document fix and create prevention guidelines
+- `repo-documentation-finder` - investigate error patterns from official repositories
+- `test-runner` - verify fix resolves issue and prevents regression with tests
+- `web-search-researcher` - research debugging best practices and solutions
 
 **Processing Pipeline**: **Request Analysis** → **Scope Identification** → **Approach Selection** → **Agent Spawning** → **Parallel Execution** → **Result Synthesis**
 
@@ -50,7 +48,7 @@ Transforms: "${arguments}" into structured intent:
 <input>${arguments} = fix the login bug</input>
 <what>authentication flow error</what>
 <how>identify login failure point and apply targeted fix</how>
-<agents>context-analyzer → debugging-specialist → implementation-specialist → validation-review-specialist</agents>
+<agents>context-analyzer → test-runner</agents>
 <output>fixed authentication with tests confirming login works correctly</output>
 </example>
 
@@ -58,7 +56,7 @@ Transforms: "${arguments}" into structured intent:
 <input>${arguments} = carefully debug the memory leak</input>
 <what>memory management issue</what>
 <how>systematic investigation with profiling and root cause analysis</how>
-<agents>debugging-specialist → research-analyst → implementation-specialist → validation-review-specialist</agents>
+<agents>web-search-researcher → test-runner</agents>
 <output>identified leak source, implemented fix, and verified memory usage is stable</output>
 </example>
 
@@ -74,7 +72,7 @@ Transforms: "${arguments}" into structured intent:
 <input>${arguments} = patch SQL injection vulnerability</input>
 <what>security vulnerability in database queries</what>
 <how>implement input validation and parameterized queries</how>
-<agents>context-analyzer → implementation-specialist → validation-review-specialist</agents>
+<agents>context-analyzer → test-runner</agents>
 <output>secured database queries with proper parameterization and validation</output>
 </example>
 

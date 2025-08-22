@@ -20,12 +20,10 @@
 **Available Specialized Agents**
 
 - `context-analyzer` - analyze project structure and identify integration points
-- `debugging-specialist` - troubleshoot integration issues during creation
-- `documentation-specialist` - create comprehensive documentation for new components
-- `implementation-specialist` - build solution following established patterns
-- `research-analyst` - research best practices and existing patterns
-- `system-architect` - design component architecture and implementation plan
-- `validation-review-specialist` - verify implementation integrates correctly
+- `context7-documentation-specialist` - create comprehensive documentation for new components
+- `repo-documentation-finder` - research best practices from official repositories
+- `test-runner` - run tests and validate implementation correctness
+- `web-search-researcher` - research current best practices and patterns
 
 **Processing Pipeline**: **Request Analysis** → **Scope Identification** → **Approach Selection** → **Agent Spawning** → **Parallel Execution** → **Result Synthesis**
 
@@ -50,7 +48,7 @@ Transforms: "${arguments}" into structured intent:
 <input>${arguments} = user auth API</input>
 <what>REST API with authentication endpoints</what>
 <how>implement JWT tokens, validation middleware, tests, and documentation</how>
-<agents>context-analyzer → system-architect → implementation-specialist → validation-review-specialist</agents>
+<agents>context-analyzer → test-runner</agents>
 <output>complete authentication API with login/register endpoints, JWT handling, and tests</output>
 </example>
 
@@ -58,7 +56,7 @@ Transforms: "${arguments}" into structured intent:
 <input>${arguments} = carefully plan a payment system</input>
 <what>payment processing system architecture</what>
 <how>meticulous design-first approach with comprehensive planning and risk analysis</how>
-<agents>research-analyst → system-architect → documentation-specialist</agents>
+<agents>web-search-researcher → context7-documentation-specialist</agents>
 <output>detailed architecture document with payment flow diagrams and implementation plan</output>
 </example>
 
@@ -74,7 +72,7 @@ Transforms: "${arguments}" into structured intent:
 <input>${arguments} = magic dashboard UI with animations</input>
 <what>interactive dashboard interface with animated elements</what>
 <how>modern UI patterns, responsive design, smooth CSS/JS animations</how>
-<agents>context-analyzer → implementation-specialist → validation-review-specialist</agents>
+<agents>context-analyzer → test-runner</agents>
 <output>complete dashboard UI with charts, widgets, and smooth animations</output>
 </example>
 

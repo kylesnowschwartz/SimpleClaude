@@ -20,12 +20,10 @@
 **Available Specialized Agents**
 
 - `context-analyzer` - analyze existing code structure and modification impact scope
-- `debugging-specialist` - identify root causes for performance or behavioral issues
-- `documentation-specialist` - update documentation to reflect modifications
-- `implementation-specialist` - execute modifications with incremental validation
-- `research-analyst` - research migration paths and optimization strategies
-- `system-architect` - design safe modification strategy with rollback plans
-- `validation-review-specialist` - verify modifications preserve existing behavior
+- `context7-documentation-specialist` - update documentation to reflect modifications
+- `repo-documentation-finder` - research migration paths from official repositories
+- `test-runner` - verify modifications preserve existing behavior with tests
+- `web-search-researcher` - research optimization strategies and best practices
 
 **Processing Pipeline**: **Request Analysis** → **Scope Identification** → **Approach Selection** → **Agent Spawning** → **Parallel Execution** → **Result Synthesis**
 
@@ -50,7 +48,7 @@ Transforms: "${arguments}" into structured intent:
 <input>${arguments} = improve performance</input>
 <what>current codebase performance bottlenecks</what>
 <how>profiling, optimization, caching, algorithm improvements</how>
-<agents>context-analyzer → research-analyst → implementation-specialist → validation-review-specialist</agents>
+<agents>context-analyzer → web-search-researcher → test-runner</agents>
 <output>optimized code with performance metrics showing improvements</output>
 </example>
 
@@ -58,7 +56,7 @@ Transforms: "${arguments}" into structured intent:
 <input>${arguments} = carefully refactor the payment module</input>
 <what>payment module requiring safe refactoring</what>
 <how>backup first, extract methods, preserve behavior, extensive testing</how>
-<agents>context-analyzer → system-architect → implementation-specialist → validation-review-specialist</agents>
+<agents>context-analyzer → test-runner</agents>
 <output>refactored payment module with improved structure and full test coverage</output>
 </example>
 
@@ -74,7 +72,7 @@ Transforms: "${arguments}" into structured intent:
 <input>${arguments} = migrate to latest React with tests</input>
 <what>React framework upgrade</what>
 <how>staged migration, compatibility testing, validation</how>
-<agents>research-analyst → system-architect → implementation-specialist → validation-review-specialist</agents>
+<agents>repo-documentation-finder → test-runner</agents>
 <output>upgraded React codebase with migration guide and passing tests</output>
 </example>
 
