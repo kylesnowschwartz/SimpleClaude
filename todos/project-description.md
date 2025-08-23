@@ -37,6 +37,7 @@ Commands follow agent orchestration pattern: Request Analysis → Scope Identifi
 
 - Build: N/A (markdown-based configuration)
 - Test: Integration testing via real-world validation in development projects
+- Test Individual Command: `claude -p "/simpleclaude:sc-[command] [arguments]"` (e.g., `claude -p "/simpleclaude:sc-plan How should I make a peanut butter and jelly sandwich?"`)
 - Lint: Pre-commit hooks configured
 - Install: `./install.sh --execute` (with `./install.sh` for dry-run preview)
 - Install Extras: `./install.sh --extras --execute`
