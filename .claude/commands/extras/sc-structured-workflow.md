@@ -17,16 +17,17 @@ Structured workflow to transform vague todos into implemented features. Works on
 <INIT>
 
 1. Read `todos/project-description.md` in full:
+   **STOP** → If missing @todos/project-description.md :
+   <IF_MISSING>
 
-- If missing
-  - Use parallel @agent-context-analyzer agents to analyze codebase:
-    - Identify purpose, features
-    - Identify languages, frameworks, tools (build, dependency management, test, etc.)
-    - Identify components and architecture
-    - Extract commands from build scripts (package.json, CMakeLists.txt, etc.)
-    - Map structure, key files, and entry points
-    - Identify test setup and how to create new tests
-  - Present proposed project description using template below:
+- Use parallel agent-context-analyzer agents to analyze codebase:
+  - Identify purpose, features
+  - Identify languages, frameworks, tools (build, dependency management, test, etc.)
+  - Identify components and architecture
+  - Extract commands from build scripts (package.json, CMakeLists.txt, etc.)
+  - Map structure, key files, and entry points
+  - Identify test setup and how to create new tests
+- Present proposed project description using template below:
 
 ```markdown
     # Project: [Name]
@@ -62,11 +63,16 @@ Structured workflow to transform vague todos into implemented features. Works on
 ```
 
 - STOP → Any corrections needed? (y/n)
-- Write confirmed content to `todos/project-description.md`
+- Request the Main Agent to confirm the content and then Write to `todos/project-description.md`
+
+  </IF_MISSING>
+
+  <CHECK_ORPHANED_TASKS>
 
 2. Check for orphaned tasks: `mkdir -p todos/work todos/done && orphaned_count=0 && for d in todos/work/*/task.md; do [ -f "$d" ] || continue; pid=$(grep "^**Agent PID:" "$d" | cut -d' ' -f3); [ -n "$pid" ] && ps -p "$pid" >/dev/null 2>&1 && continue; orphaned_count=$((orphaned_count + 1)); task_name=$(basename $(dirname "$d")); task_title=$(head -1 "$d" | sed 's/^# //'); echo "$orphaned_count. $task_name: $task_title"; done`
 
 - If orphaned tasks exist:
+
   - Present numbered list of orphaned tasks
   - STOP → "Resume orphaned task? (number or title/ignore)"
   - If resume:
@@ -77,6 +83,14 @@ Structured workflow to transform vague todos into implemented features. Works on
     - If Status is "InProgress": Continue to IMPLEMENT
     - If Status is "AwaitingCommit": Continue to COMMIT
   - If ignore: Continue to SELECT
+
+  </CHECK_ORPHANED_TASKS>
+
+  <CHECK_BRANCH>
+
+  3. Check the current git branch is appropriate for this task and checkout a new branch if still on the `main` branch so we can use version control for our work in progress
+
+  </CHECK_BRANCH>
 
 </INIT>
 
