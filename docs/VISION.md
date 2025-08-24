@@ -2,7 +2,7 @@
 
 ## Overview
 
-SimpleClaude is a practical minimalist AI assistant framework that transforms complex AI interactions into natural conversations through specialized agents. It consolidates 19+ commands into 5 intuitive commands that understand plain English.
+SimpleClaude is a practical minimalist AI assistant framework that transforms complex AI interactions into natural conversations through specialized agents. Features 4+1 intent-based commands that understand user goals and orchestrate intelligent workflows.
 
 ## Core Philosophy
 
@@ -20,79 +20,79 @@ SimpleClaude is a practical minimalist AI assistant framework that transforms co
 - Keep it simple, but not simplistic
 - Every feature must earn its place
 
-## The 5 Commands
+## The 4+1 Intent-Based Commands
 
-### `/sc-create` - Universal Creation
+### `/sc-plan` - Strategic Planning 
 
-Transforms natural language into creation workflows:
+"I need to think through something" - Analysis and roadmap creation:
 
-- "a React component for user auth" → Component generation
-- "API documentation" → Documentation creation
-- "a new project with TypeScript" → Project scaffolding
+- "How should I add authentication?" → Architecture planning
+- "Plan the migration strategy" → Migration roadmap  
+- "What's the best approach for this feature?" → Strategic analysis
 
-### `/sc-modify` - Intelligent Modification
+### `/sc-work` - Universal Implementation
 
-Understands improvement intent:
+"I need to build/fix/modify something" - All implementation work:
 
-- "improve performance" → Performance optimization
-- "refactor for clarity" → Code cleanup
-- "migrate to v2" → Version migration
+- "Add JWT authentication" → Feature creation
+- "Fix the memory leak" → Bug resolution
+- "Refactor for performance" → Code improvement
 
-### `/sc-understand` - Deep Analysis
+### `/sc-explore` - Research and Understanding
 
-Explains and visualizes:
+"I need to understand something" - Investigation and knowledge synthesis:
 
-- "how authentication works" → Step-by-step explanation
-- "the architecture" → Visual system design
-- "performance bottlenecks" → Comprehensive analysis
+- "How does authentication work here?" → Codebase exploration
+- "What are GraphQL best practices?" → Technology research
+- "Analyze performance bottlenecks" → System investigation
 
-### `/sc-fix` - Focused Resolution
+### `/sc-review` - Quality Verification
 
-Solves problems intelligently:
+"I need to verify quality/security/performance" - Comprehensive assessment:
 
-- Error messages → Debug workflow
-- "git is broken" → Git problem resolution
-- "tests are failing" → Test fixing
+- "Check security vulnerabilities" → Security audit
+- "Verify performance" → Performance analysis
+- "Review code quality" → Quality assessment
 
-### `/sc-review` - Quality Assurance
+### `/sc-workflow` - Structured Development
 
-Comprehensive quality checks:
+"I need structured, resumable task execution" - Enterprise methodology:
 
-- "security vulnerabilities" → Security audit
-- "test coverage" → Test analysis
-- "code quality" → Best practices review
+- INIT → SELECT → REFINE → IMPLEMENT → COMMIT lifecycle
+- Persistent artifacts in todos/ structure
+- Resumable tasks with clean git discipline
 
 ## Quick Start
 
 ```bash
-# Create anything with natural language
-/sc-create a React component for user authentication
+# Plan your approach
+/sc-plan "How should I add real-time notifications to this app?"
 
-# Modify code intelligently
-/sc-modify improve performance of database queries
+# Implement anything
+/sc-work "Add WebSocket support with authentication"
 
-# Understand complex codebases
-/sc-understand how does the payment system work
+# Research and understand
+/sc-explore "How does the current authentication system work?"
 
-# Fix issues quickly
-/sc-fix TypeError: Cannot read property 'user' of undefined
+# Verify quality and security
+/sc-review "Check for security vulnerabilities in auth module"
 
-# Review code quality
-/sc-review check for security vulnerabilities
+# Structured development workflow
+/sc-workflow "Start methodical development process"
 ```
 
 No flags. No configuration. Just describe what you need.
 
 ## Key Innovations
 
-### Natural Language Detection
+### Intent Recognition
 
-No flags needed - just describe what you want:
+No flags needed - commands understand your goals:
 
-- Keywords trigger appropriate modes
+- Natural language expresses intent clearly
+- Commands route to appropriate execution  
 - Context enhances understanding
-- Ambiguity prompts clarification
-- Modifiers blend behaviors
+- Agent orchestration handles complexity
 
 #### The 5 Lightweight Agents
 
@@ -114,15 +114,15 @@ Each agent is lightweight, focused, and designed for maximum token efficiency in
 
 ## What Makes SimpleClaude Different?
 
-### From SuperClaude
+### From Previous Architectures
 
-- 19 commands → 5 commands
-- Flag combinations → Natural language
+- 19 commands → 4+1 intent-based commands
+- Task-based → Intent-based philosophy
+- Flag combinations → Natural language goals
 - Manual configuration → Auto-detection
-- Rigid personas → Adaptive modes
-- 150+ line commands → 60 line commands
-- Heavyweight framework files → Lightweight agents
-- Complex YAML loading → Clean Task() delegation
+- Rigid command boundaries → Flexible intent routing
+- Heavyweight frameworks → Lightweight agent orchestration
+- Complex configuration → Clean Task() delegation
 
 ### From Traditional Tools
 

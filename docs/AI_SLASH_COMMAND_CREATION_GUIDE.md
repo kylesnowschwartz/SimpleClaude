@@ -7,7 +7,7 @@
 **Strategy**: Examine existing commands before creating new ones
 
 - Read `TEMPLATE.md` first - it's the canonical structure
-- Study a similar command (e.g., `sc-understand` for analysis-type commands)
+- Study a similar command (e.g., `sc-explore` for analysis-type commands)
 - Pattern matching is more reliable than trying to understand the entire system
 
 **Key insight**: The template provides the skeleton; existing commands show implementation patterns.
@@ -98,17 +98,25 @@ diff -u TEMPLATE.md new_command.md | grep "^[+-]" | head -20
 
 **Purpose**: [Discover/Analyze/Understand] [target] through [method]
 
-### Creation Commands (like sc-create)
+### Planning Commands (like sc-plan)
 
-**Purpose**: Create [what] with [key characteristic]
+**Purpose**: "I need to think through [what]" - Strategic planning and analysis
 
-### Modification Commands (like sc-modify)
+### Implementation Commands (like sc-work)
 
-**Purpose**: [Transform/Update/Refactor] [target] using [approach]
+**Purpose**: "I need to build/fix/modify [what]" - Universal implementation work
 
-### Fix Commands (like sc-fix)
+### Research Commands (like sc-explore)
 
-**Purpose**: [Resolve/Debug/Repair] [issues] through [method]
+**Purpose**: "I need to understand [what]" - Investigation and knowledge synthesis
+
+### Quality Commands (like sc-review)
+
+**Purpose**: "I need to verify [what aspects]" - Comprehensive assessment
+
+### Workflow Commands (like sc-workflow)
+
+**Purpose**: "I need structured execution of [what]" - Methodical development process
 
 ## Best Practices
 
