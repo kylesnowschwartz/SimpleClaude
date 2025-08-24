@@ -10,21 +10,22 @@
 - Specialized domain expertise beyond general capability
 - Parallel work streams with interdependencies
 - Complex analysis requiring multiple perspectives
-- High token consumption operations (>1000 tokens)
+- Operations that produce verbose intermediate output
 
-**Execution Decision:**
-- **Direct**: Single domain + clear path + <1000 tokens + no external needs
-- **Agent**: Multi-tech OR research needed OR unknown patterns OR >1000 tokens OR verbose outputs
+**Direct Agent Rules (ALWAYS delegate these):**
+- **Documentation lookups** → Use `context7-documentation-specialist` (fallback: `repo-documentation-finder`)
+- **Test execution** → Use `test-runner`
+- **Web searches** → Use `web-search-researcher`
+- **Multi-file analysis (10+ files)** → Use `context-analyzer`
 
-**Specialized Agents (with auto-deployment rules):**
-- `context-analyzer` - Project structure mapping [use for: architecture, migration, features]
-- `context7-documentation-specialist` - Library docs [saves ~9.5K tokens; use for: API lookups]
-- `repo-documentation-finder` - GitHub examples [saves ~14K tokens; use for: patterns]
-- `test-runner` - Test execution [saves ~4.8K tokens; use for: ANY test running]
-- `web-search-researcher` - Current info [saves ~19K tokens; use for: best practices, security]
+**Available Agents:**
+- `context-analyzer` - Maps project structure, patterns, and architecture
+- `context7-documentation-specialist` - Fetches library/framework documentation
+- `repo-documentation-finder` - Finds examples from GitHub repositories
+- `test-runner` - Executes tests and analyzes failures
+- `web-search-researcher` - Searches web for current information
 
-**Token Management Rules:**
-- **Delegate >1000 tokens**: Context7 (10K→500), tests (5K→200), web (20K→1K), repos (15K→800)
+**Context Preservation:**
 - **Keep only**: user request, actionable recommendations, code changes, summary, next steps
 - **Discard**: intermediate outputs, full docs, verbose logs, exploratory reads
 
@@ -45,12 +46,12 @@ This command interprets natural language requests that express the intent: [Inte
 
 | Condition | Direct Handling | Agent Required |
 |-----------|----------------|----------------|
+| Task Type | Simple, single-step | See "Direct Agent Rules" above |
 | Domain | Single, familiar | Multi-tech, unknown |
-| Tokens | <1000 expected | >1000 expected |
 | Context | Available locally | External research needed |
 | Output | Concise, focused | Verbose, needs filtering |
 
-**Pre-execution**: Validate confidence>medium, resources available, token impact assessed, fallback ready
+**Pre-execution**: Validate confidence>medium, resources available, appropriate agents selected, fallback ready
 
 Transforms: "${arguments}" into structured execution:
 
@@ -67,8 +68,7 @@ Transforms: "${arguments}" into structured execution:
 <intent>[recognized user intent and context]</intent>
 <confidence>[high/medium/low]</confidence>
 <approach>[direct handling OR agent orchestration with reasoning]</approach>
-<agents>[none OR minimal-viable-agent-set]</agents>
-<token-impact>[estimated tokens saved by using agents]</token-impact>
+<agents>[none OR specific agents per Direct Agent Rules]</agents>
 <output>[expected result that fulfills the user intent]</output>
 </example>
 
@@ -77,8 +77,7 @@ Transforms: "${arguments}" into structured execution:
 <intent>[different context but same core intent]</intent>
 <confidence>[high/medium/low]</confidence>
 <approach>[different complexity requiring different approach]</approach>
-<agents>[different agent set OR none]</agents>
-<token-impact>[estimated tokens saved by using agents]</token-impact>
+<agents>[different agent set OR none per Direct Agent Rules]</agents>
 <output>[result tailored to the specific context]</output>
 </example>
 
