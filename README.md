@@ -1,6 +1,6 @@
 # SimpleClaude
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) [![Version](https://img.shields.io/badge/version-0.5.0-blue.svg)](https://github.com/kylesnowschwartz/SimpleClaude) [![GitHub issues](https://img.shields.io/github/issues/kylesnowschwartz/SimpleClaude)](https://github.com/kylesnowschwartz/SimpleClaude/issues)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) [![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://github.com/kylesnowschwartz/SimpleClaude) [![GitHub issues](https://img.shields.io/github/issues/kylesnowschwartz/SimpleClaude)](https://github.com/kylesnowschwartz/SimpleClaude/issues)
 
 A practical minimalist AI assistant framework that transforms complex AI interactions into natural conversations through specialized agents.
 
@@ -31,21 +31,21 @@ git pull
 ## Quick Start
 
 ```bash
-/sc-create "REST API with authentication"
-/sc-modify "improve performance"
-/sc-understand "how does this work?"
-/sc-fix "TypeError in production"
-/sc-review "check security"
+/sc-plan "How should I add authentication to this app?"
+/sc-work "Add JWT authentication with login/logout"
+/sc-explore "How does the current database layer work?"
+/sc-review "Check security vulnerabilities in auth module"
+/sc-workflow "Start structured development process"
 ```
 
 ## Architecture
 
-SimpleClaude uses a **lightweight agent architecture** for maximum efficiency:
+SimpleClaude uses a **lightweight agent architecture** with intent-based commands:
 
-- **5 Core Commands**: Natural language interfaces that understand plain English
-- **5 Specialized Agents**: Context-specific assistants spawned via `Task()` calls
+- **4+1 Command Structure**: Intent-based interfaces that understand user goals
+- **5 Specialized Agents**: Context-specific assistants spawned via `Task()` calls  
 - **Token-Efficient Design**: Agents work in isolation with focused context
-- **Clean Separation**: Commands orchestrate, agents execute specialized tasks
+- **Clean Separation**: Commands understand intent, agents execute specialized tasks
 
 ### Agent System
 
@@ -78,8 +78,8 @@ This lightweight approach replaces previous heavyweight framework systems with f
 ```
 SimpleClaude/
 ├── .claude/
-│   ├── commands/simpleclaude/    # 5 natural language commands
-│   ├── commands/extras/          # Optional experimental commands
+│   ├── commands/simpleclaude/    # 4+1 intent-based commands
+│   ├── commands/extras/          # Optional experimental commands  
 │   └── agents/                   # Lightweight agent definitions
 ├── docs/                         # Documentation
 ├── install.sh                    # Installation/update script

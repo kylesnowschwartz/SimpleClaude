@@ -5,7 +5,7 @@ This file provides guidance to [Claude Code](https://github.com/anthropics/claud
 ## Critical Rules
 
 - **important** `.claude/` is the source directory for SimpleClaude's commands and agents
-- Command changes: update commands consistently across all 5 core-commands (sc-create, sc-modify, sc-understand, sc-fix, sc-review)
+- Command changes: update commands consistently across all 4+1 core-commands (sc-plan, sc-work, sc-explore, sc-review, sc-workflow)
 
 ## Build Commands
 
@@ -15,14 +15,14 @@ This file provides guidance to [Claude Code](https://github.com/anthropics/claud
 
 ## Architecture
 
-- SimpleClaude: 5 natural language commands that transform requests into structured AI workflows
+- SimpleClaude: 4+1 intent-based commands that understand user goals and orchestrate intelligent workflows
 - **Lightweight agent architecture**: Commands spawn focused agents via `Task()` calls for token-efficient execution
 - **5 lightweight agents**: Each handles specific responsibilities (context analysis, documentation retrieval, testing, research)
 - Token-efficient through isolated agent contexts and focused task delegation
 
 ## Versioning
 
-- Current version: 0.5.0 (beta)
+- Current version: 1.0.0
 - Follow [SemVer](https://semver.org/): fix = patch, feat = minor, breaking = major
 - **Assess each commit: does it warrant a release?** Bug fixes and new features should trigger releases
 - Release process: update README badge → update CLAUDE.md version → update VERSION file → commit → `git tag vX.X.X` → push with tags

@@ -1,16 +1,16 @@
 # Project: SimpleClaude
 
-A practical minimalist AI assistant framework that transforms complex AI interactions into natural conversations through specialized agents. Consolidates 19+ traditional commands into 5 intuitive natural language commands with a lightweight agent architecture.
+A practical minimalist AI assistant framework that transforms complex AI interactions into natural conversations through specialized agents. Features 4+1 intent-based commands that understand user goals and orchestrate intelligent workflows with a lightweight agent architecture.
 
 ## Features
 
-- 5 natural language commands (sc-create, sc-modify, sc-understand, sc-fix, sc-review) that understand plain English
+- 4+1 intent-based commands (sc-plan, sc-work, sc-explore, sc-review, sc-workflow) that understand user goals
 - Lightweight agent architecture with token-efficient execution through Task() calls
 - 5 specialized agents for context analysis, documentation retrieval, testing, and research
 - Installation system with backup and dry-run capabilities
 - Template-driven consistency across all commands
 - Smart selection process that handles tasks directly when possible, uses agents only when needed
-- Semantic transformation that converts natural language into structured intent
+- Intent recognition that understands user goals and routes to appropriate execution
 - Integration with Claude Code platform maintaining backward compatibility
 
 ## Tech Stack
@@ -18,11 +18,11 @@ A practical minimalist AI assistant framework that transforms complex AI interac
 - Shell Script installation system with comprehensive error handling
 - Markdown-based command and agent definitions with YAML frontmatter
 - Claude Code integration as target platform
-- Git-based version control with SemVer practices (current: v0.5.0 beta)
+- Git-based version control with SemVer practices (current: v1.0.0)
 
 ## Structure
 
-- `.claude/commands/simpleclaude/` - 5 core natural language commands
+- `.claude/commands/simpleclaude/` - 4+1 intent-based commands
 - `.claude/agents/` - 5 specialized agents spawned via Task() calls
 - `.claude/commands/extras/` - 8 optional experimental commands
 - `install.sh` → `scripts/install.sh` (symlink) - main installation entry point
