@@ -13,12 +13,14 @@
 - Operations that produce verbose intermediate output
 
 **Direct Agent Rules (ALWAYS delegate these):**
+
 - **Documentation lookups** → Use `context7-documentation-specialist` (fallback: `repo-documentation-finder`)
 - **Test execution** → Use `test-runner`
 - **Web searches** → Use `web-search-researcher`
 - **Multi-file analysis (10+ files)** → Use `context-analyzer`
 
 **Available Agents:**
+
 - `context-analyzer` - Maps project structure, patterns, and architecture
 - `context7-documentation-specialist` - Fetches library/framework documentation
 - `repo-documentation-finder` - Finds examples from GitHub repositories
@@ -26,6 +28,7 @@
 - `web-search-researcher` - Searches web for current information
 
 **Context Preservation:**
+
 - **Keep only**: user request, actionable recommendations, code changes, summary, next steps
 - **Discard**: intermediate outputs, full docs, verbose logs, exploratory reads
 
@@ -37,19 +40,19 @@ This command interprets natural language requests that express the intent: [Inte
 
 **Command Execution:**
 
-**Empty "${arguments}"**: Display usage suggestions → stop  
+**Empty "${arguments}"**: Display usage suggestions → stop
 **Has content**: Parse intent → apply strategy → route execution
 
 **Intent Processing:** Extract intent → Apply strategy matrix → Validate → Execute
 
 **Strategy Matrix:**
 
-| Condition | Direct Handling | Agent Required |
-|-----------|----------------|----------------|
+| Condition | Direct Handling     | Agent Required                 |
+| --------- | ------------------- | ------------------------------ |
 | Task Type | Simple, single-step | See "Direct Agent Rules" above |
-| Domain | Single, familiar | Multi-tech, unknown |
-| Context | Available locally | External research needed |
-| Output | Concise, focused | Verbose, needs filtering |
+| Domain    | Single, familiar    | Multi-tech, unknown            |
+| Context   | Available locally   | External research needed       |
+| Output    | Concise, focused    | Verbose, needs filtering       |
 
 **Pre-execution**: Validate confidence>medium, resources available, appropriate agents selected, fallback ready
 
@@ -84,23 +87,29 @@ Transforms: "${arguments}" into structured execution:
 ### Output Template
 
 ```
-## Summary
-[1-2 sentence overview]
+## Response
 
-## Key Findings
-- [Finding with evidence]
-- [Finding with evidence]
-- [Finding with evidence]
+[Direct answer or action taken - 1-3 sentences addressing the core request]
 
-## Recommendations
-1. [Action with rationale]
-2. [Action with rationale]
-3. [Action with rationale]
+## Details
 
-## Next Steps
-- [Immediate action]
-- [Follow-up item]
-- [Long-term consideration]
+[Main content based on command type:
+- Plan: Strategy breakdown with phases
+- Work: Code changes and implementation steps
+- Explore: Research findings and analysis
+- Review: Issues found and quality assessment]
+
+## Next Actions
+
+[What to do next:
+- Plan: Implementation steps to begin
+- Work: Testing and validation needed
+- Explore: Areas for deeper investigation
+- Review: Fixes and improvements to make]
+
+## Notes
+
+[Optional - context, warnings, alternatives, or additional considerations]
 ```
 
 ---
