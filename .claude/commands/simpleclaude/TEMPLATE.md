@@ -54,22 +54,17 @@ This command interprets natural language requests that express the intent: [Inte
 | Context   | Available locally   | External research needed       |
 | Output    | Concise, focused    | Verbose, needs filtering       |
 
-**Pre-execution**: Validate confidence>medium, resources available, appropriate agents selected, fallback ready
-
 Transforms: "${arguments}" into structured execution:
 
 - Intent: [recognized-user-intent]
-- Confidence: [high/medium/low]
 - Approach: [direct/agent with reasoning]
 - Agents: [none OR minimal-viable-set]
-- Fallback: [alternative if low confidence]
 
 ### Intent Recognition Examples
 
 <example>
 <input>${arguments} = [natural language request expressing core intent]</input>
 <intent>[recognized user intent and context]</intent>
-<confidence>[high/medium/low]</confidence>
 <approach>[direct handling OR agent orchestration with reasoning]</approach>
 <agents>[none OR specific agents per Direct Agent Rules]</agents>
 <output>[expected result that fulfills the user intent]</output>
@@ -78,7 +73,6 @@ Transforms: "${arguments}" into structured execution:
 <example>
 <input>${arguments} = [different natural language request for same intent category]</input>
 <intent>[different context but same core intent]</intent>
-<confidence>[high/medium/low]</confidence>
 <approach>[different complexity requiring different approach]</approach>
 <agents>[different agent set OR none per Direct Agent Rules]</agents>
 <output>[result tailored to the specific context]</output>

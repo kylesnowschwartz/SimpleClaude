@@ -6,26 +6,33 @@
 
 **Efficiency First:** Handle tasks directly when possible. Use agents only when genuinely needed for:
 
-- Option 1: Multi-step coordination requiring handoffs
-- Option 2: Specialized domain expertise beyond general capability
-- Option 3: Parallel work streams with interdependencies
-- Option 4: Complex analysis requiring multiple perspectives
+- Multi-step coordination requiring handoffs
+- Specialized domain expertise beyond general capability
+- Parallel work streams with interdependencies
+- Complex analysis requiring multiple perspectives
+- Operations that produce verbose intermediate output
 
-**Smart Selection Process:**
+**Direct Agent Rules (ALWAYS delegate these):**
 
-1. Assess: Can I complete this efficiently without agents?
-2. If agents needed: Which specific capabilities does this task require?
-3. Deploy minimal viable agent set for the identified needs
+- **Documentation lookups** → Use `context7-documentation-specialist` (fallback: `repo-documentation-finder`)
+- **Test execution** → Use `test-runner`
+- **Web searches** → Use `web-search-researcher`
+- **Multi-file analysis (10+ files)** → Use `context-analyzer`
 
-**Available Specialized Agents**
+**Available Agents:**
 
-- `context-analyzer` - Maps project structure, technology stack, and existing patterns to enable informed development decisions
-- `context7-documentation-specialist` - Retrieves current, accurate documentation for libraries/frameworks through Context7 system
-- `repo-documentation-finder` - Finds up-to-date documentation and examples from official GitHub repositories
-- `test-runner` - Runs tests and analyzes failures for systematic validation without making fixes
-- `web-search-researcher` - Conducts web research for current information and best practices
+- `context-analyzer` - Maps project structure, patterns, and architecture
+- `context7-documentation-specialist` - Fetches library/framework documentation
+- `repo-documentation-finder` - Finds examples from GitHub repositories
+- `test-runner` - Executes tests and analyzes failures
+- `web-search-researcher` - Searches web for current information
 
-**Processing Pipeline**: **Request Analysis** → **Scope Identification** → **Approach Selection** → **Agent Spawning** → **Parallel Execution** → **Result Synthesis**
+**Context Preservation:**
+
+- **Keep only**: user request, actionable recommendations, code changes, summary, next steps
+- **Discard**: intermediate outputs, full docs, verbose logs, exploratory reads
+
+**Processing Pipeline**: Parse → Classify → Validate → Route → Execute → Synthesize
 
 ## Intent Recognition and Semantic Transformation
 
@@ -33,20 +40,25 @@ This command interprets natural language requests that express the intent: "I ne
 
 **Command Execution:**
 
-**If "${arguments}" is empty**: Display usage suggestions with example intent expressions and stop.  
-**If "${arguments}" has content**: Analyze user intent, then route to appropriate verification approach.
+**Empty "${arguments}"**: Display usage suggestions → stop
+**Has content**: Parse intent → apply strategy → route execution
 
-**Intent Analysis Process:**
+**Intent Processing:** Extract intent → Apply strategy matrix → Validate → Execute
 
-1. **Parse Request**: Extract the verification goal and scope from natural language
-2. **Assess Complexity**: Determine if direct review or comprehensive analysis is needed
-3. **Route Execution**: Apply appropriate verification strategy based on domain and depth required
+**Strategy Matrix:**
+
+| Condition | Direct Handling     | Agent Required                 |
+| --------- | ------------------- | ------------------------------ |
+| Task Type | Simple, single-step | See "Direct Agent Rules" above |
+| Domain    | Single, familiar    | Multi-tech, unknown            |
+| Context   | Available locally   | External research needed       |
+| Output    | Concise, focused    | Verbose, needs filtering       |
 
 Transforms: "${arguments}" into structured execution:
 
 - Intent: [verification-goal-and-scope]
 - Approach: [direct-review OR comprehensive-analysis]
-- Agents: [context-analyzer, test-runner, web-search-researcher]
+- Agents: [none OR minimal-viable-set]
 
 ### Intent Recognition Examples
 
@@ -73,6 +85,34 @@ Transforms: "${arguments}" into structured execution:
 <agents>context-analyzer (authentication patterns), web-search-researcher (security best practices)</agents>
 <output>Code quality report with standards compliance, security patterns assessment, and improvement recommendations</output>
 </example>
+
+### Output Template
+
+```
+## Response
+
+[Direct answer or action taken - 1-3 sentences addressing the core request]
+
+## Details
+
+[Main content based on command type:
+- Plan: Strategy breakdown with phases
+- Work: Code changes and implementation steps
+- Explore: Research findings and analysis
+- Review: Issues found and quality assessment]
+
+## Next Actions
+
+[What to do next:
+- Plan: Implementation steps to begin
+- Work: Testing and validation needed
+- Explore: Areas for deeper investigation
+- Review: Fixes and improvements to make]
+
+## Notes
+
+[Optional - context, warnings, alternatives, or additional considerations]
+```
 
 ---
 
