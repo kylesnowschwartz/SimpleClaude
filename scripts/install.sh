@@ -165,12 +165,14 @@ backup_directory() {
 #   $3 - file_pattern (e.g., "*.md")
 #   $4 - display_name (e.g., "Commands")
 #   $5 - warning_message (e.g., "No SimpleClaude commands found in source")
+#   $6 - ignore_pattern (optional, e.g., "TEMPLATE.md" or "TEMPLATE.md|*.bak")
 install_directory() {
   local source_subdir="$1"
   local target_subdir="$2"
   local file_pattern="$3"
   local display_name="$4"
   local warning_msg="$5"
+  local ignore_pattern="$6"
 
   local source_path="$SOURCE_DIR/$source_subdir"
   local target_path="$TARGET_DIR/$target_subdir"
@@ -190,6 +192,23 @@ install_directory() {
       if [[ -f "$file" ]]; then
         local basename_file
         basename_file=$(basename "$file")
+
+        # Check if file should be ignored
+        if [[ -n "$ignore_pattern" ]]; then
+          # Support multiple ignore patterns separated by |
+          IFS='|' read -ra IGNORE_PATTERNS <<<"$ignore_pattern"
+          local should_ignore=false
+          for pattern in "${IGNORE_PATTERNS[@]}"; do
+            if [[ "$basename_file" == "$pattern" ]]; then
+              should_ignore=true
+              break
+            fi
+          done
+          if [[ "$should_ignore" = true ]]; then
+            continue
+          fi
+        fi
+
         local target_file="$target_path/$basename_file"
 
         if [[ -f "$target_file" ]]; then
@@ -208,7 +227,6 @@ install_directory() {
             fi
             ((updated_count++)) || true
           else
-            echo "    Unchanged: $basename_file"
             ((unchanged_count++)) || true
           fi
         else
@@ -241,6 +259,7 @@ if [[ "$CREATE_BACKUP" = true ]] && [[ "$DRY_RUN" = false ]]; then
   # Backup existing SimpleClaude components
   backup_directory "commands/simpleclaude" "commands-simpleclaude"
   backup_directory "agents" "agents"
+  backup_directory "output-styles" "output-styles"
 
   # Backup extras directory if installing extras
   if [[ "$INSTALL_EXTRAS" = true ]]; then
@@ -252,14 +271,17 @@ if [[ "$CREATE_BACKUP" = true ]] && [[ "$DRY_RUN" = false ]]; then
 fi
 
 # Install SimpleClaude commands
-install_directory "commands/simpleclaude" "commands/simpleclaude" "*.md" "commands" "No SimpleClaude commands found in source"
+install_directory "commands/simpleclaude" "commands/simpleclaude" "*.md" "commands" "No SimpleClaude commands found in source" "TEMPLATE.md"
 
 # Install SimpleClaude agent files
-install_directory "agents" "agents" "*.md" "agents" "No SimpleClaude agents found in source"
+install_directory "agents" "agents" "*.md" "agents" "No SimpleClaude agents found in source" ""
+
+# Install SimpleClaude output-styles files
+install_directory "output-styles" "output-styles" "*.md" "output-styles" "No SimpleClaude output-styles found in source" ""
 
 # Install SimpleClaude extras commands (optional)
 if [[ "$INSTALL_EXTRAS" = true ]]; then
-  install_directory "commands/extras" "commands/extras" "*.md" "extras" "No SimpleClaude extras found in source"
+  install_directory "commands/extras" "commands/extras" "*.md" "extras" "No SimpleClaude extras found in source" ""
 fi
 
 # Final summary
