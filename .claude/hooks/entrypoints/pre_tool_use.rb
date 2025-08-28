@@ -1,0 +1,77 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# PreToolUse Entrypoint
+#
+# This entrypoint orchestrates all PreToolUse handlers when Claude Code is about to execute a tool.
+# It reads JSON input from STDIN, executes all configured handlers, merges their outputs,
+# and returns the final result to Claude Code via STDOUT.
+
+require 'claude_hooks'
+require 'json'
+
+# Require all PreToolUse handler classes
+require_relative '../handlers/pre_tool_use_handler'
+
+# Add additional handler requires here as needed:
+# require_relative '../handlers/pre_tool_use/security_validator'
+# require_relative '../handlers/pre_tool_use/rate_limiter'
+# require_relative '../handlers/pre_tool_use/audit_logger'
+
+begin
+  # Read input data from Claude Code
+  input_data = JSON.parse($stdin.read)
+
+  # Execute all PreToolUse handlers
+  handlers = []
+  results = []
+
+  # Initialize and execute main handler
+  pre_tool_handler = PreToolUseHandler.new(input_data)
+  pre_tool_result = pre_tool_handler.call
+  results << pre_tool_result
+  handlers << 'PreToolUseHandler'
+
+  # Add additional handlers here:
+  # security_validator = SecurityValidatorHandler.new(input_data)
+  # security_result = security_validator.call
+  # results << security_result
+  # handlers << 'SecurityValidatorHandler'
+
+  # rate_limiter = RateLimiterHandler.new(input_data)
+  # rate_limiter_result = rate_limiter.call
+  # results << rate_limiter_result
+  # handlers << 'RateLimiterHandler'
+
+  # Merge all handler outputs using the PreToolUse-specific merge logic
+  # PreToolUse uses "pessimistic" merging where any handler can block tool usage
+  hook_output = ClaudeHooks::PreToolUse.merge_outputs(*results)
+
+  # Log successful execution
+  warn "[PreToolUse] Executed #{handlers.length} handlers: #{handlers.join(', ')}"
+
+  # Output final merged result to Claude Code
+  puts JSON.generate(hook_output)
+
+  exit 0  # Success
+rescue JSON::ParserError => e
+  warn "[PreToolUse] JSON parsing error: #{e.message}"
+  puts JSON.generate({
+                       continue: false,
+                       decision: 'block',
+                       reason: "PreToolUse hook JSON parsing error: #{e.message}",
+                       suppressOutput: false
+                     })
+  exit 1  # JSON error
+rescue StandardError => e
+  warn "[PreToolUse] Hook execution error: #{e.message}"
+  warn e.backtrace.join("\n") if ENV['RUBY_CLAUDE_HOOKS_DEBUG']
+
+  puts JSON.generate({
+                       continue: false,
+                       decision: 'block',
+                       reason: "PreToolUse hook execution error: #{e.message}",
+                       suppressOutput: false
+                     })
+  exit 1  # General error
+end

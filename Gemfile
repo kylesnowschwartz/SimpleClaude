@@ -16,6 +16,6 @@ end
 
 # Optional gems for common hook use cases
 group :optional do
-  gem 'rubocop', '~> 1.0'      # Code linting and formatting
   gem 'json', '~> 2.0'         # JSON processing (claude_hooks dependency)
+  gem 'rubocop', '~> 1.0'      # Code linting and formatting
 end
