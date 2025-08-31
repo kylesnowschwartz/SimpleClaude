@@ -10,3 +10,22 @@ inherit_from: .rubocop_todo.yml
 # where the inspected file is and continue its way up to the root directory.
 #
 # See https://docs.rubocop.org/rubocop/configuration
+
+AllCops:
+  NewCops: enable
+  SuggestExtensions: false
+  # Limit to core Ruby files only (override RuboCop's extensive defaults)
+  Include:
+    - "**/*.rb"
+    - "**/*.rake"
+    - "**/Rakefile"
+    - "**/Gemfile"
+    - "**/*.gemspec"
+    - "**/*.ru" # Rack config files
+    - ".claude/**/*.rb" # Include SimpleClaude hooks and commands
+  # Standard exclusions for performance
+  Exclude:
+    - "tmp/**/*"
+    - "vendor/**/*"
+    - ".git/**/*"
+    - "node_modules/**/*"

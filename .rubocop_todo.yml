@@ -12,5 +12,4 @@
 # SupportedStyles: always, always_true, never
 Style/FrozenStringLiteralComment:
   Exclude:
-    - '**/*.arb'
-    - 'Gemfile'
+    - "Gemfile"
