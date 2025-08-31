@@ -20,8 +20,7 @@
 **Available Specialized Agents**
 
 - `context-analyzer` - Maps project structure, technology stack, and existing patterns to enable informed development decisions
-- `context7-documentation-specialist` - Retrieves current, accurate documentation for libraries/frameworks through Context7 system
-- `repo-documentation-finder` - Finds up-to-date documentation and examples from official GitHub repositories
+- `repository-documentation-expert` - Finds documentation from Context7, local repos, and GitHub repositories
 - `test-runner` - Runs tests and analyzes failures for systematic validation without making fixes
 - `web-search-researcher` - Conducts web research for current information and best practices
 

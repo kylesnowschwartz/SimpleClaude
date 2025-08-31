@@ -94,13 +94,12 @@ No flags needed - commands understand your goals:
 - Context enhances understanding
 - Agent orchestration handles complexity
 
-#### The 5 Lightweight Agents
+#### The 4 Lightweight Agents
 
 1. **context-analyzer** - Maps project structure, technology stack, and existing patterns
-2. **context7-documentation-specialist** - Retrieves current, accurate documentation for libraries and frameworks
-3. **repo-documentation-finder** - Finds up-to-date documentation from official GitHub repositories
-4. **test-runner** - Runs tests and analyzes failures without making fixes
-5. **web-search-researcher** - Searches web for current information and research
+2. **repository-documentation-expert** - Finds documentation from Context7, local repos, and GitHub repositories
+3. **test-runner** - Runs tests and analyzes failures without making fixes
+4. **web-search-researcher** - Searches web for current information and research
 
 Each agent is lightweight, focused, and designed for maximum token efficiency in its domain.
 

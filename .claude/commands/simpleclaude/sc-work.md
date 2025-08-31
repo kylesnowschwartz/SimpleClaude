@@ -14,7 +14,7 @@
 
 **Direct Agent Rules (ALWAYS delegate these):**
 
-- **Documentation lookups** → Use `context7-documentation-specialist` (fallback: `repo-documentation-finder`)
+- **Documentation lookups** → Use `repository-documentation-expert`
 - **Test execution** → Use `test-runner`
 - **Web searches** → Use `web-search-researcher`
 - **Multi-file analysis (10+ files)** → Use `context-analyzer`
@@ -22,8 +22,7 @@
 **Available Agents:**
 
 - `context-analyzer` - Maps project structure, patterns, and architecture
-- `context7-documentation-specialist` - Fetches library/framework documentation
-- `repo-documentation-finder` - Finds examples from GitHub repositories
+- `repository-documentation-expert` - Finds documentation from Context7, local repos, and GitHub repositories
 - `test-runner` - Executes tests and analyzes failures
 - `web-search-researcher` - Searches web for current information
 
@@ -82,7 +81,7 @@ Transforms: "${arguments}" into structured execution:
 <input>${arguments} = "Refactor the API client to use TypeScript generics"</input>
 <intent>Code improvement - type safety enhancement</intent>
 <approach>Documentation research + gradual refactoring with type safety validation</approach>
-<agents>context7-documentation-specialist (TypeScript generics best practices), context-analyzer (current API client structure), test-runner (type checking and functionality validation)</agents>
+<agents>repository-documentation-expert (TypeScript generics best practices), context-analyzer (current API client structure), test-runner (type checking and functionality validation)</agents>
 <output>Refactored API client with proper generic types, improved type safety, and maintained backward compatibility</output>
 </example>
 

@@ -14,7 +14,7 @@
 
 **Direct Agent Rules (ALWAYS delegate these):**
 
-- **Documentation lookups** → Use `context7-documentation-specialist` (fallback: `repo-documentation-finder`)
+- **Documentation lookups** → Use `repository-documentation-expert`
 - **Test execution** → Use `test-runner`
 - **Web searches** → Use `web-search-researcher`
 - **Multi-file analysis (10+ files)** → Use `context-analyzer`
@@ -22,8 +22,7 @@
 **Available Agents:**
 
 - `context-analyzer` - Maps project structure, patterns, and architecture
-- `context7-documentation-specialist` - Fetches library/framework documentation
-- `repo-documentation-finder` - Finds examples from GitHub repositories
+- `repository-documentation-expert` - Finds documentation from Context7, local repos, and GitHub repositories
 - `test-runner` - Executes tests and analyzes failures
 - `web-search-researcher` - Searches web for current information
 

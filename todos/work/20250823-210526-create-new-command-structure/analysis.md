@@ -41,15 +41,11 @@ Located in `.claude/agents/`, each with specific capabilities:
    - Uses WebSearch, WebFetch, sequential thinking
    - Complex agent with comprehensive capabilities
 
-4. **context7-documentation-specialist** (`/Users/kyle/Code/SimpleClaude/.claude/agents/context7-documentation-specialist.md`)
-   - Retrieves current documentation through Context7 system
-   - Fetches official documentation for libraries/frameworks
-   - Uses Context7 MCP tools for documentation retrieval
-
-5. **repo-documentation-finder** (`/Users/kyle/Code/SimpleClaude/.claude/agents/repo-documentation-finder.md`)
-   - Finds documentation from official GitHub repositories
-   - 5-phase workflow: LOCATE → ACQUIRE → SEARCH → ANALYZE → SYNTHESIZE
-   - Uses Bash, GitHub CLI, repository management
+4. **repository-documentation-expert** (`/Users/kyle/Code/SimpleClaude/.claude/agents/repository-documentation-expert.md`)
+   - Unified documentation finder combining Context7 and repository analysis
+   - Uses intelligent fail-fast heuristics with confidence scoring
+   - 5-phase workflow: RAPID CONTEXT → LOCAL VERIFICATION → INTELLIGENT ACQUISITION → TARGETED SEARCH → DEEP ANALYSIS → SYNTHESIS
+   - Integrates Context7 MCP tools with GitHub CLI and repository management
 
 ### Agent Spawning Patterns
 
@@ -256,7 +252,7 @@ Each command must follow the established template pattern:
 5. **Transformation examples** showing input/output patterns
 
 #### Agent Integration Requirements
-- Must use existing 5 agents: `context-analyzer`, `context7-documentation-specialist`, `repo-documentation-finder`, `test-runner`, `web-search-researcher`
+- Must use existing agents: `context-analyzer`, `repository-documentation-expert`, `test-runner`, `web-search-researcher`
 - Agent spawning via `Task()` calls for token efficiency
 - Isolated agent contexts to prevent token bloat
 - Parallel execution capability for interdependent tasks
