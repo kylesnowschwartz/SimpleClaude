@@ -22,7 +22,7 @@ This file provides guidance to [Claude Code](https://github.com/anthropics/claud
 
 ## Versioning
 
-- Current version: 1.0.0
+- Current version: 1.1.0
 - Follow [SemVer](https://semver.org/): fix = patch, feat = minor, breaking = major
 - **Assess each commit: does it warrant a release?** Bug fixes and new features should trigger releases
 - Release process: update README badge → update CLAUDE.md version → update VERSION file → commit → `git tag vX.X.X` → push with tags
