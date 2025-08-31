@@ -24,7 +24,8 @@ fi
 
 # Configuration
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-SOURCE_DIR="$SCRIPT_DIR/.claude"
+# Look for .claude directory in the parent directory (project root)
+SOURCE_DIR="$(cd "$SCRIPT_DIR/.." && pwd)/.claude"
 DEFAULT_TARGET="$HOME/.claude"
 TIMESTAMP=$(date '+%Y%m%d_%H%M%S')
 
@@ -290,7 +291,8 @@ file_hash() {
 
 # Function: install_gemfile
 install_gemfile() {
-  local source_gemfile="$SOURCE_DIR/../Gemfile"
+  local source_gemfile
+  source_gemfile="$(cd "$SCRIPT_DIR/.." && pwd)/Gemfile"
   local target_gemfile="$TARGET_DIR/Gemfile"
 
   if [[ ! -f "$source_gemfile" ]]; then
@@ -360,10 +362,8 @@ if ! check_bundler; then
   bundler_ok=false
 fi
 
-gems_ok=true
-if ! check_claude_hooks_gem; then
-  gems_ok=false
-fi
+# Check for claude_hooks gem (informational only, will be installed via Gemfile if needed)
+check_claude_hooks_gem
 
 if [[ "$ruby_ok" = false ]] || [[ "$bundler_ok" = false ]]; then
   if [[ "$FORCE_DEPS" = false ]]; then
