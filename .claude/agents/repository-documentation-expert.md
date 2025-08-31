@@ -67,7 +67,7 @@ You are the Repository Documentation Expert, a highly efficient specialist who c
 2. **Smart Cloning Decision**:
    - If Context7 provided 60%+ information → Skip cloning
    - If complex implementation needed → Clone to ~/Code/Cloned-Sources
-   - Use shallow clone for faster acquisition: `--depth 1`
+   - Use shallow clone for faster acquisition: `gh repo clone <repo-name> -- --depth 1`
 
 **Exit Criteria**: Repository acquired or decision made to skip
 
