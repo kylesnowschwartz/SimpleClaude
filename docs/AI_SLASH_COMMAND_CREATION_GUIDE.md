@@ -6,7 +6,7 @@
 
 **Strategy**: Examine existing commands before creating new ones
 
-- Read `TEMPLATE.md` first - it's the canonical structure
+- Read `.claude/commands/simpleclaude/TEMPLATE.md` first - it's the canonical structure
 - Study a similar command (e.g., `sc-explore` for analysis-type commands)
 - Pattern matching is more reliable than trying to understand the entire system
 
@@ -69,7 +69,7 @@ This format makes it easy to understand how the command interprets various input
 
 ### Essential SimpleClaude Patterns
 
-- **Always load**: Relevant agent specialists from $HOME/.claude/agents/ 
+- **Always load**: Relevant agent specialists from $HOME/.claude/agents/
 - **Always check**: "If $ARGUMENTS is empty" logic
 - **Always transform**: Natural language → structured intent
 - **Always mention**: Auto-spawning sub-agents

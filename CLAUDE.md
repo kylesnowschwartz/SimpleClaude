@@ -19,6 +19,7 @@ This file provides guidance to [Claude Code](https://github.com/anthropics/claud
 - **Lightweight agent architecture**: Commands spawn focused agents via `Task()` calls for token-efficient execution
 - **5 lightweight agents**: Each handles specific responsibilities (context analysis, documentation retrieval, testing, research)
 - Token-efficient through isolated agent contexts and focused task delegation
+- Command template is located at `.claude/commands/simpleclaude/TEMPLATE.md`
 
 ## Versioning
 

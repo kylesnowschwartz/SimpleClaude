@@ -43,7 +43,7 @@ git pull
 SimpleClaude uses a **lightweight agent architecture** with intent-based commands:
 
 - **4+1 Command Structure**: Intent-based interfaces that understand user goals
-- **4 Specialized Agents**: Context-specific assistants spawned via `Task()` calls  
+- **4 Core Agents**: Context-specific assistants spawned via `Task()` calls
 - **Token-Efficient Design**: Agents work in isolation with focused context
 - **Clean Separation**: Commands understand intent, agents execute specialized tasks
 
@@ -60,9 +60,9 @@ This lightweight approach replaces previous heavyweight framework systems with f
 
 ## Documentation
 
-- [Project Vision](docs/VISION.md) - Philosophy and features
-- [Development Status](docs/PHASES.md) - Current status and roadmap
-- [Quick Start Guide](docs/README.md) - Examples and usage
+- [Project Vision](docs/VISION.md) - Philosophy, features, and architecture
+- [Command Creation Guide](docs/AI_SLASH_COMMAND_CREATION_GUIDE.md) - How to create new slash commands
+- [Hooks Usage Guide](docs/HOOKS_GUIDE.md) - How to create new slash commands
 
 ## Development
 
@@ -78,8 +78,10 @@ This lightweight approach replaces previous heavyweight framework systems with f
 SimpleClaude/
 ├── .claude/
 │   ├── commands/simpleclaude/    # 4+1 intent-based commands
-│   ├── commands/extras/          # Optional experimental commands  
-│   └── agents/                   # Lightweight agent definitions
+│   ├── commands/extras/          # Optional experimental commands
+│   ├── agents/                   # Lightweight agent definitions
+│   ├── hooks/                    # Claude Code hook system
+│   └── output-styles/            # Custom output formatting styles
 ├── docs/                         # Documentation
 ├── install.sh                    # Installation/update script
 └── README.md                     # This file
