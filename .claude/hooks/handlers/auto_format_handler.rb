@@ -9,17 +9,12 @@ require 'shellwords'
 #
 # PURPOSE: Automatically format/lint files after Write, Edit, or MultiEdit operations
 # DESIGN: Lightweight, obvious, maintainable using claude_hooks DSL patterns
+# ALIGNMENT: Mirrors pre-commit configuration for consistency
 #
 # SUPPORTED FORMATTERS:
 # - Ruby: RuboCop with auto-correct (-A flag)
-# - JavaScript/TypeScript: Prettier, ESLint --fix
-# - Python: Black, autopep8
-# - Go: gofmt
-# - Rust: rustfmt
-# - JSON: jq with pretty formatting
-# - YAML: yq with proper indentation
-# - CSS/SCSS: Prettier
-# - Markdown: Prettier
+# - Markdown: markdownlint with --fix (matching pre-commit rules)
+# - Shell: shfmt with 2-space indentation (matching pre-commit args)
 
 class AutoFormatHandler < ClaudeHooks::PostToolUse
   def call
@@ -179,32 +174,30 @@ class AutoFormatHandler < ClaudeHooks::PostToolUse
   def detect_formatter
     extension = File.extname(current_file_path).downcase
 
-    # Simple, obvious formatter detection
+    # Simplified formatter detection - mirrors pre-commit configuration
     case extension
     when '.rb'
       command_available?('rubocop') ? { name: 'RuboCop', command: 'rubocop', args: ['-A'] } : nil
-    when '.js', '.jsx', '.ts', '.tsx'
-      if command_available?('prettier')
-        { name: 'Prettier', command: 'prettier', args: ['--write'] }
-      elsif command_available?('eslint')
-        { name: 'ESLint', command: 'eslint', args: ['--fix'] }
+    when '.md'
+      if command_available?('markdownlint')
+        {
+          name: 'markdownlint',
+          command: 'markdownlint',
+          args: [
+            '--fix',
+            '--disable',
+            'MD013,MD041,MD026,MD012,MD024' # Match pre-commit disabled rules
+          ]
+        }
       end
-    when '.py'
-      if command_available?('black')
-        { name: 'Black', command: 'black', args: [] }
-      elsif command_available?('autopep8')
-        { name: 'autopep8', command: 'autopep8', args: ['--in-place'] }
+    when '.sh', '.bash'
+      if command_available?('shfmt')
+        {
+          name: 'shfmt',
+          command: 'shfmt',
+          args: ['-w', '-i', '2'] # Match pre-commit args: 2-space indentation
+        }
       end
-    when '.go'
-      command_available?('gofmt') ? { name: 'gofmt', command: 'gofmt', args: ['-w'] } : nil
-    when '.rs'
-      command_available?('rustfmt') ? { name: 'rustfmt', command: 'rustfmt', args: [] } : nil
-    when '.json'
-      command_available?('jq') ? { name: 'jq', command: 'jq', args: ['.', '--indent', '2'] } : nil
-    when '.yml', '.yaml'
-      command_available?('yq') ? { name: 'yq', command: 'yq', args: ['eval', '--inplace', '--indent', '2'] } : nil
-    when '.css', '.scss', '.md'
-      command_available?('prettier') ? { name: 'Prettier', command: 'prettier', args: ['--write'] } : nil
     end
   end
 
@@ -221,11 +214,7 @@ class AutoFormatHandler < ClaudeHooks::PostToolUse
     # Store original content to detect changes
     original_content = File.read(current_file_path)
 
-    if formatter[:name] == 'jq'
-      run_jq_formatter
-    else
-      run_standard_formatter(formatter)
-    end.tap do |result|
+    run_standard_formatter(formatter).tap do |result|
       # Check if changes were made and report
       if result[:success]
         new_content = File.read(current_file_path)
@@ -248,22 +237,6 @@ class AutoFormatHandler < ClaudeHooks::PostToolUse
       { success: true, output: stdout_err }
     else
       { success: false, error: stdout_err.strip }
-    end
-  end
-
-  def run_jq_formatter
-    # Special handling for jq which needs pipe input
-    command = "jq . --indent 2 --sort-keys #{Shellwords.escape(current_file_path)}"
-
-    log "Running: #{command}"
-
-    stdout, stderr, status = Open3.capture3(command)
-
-    if status.success?
-      File.write(current_file_path, stdout)
-      { success: true, output: 'Formatted JSON successfully' }
-    else
-      { success: false, error: stderr.strip }
     end
   end
 

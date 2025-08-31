@@ -307,7 +307,7 @@ class PreCompactHandler < ClaudeHooks::PreCompact
     resolutions = []
     lines.each_with_index do |line, index|
       next unless line.match?(/fixed|resolved|solved/i) &&
-                  lines[index - 1..index + 1].any? { |l| l.match?(/error|exception/i) }
+                  lines[(index - 1)..(index + 1)].any? { |l| l.match?(/error|exception/i) }
 
       resolutions << {
         line: index + 1,

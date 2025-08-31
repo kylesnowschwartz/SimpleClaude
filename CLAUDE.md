@@ -31,3 +31,4 @@ This file provides guidance to [Claude Code](https://github.com/anthropics/claud
 
 - Commits: use conventional format (feat:, fix:, docs:, refactor:)
 - Consider release for meaningful changes following SemVer practices
+- Reference ./docs/AI_SLASH_COMMAND_CREATION_GUIDE.md if creating a new slash (/) command

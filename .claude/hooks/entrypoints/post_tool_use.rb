@@ -11,7 +11,7 @@ require 'claude_hooks'
 require 'json'
 
 # Require all PostToolUse handler classes
-require_relative '../handlers/post_tool_use_handler'
+# require_relative '../handlers/post_tool_use_handler'
 require_relative '../handlers/auto_format_handler'
 
 # Add additional handler requires here as needed:
@@ -28,10 +28,10 @@ begin
   results = []
 
   # Initialize and execute main handler
-  post_tool_handler = PostToolUseHandler.new(input_data)
-  post_tool_result = post_tool_handler.call
-  results << post_tool_result
-  handlers << 'PostToolUseHandler'
+  # post_tool_handler = PostToolUseHandler.new(input_data)
+  # post_tool_result = post_tool_handler.call
+  # results << post_tool_result
+  # handlers << 'PostToolUseHandler'
 
   # Initialize and execute auto-format handler
   auto_format_handler = AutoFormatHandler.new(input_data)
