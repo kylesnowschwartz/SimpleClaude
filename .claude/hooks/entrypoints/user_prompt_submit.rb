@@ -22,38 +22,10 @@ begin
   # Read input data from Claude Code
   input_data = JSON.parse($stdin.read)
 
-  # Execute all UserPromptSubmit handlers
-  handlers = []
-  results = []
 
-  # Initialize and execute main handler
-  user_prompt_handler = UserPromptSubmitHandler.new(input_data)
-  user_prompt_result = user_prompt_handler.call
-  results << user_prompt_result
-  handlers << 'UserPromptSubmitHandler'
-
-  # Add additional handlers here:
-  # append_rules = AppendRulesHandler.new(input_data)
-  # append_rules_result = append_rules.call
-  # results << append_rules_result
-  # handlers << 'AppendRulesHandler'
-
-  # log_prompt = LogUserPromptHandler.new(input_data)
-  # log_prompt_result = log_prompt.call
-  # results << log_prompt_result
-  # handlers << 'LogUserPromptHandler'
-
-  # Merge all handler outputs using the UserPromptSubmit-specific merge logic
-  # UserPromptSubmit uses "pessimistic" merging where any handler can block the prompt
-  hook_output = ClaudeHooks::UserPromptSubmit.merge_outputs(*results)
-
-  # Log successful execution
-  warn "[UserPromptSubmit] Executed #{handlers.length} handlers: #{handlers.join(', ')}"
-
-  # Output final merged result to Claude Code
-  puts JSON.generate(hook_output)
-
-  exit 0  # Success
+  hook = UserPromptSubmitHandler.new(input_data)
+  hook.call
+  hook.output_and_exit
 rescue JSON::ParserError => e
   warn "[UserPromptSubmit] JSON parsing error: #{e.message}"
   puts JSON.generate({

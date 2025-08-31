@@ -22,37 +22,10 @@ begin
   # Read input data from Claude Code
   input_data = JSON.parse($stdin.read)
 
-  # Execute all Stop handlers
-  handlers = []
-  results = []
 
-  # Initialize and execute main handler
-  stop_handler = StopHandler.new(input_data)
-  stop_result = stop_handler.call
-  results << stop_result
-  handlers << 'StopHandler'
-
-  # Add additional handlers here:
-  # session_saver = SessionSaverHandler.new(input_data)
-  # saver_result = session_saver.call
-  # results << saver_result
-  # handlers << 'SessionSaverHandler'
-
-  # cleanup_manager = CleanupManagerHandler.new(input_data)
-  # cleanup_result = cleanup_manager.call
-  # results << cleanup_result
-  # handlers << 'CleanupManagerHandler'
-
-  # Merge all handler outputs using the Stop-specific merge logic
-  hook_output = ClaudeHooks::Stop.merge_outputs(*results)
-
-  # Log successful execution
-  warn "[Stop] Executed #{handlers.length} handlers: #{handlers.join(', ')}"
-
-  # Output final merged result to Claude Code
-  puts JSON.generate(hook_output)
-
-  exit 0  # Success
+  hook = StopHandler.new(input_data)
+  hook.call
+  hook.output_and_exit
 rescue JSON::ParserError => e
   warn "[Stop] JSON parsing error: #{e.message}"
   puts JSON.generate({

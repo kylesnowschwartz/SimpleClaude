@@ -22,37 +22,10 @@ begin
   # Read input data from Claude Code
   input_data = JSON.parse($stdin.read)
 
-  # Execute all SubagentStop handlers
-  handlers = []
-  results = []
 
-  # Initialize and execute main handler
-  subagent_stop_handler = SubagentStopHandler.new(input_data)
-  subagent_result = subagent_stop_handler.call
-  results << subagent_result
-  handlers << 'SubagentStopHandler'
-
-  # Add additional handlers here:
-  # result_processor = ResultProcessorHandler.new(input_data)
-  # processor_result = result_processor.call
-  # results << processor_result
-  # handlers << 'ResultProcessorHandler'
-
-  # performance_tracker = PerformanceTrackerHandler.new(input_data)
-  # perf_result = performance_tracker.call
-  # results << perf_result
-  # handlers << 'PerformanceTrackerHandler'
-
-  # Merge all handler outputs using the SubagentStop-specific merge logic
-  hook_output = ClaudeHooks::SubagentStop.merge_outputs(*results)
-
-  # Log successful execution
-  warn "[SubagentStop] Executed #{handlers.length} handlers: #{handlers.join(', ')}"
-
-  # Output final merged result to Claude Code
-  puts JSON.generate(hook_output)
-
-  exit 0  # Success
+  hook = SubagentStopHandler.new(input_data)
+  hook.call
+  hook.output_and_exit
 rescue JSON::ParserError => e
   warn "[SubagentStop] JSON parsing error: #{e.message}"
   puts JSON.generate({

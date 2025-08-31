@@ -22,38 +22,10 @@ begin
   # Read input data from Claude Code
   input_data = JSON.parse($stdin.read)
 
-  # Execute all PreToolUse handlers
-  handlers = []
-  results = []
 
-  # Initialize and execute main handler
-  pre_tool_handler = PreToolUseHandler.new(input_data)
-  pre_tool_result = pre_tool_handler.call
-  results << pre_tool_result
-  handlers << 'PreToolUseHandler'
-
-  # Add additional handlers here:
-  # security_validator = SecurityValidatorHandler.new(input_data)
-  # security_result = security_validator.call
-  # results << security_result
-  # handlers << 'SecurityValidatorHandler'
-
-  # rate_limiter = RateLimiterHandler.new(input_data)
-  # rate_limiter_result = rate_limiter.call
-  # results << rate_limiter_result
-  # handlers << 'RateLimiterHandler'
-
-  # Merge all handler outputs using the PreToolUse-specific merge logic
-  # PreToolUse uses "pessimistic" merging where any handler can block tool usage
-  hook_output = ClaudeHooks::PreToolUse.merge_outputs(*results)
-
-  # Log successful execution
-  warn "[PreToolUse] Executed #{handlers.length} handlers: #{handlers.join(', ')}"
-
-  # Output final merged result to Claude Code
-  puts JSON.generate(hook_output)
-
-  exit 0  # Success
+  hook = PreToolUseHandler.new(input_data)
+  hook.call
+  hook.output_and_exit
 rescue JSON::ParserError => e
   warn "[PreToolUse] JSON parsing error: #{e.message}"
   puts JSON.generate({

@@ -6,7 +6,7 @@ source 'https://rubygems.org'
 ruby '>= 2.7.0'
 
 # Claude Hooks DSL framework
-gem 'claude_hooks', '~> 0.2.1'
+gem 'claude_hooks', '~> 1.0.0'
 
 # Development and utility gems for hook development
 group :development do

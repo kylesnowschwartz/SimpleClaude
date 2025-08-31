@@ -22,37 +22,10 @@ begin
   # Read input data from Claude Code
   input_data = JSON.parse($stdin.read)
 
-  # Execute all Notification handlers
-  handlers = []
-  results = []
 
-  # Initialize and execute main handler
-  notification_handler = NotificationHandler.new(input_data)
-  notification_result = notification_handler.call
-  results << notification_result
-  handlers << 'NotificationHandler'
-
-  # Add additional handlers here:
-  # slack_notifier = SlackNotifierHandler.new(input_data)
-  # slack_result = slack_notifier.call
-  # results << slack_result
-  # handlers << 'SlackNotifierHandler'
-
-  # email_sender = EmailSenderHandler.new(input_data)
-  # email_result = email_sender.call
-  # results << email_result
-  # handlers << 'EmailSenderHandler'
-
-  # Merge all handler outputs using the Notification-specific merge logic
-  hook_output = ClaudeHooks::Notification.merge_outputs(*results)
-
-  # Log successful execution
-  warn "[Notification] Executed #{handlers.length} handlers: #{handlers.join(', ')}"
-
-  # Output final merged result to Claude Code
-  puts JSON.generate(hook_output)
-
-  exit 0  # Success
+  hook = NotificationHandler.new(input_data)
+  hook.call
+  hook.output_and_exit
 rescue JSON::ParserError => e
   warn "[Notification] JSON parsing error: #{e.message}"
   puts JSON.generate({

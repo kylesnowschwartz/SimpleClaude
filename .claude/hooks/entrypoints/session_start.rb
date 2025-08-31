@@ -21,32 +21,10 @@ begin
   # Read input data from Claude Code
   input_data = JSON.parse($stdin.read)
 
-  # Execute all SessionStart handlers
-  handlers = []
-  results = []
 
-  # Initialize and execute main handler
-  session_start_handler = SessionStartHandler.new(input_data)
-  session_start_result = session_start_handler.call
-  results << session_start_result
-  handlers << 'SessionStartHandler'
-
-  # Add additional handlers here:
-  # custom_handler = CustomSessionStartHandler.new(input_data)
-  # custom_result = custom_handler.call
-  # results << custom_result
-  # handlers << 'CustomSessionStartHandler'
-
-  # Merge all handler outputs using the SessionStart-specific merge logic
-  hook_output = ClaudeHooks::SessionStart.merge_outputs(*results)
-
-  # Log successful execution
-  warn "[SessionStart] Executed #{handlers.length} handlers: #{handlers.join(', ')}"
-
-  # Output final merged result to Claude Code
-  puts JSON.generate(hook_output)
-
-  exit 0  # Success
+  hook = SessionStartHandler.new(input_data)
+  hook.call
+  hook.output_and_exit
 rescue JSON::ParserError => e
   warn "[SessionStart] JSON parsing error: #{e.message}"
   puts JSON.generate({

@@ -23,43 +23,10 @@ begin
   # Read input data from Claude Code
   input_data = JSON.parse($stdin.read)
 
-  # Execute all PostToolUse handlers
-  handlers = []
-  results = []
 
-  # Initialize and execute main handler
-  # post_tool_handler = PostToolUseHandler.new(input_data)
-  # post_tool_result = post_tool_handler.call
-  # results << post_tool_result
-  # handlers << 'PostToolUseHandler'
-
-  # Initialize and execute auto-format handler
-  auto_format_handler = AutoFormatHandler.new(input_data)
-  auto_format_result = auto_format_handler.call
-  results << auto_format_result
-  handlers << 'AutoFormatHandler'
-
-  # Add additional handlers here:
-  # result_analyzer = ResultAnalyzerHandler.new(input_data)
-  # analyzer_result = result_analyzer.call
-  # results << analyzer_result
-  # handlers << 'ResultAnalyzerHandler'
-
-  # error_extractor = ErrorExtractorHandler.new(input_data)
-  # error_result = error_extractor.call
-  # results << error_result
-  # handlers << 'ErrorExtractorHandler'
-
-  # Merge all handler outputs using the PostToolUse-specific merge logic
-  hook_output = ClaudeHooks::PostToolUse.merge_outputs(*results)
-
-  # Log successful execution
-  warn "[PostToolUse] Executed #{handlers.length} handlers: #{handlers.join(', ')}"
-
-  # Output final merged result to Claude Code
-  puts JSON.generate(hook_output)
-
-  exit 0  # Success
+  hook = AutoFormatHandler.new(input_data)
+  hook.call
+  hook.output_and_exit
 rescue JSON::ParserError => e
   warn "[PostToolUse] JSON parsing error: #{e.message}"
   puts JSON.generate({

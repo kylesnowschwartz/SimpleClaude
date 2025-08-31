@@ -22,37 +22,10 @@ begin
   # Read input data from Claude Code
   input_data = JSON.parse($stdin.read)
 
-  # Execute all PreCompact handlers
-  handlers = []
-  results = []
 
-  # Initialize and execute main handler
-  pre_compact_handler = PreCompactHandler.new(input_data)
-  pre_compact_result = pre_compact_handler.call
-  results << pre_compact_result
-  handlers << 'PreCompactHandler'
-
-  # Add additional handlers here:
-  # transcript_backupper = TranscriptBackupperHandler.new(input_data)
-  # backup_result = transcript_backupper.call
-  # results << backup_result
-  # handlers << 'TranscriptBackupperHandler'
-
-  # insight_extractor = InsightExtractorHandler.new(input_data)
-  # insight_result = insight_extractor.call
-  # results << insight_result
-  # handlers << 'InsightExtractorHandler'
-
-  # Merge all handler outputs using the PreCompact-specific merge logic
-  hook_output = ClaudeHooks::PreCompact.merge_outputs(*results)
-
-  # Log successful execution
-  warn "[PreCompact] Executed #{handlers.length} handlers: #{handlers.join(', ')}"
-
-  # Output final merged result to Claude Code
-  puts JSON.generate(hook_output)
-
-  exit 0  # Success
+  hook = PreCompactHandler.new(input_data)
+  hook.call
+  hook.output_and_exit
 rescue JSON::ParserError => e
   warn "[PreCompact] JSON parsing error: #{e.message}"
   puts JSON.generate({
