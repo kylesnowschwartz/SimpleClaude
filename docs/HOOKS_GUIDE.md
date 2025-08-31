@@ -2,26 +2,33 @@
 
 This directory contains base Ruby classes and entrypoints for all 8 Claude Code hook types, demonstrating the architecture and providing starting points for custom implementations.
 
+**Important:** The hooks system is included with SimpleClaude but operates independently from the main install script. While `./scripts/install.sh` installs SimpleClaude commands, agents, and output-styles, hook configuration requires manual setup in your `~/.claude/settings.json` file.
+
 ## Quick Start
 
-1. **Install the claude_hooks gem:**
+1. **Install SimpleClaude (includes hooks):**
+   ```bash
+   # From the SimpleClaude repository root
+   ./scripts/install.sh --execute
+   ```
+   Note: The SimpleClaude install script installs commands, agents, and output-styles, but hooks must be configured separately.
+
+2. **Install the claude_hooks gem:**
    ```bash
    gem install claude_hooks
    ```
 
-2. **Copy the example settings:**
+3. **Configure hooks in your settings:**
+   Copy the hooks configuration from `.claude/settings.local.json` to your main `~/.claude/settings.json`, or create a new hooks section based on the examples below.
+
+4. **Make entrypoints executable (if needed):**
    ```bash
-   cp settings.json.example ../settings.json
+   chmod +x ~/.claude/hooks/entrypoints/*.rb
    ```
 
-3. **Make entrypoints executable:**
+5. **Test a handler:**
    ```bash
-   chmod +x entrypoints/*.rb
-   ```
-
-4. **Test a handler:**
-   ```bash
-   ruby handlers/session_start_handler.rb
+   ruby ~/.claude/hooks/handlers/session_start_handler.rb
    ```
 
 ## Architecture Overview
@@ -49,9 +56,12 @@ Claude Code → Entrypoints (orchestration) → Handlers (business logic) → Ba
 
 ## File Structure
 
+After installing SimpleClaude, the hooks are located at:
+
 ```
-.claude/hooks/
+~/.claude/hooks/                 # Installed hooks directory
 ├── handlers/                    # Business logic classes
+│   ├── auto_format_handler.rb   # Auto-formatting handler
 │   ├── session_start_handler.rb
 │   ├── user_prompt_submit_handler.rb
 │   ├── pre_tool_use_handler.rb
@@ -69,9 +79,10 @@ Claude Code → Entrypoints (orchestration) → Handlers (business logic) → Ba
 │   ├── stop.rb
 │   ├── subagent_stop.rb
 │   └── pre_compact.rb
-├── settings.json.example        # Configuration template
-└── README.md                   # This file
+└── # No settings file - configure in ~/.claude/settings.json
 ```
+
+**Note:** Hook configuration is done in your main `~/.claude/settings.json` file, not in a separate settings file within the hooks directory.
 
 ## Common Use Cases by Hook Type
 
@@ -158,16 +169,16 @@ ask_for_permission!(r)  # Request user permission
 ### Test a Handler
 ```bash
 # Run handler with sample data
-ruby handlers/session_start_handler.rb
+ruby ~/.claude/hooks/handlers/session_start_handler.rb
 
 # With custom input
-echo '{"session_id": "test", "prompt": "Hello"}' | ruby handlers/user_prompt_submit_handler.rb
+echo '{"session_id": "test", "prompt": "Hello"}' | ruby ~/.claude/hooks/handlers/user_prompt_submit_handler.rb
 ```
 
 ### Test an Entrypoint
 ```bash
 # Test complete hook flow
-echo '{"session_id": "test"}' | ruby entrypoints/session_start.rb
+echo '{"session_id": "test"}' | ruby ~/.claude/hooks/entrypoints/session_start.rb
 ```
 
 ## Creating Custom Handlers
@@ -200,15 +211,17 @@ echo '{"session_id": "test"}' | ruby entrypoints/session_start.rb
 
 ## Configuration Examples
 
+Add these configurations to your `~/.claude/settings.json` file:
+
 ### Basic Configuration
 ```json
 {
   "hooks": {
-    "UserPromptSubmit": [{
+    "SessionStart": [{
       "matcher": "",
       "hooks": [{
         "type": "command",
-        "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/entrypoints/user_prompt_submit.rb"
+        "command": ".claude/hooks/entrypoints/session_start.rb"
       }]
     }]
   }
@@ -223,33 +236,29 @@ echo '{"session_id": "test"}' | ruby entrypoints/session_start.rb
       "matcher": "help.*implement",
       "hooks": [{
         "type": "command",
-        "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/entrypoints/user_prompt_submit.rb"
+        "command": ".claude/hooks/entrypoints/user_prompt_submit.rb"
       }]
     }]
   }
 }
 ```
 
-### Multiple Handlers
+### Multiple Handlers (Production Example)
 ```json
 {
   "hooks": {
     "PostToolUse": [{
-      "matcher": "",
-      "hooks": [
-        {
-          "type": "command",
-          "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/entrypoints/post_tool_use.rb"
-        },
-        {
-          "type": "command",
-          "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/entrypoints/analytics_post_tool_use.rb"
-        }
-      ]
+      "matcher": "Write|Edit|MultiEdit",
+      "hooks": [{
+        "type": "command",
+        "command": ".claude/hooks/entrypoints/post_tool_use.rb"
+      }]
     }]
   }
 }
 ```
+
+**Note:** The command paths are relative to your `~/.claude/` directory. Claude Code will resolve `.claude/hooks/entrypoints/` to the full path automatically.
 
 ## Environment Variables
 
@@ -273,18 +282,19 @@ echo '{"session_id": "test"}' | ruby entrypoints/session_start.rb
 3. **Test components individually:**
    ```bash
    # Test handler
-   ruby handlers/session_start_handler.rb
+   ruby ~/.claude/hooks/handlers/session_start_handler.rb
    
    # Test entrypoint
-   echo '{}' | ruby entrypoints/session_start.rb
+   echo '{}' | ruby ~/.claude/hooks/entrypoints/session_start.rb
    ```
 
 ## Next Steps
 
-1. Review the handler implementations in `handlers/`
-2. Customize the business logic for your use cases
-3. Add additional handlers by creating new classes
-4. Configure which hooks you want to use in `settings.json`
-5. Test your implementation before deploying
+1. Install SimpleClaude using `./scripts/install.sh --execute` from the repository root
+2. Install the claude_hooks gem: `gem install claude_hooks`
+3. Review the handler implementations in `~/.claude/hooks/handlers/`
+4. Customize the business logic for your use cases in the handlers
+5. Add hook configurations to your `~/.claude/settings.json` file
+6. Test your implementation using the testing commands above
 
 For more details about the claude_hooks gem architecture, see the official documentation at: https://github.com/gabriel-dehan/claude_hooks
