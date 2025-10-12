@@ -17,14 +17,9 @@
 - **Documentation lookups** → Use `repository-documentation-expert`
 - **Test execution** → Use `test-runner`
 - **Web searches** → Use `web-search-researcher`
-- **Multi-file analysis (10+ files)** → Use `context-analyzer`
-
-**Available Agents:**
-
-- `context-analyzer` - Maps project structure, patterns, and architecture
-- `repository-documentation-expert` - Finds documentation from Context7, local repos, and GitHub repositories
-- `test-runner` - Executes tests and analyzes failures
-- `web-search-researcher` - Searches web for current information
+- **Deep codebase analysis** → Use `code-explorer`
+- **Architecture design** → Use `code-architect`
+- **Code quality review** → Use `code-reviewer`
 
 **Context Preservation:**
 
@@ -53,7 +48,7 @@ This command interprets natural language requests that express the intent: "I ne
 | Context   | Available locally   | External research needed       |
 | Output    | Concise, focused    | Verbose, needs filtering       |
 
-Transforms: "${arguments}" into structured execution:
+Transforms: $AGENTS into structured execution:
 
 - Intent: [recognized-user-intent]
 - Approach: [direct/agent with reasoning]

@@ -17,11 +17,15 @@
 - **Documentation lookups** → Use `repository-documentation-expert`
 - **Test execution** → Use `test-runner`
 - **Web searches** → Use `web-search-researcher`
-- **Multi-file analysis (10+ files)** → Use `context-analyzer`
+- **Deep codebase analysis** → Use `code-explorer`
+- **Architecture design** → Use `code-architect`
+- **Code quality review** → Use `code-reviewer`
 
 **Available Agents:**
 
-- `context-analyzer` - Maps project structure, patterns, and architecture
+- `code-explorer` - Deeply analyzes existing codebase features by tracing execution paths and mapping architecture
+- `code-architect` - Designs feature architectures by analyzing existing patterns and providing implementation blueprints
+- `code-reviewer` - Reviews code for bugs, security vulnerabilities, and adherence to project conventions
 - `repository-documentation-expert` - Finds documentation from Context7, local repos, and GitHub repositories
 - `test-runner` - Executes tests and analyzes failures
 - `web-search-researcher` - Searches web for current information

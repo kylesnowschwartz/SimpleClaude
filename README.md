@@ -43,7 +43,7 @@ git pull
 SimpleClaude uses a **lightweight agent architecture** with intent-based commands:
 
 - **4+1 Command Structure**: Intent-based interfaces that understand user goals
-- **4 Core Agents**: Context-specific assistants spawned via `Task()` calls
+- **6 Core Agents**: Context-specific assistants spawned via `Task()` calls
 - **Token-Efficient Design**: Agents work in isolation with focused context
 - **Clean Separation**: Commands understand intent, agents execute specialized tasks
 
@@ -51,7 +51,9 @@ SimpleClaude uses a **lightweight agent architecture** with intent-based command
 
 Each command automatically spawns appropriate agents:
 
-- `context-analyzer` - Maps project structure, technology stack, and existing patterns
+- `code-explorer` - Deeply analyzes existing codebase features by tracing execution paths and mapping architecture
+- `code-architect` - Designs feature architectures by analyzing existing patterns and providing implementation blueprints
+- `code-reviewer` - Reviews code for bugs, security vulnerabilities, and adherence to project conventions
 - `repo-documentation-expert` - Finds documentation from Context7, local repos, and GitHub repositories
 - `test-runner` - Runs tests and analyzes failures without making fixes
 - `web-search-researcher` - Searches web for current information and research

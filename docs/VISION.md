@@ -94,12 +94,14 @@ No flags needed - commands understand your goals:
 - Context enhances understanding
 - Agent orchestration handles complexity
 
-#### The 4 Lightweight Agents
+#### The 6 Lightweight Agents
 
-1. **context-analyzer** - Maps project structure, technology stack, and existing patterns
-2. **repository-documentation-expert** - Finds documentation from Context7, local repos, and GitHub repositories
-3. **test-runner** - Runs tests and analyzes failures without making fixes
-4. **web-search-researcher** - Searches web for current information and research
+1. **code-explorer** - Deeply analyzes existing codebase features by tracing execution paths and mapping architecture
+2. **code-architect** - Designs feature architectures by analyzing existing patterns and providing implementation blueprints
+3. **code-reviewer** - Reviews code for bugs, security vulnerabilities, and adherence to project conventions
+4. **repository-documentation-expert** - Finds documentation from Context7, local repos, and GitHub repositories
+5. **test-runner** - Runs tests and analyzes failures without making fixes
+6. **web-search-researcher** - Searches web for current information and research
 
 Each agent is lightweight, focused, and designed for maximum token efficiency in its domain.
 
@@ -138,6 +140,6 @@ SimpleClaude's agent-based architecture is ready for real-world testing! All cor
 - ✅ Natural language understanding
 - ✅ Automatic mode detection
 - ✅ Zero configuration required
-- ✅ **Lightweight agent system**: 5 focused agents handle specific tasks
+- ✅ **Lightweight agent system**: 6 focused agents handle specific tasks
 - ✅ **Token efficiency**: Isolated agent contexts prevent bloat
 - ✅ **Clean Task() delegation**: Commands orchestrate, agents execute

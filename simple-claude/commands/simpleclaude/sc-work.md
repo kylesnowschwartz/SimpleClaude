@@ -17,11 +17,15 @@
 - **Documentation lookups** → Use `repository-documentation-expert`
 - **Test execution** → Use `test-runner`
 - **Web searches** → Use `web-search-researcher`
-- **Multi-file analysis (10+ files)** → Use `context-analyzer`
+- **Deep codebase analysis** → Use `code-explorer`
+- **Architecture design** → Use `code-architect`
+- **Code quality review** → Use `code-reviewer`
 
 **Available Agents:**
 
-- `context-analyzer` - Maps project structure, patterns, and architecture
+- `code-explorer` - Deeply analyzes existing codebase features by tracing execution paths and mapping architecture
+- `code-architect` - Designs feature architectures by analyzing existing patterns and providing implementation blueprints
+- `code-reviewer` - Reviews code for bugs, security vulnerabilities, and adherence to project conventions
 - `repository-documentation-expert` - Finds documentation from Context7, local repos, and GitHub repositories
 - `test-runner` - Executes tests and analyzes failures
 - `web-search-researcher` - Searches web for current information
@@ -65,7 +69,7 @@ Transforms: "${arguments}" into structured execution:
 <input>${arguments} = "Add a dark mode toggle to the user settings page"</input>
 <intent>Feature implementation - dark mode functionality</intent>
 <approach>Direct implementation with context analysis for existing patterns</approach>
-<agents>context-analyzer (current theming/settings patterns), test-runner (validation after implementation)</agents>
+<agents>code-explorer (current theming/settings patterns), test-runner (validation after implementation)</agents>
 <output>Dark mode toggle component with state management, CSS updates, and integration into settings page</output>
 </example>
 
@@ -73,7 +77,7 @@ Transforms: "${arguments}" into structured execution:
 <input>${arguments} = "Fix the memory leak in the data processing pipeline"</input>
 <intent>Bug fixing - performance and memory optimization</intent>
 <approach>Analysis-first approach to identify root cause, then targeted fixes</approach>
-<agents>context-analyzer (pipeline architecture), web-search-researcher (memory leak debugging techniques), test-runner (validation of fixes)</agents>
+<agents>code-explorer (pipeline architecture), web-search-researcher (memory leak debugging techniques), test-runner (validation of fixes)</agents>
 <output>Root cause analysis, targeted code fixes, memory usage improvements, and validation tests</output>
 </example>
 
@@ -81,7 +85,7 @@ Transforms: "${arguments}" into structured execution:
 <input>${arguments} = "Refactor the API client to use TypeScript generics"</input>
 <intent>Code improvement - type safety enhancement</intent>
 <approach>Documentation research + gradual refactoring with type safety validation</approach>
-<agents>repository-documentation-expert (TypeScript generics best practices), context-analyzer (current API client structure), test-runner (type checking and functionality validation)</agents>
+<agents>repository-documentation-expert (TypeScript generics best practices), code-explorer (current API client structure), test-runner (type checking and functionality validation)</agents>
 <output>Refactored API client with proper generic types, improved type safety, and maintained backward compatibility</output>
 </example>
 

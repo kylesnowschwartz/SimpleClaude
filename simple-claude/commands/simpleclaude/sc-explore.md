@@ -17,11 +17,15 @@
 - **Documentation lookups** → Use `repository-documentation-expert`
 - **Test execution** → Use `test-runner`
 - **Web searches** → Use `web-search-researcher`
-- **Multi-file analysis (10+ files)** → Use `context-analyzer`
+- **Deep codebase analysis** → Use `code-explorer`
+- **Architecture design** → Use `code-architect`
+- **Code quality review** → Use `code-reviewer`
 
 **Available Agents:**
 
-- `context-analyzer` - Maps project structure, patterns, and architecture
+- `code-explorer` - Deeply analyzes existing codebase features by tracing execution paths and mapping architecture
+- `code-architect` - Designs feature architectures by analyzing existing patterns and providing implementation blueprints
+- `code-reviewer` - Reviews code for bugs, security vulnerabilities, and adherence to project conventions
 - `repository-documentation-expert` - Finds documentation from Context7, local repos, and GitHub repositories
 - `test-runner` - Executes tests and analyzes failures
 - `web-search-researcher` - Searches web for current information
@@ -65,7 +69,7 @@ Transforms: "${arguments}" into structured execution:
 <input>${arguments} = "How does the authentication flow work in this application?"</input>
 <intent>Codebase exploration - understanding authentication architecture</intent>
 <approach>Direct codebase analysis to map authentication flow and patterns</approach>
-<agents>context-analyzer (authentication components and flow mapping)</agents>
+<agents>code-explorer (authentication components and flow mapping)</agents>
 <output>Detailed authentication flow documentation with code references, security patterns, and integration points</output>
 </example>
 
@@ -81,7 +85,7 @@ Transforms: "${arguments}" into structured execution:
 <input>${arguments} = "Analyze the performance bottlenecks in our data processing pipeline"</input>
 <intent>System analysis - performance investigation and bottleneck identification</intent>
 <approach>Multi-perspective analysis combining codebase review, testing, and research</approach>
-<agents>context-analyzer (pipeline architecture analysis), test-runner (performance testing), web-search-researcher (optimization techniques)</agents>
+<agents>code-explorer (pipeline architecture analysis), test-runner (performance testing), web-search-researcher (optimization techniques)</agents>
 <output>Performance analysis report with bottleneck identification, metrics, optimization recommendations, and implementation strategies</output>
 </example>
 

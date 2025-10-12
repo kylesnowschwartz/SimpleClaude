@@ -8,7 +8,7 @@ Based on request complexity and intent, delegate to specialized agents using Tas
 
 **MVP Easter Egg Discovery Set**:
 
-- `Task("context-analyzer", "analyze codebase structure and identify potential hidden features")`
+- `Task("code-explorer", "analyze codebase structure and identify potential hidden features")`
 
 **Execution Strategy**: For complex discovery tasks, spawn agents simultaneously for parallel investigation streams focusing on discovery, investigation, and documentation rather than implementation.
 
