@@ -6,6 +6,29 @@ A practical minimalist AI assistant framework that transforms complex AI interac
 
 ## Installation
 
+### Option 1: Plugin Marketplace (untested)
+
+Install directly from the Claude Code plugin marketplace:
+
+```bash
+# Add SimpleClaude marketplace
+/plugin marketplace add https://github.com/kylesnowschwartz/SimpleClaude
+
+# Install SimpleClaude (core commands and agents)
+/plugin install simpleclaude
+
+# Optional: Install SimpleClaude extras (advanced utilities)
+/plugin install sc-extras
+```
+
+**What's included:**
+- **simpleclaude**: 4+1 core commands, 6 agents, hooks, and output styles
+- **sc-extras** _(optional)_: 7 advanced utility commands for debugging, GitHub workflows, git worktrees, task validation, command creation, feature discovery, and pre-commit setup
+
+### Option 2: Manual Installation
+
+Clone and install the repository directly:
+
 ```bash
 # Clone the repository
 git clone https://github.com/kylesnowschwartz/SimpleClaude.git
@@ -19,6 +42,18 @@ cd SimpleClaude
 ```
 
 ## Updating
+
+### If installed via Plugin Marketplace:
+
+```bash
+# Update SimpleClaude core
+/plugin update simpleclaude
+
+# Update SimpleClaude extras (if installed)
+/plugin update sc-extras
+```
+
+### If installed manually:
 
 ```bash
 # Pull latest changes

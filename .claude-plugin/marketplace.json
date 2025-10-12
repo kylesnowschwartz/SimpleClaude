@@ -1,0 +1,62 @@
+{
+  "name": "simpleclaude",
+  "owner": {
+    "name": "Kyle Snow Schwartz",
+    "url": "https://github.com/kylesnowschwartz"
+  },
+  "metadata": {
+    "description": "Practical minimalist AI assistant framework with specialized agents",
+    "version": "2.0.0",
+    "homepage": "https://github.com/kylesnowschwartz/SimpleClaude",
+    "repository": "https://github.com/kylesnowschwartz/SimpleClaude"
+  },
+  "plugins": [
+    {
+      "name": "simpleclaude",
+      "source": "./simple-claude/",
+      "description": "A practical minimalist AI assistant framework that transforms complex AI interactions into natural conversations through specialized agents. Includes 4+1 intent-based commands and 6 lightweight agents for token-efficient execution.",
+      "version": "2.0.0",
+      "author": {
+        "name": "Kyle Snow Schwartz"
+      },
+      "homepage": "https://github.com/kylesnowschwartz/SimpleClaude",
+      "repository": "https://github.com/kylesnowschwartz/SimpleClaude",
+      "license": "MIT",
+      "keywords": [
+        "ai",
+        "assistant",
+        "agents",
+        "workflow",
+        "claude-code",
+        "architecture",
+        "productivity",
+        "automation",
+        "code-review",
+        "testing",
+        "exploration",
+        "planning",
+        "lightweight",
+        "token-efficient"
+      ],
+      "category": "productivity",
+      "features": [
+        "4+1 intent-based commands (plan, work, explore, review, workflow)",
+        "6 specialized lightweight agents",
+        "Token-efficient agent architecture",
+        "Code architecture design with pattern analysis",
+        "Deep codebase exploration and feature tracing",
+        "Comprehensive code review with security analysis",
+        "Automated test running and failure analysis",
+        "Documentation retrieval from Context7 and GitHub",
+        "Web research capabilities"
+      ],
+      "components": {
+        "commands": 5,
+        "agents": 6,
+        "hooks": 2,
+        "outputStyles": 7,
+        "total": 20
+      }
+    }
+  ]
+}
