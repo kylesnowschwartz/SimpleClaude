@@ -24,7 +24,7 @@ fi
 
 # Configuration
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-SOURCE_DIR="$SCRIPT_DIR/.claude"
+SOURCE_DIR="$SCRIPT_DIR/simple-claude"
 DEFAULT_TARGET="$HOME/.claude"
 TIMESTAMP=$(date '+%Y%m%d_%H%M%S')
 
@@ -41,12 +41,15 @@ Options:
     --no-backup        Skip backup creation (not recommended)
     --dry-run          Show what would be installed without making changes (default)
     --extras           Also install commands/extras directory (experimental commands)
+    --hooks            Also install Ruby-based hooks system (requires Ruby >= 2.7.0)
     --help             Show this help message
 
 Examples:
     $0                                    # Preview changes (dry-run)
     $0 --execute                         # Actually install to ~/.claude
     $0 --execute --extras                # Install including experimental commands
+    $0 --execute --hooks                 # Install including hooks system
+    $0 --execute --extras --hooks        # Install everything (commands + hooks)
     $0 --target ~/code/dotfiles/claude   # Preview installation to custom location
     $0 --target ~/code/dotfiles/claude --execute  # Install to custom location
 
@@ -58,6 +61,7 @@ TARGET_DIR="$DEFAULT_TARGET"
 CREATE_BACKUP=true
 DRY_RUN=true # Default to dry-run for safety
 INSTALL_EXTRAS=false
+INSTALL_HOOKS=false
 
 while [[ $# -gt 0 ]]; do
   case $1 in
@@ -79,6 +83,10 @@ while [[ $# -gt 0 ]]; do
     ;;
   --extras)
     INSTALL_EXTRAS=true
+    shift
+    ;;
+  --hooks)
+    INSTALL_HOOKS=true
     shift
     ;;
   --help | -h)
@@ -284,6 +292,29 @@ if [[ "$INSTALL_EXTRAS" = true ]]; then
   install_directory "commands/extras" "commands/extras" "*.md" "extras" "No SimpleClaude extras found in source" ""
 fi
 
+# Install SimpleClaude hooks system (optional)
+if [[ "$INSTALL_HOOKS" = true ]]; then
+  echo ""
+  echo -e "${YELLOW}Installing SimpleClaude hooks system...${NC}"
+
+  # Build hooks installer arguments
+  hooks_args=("--target" "$TARGET_DIR")
+  if [[ "$DRY_RUN" = false ]]; then
+    hooks_args+=("--execute")
+  fi
+  if [[ "$CREATE_BACKUP" = false ]]; then
+    hooks_args+=("--no-backup")
+  fi
+
+  # Call the separate hooks installer
+  if [[ -x "$SCRIPT_DIR/scripts/install_hooks.sh" ]]; then
+    "$SCRIPT_DIR/scripts/install_hooks.sh" "${hooks_args[@]}"
+  else
+    echo -e "${RED}  Error: scripts/install_hooks.sh not found or not executable${NC}"
+    echo "  Please ensure scripts/install_hooks.sh exists in the SimpleClaude directory"
+  fi
+fi
+
 # Final summary
 echo ""
 if [[ "$DRY_RUN" = true ]]; then
@@ -308,8 +339,15 @@ else
     fi
   fi
   echo ""
-  if [[ "$INSTALL_EXTRAS" = true ]]; then
+  # Success message based on what was installed
+  if [[ "$INSTALL_EXTRAS" = true ]] && [[ "$INSTALL_HOOKS" = true ]]; then
     echo -e "${GREEN}Try a command:${NC} /sc-create a React component or /eastereggs"
+    echo -e "${GREEN}Hooks installed:${NC} Customize and activate hooks in $TARGET_DIR/hooks/"
+  elif [[ "$INSTALL_EXTRAS" = true ]]; then
+    echo -e "${GREEN}Try a command:${NC} /sc-create a React component or /eastereggs"
+  elif [[ "$INSTALL_HOOKS" = true ]]; then
+    echo -e "${GREEN}Try a command:${NC} /sc-create a React component"
+    echo -e "${GREEN}Hooks installed:${NC} Customize and activate hooks in $TARGET_DIR/hooks/"
   else
     echo -e "${GREEN}Try a command:${NC} /sc-create a React component"
   fi
