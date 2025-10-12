@@ -46,7 +46,6 @@ Create with these sections:
 - **Description**: One-line summary
 - **Usage**: How to invoke with parameters
 - **Process**: Step-by-step instructions
-- **Examples**: Concrete usage examples
 - **Output**: Expected results
 - **Notes**: Special considerations
 
@@ -66,11 +65,6 @@ Brief description of what this command does.
 1. First step
 2. Second step
 3. Third step
-
-## Examples:
-
-- Example 1
-- Example 2
 
 ## Notes:
 

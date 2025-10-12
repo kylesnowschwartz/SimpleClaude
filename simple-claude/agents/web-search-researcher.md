@@ -1,16 +1,6 @@
 ---
 name: web-search-researcher
-description: |
-  Use this agent when you need to search the web for current information, fetch web page content, or research topics that require up-to-date data from the internet. This agent excels at gathering, verifying, and synthesizing information from multiple web sources while maintaining awareness of temporal context. Examples:
-  <example>
-  Context: User needs current information about a recent event or topic. user: "What are the latest developments in quantum computing?" assistant: "I'll use the web-search-researcher agent to find the most recent information about quantum computing developments." <commentary>Since the user is asking for latest/current information that requires web search, use the Task tool to launch the web-search-researcher agent.</commentary>
-  </example>
-  <example>
-  Context: User needs to verify facts or gather data from specific websites. user: "Can you check what the current price of Bitcoin is?" assistant: "Let me use the web-search-researcher agent to fetch the current Bitcoin price from reliable sources." <commentary>The user needs real-time data from the web, so the web-search-researcher agent should be used via the Task tool.</commentary>
-  </example>
-  <example>
-  Context: User needs comprehensive research on a topic. user: "Research the environmental impact of electric vehicles vs traditional cars" assistant: "I'll deploy the web-search-researcher agent to conduct a thorough search and analysis of environmental impact comparisons." <commentary>This requires extensive web research and synthesis, perfect for the web-search-researcher agent.</commentary>
-  </example>
+description: Use this agent when you need to search the web for current information, fetch web page content, or research topics that require up-to-date data from the internet. This agent excels at gathering, verifying, and synthesizing information from multiple web sources while maintaining awareness of temporal context.
 color: pink
 ---
 

@@ -63,32 +63,6 @@ Transforms: $ARGUMENTS into structured execution:
 - Approach: [direct-review OR comprehensive-analysis]
 - Agents: [none OR minimal-viable-set]
 
-### Intent Recognition Examples
-
-<example>
-<input>$ARGUMENTS = "Review this pull request for security vulnerabilities"</input>
-<intent>Security verification - comprehensive security audit of PR changes</intent>
-<approach>Multi-perspective analysis combining code review, security research, and vulnerability scanning</approach>
-<agents>code-reviewer (code change analysis), web-search-researcher (security vulnerability research)</agents>
-<output>Security audit report with vulnerability assessment, risk ratings, and remediation recommendations</output>
-</example>
-
-<example>
-<input>$ARGUMENTS = "Check the performance of our data processing pipeline"</input>
-<intent>Performance verification - bottleneck identification and optimization analysis</intent>
-<approach>Performance profiling with testing and optimization research</approach>
-<agents>code-explorer (pipeline architecture), test-runner (performance testing), web-search-researcher (optimization techniques)</agents>
-<output>Performance analysis with bottleneck identification, metrics, and optimization strategies</output>
-</example>
-
-<example>
-<input>$ARGUMENTS = "Verify code quality standards across the authentication module"</input>
-<intent>Quality verification - comprehensive code quality assessment</intent>
-<approach>Direct code review with standards validation and best practices research</approach>
-<agents>code-reviewer (authentication patterns), web-search-researcher (security best practices)</agents>
-<output>Code quality report with standards compliance, security patterns assessment, and improvement recommendations</output>
-</example>
-
 ### Output Template
 
 ```

@@ -63,24 +63,6 @@ Transforms: $ARGUMENTS into structured execution:
 - Approach: [direct/agent with reasoning]
 - Agents: [none OR minimal-viable-set]
 
-### Intent Recognition Examples
-
-<example>
-<input>$ARGUMENTS = [natural language request expressing core intent]</input>
-<intent>[recognized user intent and context]</intent>
-<approach>[direct handling OR agent orchestration with reasoning]</approach>
-<agents>[none OR specific agents per Direct Agent Rules]</agents>
-<output>[expected result that fulfills the user intent]</output>
-</example>
-
-<example>
-<input>$ARGUMENTS = [different natural language request for same intent category]</input>
-<intent>[different context but same core intent]</intent>
-<approach>[different complexity requiring different approach]</approach>
-<agents>[different agent set OR none per Direct Agent Rules]</agents>
-<output>[result tailored to the specific context]</output>
-</example>
-
 ### Output Template
 
 ```

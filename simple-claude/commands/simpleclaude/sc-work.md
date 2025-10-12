@@ -63,32 +63,6 @@ Transforms: $ARGUMENTS into structured execution:
 - Approach: [direct-implementation OR research-then-implement]
 - Agents: [none OR minimal-viable-set]
 
-### Intent Recognition Examples
-
-<example>
-<input>$ARGUMENTS = "Add a dark mode toggle to the user settings page"</input>
-<intent>Feature implementation - dark mode functionality</intent>
-<approach>Direct implementation with context analysis for existing patterns</approach>
-<agents>code-explorer (current theming/settings patterns), test-runner (validation after implementation)</agents>
-<output>Dark mode toggle component with state management, CSS updates, and integration into settings page</output>
-</example>
-
-<example>
-<input>$ARGUMENTS = "Fix the memory leak in the data processing pipeline"</input>
-<intent>Bug fixing - performance and memory optimization</intent>
-<approach>Analysis-first approach to identify root cause, then targeted fixes</approach>
-<agents>code-explorer (pipeline architecture), web-search-researcher (memory leak debugging techniques), test-runner (validation of fixes)</agents>
-<output>Root cause analysis, targeted code fixes, memory usage improvements, and validation tests</output>
-</example>
-
-<example>
-<input>$ARGUMENTS = "Refactor the API client to use TypeScript generics"</input>
-<intent>Code improvement - type safety enhancement</intent>
-<approach>Documentation research + gradual refactoring with type safety validation</approach>
-<agents>repository-documentation-expert (TypeScript generics best practices), code-explorer (current API client structure), test-runner (type checking and functionality validation)</agents>
-<output>Refactored API client with proper generic types, improved type safety, and maintained backward compatibility</output>
-</example>
-
 ### Output Template
 
 ```

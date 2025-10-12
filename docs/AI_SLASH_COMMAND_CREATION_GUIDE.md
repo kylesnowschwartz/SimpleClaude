@@ -124,7 +124,6 @@ diff -u TEMPLATE.md new_command.md | grep "^[+-]" | head -20
 2. **Read files in order**: TEMPLATE → similar command → create new
 3. **Test section presence** with grep before assuming completion
 4. **Keep the language natural** in semantic transformations
-5. **Make examples diverse** - show the command's flexibility
 
 ## Example Creation Flow
 

@@ -63,32 +63,6 @@ Transforms: $ARGUMENTS into structured execution:
 - Approach: [direct/agent with reasoning]
 - Agents: [none OR minimal-viable-set]
 
-### Intent Recognition Examples
-
-<example>
-<input>$ARGUMENTS = "How does the authentication flow work in this application?"</input>
-<intent>Codebase exploration - understanding authentication architecture</intent>
-<approach>Direct codebase analysis to map authentication flow and patterns</approach>
-<agents>code-explorer (authentication components and flow mapping)</agents>
-<output>Detailed authentication flow documentation with code references, security patterns, and integration points</output>
-</example>
-
-<example>
-<input>$ARGUMENTS = "What are the best practices for implementing microservices with Docker?"</input>
-<intent>Technology research - microservices and containerization knowledge</intent>
-<approach>Comprehensive research combining documentation and current best practices</approach>
-<agents>repository-documentation-expert (Docker official docs and examples), web-search-researcher (microservices best practices)</agents>
-<output>Comprehensive guide covering microservices patterns, Docker optimization, orchestration, monitoring, and real-world examples</output>
-</example>
-
-<example>
-<input>$ARGUMENTS = "Analyze the performance bottlenecks in our data processing pipeline"</input>
-<intent>System analysis - performance investigation and bottleneck identification</intent>
-<approach>Multi-perspective analysis combining codebase review, testing, and research</approach>
-<agents>code-explorer (pipeline architecture analysis), test-runner (performance testing), web-search-researcher (optimization techniques)</agents>
-<output>Performance analysis report with bottleneck identification, metrics, optimization recommendations, and implementation strategies</output>
-</example>
-
 ### Output Template
 
 ```

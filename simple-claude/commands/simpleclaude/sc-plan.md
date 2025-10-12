@@ -54,24 +54,6 @@ Transforms: $AGENTS into structured execution:
 - Approach: [direct/agent with reasoning]
 - Agents: [none OR minimal-viable-set]
 
-### Intent Recognition Examples
-
-<example>
-<input>$ARGUMENTS = "How should I approach adding real-time notifications to this app?"</input>
-<intent>Architecture planning for real-time notifications feature</intent>
-<approach>Direct analysis + agent research for best practices</approach>
-<agents>web-search-researcher (per Direct Agent Rules)</agents>
-<output>Structured plan with technology recommendations and implementation phases</output>
-</example>
-
-<example>
-<input>$ARGUMENTS = "I need to plan the migration from React 16 to React 18"</input>
-<intent>Technology migration strategy and roadmap</intent>
-<approach>Documentation research + codebase analysis + migration planning</approach>
-<agents>repository-documentation-expert (per Direct Agent Rules), context-analyzer if 10+ files</agents>
-<output>Phased migration plan with breaking changes, testing strategy, and timeline</output>
-</example>
-
 ### Output Template
 
 ```
