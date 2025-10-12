@@ -35,7 +35,7 @@ module SimpleClaude
     COMPONENTS = [
       { path: 'commands/simpleclaude', name: 'Commands', skip: ['TEMPLATE.md'] },
       { path: 'agents', name: 'Agents', skip: [] },
-      { path: 'output-styles', name: 'Output Styles', skip: [] }
+      { path: 'output-styles', name: 'Output Styles', skip: [] },
       { path: 'status-lines', name: 'Status Lines', skip: [] }
     ].freeze
 
@@ -279,12 +279,12 @@ module SimpleClaude
     end
 
     def show_settings_instructions
-      settings_file = File.join(@install_dir, 'settings.json')
+      settings_file = File.join(@target_dir, 'settings.json')
 
       example_file = File.join(@repo_root, 'simple-claude/settings.example.json')
 
       puts "\n#{'=' * 50}"
-      puts 'NEXT STEP: Configure hooks'
+      puts colorize('NEXT STEP: Configure hooks', :yellow)
       puts '=' * 50
       puts <<~INSTRUCTIONS
 
