@@ -6,7 +6,7 @@
 
 **Strategy**: Examine existing commands before creating new ones
 
-- Read `.claude/commands/simpleclaude/TEMPLATE.md` first - it's the canonical structure
+- Read `simple-claude/commands/simpleclaude/TEMPLATE.md` first - it's the canonical structure
 - Study a similar command (e.g., `sc-explore` for analysis-type commands)
 - Pattern matching is more reliable than trying to understand the entire system
 
@@ -18,8 +18,8 @@
 
 ```bash
 # Start broad, then narrow
-ls .claude/commands/simpleclaude/
-find .claude -name "*.yml" -type f
+ls simple-claude/commands/simpleclaude/
+find simple-claude -name "*.yml" -type f
 grep -E "pattern" existing_commands.md
 ```
 

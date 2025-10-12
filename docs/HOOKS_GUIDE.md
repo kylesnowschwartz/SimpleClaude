@@ -2,14 +2,14 @@
 
 This directory contains base Ruby classes and entrypoints for all 8 Claude Code hook types, demonstrating the architecture and providing starting points for custom implementations.
 
-**Important:** The hooks system is included with SimpleClaude but operates independently from the main install script. While `./scripts/install.sh` installs SimpleClaude commands, agents, and output-styles, hook configuration requires manual setup in your `~/.claude/settings.json` file.
+**Important:** The hooks system is included with SimpleClaude but operates independently from the main install script. While `./scripts/install.rb` installs SimpleClaude commands, agents, and output-styles, hook configuration requires manual setup in your `~/.claude/settings.json` file.
 
 ## Quick Start
 
 1. **Install SimpleClaude (includes hooks):**
    ```bash
    # From the SimpleClaude repository root
-   ./scripts/install.sh --execute
+   ./scripts/install.rb
    ```
    Note: The SimpleClaude install script installs commands, agents, and output-styles, but hooks must be configured separately.
 
@@ -290,7 +290,7 @@ Add these configurations to your `~/.claude/settings.json` file:
 
 ## Next Steps
 
-1. Install SimpleClaude using `./scripts/install.sh --execute` from the repository root
+1. Install SimpleClaude using `./scripts/install.rb` from the repository root
 2. Install the claude_hooks gem: `gem install claude_hooks`
 3. Review the handler implementations in `~/.claude/hooks/handlers/`
 4. Customize the business logic for your use cases in the handlers

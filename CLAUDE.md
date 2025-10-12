@@ -4,14 +4,13 @@ This file provides guidance to [Claude Code](https://github.com/anthropics/claud
 
 ## Critical Rules
 
-- **important** `.claude/` is the source directory for SimpleClaude's commands and agents
+- **important** `simple-claude/` is the source directory for SimpleClaude's commands and agents
 - Command changes: update commands consistently across all 4+1 core-commands (sc-plan, sc-work, sc-explore, sc-review, sc-workflow)
 
 ## Build Commands
 
-- Test installation: `./install.sh` (dry-run by default)
-- Install: `./install.sh --execute` (Backs up existing configuration)
-- Extras: `./install.sh --extras --execute` (Install the 'extra' commands)
+- Preview installation: `./scripts/install.rb --dry-run`
+- Install: `./scripts/install.rb` (Interactive with prompts, backs up existing configuration)
 
 ## Architecture
 
@@ -19,11 +18,11 @@ This file provides guidance to [Claude Code](https://github.com/anthropics/claud
 - **Lightweight agent architecture**: Commands spawn focused agents via `Task()` calls for token-efficient execution
 - **5 lightweight agents**: Each handles specific responsibilities (context analysis, documentation retrieval, testing, research)
 - Token-efficient through isolated agent contexts and focused task delegation
-- Command template is located at `.claude/commands/simpleclaude/TEMPLATE.md`
+- Command template is located at `simple-claude/commands/simpleclaude/TEMPLATE.md`
 
 ## Versioning
 
-- Current version: 1.1.0
+- Current version: 2.0.0
 - Follow [SemVer](https://semver.org/): fix = patch, feat = minor, breaking = major
 - **Assess each commit: does it warrant a release?** Bug fixes and new features should trigger releases
 - Release process: update README badge → update CLAUDE.md version → update VERSION file → commit → `git tag vX.X.X` → push with tags

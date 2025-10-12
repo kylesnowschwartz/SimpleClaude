@@ -1,6 +1,6 @@
 # SimpleClaude
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) [![Version](https://img.shields.io/badge/version-1.1.0-blue.svg)](https://github.com/kylesnowschwartz/SimpleClaude) [![GitHub issues](https://img.shields.io/github/issues/kylesnowschwartz/SimpleClaude)](https://github.com/kylesnowschwartz/SimpleClaude/issues)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) [![Version](https://img.shields.io/badge/version-2.0.0-blue.svg)](https://github.com/kylesnowschwartz/SimpleClaude) [![GitHub issues](https://img.shields.io/github/issues/kylesnowschwartz/SimpleClaude)](https://github.com/kylesnowschwartz/SimpleClaude/issues)
 
 A practical minimalist AI assistant framework that transforms complex AI interactions into natural conversations through specialized agents.
 
@@ -11,11 +11,11 @@ A practical minimalist AI assistant framework that transforms complex AI interac
 git clone https://github.com/kylesnowschwartz/SimpleClaude.git
 cd SimpleClaude
 
-# Preview what will be installed (dry-run by default)
-./install.sh
+# Preview what will be installed
+./scripts/install.rb --dry-run
 
-# Install SimpleClaude to your Claude configuration
-./install.sh --execute
+# Install SimpleClaude to your Claude configuration (interactive with prompts)
+./scripts/install.rb
 ```
 
 ## Updating
@@ -25,7 +25,7 @@ cd SimpleClaude
 git pull
 
 # Update SimpleClaude (Backs up existing configuration)
-./install.sh --execute
+./scripts/install.rb
 ```
 
 ## Quick Start
@@ -52,7 +52,7 @@ SimpleClaude uses a **lightweight agent architecture** with intent-based command
 Each command automatically spawns appropriate agents:
 
 - `context-analyzer` - Maps project structure, technology stack, and existing patterns
-- `repository-documentation-expert` - Finds documentation from Context7, local repos, and GitHub repositories
+- `repo-documentation-expert` - Finds documentation from Context7, local repos, and GitHub repositories
 - `test-runner` - Runs tests and analyzes failures without making fixes
 - `web-search-researcher` - Searches web for current information and research
 
@@ -68,7 +68,7 @@ This lightweight approach replaces previous heavyweight framework systems with f
 
 ### Development Workflow
 
-1. **Make changes** to `.claude/commands/` or `.claude/agents/`
+1. **Make changes** to `simple-claude/commands/` or `simple-claude/agents/`
 2. **Test commands** in real projects
 3. **Update documentation** if needed
 
@@ -76,14 +76,16 @@ This lightweight approach replaces previous heavyweight framework systems with f
 
 ```
 SimpleClaude/
-├── .claude/
+├── simple-claude/
 │   ├── commands/simpleclaude/    # 4+1 intent-based commands
 │   ├── commands/extras/          # Optional experimental commands
 │   ├── agents/                   # Lightweight agent definitions
 │   ├── hooks/                    # Claude Code hook system
-│   └── output-styles/            # Custom output formatting styles
+│   ├── output-styles/            # Custom output formatting styles
+│   └── settings.example.json     # Example settings configuration
+├── scripts/
+│   └── install.rb                # Installation/update script
 ├── docs/                         # Documentation
-├── install.sh                    # Installation/update script
 └── README.md                     # This file
 ```
 
