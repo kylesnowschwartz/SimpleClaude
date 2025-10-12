@@ -43,7 +43,7 @@ This command interprets natural language requests that express the intent: "I ne
 
 **Command Execution:**
 
-**Empty "${arguments}"**: Display usage suggestions → stop
+**Empty $ARGUMENTS**: Display usage suggestions → stop
 **Has content**: Parse intent → apply strategy → route execution
 
 **Intent Processing:** Extract intent → Apply strategy matrix → Validate → Execute
@@ -57,7 +57,7 @@ This command interprets natural language requests that express the intent: "I ne
 | Context   | Available locally   | External research needed       |
 | Output    | Concise, focused    | Verbose, needs filtering       |
 
-Transforms: "${arguments}" into structured execution:
+Transforms: $ARGUMENTS into structured execution:
 
 - Intent: [implementation-goal-and-scope]
 - Approach: [direct-implementation OR research-then-implement]
@@ -66,7 +66,7 @@ Transforms: "${arguments}" into structured execution:
 ### Intent Recognition Examples
 
 <example>
-<input>${arguments} = "Add a dark mode toggle to the user settings page"</input>
+<input>$ARGUMENTS = "Add a dark mode toggle to the user settings page"</input>
 <intent>Feature implementation - dark mode functionality</intent>
 <approach>Direct implementation with context analysis for existing patterns</approach>
 <agents>code-explorer (current theming/settings patterns), test-runner (validation after implementation)</agents>
@@ -74,7 +74,7 @@ Transforms: "${arguments}" into structured execution:
 </example>
 
 <example>
-<input>${arguments} = "Fix the memory leak in the data processing pipeline"</input>
+<input>$ARGUMENTS = "Fix the memory leak in the data processing pipeline"</input>
 <intent>Bug fixing - performance and memory optimization</intent>
 <approach>Analysis-first approach to identify root cause, then targeted fixes</approach>
 <agents>code-explorer (pipeline architecture), web-search-researcher (memory leak debugging techniques), test-runner (validation of fixes)</agents>
@@ -82,7 +82,7 @@ Transforms: "${arguments}" into structured execution:
 </example>
 
 <example>
-<input>${arguments} = "Refactor the API client to use TypeScript generics"</input>
+<input>$ARGUMENTS = "Refactor the API client to use TypeScript generics"</input>
 <intent>Code improvement - type safety enhancement</intent>
 <approach>Documentation research + gradual refactoring with type safety validation</approach>
 <agents>repository-documentation-expert (TypeScript generics best practices), code-explorer (current API client structure), test-runner (type checking and functionality validation)</agents>
@@ -115,4 +115,4 @@ Transforms: "${arguments}" into structured execution:
 
 ---
 
-**User Request**: ${arguments}
+**User Request**: $ARGUMENTS

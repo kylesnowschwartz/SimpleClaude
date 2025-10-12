@@ -43,7 +43,7 @@ This command interprets natural language requests that express the intent: [Inte
 
 **Command Execution:**
 
-**Empty "${arguments}"**: Display usage suggestions → stop
+**Empty $ARGUMENTS**: Display usage suggestions → stop
 **Has content**: Parse intent → apply strategy → route execution
 
 **Intent Processing:** Extract intent → Apply strategy matrix → Validate → Execute
@@ -57,7 +57,7 @@ This command interprets natural language requests that express the intent: [Inte
 | Context   | Available locally   | External research needed       |
 | Output    | Concise, focused    | Verbose, needs filtering       |
 
-Transforms: "${arguments}" into structured execution:
+Transforms: $ARGUMENTS into structured execution:
 
 - Intent: [recognized-user-intent]
 - Approach: [direct/agent with reasoning]
@@ -66,7 +66,7 @@ Transforms: "${arguments}" into structured execution:
 ### Intent Recognition Examples
 
 <example>
-<input>${arguments} = [natural language request expressing core intent]</input>
+<input>$ARGUMENTS = [natural language request expressing core intent]</input>
 <intent>[recognized user intent and context]</intent>
 <approach>[direct handling OR agent orchestration with reasoning]</approach>
 <agents>[none OR specific agents per Direct Agent Rules]</agents>
@@ -74,7 +74,7 @@ Transforms: "${arguments}" into structured execution:
 </example>
 
 <example>
-<input>${arguments} = [different natural language request for same intent category]</input>
+<input>$ARGUMENTS = [different natural language request for same intent category]</input>
 <intent>[different context but same core intent]</intent>
 <approach>[different complexity requiring different approach]</approach>
 <agents>[different agent set OR none per Direct Agent Rules]</agents>
@@ -111,4 +111,4 @@ Transforms: "${arguments}" into structured execution:
 
 ---
 
-**User Request**: ${arguments}
+**User Request**: $ARGUMENTS

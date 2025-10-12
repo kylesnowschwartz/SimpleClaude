@@ -34,7 +34,7 @@ This command interprets natural language requests that express the intent: "I ne
 
 **Command Execution:**
 
-**Empty "${arguments}"**: Display usage suggestions → stop
+**Empty $ARGUMENTS**: Display usage suggestions → stop
 **Has content**: Parse intent → apply strategy → route execution
 
 **Intent Processing:** Extract intent → Apply strategy matrix → Validate → Execute
@@ -57,7 +57,7 @@ Transforms: $AGENTS into structured execution:
 ### Intent Recognition Examples
 
 <example>
-<input>${arguments} = "How should I approach adding real-time notifications to this app?"</input>
+<input>$ARGUMENTS = "How should I approach adding real-time notifications to this app?"</input>
 <intent>Architecture planning for real-time notifications feature</intent>
 <approach>Direct analysis + agent research for best practices</approach>
 <agents>web-search-researcher (per Direct Agent Rules)</agents>
@@ -65,7 +65,7 @@ Transforms: $AGENTS into structured execution:
 </example>
 
 <example>
-<input>${arguments} = "I need to plan the migration from React 16 to React 18"</input>
+<input>$ARGUMENTS = "I need to plan the migration from React 16 to React 18"</input>
 <intent>Technology migration strategy and roadmap</intent>
 <approach>Documentation research + codebase analysis + migration planning</approach>
 <agents>repository-documentation-expert (per Direct Agent Rules), context-analyzer if 10+ files</agents>
@@ -102,4 +102,4 @@ Transforms: $AGENTS into structured execution:
 
 ---
 
-**User Request**: ${arguments}
+**User Request**: $ARGUMENTS

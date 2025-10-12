@@ -43,7 +43,7 @@ This command interprets natural language requests that express the intent: "I ne
 
 **Command Execution:**
 
-**Empty "${arguments}"**: Display usage suggestions → stop
+**Empty $ARGUMENTS**: Display usage suggestions → stop
 **Has content**: Parse intent → apply strategy → route execution
 
 **Intent Processing:** Extract intent → Apply strategy matrix → Validate → Execute
@@ -57,7 +57,7 @@ This command interprets natural language requests that express the intent: "I ne
 | Context   | Available locally   | External research needed       |
 | Output    | Concise, focused    | Verbose, needs filtering       |
 
-Transforms: "${arguments}" into structured execution:
+Transforms: $ARGUMENTS into structured execution:
 
 - Intent: [recognized-user-intent]
 - Approach: [direct/agent with reasoning]
@@ -66,7 +66,7 @@ Transforms: "${arguments}" into structured execution:
 ### Intent Recognition Examples
 
 <example>
-<input>${arguments} = "How does the authentication flow work in this application?"</input>
+<input>$ARGUMENTS = "How does the authentication flow work in this application?"</input>
 <intent>Codebase exploration - understanding authentication architecture</intent>
 <approach>Direct codebase analysis to map authentication flow and patterns</approach>
 <agents>code-explorer (authentication components and flow mapping)</agents>
@@ -74,7 +74,7 @@ Transforms: "${arguments}" into structured execution:
 </example>
 
 <example>
-<input>${arguments} = "What are the best practices for implementing microservices with Docker?"</input>
+<input>$ARGUMENTS = "What are the best practices for implementing microservices with Docker?"</input>
 <intent>Technology research - microservices and containerization knowledge</intent>
 <approach>Comprehensive research combining documentation and current best practices</approach>
 <agents>repository-documentation-expert (Docker official docs and examples), web-search-researcher (microservices best practices)</agents>
@@ -82,7 +82,7 @@ Transforms: "${arguments}" into structured execution:
 </example>
 
 <example>
-<input>${arguments} = "Analyze the performance bottlenecks in our data processing pipeline"</input>
+<input>$ARGUMENTS = "Analyze the performance bottlenecks in our data processing pipeline"</input>
 <intent>System analysis - performance investigation and bottleneck identification</intent>
 <approach>Multi-perspective analysis combining codebase review, testing, and research</approach>
 <agents>code-explorer (pipeline architecture analysis), test-runner (performance testing), web-search-researcher (optimization techniques)</agents>
@@ -119,4 +119,4 @@ Transforms: "${arguments}" into structured execution:
 
 ---
 
-**User Request**: ${arguments}
+**User Request**: $ARGUMENTS
