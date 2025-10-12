@@ -33,23 +33,47 @@ if ! command -v gh &> /dev/null || ! command -v jq &> /dev/null; then
     exit 1
 fi
 
-# Get repository languages
+# Get repository languages and suggest appropriate hooks
 REPO_LANGS=$(gh repo view --json languages | jq -r '.languages | map(.node.name) | join(" ")')
 echo "Detected languages: $REPO_LANGS"
+echo ""
+echo "Recommended hooks based on detected languages:"
 
-# Check for common configuration files
-find . -maxdepth 2 \( -name ".git" -o -name "node_modules" \) -prune -o -type f \( -name "package.json" -o -name "requirements.txt" -o -name "go.mod" -o -name "Cargo.toml" -o -name "pyproject.toml" -o -name "tsconfig.json" -o -name ".pre-commit-config.yaml" \) -print
+# Universal (always include)
+echo "  - pre-commit/pre-commit-hooks (file hygiene, always include)"
+
+# Python
+if echo "$REPO_LANGS" | grep -q "Python"; then
+  echo "  - astral-sh/ruff-pre-commit (Python linting & formatting)"
+fi
+
+# JavaScript/TypeScript
+if echo "$REPO_LANGS" | grep -qE "JavaScript|TypeScript"; then
+  echo "  - pre-commit/mirrors-prettier (JS/TS formatting)"
+  echo "  - pre-commit/mirrors-eslint (JS/TS linting)"
+fi
+
+# Ruby
+if echo "$REPO_LANGS" | grep -q "Ruby"; then
+  echo "  - pre-commit/mirrors-rubocop (Ruby linting & formatting)"
+fi
+
+# Shell
+if echo "$REPO_LANGS" | grep -q "Shell"; then
+  echo "  - koalaman/shellcheck-precommit (Shell linting)"
+  echo "  - scop/pre-commit-shfmt (Shell formatting)"
+fi
+
+echo ""
+echo "Configuration files present:"
+find . -maxdepth 2 \( -name ".git" -o -name "node_modules" \) -prune -o -type f \( -name "package.json" -o -name "requirements.txt" -o -name "Gemfile" -o -name "pyproject.toml" -o -name "tsconfig.json" -o -name ".pre-commit-config.yaml" \) -print
 ```
 
-Based on detected languages, select appropriate hook repositories:
-
-- **Python**: `psf/black`, `PyCQA/flake8`
-- **JavaScript/TypeScript**: `pre-commit/mirrors-prettier`
-- **Shell**: `koalaman/shellcheck-precommit`, `scop/pre-commit-shfmt`
-- **Go**: `dnephin/pre-commit-golang`
-- **Universal**: `pre-commit/pre-commit-hooks` (always include)
+Select appropriate hook repositories from the recommendations above.
 
 ## Step 3: Create Configuration
+
+**⚠️ Important**: The version numbers in the examples below are illustrative only and may be outdated. Always fetch the latest versions using the commands shown at the end of this section before creating your configuration.
 
 Generate `.pre-commit-config.yaml` based on detected languages:
 
@@ -71,7 +95,22 @@ repos:
       - id: detect-private-key
 
   # Language-specific hooks (add based on repository analysis)
-  # Example for shell scripts:
+  # Example for Python (modern approach using Ruff):
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.8.4
+    hooks:
+      - id: ruff
+        args: [--fix]
+      - id: ruff-format
+
+  # Example for Ruby:
+  - repo: https://github.com/pre-commit/mirrors-rubocop
+    rev: v1.70.0
+    hooks:
+      - id: rubocop
+        args: [--auto-correct]
+
+  # Example for Shell scripts:
   - repo: https://github.com/koalaman/shellcheck-precommit
     rev: v0.10.0
     hooks:
@@ -88,8 +127,16 @@ repos:
 **Get latest versions**:
 
 ```bash
-# Get latest versions (using releases for repos that have them, tags for others)
+# Core hooks
 gh api repos/pre-commit/pre-commit-hooks/releases/latest | jq -r '.tag_name'
+
+# Python
+gh api repos/astral-sh/ruff-pre-commit/releases/latest | jq -r '.tag_name'
+
+# Ruby
+gh api repos/pre-commit/mirrors-rubocop/tags | jq -r '.[0].name'
+
+# Shell
 gh api repos/koalaman/shellcheck-precommit/tags | jq -r '.[0].name'
 gh api repos/scop/pre-commit-shfmt/tags | jq -r '.[0].name'
 ```
@@ -124,16 +171,27 @@ Pre-commit **does not** have built-in auto-restaging. If your hooks modify files
 
 **Implementation**:
 
-1. Backup the generated hook: `cp .git/hooks/pre-commit .git/hooks/pre-commit.original`
+1. Ensure `pre-commit install` has been run (from Step 1). This generates `.git/hooks/pre-commit` which we'll now enhance with auto-restaging capability.
 
-2. Replace with staging-aware wrapper:
+2. Extract system-specific values from the generated hook:
+
+```bash
+# Backup the generated hook
+cp .git/hooks/pre-commit .git/hooks/pre-commit.original
+
+# Extract the templated values (these are system-specific)
+grep "INSTALL_PYTHON=" .git/hooks/pre-commit.original
+grep "ARGS=(" .git/hooks/pre-commit.original
+```
+
+3. Create the staging-aware wrapper using YOUR extracted values:
 
 ```bash
 #!/usr/bin/env bash
 # Staging-aware pre-commit wrapper
 # Preserves original staging intent while using pre-commit framework
 
-# start templated (preserve this section from original)
+# start templated (REPLACE these lines with YOUR extracted values from step 2)
 INSTALL_PYTHON=/usr/local/opt/pre-commit/libexec/bin/python3.13
 ARGS=(hook-impl --config=.pre-commit-config.yaml --hook-type=pre-commit)
 # end templated
@@ -149,7 +207,7 @@ else
 fi
 
 # Store originally staged files BEFORE pre-commit runs
-original_staged_files=$(git diff --cached --name-only --diff-filter=ACDMRT $against)
+original_staged_files=$(git diff --cached --name-only --diff-filter=ACDMRT "$against")
 
 # Run original pre-commit framework logic
 if [ -x "$INSTALL_PYTHON" ]; then
@@ -164,7 +222,8 @@ else
 fi
 
 # If pre-commit failed due to file modifications (exit code 1),
-# restore proper staging to only include originally staged files
+# restore proper staging to only include originally staged files.
+# Exit codes: 0=success, 1=failures/fixes applied, >1=actual errors
 if [ $result -eq 1 ] && [ -n "$original_staged_files" ]; then
   # Reset staging area completely
   git reset HEAD --quiet
@@ -182,7 +241,13 @@ fi
 exit $result
 ```
 
-3. Make executable: `chmod +x .git/hooks/pre-commit`
+4. Write the complete wrapper to `.git/hooks/pre-commit` and make it executable:
+
+```bash
+# Copy your complete wrapper script to .git/hooks/pre-commit
+# (After editing the templated section with your extracted values)
+chmod +x .git/hooks/pre-commit
+```
 
 ## Step 6: Final Verification
 
@@ -197,7 +262,7 @@ git add test-format.txt
 git commit -m "Test pre-commit setup"
 
 # Cleanup
-git reset HEAD test-format.txt
+git restore --staged test-format.txt
 rm test-format.txt
 ```
 
@@ -213,6 +278,9 @@ gh api repos/pre-commit/pre-commit-hooks/releases/latest   # Basic file checks
 gh api repos/astral-sh/ruff-pre-commit/releases/latest     # Python linting & formatting
 gh api repos/RobertCraigie/pyright-python/releases/latest # Python type checking
 
+# Ruby
+gh api repos/pre-commit/mirrors-rubocop/tags | jq -r '.[0].name'    # Ruby linting & formatting
+
 # JavaScript/TypeScript
 gh api repos/pre-commit/mirrors-prettier/tags | jq -r '.[0].name'  # JS/TS formatting
 gh api repos/pre-commit/mirrors-eslint/tags | jq -r '.[0].name'    # JS/TS linting
@@ -220,12 +288,6 @@ gh api repos/pre-commit/mirrors-eslint/tags | jq -r '.[0].name'    # JS/TS linti
 # Shell
 gh api repos/koalaman/shellcheck-precommit/tags | jq -r '.[0].name' # Shell linting
 gh api repos/scop/pre-commit-shfmt/tags | jq -r '.[0].name'         # Shell formatting
-
-# Go
-gh api repos/tekwizely/pre-commit-golang/releases/latest  # Go hooks (monorepo support)
-
-# Rust
-gh api repos/doublify/pre-commit-rust/releases/latest     # Rust hooks
 
 # Security & General
 gh api repos/zricethezav/gitleaks/releases/latest         # Secret detection
@@ -259,5 +321,5 @@ pre-commit autoupdate
 pre-commit run --all-files
 
 # Update specific hook
-pre-commit autoupdate --repo https://github.com/psf/black
+pre-commit autoupdate --repo https://github.com/astral-sh/ruff-pre-commit
 ```
