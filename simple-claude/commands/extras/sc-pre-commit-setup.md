@@ -149,7 +149,7 @@ else
 fi
 
 # Store originally staged files BEFORE pre-commit runs
-original_staged_files=$(git diff --cached --name-only --diff-filter=ACM $against)
+original_staged_files=$(git diff --cached --name-only --diff-filter=ACDMRT $against)
 
 # Run original pre-commit framework logic
 if [ -x "$INSTALL_PYTHON" ]; then
@@ -171,9 +171,7 @@ if [ $result -eq 1 ] && [ -n "$original_staged_files" ]; then
 
   # Re-stage only originally staged files (which now include hook modifications)
   echo "$original_staged_files" | while IFS= read -r file; do
-    if [ -f "$file" ]; then
-      git add "$file"
-    fi
+    git add "$file"
   done
 
   echo "Pre-commit: Auto-formatted files and preserved original staging intent"
