@@ -7,26 +7,48 @@ require 'claude_hooks'
 #
 # PURPOSE: Handle Claude Code notifications (permission requests, idle warnings)
 # TRIGGERS: When Claude needs permission to use tools or when idle for 60+ seconds
-#
-# This is a basic implementation that logs notifications.
-# Extend this class for custom notification handling (e.g., desktop notifications, sounds, etc.)
 
 class NotificationHandler < ClaudeHooks::Notification
   def call
     log "Claude Code Notification: #{message}"
 
-    # Log different types of notifications with appropriate levels
-    case message
-    when /needs your permission/i
-      log "Permission request detected: #{message}", level: :info
-    when /waiting for your input/i
-      log "Idle timeout detected: #{message}", level: :warn
-    else
-      log "Other notification: #{message}", level: :info
-    end
+    # Send iOS notification popup
+    send_ios_notification
 
     # Notification hooks don't block or modify behavior, they just react
     output_data
+  end
+
+  private
+
+  def send_ios_notification
+    title = 'Claude Code'
+    subtitle = case message
+               when /needs your permission/i
+                 log "Permission request detected: #{message}", level: :info
+                 'Permission Required'
+               when /waiting for your input/i
+                 log "Idle timeout detected: #{message}", level: :warn
+                 'Waiting for Input'
+               else
+                 log "Other notification: #{message}", level: :info
+                 'Notification'
+               end
+
+    # Use osascript to send native macOS notification
+    sound_arg = File.exist?(File.expand_path('~/.claude/.sounds_disabled')) ? '' : ' sound name "glass"'
+    command = [
+      'osascript', '-e',
+      %(display notification "#{escape_quotes(message)}" with title "#{title}" subtitle "#{subtitle}"#{sound_arg})
+    ]
+
+    system(*command)
+  rescue StandardError => e
+    log "Failed to send iOS notification: #{e.message}", level: :error
+  end
+
+  def escape_quotes(text)
+    text.to_s.gsub('"', '\\"')
   end
 end
 

@@ -9,14 +9,6 @@ require 'claude_hooks'
 # PURPOSE: Initialize session state, setup logging, prepare environment
 # TRIGGERS: When a new Claude Code session begins
 #
-# COMMON USE CASES:
-# - Initialize project-specific configuration
-# - Setup session logging
-# - Load user preferences
-# - Prepare development environment
-# - Send welcome notifications
-# - Check system requirements
-#
 # SETTINGS.JSON CONFIGURATION:
 # {
 #   "hooks": {
@@ -34,13 +26,9 @@ class SessionStartHandler < ClaudeHooks::SessionStart
   def call
     log "Session starting for project: #{project_name}"
 
-    # Example: Initialize session state
-    # setup_project_environment
-    # load_user_preferences
-    # check_dependencies
-    send_welcome_message
+    backup_projects_directory
+    acknowledge_current_date
 
-    # Allow session to continue
     allow_continue!
     suppress_output!
 
@@ -53,29 +41,38 @@ class SessionStartHandler < ClaudeHooks::SessionStart
     File.basename(cwd || Dir.pwd)
   end
 
-  def setup_project_environment
-    # Example: Setup environment variables, check git status, etc.
-    log 'Setting up project environment'
+  def backup_projects_directory
+    source_dir = File.expand_path('~/.claude/projects')
+    backup_dir = File.expand_path('~/backups/claude/projects')
+
+    if Dir.exist?(source_dir)
+      log 'Backing up projects directory to ~/backups/claude/projects'
+
+      # Create backup directory if it doesn't exist
+      system('mkdir', '-p', backup_dir)
+
+      # Remove existing backup and copy fresh
+      system('rm', '-rf', backup_dir) if Dir.exist?(backup_dir)
+
+      # Copy the projects directory
+      if system('cp', '-r', source_dir, backup_dir)
+        log 'Projects directory backup completed successfully'
+      else
+        log 'Warning: Projects directory backup failed'
+      end
+    else
+      log 'No projects directory found to backup'
+    end
   end
 
-  def load_user_preferences
-    # Example: Load user-specific settings for this project
-    log 'Loading user preferences'
-  end
-
-  def check_dependencies
-    # Example: Verify required tools are installed
-    log 'Checking project dependencies'
-  end
-
-  def send_welcome_message
+  def acknowledge_current_date
     # Add timestamp to backend context only
     current_time = Time.now.strftime('%B %d, %Y at %I:%M %p %Z')
     day_of_week = Date.today.strftime('%A')
 
     # Use additionalContext for Claude instructions (will be minimally visible)
     context_message = "Current local date and time: #{day_of_week}, #{current_time}"
-    add_additional_context!("#{context_message}. Please acknowledge the current date and time in your first response.")
+    add_additional_context!("#{context_message}. Acknowledge the current date and time in your first response.")
   end
 end
 

@@ -3,7 +3,11 @@
 
 # Notification Entrypoint
 #
-# This entrypoint orchestrates all Notification handlers when Claude Code sends system notifications.
+# This entrypoint orchestrates all Notification handlers when Claude Code sends notifications.
+# Notifications are triggered when:
+# 1. Claude needs permission to use a tool (e.g., "Claude needs your permission to use Bash")
+# 2. When prompt input has been idle for at least 60 seconds (e.g., "Claude is waiting for your input")
+#
 # It reads JSON input from STDIN, executes all configured handlers, merges their outputs,
 # and returns the final result to Claude Code via STDOUT.
 
@@ -13,35 +17,34 @@ require 'json'
 # Require all Notification handler classes
 require_relative '../handlers/notification_handler'
 
-# Add additional handler requires here as needed:
-# require_relative '../handlers/notification/slack_notifier'
-# require_relative '../handlers/notification/email_sender'
-# require_relative '../handlers/notification/log_formatter'
-
 begin
   # Read input data from Claude Code
   input_data = JSON.parse($stdin.read)
 
+  # Initialize and execute all handlers
+  main_handler = NotificationHandler.new(input_data)
 
-  hook = NotificationHandler.new(input_data)
-  hook.call
-  hook.output_and_exit
+  # Execute handlers
+  main_handler.call
+
+  # Output result and exit with appropriate code
+  main_handler.output_and_exit
 rescue JSON::ParserError => e
   warn "[Notification] JSON parsing error: #{e.message}"
-  puts JSON.generate({
-                       continue: false,
+  warn JSON.generate({
+                       continue: true,
                        stopReason: "Notification hook JSON parsing error: #{e.message}",
                        suppressOutput: false
                      })
-  exit 1  # JSON error
+  exit 1
 rescue StandardError => e
   warn "[Notification] Hook execution error: #{e.message}"
   warn e.backtrace.join("\n") if ENV['RUBY_CLAUDE_HOOKS_DEBUG']
 
-  puts JSON.generate({
-                       continue: false,
+  warn JSON.generate({
+                       continue: true,
                        stopReason: "Notification hook execution error: #{e.message}",
                        suppressOutput: false
                      })
-  exit 1  # General error
+  exit 1
 end
