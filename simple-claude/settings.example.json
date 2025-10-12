@@ -1,0 +1,149 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "cleanupPeriodDays": 90,
+  "env": {
+    "MAX_MCP_OUTPUT_TOKENS": "70000",
+    "MCP_TOOL_TIMEOUT": "120000",
+    "MCP_TIMEOUT": "120000",
+    "CLAUDE_BASH_MAINTAIN_PROJECT_WORKING_DIR": "1"
+  },
+  "includeCoAuthoredBy": false,
+  "permissions": {
+    "allow": [
+      "Agent",
+      "Bash(cat:*)",
+      "Bash(chmod:*)",
+      "Bash(date:*)",
+      "Bash(df:*)",
+      "Bash(du:*)",
+      "Bash(echo:*)",
+      "Bash(env:*)",
+      "Bash(eza:*)",
+      "Bash(fd:*)",
+      "Bash(file:*)",
+      "Bash(find:*)",
+      "Bash(free:*)",
+      "Bash(grep:*)",
+      "Bash(gh:*)",
+      "Bash(git cd:*)",
+      "Bash(git checkout:*)",
+      "Bash(git diff:*)",
+      "Bash(git fetch:*)",
+      "Bash(git log:*)",
+      "Bash(git pull:*)",
+      "Bash(git show:*)",
+      "Bash(git status:*)",
+      "Bash(head:*)",
+      "Bash(htop:*)",
+      "Bash(id:*)",
+      "Bash(jq:*)",
+      "Bash(less:*)",
+      "Bash(ls:*)",
+      "Bash(lsof:*)",
+      "Bash(more:*)",
+      "Bash(mount:*)",
+      "Bash(mkdir -p:*)",
+      "Bash(netstat:*)",
+      "Bash(pip3:*)",
+      "Bash(printenv:*)",
+      "Bash(ps:*)",
+      "Bash(pwd)",
+      "Bash(rg:*)",
+      "Bash(stat:*)",
+      "Bash(rubocop:*)",
+      "Bash(tail:*)",
+      "Bash(tee:*)",
+      "Bash(top:*)",
+      "Bash(tree:*)",
+      "Bash(type:*)",
+      "Bash(uname:*)",
+      "Bash(uptime)",
+      "Bash(uv:*)",
+      "Bash(wc:*)",
+      "Bash(whereis:*)",
+      "Bash(which:*)",
+      "Bash(whoami)",
+      "Bash(yarn:*)",
+      "Bash(zsh:*)",
+      "Edit",
+      "Find",
+      "Glob",
+      "Grep",
+      "LS",
+      "List",
+      "MultiEdit",
+      "Read",
+      "Search",
+      "TodoRead",
+      "TodoWrite",
+      "WebFetch",
+      "WebSearch",
+      "Write",
+      "mcp__context7",
+      "mcp__jina_mcp_server"
+    ],
+    "deny": ["Bash(git push --force)", "Bash(git commit --no-verify)"],
+    "ask": [
+      "Bash(git add:*)",
+      "Bash(git push:*)",
+      "Bash(git commit:*)",
+      "Bash(rm:*)",
+      "Bash(curl:*)",
+      "Bash(ln:*)",
+      "Bash(node:*)",
+      "Bash(ruby:*)",
+      "Bash(python3:*)"
+    ],
+    "additionalDirectories": ["$HOME/Code/Cloned-Sources/"]
+  },
+  "hooks": {
+    "Notification": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$HOME/.claude/hooks/entrypoints/notification.rb"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$HOME/.claude/hooks/entrypoints/post_tool_use.rb"
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$HOME/.claude/hooks/entrypoints/session_start.rb"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$HOME/.claude/hooks/entrypoints/stop.rb"
+          }
+        ]
+      }
+    ]
+  },
+  "statusLine": {
+    "type": "command",
+    "command": "$HOME/.claude/status-lines/simple-status-line.sh",
+    "padding": 0
+  }
+}

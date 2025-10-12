@@ -36,6 +36,7 @@ module SimpleClaude
       { path: 'commands/simpleclaude', name: 'Commands', skip: ['TEMPLATE.md'] },
       { path: 'agents', name: 'Agents', skip: [] },
       { path: 'output-styles', name: 'Output Styles', skip: [] }
+      { path: 'status-lines', name: 'Status Lines', skip: [] }
     ].freeze
 
     OPTIONAL_COMPONENTS = [
@@ -79,7 +80,7 @@ module SimpleClaude
         install_component(component[:path], component[:name], component[:skip])
       end
 
-      show_hooks_instructions
+      show_settings_instructions
       show_summary
     end
 
@@ -277,42 +278,28 @@ module SimpleClaude
       puts ''
     end
 
-    def show_hooks_instructions
-      hooks_script = File.join(@script_dir, 'install_hooks.sh')
+    def show_settings_instructions
+      settings_file = File.join(@install_dir, 'settings.json')
+
+      example_file = File.join(@repo_root, 'simple-claude/settings.example.json')
 
       puts "\n#{'=' * 50}"
-      puts colorize('OPTIONAL: Install Hooks System', :blue)
+      puts 'NEXT STEP: Configure hooks'
       puts '=' * 50
       puts <<~INSTRUCTIONS
 
-        SimpleClaude includes a Ruby-based hooks system for advanced
-        customization (auto-formatting, notifications, etc.).
+        To enable auto-formatting and other hooks, merge the hook
+        configuration from:
 
-        Requirements:
-          • Ruby >= 2.7.0
-          • claude_hooks gem >= 0.2.1
-          • Bundler for dependency management
+          #{example_file}
 
-        To install hooks:
+        into:
 
-        1. Run the hooks installer:
-           #{hooks_script} --execute
+          #{settings_file}
 
-        2. The installer will:
-           - Check Ruby and gem dependencies
-           - Install hooks as .template files
-           - Install Gemfile and run bundle install
-
-        3. Copy and customize hook templates:
-           cd #{@target_dir}/hooks/handlers
-           cp auto_format_handler.rb.template auto_format_handler.rb
-           # Edit the .rb file for your environment
-
-        4. Configure Claude Code settings.json:
-           See the hooks installer help for configuration examples
-
-        For more information:
-           #{hooks_script} --help
+        Copy the "hooks" and "statusLine" sections from the example
+        into your settings.json. The example also includes useful
+        permissions and environment variables you may want to adopt.
 
       INSTRUCTIONS
     end
