@@ -5,7 +5,6 @@
   "description": "Practical minimalist AI assistant framework with specialized agents",
   "owner": {
     "name": "Kyle Snow Schwartz",
-    "email": "kyle@kylesnowschwartz.com",
     "url": "https://github.com/kylesnowschwartz"
   },
   "plugins": [
@@ -14,8 +13,7 @@
       "description": "Core SimpleClaude framework with 4+1 intent-based commands and 6 specialized agents for token-efficient execution",
       "version": "2.0.0",
       "author": {
-        "name": "Kyle Snow Schwartz",
-        "email": "kyle@kylesnowschwartz.com"
+        "name": "Kyle Snow Schwartz"
       },
       "source": "./plugins/simpleclaude",
       "homepage": "https://github.com/kylesnowschwartz/SimpleClaude",
@@ -40,8 +38,7 @@
       "description": "SimpleClaude hooks for session management, tool monitoring, and notifications",
       "version": "2.0.0",
       "author": {
-        "name": "Kyle Snow Schwartz",
-        "email": "kyle@kylesnowschwartz.com"
+        "name": "Kyle Snow Schwartz"
       },
       "source": "./plugins/sc-hooks",
       "homepage": "https://github.com/kylesnowschwartz/SimpleClaude",
@@ -61,8 +58,7 @@
       "description": "Optional SimpleClaude utilities for debugging, git workflows, and task validation",
       "version": "2.0.0",
       "author": {
-        "name": "Kyle Snow Schwartz",
-        "email": "kyle@kylesnowschwartz.com"
+        "name": "Kyle Snow Schwartz"
       },
       "source": "./plugins/sc-extras",
       "homepage": "https://github.com/kylesnowschwartz/SimpleClaude",
