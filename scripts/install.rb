@@ -32,16 +32,22 @@ end
 
 module SimpleClaude
   class Installer
+    # NOTE: As of v2.0.0, core commands, agents, and hooks are now available via
+    # the Claude Code plugin marketplace. This installer only handles non-plugin
+    # components (output styles, status lines, and settings templates).
+    #
+    # To install the core functionality, use:
+    #   /plugin marketplace add https://github.com/kylesnowschwartz/SimpleClaude
+    #   /plugin install simpleclaude
+    #   /plugin install sc-hooks
+    #   /plugin install sc-extras
+
     COMPONENTS = [
-      { path: 'commands/simpleclaude', name: 'Commands', skip: ['TEMPLATE.md'] },
-      { path: 'agents', name: 'Agents', skip: [] },
       { path: 'output-styles', name: 'Output Styles', skip: [] },
       { path: 'status-lines', name: 'Status Lines', skip: [] }
     ].freeze
 
-    OPTIONAL_COMPONENTS = [
-      { path: 'commands/extras', name: 'Experimental Commands', skip: ['TEMPLATE.md'] }
-    ].freeze
+    OPTIONAL_COMPONENTS = [].freeze
 
     # ANSI color codes
     COLORS = {
@@ -113,7 +119,15 @@ module SimpleClaude
       mode = @dry_run ? ' [DRY RUN - No changes will be made]' : ''
       puts colorize("\nSimpleClaude Installer#{mode}", :blue)
       puts '=' * 50
-      puts "Copies SimpleClaude configuration into your Claude Code installation.\n\n"
+      puts colorize("\nNOTE: This installer is for auxiliary components only.", :yellow)
+      puts 'For core SimpleClaude functionality (commands, agents, hooks),'
+      puts "use the plugin marketplace instead:\n\n"
+      puts '  /plugin marketplace add https://github.com/kylesnowschwartz/SimpleClaude'
+      puts '  /plugin install simpleclaude'
+      puts '  /plugin install sc-hooks'
+      puts "  /plugin install sc-extras\n\n"
+      puts 'This installer will copy output styles and status lines to your'
+      puts "Claude configuration.\n\n"
       puts "Source:      #{@source_dir}"
       puts "Destination: #{@target_dir}"
       puts '=' * 50
