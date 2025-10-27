@@ -444,7 +444,7 @@ module SimpleClaude
     def show_settings_instructions
       settings_file = File.join(@target_dir, 'settings.json')
 
-      example_file = File.join(@repo_root, 'simple-claude/settings.example.json')
+      example_file = File.join(@repo_root, 'templates/settings.example.json')
 
       puts "\n#{'=' * 50}"
       puts colorize('NEXT STEP: Configure hooks', :yellow)
