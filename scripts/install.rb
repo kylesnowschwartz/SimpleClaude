@@ -460,7 +460,7 @@ module SimpleClaude
 
           #{settings_file}
 
-        Copy the "hooks" and "statusLine" sections from the example
+        Copy the "statusLine" section from the example
         into your settings.json. The example also includes useful
         permissions and environment variables you may want to adopt.
 
