@@ -67,10 +67,12 @@ module SimpleClaude
       @dry_run = dry_run
       @backup_created = false
       @changes = { added: [], updated: [], unchanged: [] }
+      @installation_source = :not_installed # Will be set by detect_installation_source
     end
 
     def run
       validate_source_dir
+      detect_installation_source
       detect_old_installation
       show_installation_info
       confirm_proceed
@@ -91,6 +93,33 @@ module SimpleClaude
     end
 
     private
+
+    def detect_installation_source
+      marketplace_file = File.join(Dir.home, '.claude/plugins/known_marketplaces.json')
+
+      unless File.exist?(marketplace_file)
+        @installation_source = :not_installed
+        return
+      end
+
+      require 'json'
+      marketplaces = JSON.parse(File.read(marketplace_file))
+      simpleclaude_entry = marketplaces['simpleclaude']
+
+      unless simpleclaude_entry
+        @installation_source = :not_installed
+        return
+      end
+
+      source_type = simpleclaude_entry.dig('source', 'source')
+
+      # Both "github" and "git" sources are remote installations
+      # Only "local" source is a local installation
+      @installation_source = source_type == 'local' ? :local : :remote
+    rescue StandardError
+      # If we can't read the file, assume not installed
+      @installation_source = :not_installed
+    end
 
     def colorize(text, color)
       return text unless $stdout.tty?
@@ -185,10 +214,25 @@ module SimpleClaude
       mode = @dry_run ? ' [DRY RUN - No changes will be made]' : ''
       puts colorize("\nSimpleClaude Installer v2.0.0#{mode}", :blue)
       puts '=' * 50
+
+      # Show detected installation source
+      source_label = case @installation_source
+                     when :local then colorize('local git repository', :green)
+                     when :remote then colorize('remote (GitHub)', :yellow)
+                     when :not_installed then colorize('not installed', :blue)
+                     end
+      puts "\nDetected: #{source_label}"
+
       puts "\nThis installer will:"
-      puts '  1. Register SimpleClaude plugin marketplace'
-      puts '  2. Install plugins (simpleclaude, sc-hooks, sc-extras)'
-      puts "  3. Copy auxiliary components (output-styles, status-lines)\n\n"
+      if @installation_source == :remote
+        puts '  1. Update SimpleClaude plugins (simpleclaude, sc-hooks, sc-extras)'
+        puts '  2. Skip auxiliary components (not available for remote installs)'
+      else
+        puts '  1. Register SimpleClaude plugin marketplace'
+        puts '  2. Install plugins (simpleclaude, sc-hooks, sc-extras)'
+        puts '  3. Copy auxiliary components (output-styles, status-lines)'
+      end
+      puts ''
       puts "Source:      #{@repo_root}"
       puts "Destination: #{@target_dir}"
       puts '=' * 50
@@ -219,24 +263,31 @@ module SimpleClaude
         return
       end
 
-      # Check if marketplace already exists
-      marketplace_exists = marketplace_installed?('simpleclaude')
-
-      if marketplace_exists
-        puts 'SimpleClaude marketplace already configured, updating...'
-        if system('claude plugin marketplace update simpleclaude')
-          puts colorize('✓ Marketplace updated successfully', :green)
-        else
-          puts colorize('✗ Failed to update marketplace', :red)
-          exit 1 unless @force
-        end
+      # For remote installations, skip marketplace re-registration
+      # The marketplace already points to the remote GitHub URL
+      if @installation_source == :remote
+        puts colorize('Remote installation detected - marketplace already configured', :yellow)
+        puts 'Updating plugins only (marketplace points to GitHub)...'
       else
-        puts 'Adding SimpleClaude marketplace...'
-        if system("claude plugin marketplace add #{@repo_root}")
-          puts colorize('✓ Marketplace added successfully', :green)
+        # For local or new installations, register/update the marketplace
+        marketplace_exists = marketplace_installed?('simpleclaude')
+
+        if marketplace_exists
+          puts 'SimpleClaude marketplace already configured, updating...'
+          if system('claude plugin marketplace update simpleclaude')
+            puts colorize('✓ Marketplace updated successfully', :green)
+          else
+            puts colorize('✗ Failed to update marketplace', :red)
+            exit 1 unless @force
+          end
         else
-          puts colorize('✗ Failed to add marketplace', :red)
-          exit 1 unless @force
+          puts 'Adding SimpleClaude marketplace...'
+          if system("claude plugin marketplace add #{@repo_root}")
+            puts colorize('✓ Marketplace added successfully', :green)
+          else
+            puts colorize('✗ Failed to add marketplace', :red)
+            exit 1 unless @force
+          end
         end
       end
       puts ''
@@ -321,6 +372,13 @@ module SimpleClaude
     end
 
     def install_component(component_path, component_name, skip_files)
+      # Skip auxiliary components for remote installations
+      if @installation_source == :remote
+        puts colorize("[#{component_name}] Skipped (not available for remote installations)", :yellow)
+        puts ''
+        return
+      end
+
       source_path = File.join(@source_dir, component_path)
       target_path = File.join(@target_dir, component_path)
 
@@ -444,27 +502,49 @@ module SimpleClaude
     def show_settings_instructions
       settings_file = File.join(@target_dir, 'settings.json')
 
-      example_file = File.join(@repo_root, 'templates/settings.example.json')
-
       puts "\n#{'=' * 50}"
       puts colorize('NEXT STEP: Configure hooks', :yellow)
       puts '=' * 50
-      puts <<~INSTRUCTIONS
 
-        To enable auto-formatting and other hooks, merge the hook
-        configuration from:
+      if @installation_source == :remote
+        # For remote installations, provide GitHub URL
+        github_url = 'https://github.com/kylesnowschwartz/SimpleClaude/blob/main/templates/settings.example.json'
+        puts <<~INSTRUCTIONS
 
-          #{example_file}
+          To enable auto-formatting and other hooks, download the example
+          configuration from GitHub:
 
-        into:
+            #{github_url}
 
-          #{settings_file}
+          Then merge the hook configuration into:
 
-        Copy the "statusLine" section from the example
-        into your settings.json. The example also includes useful
-        permissions and environment variables you may want to adopt.
+            #{settings_file}
 
-      INSTRUCTIONS
+          Copy the "statusLine" section from the example into your
+          settings.json. The example also includes useful permissions
+          and environment variables you may want to adopt.
+
+        INSTRUCTIONS
+      else
+        # For local installations, use local file path
+        example_file = File.join(@repo_root, 'templates/settings.example.json')
+        puts <<~INSTRUCTIONS
+
+          To enable auto-formatting and other hooks, merge the hook
+          configuration from:
+
+            #{example_file}
+
+          into:
+
+            #{settings_file}
+
+          Copy the "statusLine" section from the example
+          into your settings.json. The example also includes useful
+          permissions and environment variables you may want to adopt.
+
+        INSTRUCTIONS
+      end
     end
 
     def ask(question)
