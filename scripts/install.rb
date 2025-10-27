@@ -32,15 +32,16 @@ end
 
 module SimpleClaude
   class Installer
-    # NOTE: As of v2.0.0, core commands, agents, and hooks are now available via
-    # the Claude Code plugin marketplace. This installer only handles non-plugin
-    # components (output styles, status lines, and settings templates).
+    # SimpleClaude v2.0.0 Installer
     #
-    # To install the core functionality, use:
-    #   /plugin marketplace add https://github.com/kylesnowschwartz/SimpleClaude
-    #   /plugin install simpleclaude
-    #   /plugin install sc-hooks
-    #   /plugin install sc-extras
+    # This installer handles:
+    #   1. Plugin marketplace registration and installation
+    #   2. Auxiliary components (output styles, status lines, settings template)
+    #
+    # BREAKING CHANGE: v2.0.0 restructured from 1 monolithic plugin to 3 isolated plugins:
+    #   - simpleclaude: Core framework (5 commands + 6 agents)
+    #   - sc-hooks: Session management and tool monitoring
+    #   - sc-extras: 7 optional utility commands
 
     COMPONENTS = [
       { path: 'output-styles', name: 'Output Styles', skip: [] },
@@ -72,16 +73,20 @@ module SimpleClaude
 
     def run
       validate_source_dir
+      detect_old_installation
       show_installation_info
       confirm_proceed
+
+      # Install via plugin marketplace
+      install_marketplace_plugins
+
+      # Install auxiliary components
       backup_existing_installation
 
-      # Install core components
       COMPONENTS.each do |component|
         install_component(component[:path], component[:name], component[:skip])
       end
 
-      # Ask about optional components
       OPTIONAL_COMPONENTS.each do |component|
         install_component(component[:path], component[:name], component[:skip])
       end
@@ -115,20 +120,55 @@ module SimpleClaude
       end
     end
 
+    def detect_old_installation
+      # SimpleClaude-specific files to detect
+      simpleclaude_agents = %w[
+        code-architect.md
+        code-explorer.md
+        code-reviewer.md
+        repo-documentation-finder.md
+        test-runner.md
+        web-search-researcher.md
+      ].map { |f| File.join(@target_dir, 'agents', f) }
+                            .select { |path| File.exist?(path) }
+
+      simpleclaude_hooks = %w[
+        notification.rb
+        post_tool_use.rb
+        pre_tool_use.rb
+        session_start.rb
+        stop.rb
+      ].map { |f| File.join(@target_dir, 'hooks', 'entrypoints', f) }
+                           .select { |path| File.exist?(path) }
+
+      # Command directories (safe to remove entirely)
+      old_command_dirs = [
+        File.join(@target_dir, 'commands', 'simpleclaude'),
+        File.join(@target_dir, 'commands', 'extras')
+      ].select { |path| Dir.exist?(path) }
+
+      all_old_files = old_command_dirs + simpleclaude_agents + simpleclaude_hooks
+
+      return if all_old_files.empty?
+
+      puts colorize("\n⚠ Old SimpleClaude installation detected!", :red)
+      puts "\nRemove these files/directories before proceeding:"
+      old_command_dirs.each { |path| puts "  rm -rf #{path}" }
+      simpleclaude_agents.each { |path| puts "  rm #{path}" }
+      simpleclaude_hooks.each { |path| puts "  rm #{path}" }
+      puts "\nThen run this script again.\n"
+      exit 1
+    end
+
     def show_installation_info
       mode = @dry_run ? ' [DRY RUN - No changes will be made]' : ''
-      puts colorize("\nSimpleClaude Installer#{mode}", :blue)
+      puts colorize("\nSimpleClaude Installer v2.0.0#{mode}", :blue)
       puts '=' * 50
-      puts colorize("\nNOTE: This installer is for auxiliary components only.", :yellow)
-      puts 'For core SimpleClaude functionality (commands, agents, hooks),'
-      puts "use the plugin marketplace instead:\n\n"
-      puts '  /plugin marketplace add https://github.com/kylesnowschwartz/SimpleClaude'
-      puts '  /plugin install simpleclaude'
-      puts '  /plugin install sc-hooks'
-      puts "  /plugin install sc-extras\n\n"
-      puts 'This installer will copy output styles and status lines to your'
-      puts "Claude configuration.\n\n"
-      puts "Source:      #{@source_dir}"
+      puts "\nThis installer will:"
+      puts '  1. Register SimpleClaude plugin marketplace'
+      puts '  2. Install plugins (simpleclaude, sc-hooks, sc-extras)'
+      puts "  3. Copy auxiliary components (output-styles, status-lines)\n\n"
+      puts "Source:      #{@repo_root}"
       puts "Destination: #{@target_dir}"
       puts '=' * 50
       puts ''
@@ -141,6 +181,59 @@ module SimpleClaude
         puts 'Installation cancelled.'
         exit(0)
       end
+      puts ''
+    end
+
+    def install_marketplace_plugins
+      return if @dry_run
+
+      puts colorize("\nInstalling SimpleClaude via Plugin Marketplace", :blue)
+      puts '=' * 50
+      puts ''
+
+      # Add marketplace
+      puts 'Adding SimpleClaude marketplace...'
+      if system("claude plugin marketplace add #{@repo_root}")
+        puts colorize('✓ Marketplace added successfully', :green)
+      else
+        puts colorize('✗ Failed to add marketplace', :red)
+        exit 1 unless @force
+      end
+      puts ''
+
+      # Install core (required)
+      puts 'Installing simpleclaude (core framework)...'
+      if system('claude plugin install simpleclaude')
+        puts colorize('✓ simpleclaude installed', :green)
+      else
+        puts colorize('✗ Failed to install simpleclaude', :red)
+        exit 1 unless @force
+      end
+      puts ''
+
+      # Install hooks (optional)
+      if @force || ask('Install sc-hooks (session management, tool monitoring)?')
+        puts 'Installing sc-hooks...'
+        if system('claude plugin install sc-hooks')
+          puts colorize('✓ sc-hooks installed', :green)
+        else
+          puts colorize('✗ Failed to install sc-hooks', :red)
+        end
+        puts ''
+      end
+
+      # Install extras (optional)
+      if @force || ask('Install sc-extras (7 utility commands)?')
+        puts 'Installing sc-extras...'
+        if system('claude plugin install sc-extras')
+          puts colorize('✓ sc-extras installed', :green)
+        else
+          puts colorize('✗ Failed to install sc-extras', :red)
+        end
+        puts ''
+      end
+
+      puts colorize('✓ Plugin marketplace installation complete', :green)
       puts ''
     end
 

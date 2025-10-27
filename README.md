@@ -6,21 +6,30 @@ A practical minimalist AI assistant framework that transforms complex AI interac
 
 ## Installation
 
-### Option 1: Plugin Marketplace (Recommended)
+### Option 1: Direct from GitHub (Plugins Only)
 
-Install directly from the Claude Code plugin marketplace:
+Install SimpleClaude plugins directly without cloning:
 
 ```bash
-# Add SimpleClaude marketplace
-/plugin marketplace add https://github.com/kylesnowschwartz/SimpleClaude
+# Add SimpleClaude marketplace from GitHub
+claude plugin marketplace add https://github.com/kylesnowschwartz/SimpleClaude
 
 # Install core framework (required)
-/plugin install simpleclaude
+claude plugin install simpleclaude
 
 # Install hooks (optional but recommended)
-/plugin install sc-hooks
+claude plugin install sc-hooks
 
 # Install extra utilities (optional)
+claude plugin install sc-extras
+```
+
+Or from within Claude Code:
+
+```bash
+/plugin marketplace add https://github.com/kylesnowschwartz/SimpleClaude
+/plugin install simpleclaude
+/plugin install sc-hooks
 /plugin install sc-extras
 ```
 
@@ -29,11 +38,9 @@ Install directly from the Claude Code plugin marketplace:
 - **sc-hooks** _(optional)_: Session management, tool monitoring, and notification hooks
 - **sc-extras** _(optional)_: 7 advanced utility commands for debugging, GitHub workflows, git worktrees, task validation, command creation, feature discovery, and pre-commit setup
 
-**Note:** Output styles, status lines, and settings templates are available for manual installation using the install.rb script (see Option 2).
+### Option 2: Full Installation (Plugins + Auxiliary Components)
 
-### Option 2: Manual Installation
-
-Clone and install the repository directly:
+Clone the repository and run the interactive installer to also get output styles, status lines, and settings template:
 
 ```bash
 # Clone the repository
@@ -43,32 +50,31 @@ cd SimpleClaude
 # Preview what will be installed
 ./scripts/install.rb --dry-run
 
-# Install SimpleClaude to your Claude configuration (interactive with prompts)
+# Run interactive installer (installs plugins + auxiliary components)
 ./scripts/install.rb
 ```
 
+**Additional components:**
+- Output styles for custom response formatting
+- Status line for session information display
+- Settings template
+
 ## Updating
-
-### If installed via Plugin Marketplace:
-
-```bash
-# Update SimpleClaude core
-/plugin update simpleclaude
-
-# Update SimpleClaude hooks (if installed)
-/plugin update sc-hooks
-
-# Update SimpleClaude extras (if installed)
-/plugin update sc-extras
-```
-
-### If installed manually:
 
 ```bash
 # Pull latest changes
+cd SimpleClaude
 git pull
 
-# Update SimpleClaude (Backs up existing configuration)
+# Update marketplace registration
+claude plugin marketplace update simpleclaude
+
+# Update installed plugins
+claude plugin update simpleclaude
+claude plugin update sc-hooks     # if installed
+claude plugin update sc-extras    # if installed
+
+# Update auxiliary components (optional)
 ./scripts/install.rb
 ```
 
