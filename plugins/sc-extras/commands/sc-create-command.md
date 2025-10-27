@@ -51,6 +51,8 @@ Create with these sections:
 
 ## Template:
 
+For SimpleClaude commands look at @templates/sc-command-template.md, or use this basic markdown template:
+
 ```markdown
 # Command Name
 
