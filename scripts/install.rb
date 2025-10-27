@@ -48,8 +48,6 @@ module SimpleClaude
       { path: 'status-lines', name: 'Status Lines', skip: [] }
     ].freeze
 
-    OPTIONAL_COMPONENTS = [].freeze
-
     # ANSI color codes
     COLORS = {
       green: "\e[32m",
@@ -77,17 +75,14 @@ module SimpleClaude
       show_installation_info
       confirm_proceed
 
+      # Backup BEFORE making any changes
+      backup_existing_installation
+
       # Install via plugin marketplace
       install_marketplace_plugins
 
       # Install auxiliary components
-      backup_existing_installation
-
       COMPONENTS.each do |component|
-        install_component(component[:path], component[:name], component[:skip])
-      end
-
-      OPTIONAL_COMPONENTS.each do |component|
         install_component(component[:path], component[:name], component[:skip])
       end
 
@@ -121,25 +116,51 @@ module SimpleClaude
     end
 
     def detect_old_installation
-      # SimpleClaude-specific files to detect
+      # SimpleClaude-specific agents to detect (all versions)
       simpleclaude_agents = %w[
+        buildkite-build-fetcher.md
         code-architect.md
+        code-expert.md
         code-explorer.md
         code-reviewer.md
+        context-analyzer.md
+        repo-documentation-expert.md
         repo-documentation-finder.md
         test-runner.md
         web-search-researcher.md
       ].map { |f| File.join(@target_dir, 'agents', f) }
                             .select { |path| File.exist?(path) }
 
+      # SimpleClaude-specific hooks to detect (all versions)
       simpleclaude_hooks = %w[
         notification.rb
         post_tool_use.rb
+        pre_compact.rb
         pre_tool_use.rb
+        session_end.rb
         session_start.rb
         stop.rb
+        subagent_stop.rb
+        user_prompt_submit.rb
       ].map { |f| File.join(@target_dir, 'hooks', 'entrypoints', f) }
                            .select { |path| File.exist?(path) }
+
+      simpleclaude_hooks += %w[
+        auto_format_handler.rb
+        copy_message_handler.rb
+        notification_handler.rb
+        post_tool_use_handler.rb
+        pre_compact_handler.rb
+        pre_tool_use_handler.rb
+        session_end_handler.rb
+        session_start_handler.rb
+        stop_handler.rb
+        subagent_stop_handler.rb
+        stop_you_are_not_right.rb
+        transcript_parser.rb
+        user_prompt_submit_handler.rb
+      ].map { |f| File.join(@target_dir, 'hooks', 'handlers', f) }
+                            .select { |path| File.exist?(path) }
 
       # Command directories (safe to remove entirely)
       old_command_dirs = [
@@ -185,55 +206,90 @@ module SimpleClaude
     end
 
     def install_marketplace_plugins
-      return if @dry_run
-
       puts colorize("\nInstalling SimpleClaude via Plugin Marketplace", :blue)
       puts '=' * 50
       puts ''
 
-      # Add marketplace
-      puts 'Adding SimpleClaude marketplace...'
-      if system("claude plugin marketplace add #{@repo_root}")
-        puts colorize('✓ Marketplace added successfully', :green)
+      if @dry_run
+        puts colorize('[DRY RUN] Would check and update/add SimpleClaude marketplace', :yellow)
+        puts colorize('[DRY RUN] Would install/update simpleclaude plugin', :yellow)
+        puts colorize('[DRY RUN] Would install/update sc-hooks plugin', :yellow)
+        puts colorize('[DRY RUN] Would install/update sc-extras plugin', :yellow)
+        puts ''
+        return
+      end
+
+      # Check if marketplace already exists
+      marketplace_exists = marketplace_installed?('simpleclaude')
+
+      if marketplace_exists
+        puts 'SimpleClaude marketplace already configured, updating...'
+        if system('claude plugin marketplace update simpleclaude')
+          puts colorize('✓ Marketplace updated successfully', :green)
+        else
+          puts colorize('✗ Failed to update marketplace', :red)
+          exit 1 unless @force
+        end
       else
-        puts colorize('✗ Failed to add marketplace', :red)
-        exit 1 unless @force
+        puts 'Adding SimpleClaude marketplace...'
+        if system("claude plugin marketplace add #{@repo_root}")
+          puts colorize('✓ Marketplace added successfully', :green)
+        else
+          puts colorize('✗ Failed to add marketplace', :red)
+          exit 1 unless @force
+        end
       end
       puts ''
 
       # Install core (required)
-      puts 'Installing simpleclaude (core framework)...'
-      if system('claude plugin install simpleclaude')
-        puts colorize('✓ simpleclaude installed', :green)
-      else
-        puts colorize('✗ Failed to install simpleclaude', :red)
-        exit 1 unless @force
-      end
-      puts ''
+      install_or_update_plugin('simpleclaude', 'core framework', required: true)
 
       # Install hooks (optional)
-      if @force || ask('Install sc-hooks (session management, tool monitoring)?')
-        puts 'Installing sc-hooks...'
-        if system('claude plugin install sc-hooks')
-          puts colorize('✓ sc-hooks installed', :green)
-        else
-          puts colorize('✗ Failed to install sc-hooks', :red)
-        end
-        puts ''
+      if @force || plugin_installed?('sc-hooks') || ask('Install sc-hooks (session management, tool monitoring)?')
+        install_or_update_plugin('sc-hooks', 'session management')
       end
 
       # Install extras (optional)
-      if @force || ask('Install sc-extras (7 utility commands)?')
-        puts 'Installing sc-extras...'
-        if system('claude plugin install sc-extras')
-          puts colorize('✓ sc-extras installed', :green)
-        else
-          puts colorize('✗ Failed to install sc-extras', :red)
-        end
-        puts ''
+      if @force || plugin_installed?('sc-extras') || ask('Install sc-extras (7 utility commands)?')
+        install_or_update_plugin('sc-extras', '7 utility commands')
       end
 
       puts colorize('✓ Plugin marketplace installation complete', :green)
+      puts ''
+    end
+
+    def marketplace_installed?(name)
+      output = `claude plugin marketplace list 2>&1`
+      output.include?("❯ #{name}")
+    end
+
+    def plugin_installed?(name)
+      config_path = File.join(Dir.home, '.claude', 'plugins', 'installed_plugins.json')
+      return false unless File.exist?(config_path)
+
+      require 'json'
+      config = JSON.parse(File.read(config_path))
+      config['plugins']&.keys&.any? { |key| key.start_with?("#{name}@") }
+    rescue StandardError
+      false
+    end
+
+    def install_or_update_plugin(name, description, required: false)
+      if plugin_installed?(name)
+        puts "Updating #{name} (#{description})..."
+        # Uninstall then reinstall to update
+        system("claude plugin uninstall #{name}")
+      else
+        puts "Installing #{name} (#{description})..."
+      end
+      success = system("claude plugin install #{name}")
+
+      if success
+        puts colorize("✓ #{name} #{plugin_installed?(name) ? 'updated' : 'installed'}", :green)
+      else
+        puts colorize("✗ Failed to install #{name}", :red)
+        exit 1 if required && !@force
+      end
       puts ''
     end
 
@@ -412,10 +468,10 @@ module SimpleClaude
     end
 
     def ask(question)
-      return true if @force
+      return true if @force || @dry_run
 
       print "#{question} (yes/no): "
-      answer = $stdin.gets.chomp.downcase
+      answer = $stdin.gets&.chomp&.downcase
       answer == 'yes'
     end
   end
