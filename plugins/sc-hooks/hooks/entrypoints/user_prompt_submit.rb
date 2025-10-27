@@ -11,9 +11,11 @@ require 'claude_hooks'
 require 'json'
 
 # Require all UserPromptSubmit handler classes
-require_relative '../handlers/user_prompt_submit_handler'
+# require_relative '../handlers/user_prompt_submit_handler.rb'
+require_relative '../handlers/copy_message_handler'
 
 # Add additional handler requires here as needed:
+# require_relative '../handlers/user_prompt_submit_handler'
 # require_relative '../handlers/user_prompt_submit/append_rules'
 # require_relative '../handlers/user_prompt_submit/log_user_prompt'
 # require_relative '../handlers/user_prompt_submit/validate_content'
@@ -22,10 +24,17 @@ begin
   # Read input data from Claude Code
   input_data = JSON.parse($stdin.read)
 
+  # Initialize and execute all handlers
+  copy_message_handler = CopyMessageHandler.new(input_data)
 
-  hook = UserPromptSubmitHandler.new(input_data)
-  hook.call
-  hook.output_and_exit
+  # Execute handlers
+  copy_message_handler.call
+
+  # Use the single handler's output directly
+  merged_output = copy_message_handler.output
+
+  # Output result and exit with appropriate code
+  merged_output.output_and_exit
 rescue JSON::ParserError => e
   warn "[UserPromptSubmit] JSON parsing error: #{e.message}"
   puts JSON.generate({
