@@ -6,7 +6,7 @@
 
 **Strategy**: Examine existing commands before creating new ones
 
-- Read `simple-claude/commands/simpleclaude/TEMPLATE.md` first - it's the canonical structure
+- Read `templates/command-template.md` first - it's the canonical structure
 - Study a similar command (e.g., `sc-explore` for analysis-type commands)
 - Pattern matching is more reliable than trying to understand the entire system
 
@@ -18,9 +18,9 @@
 
 ```bash
 # Start broad, then narrow
-ls simple-claude/commands/simpleclaude/
-find simple-claude -name "*.yml" -type f
-grep -E "pattern" existing_commands.md
+ls plugins/simple-claude/commands/
+find simple-claude/commands/ -name "*.md" -type f
+rg "agent-specialists" simple-claude/commands/
 ```
 
 **What works**: Using multiple search strategies when initial paths fail (e.g., when searching for agent definitions or shared patterns).
