@@ -3,30 +3,14 @@
 
 require 'json'
 require 'fileutils'
+require_relative '../plugins/sc-hooks/hooks/handlers/reflexive_agreement_detector'
 
 # Test Harness for Reflexive Agreement Detection
 #
 # Analyzes backup conversation transcripts to measure accuracy of detection algorithm
 
 class ReflexiveAgreementTester
-  # Agreement patterns - match at start of first sentence
-  AGREEMENT_PATTERNS = [
-    /\A\s*[Yy]ou'?re?\s+(absolutely\s+)?(right|correct)/i,
-    /\A\s*[Aa]bsolutely\.?\s*\Z/i,
-    /\A\s*[Yy]es,?\s+you'?re?\s+(totally\s+)?correct/i,
-    /\A\s*[Dd]efinitely\.?\s*\Z/i
-  ].freeze
-
-  # Pivot words that indicate substantive continuation
-  PIVOT_INDICATORS = /\b(but|however|though|although|that said|except|yet)\b/i
-
-  # Substantive content markers
-  SUBSTANTIVE_MARKERS = [
-    /\d+\s*(slots|tokens|ms|bytes|chars|seconds|lines)/i,
-    /\b(here's why|the reason|specifically|for example|need to|will|should|must)\b/i,  # Removed "let me"
-    /```|`[^`]+`/,
-    /\b(analyze|consider|examine|investigate|review|explore)\b/i
-  ].freeze
+  include ReflexiveAgreementDetector
 
   def initialize(backup_dir)
     @backup_dir = backup_dir
@@ -98,7 +82,7 @@ class ReflexiveAgreementTester
   def analyze_message(message, file)
     @results[:total_messages] += 1
 
-    text = message.dig('message', 'content', 0, 'text')
+    text = extract_text(message)
     return unless text.is_a?(String)
 
     # STEP 1: Check if first sentence contains agreement
@@ -138,36 +122,6 @@ class ReflexiveAgreementTester
     # Would trigger!
     @results[:would_trigger] += 1
     save_example(:would_trigger, text, first_sentence, file, 'WOULD TRIGGER')
-  end
-
-  def extract_first_sentence(text)
-    sentences = text.split(/[.!?]+/)
-    first = sentences[0] || ""
-    first.strip
-  end
-
-  def first_sentence_has_agreement?(sentence)
-    AGREEMENT_PATTERNS.any? { |pattern| sentence.match?(pattern) }
-  end
-
-  def message_contains_tool_use?(message)
-    content = message.dig('message', 'content') || []
-    content.any? { |block| block['type'] == 'tool_use' }
-  end
-
-  def first_sentence_has_pivot?(sentence)
-    return true if sentence.match?(PIVOT_INDICATORS)
-    return true if sentence.match?(/\b(need to|will|should|must|going to|have to)\b/i)
-    return true if sentence.match?(/[:\u2014\u2013]\s*$/)
-    false
-  end
-
-  def followed_by_substantive_content?(text)
-    sentences = text.split(/[.!?]+/).map(&:strip).reject(&:empty?)
-    return false if sentences.length <= 1
-
-    rest_of_text = sentences[1..-1].join(' ')
-    SUBSTANTIVE_MARKERS.any? { |marker| rest_of_text.match?(marker) }
   end
 
   def save_example(category, full_text, first_sentence, file, reason)
