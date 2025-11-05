@@ -23,7 +23,7 @@ class ReflexiveAgreementTester
   # Substantive content markers
   SUBSTANTIVE_MARKERS = [
     /\d+\s*(slots|tokens|ms|bytes|chars|seconds|lines)/i,
-    /\b(let me|here's why|the reason|specifically|for example)\b/i,
+    /\b(here's why|the reason|specifically|for example|need to|will|should|must)\b/i,  # Removed "let me"
     /```|`[^`]+`/,
     /\b(analyze|consider|examine|investigate|review|explore)\b/i
   ].freeze
@@ -114,19 +114,26 @@ class ReflexiveAgreementTester
       return
     end
 
-    # STEP 3: Check if first sentence has pivot
-    if first_sentence_has_pivot?(first_sentence)
+    # STEP 3: Check for pivot and substantive content
+    has_pivot = first_sentence_has_pivot?(first_sentence)
+    has_substantive = followed_by_substantive_content?(text)
+
+    # Pivot words only matter if backed by substantive follow-up
+    if has_pivot && has_substantive
       @results[:skipped_pivot] += 1
-      save_example(:skipped_pivot, text, first_sentence, file, 'Contains pivot word')
+      save_example(:skipped_pivot, text, first_sentence, file, 'Contains pivot word with substantive follow-up')
       return
     end
 
-    # STEP 4: Check if followed by substantive content
-    if followed_by_substantive_content?(text)
+    # Substantive content without pivot = still not reflexive
+    if has_substantive
       @results[:skipped_substantive] += 1
       save_example(:skipped_substantive, text, first_sentence, file, 'Contains substantive markers')
       return
     end
+
+    # At this point: has_pivot might be true, but no substantive follow-up
+    # This is now treated as reflexive (will trigger)
 
     # Would trigger!
     @results[:would_trigger] += 1
@@ -149,7 +156,10 @@ class ReflexiveAgreementTester
   end
 
   def first_sentence_has_pivot?(sentence)
-    sentence.match?(PIVOT_INDICATORS)
+    return true if sentence.match?(PIVOT_INDICATORS)
+    return true if sentence.match?(/\b(need to|will|should|must|going to|have to)\b/i)
+    return true if sentence.match?(/[:\u2014\u2013]\s*$/)
+    false
   end
 
   def followed_by_substantive_content?(text)
@@ -161,12 +171,10 @@ class ReflexiveAgreementTester
   end
 
   def save_example(category, full_text, first_sentence, file, reason)
-    # Only save first 10 examples per category
-    return if @results[:examples][category].size >= 10
-
+    # Save ALL examples for review
     @results[:examples][category] << {
       first_sentence: first_sentence,
-      full_text: full_text[0, 300],
+      full_text: full_text[0, 500],  # Show more context (500 chars)
       file: File.basename(file),
       reason: reason
     }
@@ -208,24 +216,24 @@ class ReflexiveAgreementTester
 
   def print_examples
     puts "=" * 80
-    puts "EXAMPLES"
+    puts "ALL EXAMPLES (for review)"
     puts "=" * 80
 
+    # Print each category with ALL examples
     [:would_trigger, :skipped_tool_use, :skipped_pivot, :skipped_substantive].each do |category|
       examples = @results[:examples][category]
       next if examples.empty?
 
       puts
-      puts category.to_s.upcase.gsub('_', ' ')
+      puts "#{category.to_s.upcase.gsub('_', ' ')} (#{examples.size} total)"
       puts "-" * 80
 
-      examples.first(5).each_with_index do |ex, idx|
+      examples.each_with_index do |ex, idx|
         puts
-        puts "Example #{idx + 1}:"
-        puts "  First sentence: #{ex[:first_sentence]}"
-        puts "  Full text: #{ex[:full_text]}#{ex[:full_text].length >= 300 ? '...' : ''}"
-        puts "  File: #{ex[:file]}"
-        puts "  Reason: #{ex[:reason]}"
+        puts "#{idx + 1}. #{ex[:first_sentence]}"
+        puts "   #{ex[:full_text]}#{ex[:full_text].length >= 500 ? '...' : ''}"
+        puts "   [#{ex[:file]}]"
+        puts
       end
     end
   end

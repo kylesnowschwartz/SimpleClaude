@@ -31,7 +31,7 @@ class StopYouAreNotRight < ClaudeHooks::Stop
   # Substantive content markers
   SUBSTANTIVE_MARKERS = [
     /\d+\s*(slots|tokens|ms|bytes|chars|seconds|lines)/i,     # Technical metrics
-    /\b(let me|here's why|the reason|specifically|for example)\b/i,  # Analysis indicators
+    /\b(here's why|the reason|specifically|for example|need to|will|should|must)\b/i,  # Analysis/action indicators (removed "let me")
     /```|`[^`]+`/,                                             # Code blocks
     /\b(analyze|consider|examine|investigate|review|explore)\b/i  # Action verbs
   ].freeze
@@ -80,16 +80,27 @@ class StopYouAreNotRight < ClaudeHooks::Stop
       return false
     end
 
-    # STEP 3: Check if first sentence has substantive pivot
-    if first_sentence_has_pivot?(first_sentence)
-      log "First sentence contains pivot word - not reflexive"
+    # STEP 3: Check for pivot and substantive content
+    has_pivot = first_sentence_has_pivot?(first_sentence)
+    has_substantive = followed_by_substantive_content?(text)
+
+    # Pivot words only matter if backed by substantive follow-up
+    # "You're right, but..." + actual analysis = skip
+    # "You're right, but..." + nothing substantial = still reflexive
+    if has_pivot && has_substantive
+      log "First sentence has pivot with substantive follow-up - not reflexive"
       return false
     end
 
-    # STEP 4: Check if followed by substantive content
-    if followed_by_substantive_content?(text)
+    # Substantive content without pivot = still not reflexive
+    if has_substantive
       log "Response contains substantive follow-up content - not reflexive"
       return false
+    end
+
+    # At this point: has_pivot might be true, but no substantive follow-up
+    if has_pivot && !has_substantive
+      log "Pivot word present but no substantive follow-up - treating as reflexive"
     end
 
     log "All checks passed - response is reflexive agreement"
@@ -126,7 +137,17 @@ class StopYouAreNotRight < ClaudeHooks::Stop
   def first_sentence_has_pivot?(sentence)
     # Check if first sentence contains pivot words
     # "You're right, but..." or "You're right; however..."
-    sentence.match?(PIVOT_INDICATORS)
+    return true if sentence.match?(PIVOT_INDICATORS)
+
+    # Check for action indicators in first sentence
+    # "You're right - need to..." or "You're right - will..."
+    return true if sentence.match?(/\b(need to|will|should|must|going to|have to)\b/i)
+
+    # Check for continuation markers (colon, em-dash)
+    # "You're right:" or "You're right —"
+    return true if sentence.match?(/[:\u2014\u2013]\s*$/)
+
+    false
   end
 
   def followed_by_substantive_content?(text)
