@@ -7,10 +7,17 @@ require 'claude_hooks'
 #
 # PURPOSE: Handle Claude Code notifications (permission requests, idle warnings)
 # TRIGGERS: When Claude needs permission to use tools or when idle for 60+ seconds
+# DISABLE: Set SIMPLE_CLAUDE_DISABLE_NOTIFICATIONS=1 to skip notifications (useful when terminal handles them)
 
 class NotificationHandler < ClaudeHooks::Notification
   def call
     log "Claude Code Notification: #{message}"
+
+    # Early return if notifications are disabled
+    if ENV['SIMPLE_CLAUDE_DISABLE_NOTIFICATIONS']
+      log 'Notifications disabled via SIMPLE_CLAUDE_DISABLE_NOTIFICATIONS', level: :debug
+      return output_data
+    end
 
     # Send iOS notification popup
     send_ios_notification
