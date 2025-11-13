@@ -25,7 +25,15 @@ This file provides guidance to [Claude Code](https://github.com/anthropics/claud
 - Current version: 2.1.0
 - Follow [SemVer](https://semver.org/): fix = patch, feat = minor, breaking = major
 - **Assess each commit: does it warrant a release?** Bug fixes and new features should trigger releases
-- Release process: update README badge → update CLAUDE.md version → update VERSION file → commit → `git tag vX.X.X` → push with tags
+- Release process:
+  1. Update README.md badge version
+  2. Update CLAUDE.md version
+  3. Update VERSION file
+  4. Update `.claude-plugin/marketplace.json` (top-level version + affected plugin versions in plugins array)
+  5. Update `plugins/<plugin-name>/.claude-plugin/plugin.json` for affected plugins
+  6. Commit: `git commit -m "chore: Bump version to vX.X.X"`
+  7. Tag: `git tag vX.X.X`
+  8. Push: `git push && git push --tags`
 
 ## Development Workflow
 
