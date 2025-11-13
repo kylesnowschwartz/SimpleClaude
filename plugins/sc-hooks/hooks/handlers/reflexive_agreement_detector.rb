@@ -15,12 +15,13 @@ module ReflexiveAgreementDetector
   # Pivot words that indicate substantive continuation
   PIVOT_INDICATORS = /\b(but|however|though|although|that said|except|yet)\b/i
 
-  # Substantive content markers
+  # Substantive content markers - require CONCRETE technical evidence only
+  # Removed: "here's why", "the reason", "for example", "because" (setup words, not substance)
+  # Removed: "found|discovered|detected" (can be vacuous: "I found the issue" without details)
   SUBSTANTIVE_MARKERS = [
-    /\d+\s*(slots|tokens|ms|bytes|chars|seconds|lines)/i,
-    /\b(here's why|the reason|specifically|for example|need to|will|should|must)\b/i,
-    /```|`[^`]+`/,
-    /\b(analyze|consider|examine|investigate|review|explore)\b/i
+    /\d+\s*(slots|tokens|ms|bytes|chars|seconds|lines|files|functions|tests|errors?|warnings?)/i, # Specific measurements
+    /```[\s\S]{20,}```/, # Code blocks (min 20 chars)
+    /\b(benchmark|profiled|traced|debugged|stack trace|error message)\b/i # Technical investigation
   ].freeze
 
   # Main detection method
@@ -58,7 +59,7 @@ module ReflexiveAgreementDetector
 
   def extract_first_sentence(text)
     sentences = text.split(/[.!?]+/)
-    first = sentences[0] || ""
+    first = sentences[0] || ''
     first.strip
   end
 
@@ -72,9 +73,11 @@ module ReflexiveAgreementDetector
   end
 
   def first_sentence_has_pivot?(sentence)
+    # Only count actual pivots and colons/dashes as setup for substantive content
+    # Removed: "need to|will|should|must|going to|have to" (action promises, not pivots)
     return true if sentence.match?(PIVOT_INDICATORS)
-    return true if sentence.match?(/\b(need to|will|should|must|going to|have to)\b/i)
     return true if sentence.match?(/[:\u2014\u2013]\s*$/)
+
     false
   end
 
@@ -82,7 +85,12 @@ module ReflexiveAgreementDetector
     sentences = text.split(/[.!?]+/).map(&:strip).reject(&:empty?)
     return false if sentences.length <= 1
 
-    rest_of_text = sentences[1..-1].join(' ')
+    rest_of_text = sentences[1..].join(' ')
+
+    # Require SIGNIFICANT follow-up with concrete technical content
+    # Increased from 50 → 100 chars minimum (rules out "Let me check what you have")
+    return false if rest_of_text.length < 100
+
     SUBSTANTIVE_MARKERS.any? { |marker| rest_of_text.match?(marker) }
   end
 end
