@@ -1,4 +1,2 @@
-# Don't ignore .claude directory
-!.claude/
 settings.local.json
 node_modules/
