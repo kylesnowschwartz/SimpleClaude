@@ -1,12 +1,12 @@
 # SimpleClaude
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) [![Version](https://img.shields.io/badge/version-2.1.0-blue.svg)](https://github.com/kylesnowschwartz/SimpleClaude) [![GitHub issues](https://img.shields.io/github/issues/kylesnowschwartz/SimpleClaude)](https://github.com/kylesnowschwartz/SimpleClaude/issues)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) [![Version](https://img.shields.io/badge/version-2.2.0-blue.svg)](https://github.com/kylesnowschwartz/SimpleClaude) [![GitHub issues](https://img.shields.io/github/issues/kylesnowschwartz/SimpleClaude)](https://github.com/kylesnowschwartz/SimpleClaude/issues)
 
 A practical minimalist AI assistant framework that transforms complex AI interactions into natural conversations. Comes with a set of user-commands, sub-agents, hooks, and utilities designed for real-world software development tasks.
 
 ## Installation
 
-### Option 1: Direct from GitHub (Plugins Only, no status-lines or output-styles)
+### Option 1: Direct from GitHub (Recommended)
 
 Install SimpleClaude plugins directly without cloning:
 
@@ -21,6 +21,9 @@ claude plugin install simpleclaude
 # Install hooks (optional but recommended)
 claude plugin install sc-hooks
 
+# Install output styles (optional but recommended)
+claude plugin install sc-output-styles
+
 # Install extra utilities (optional)
 claude plugin install sc-extras
 ```
@@ -31,17 +34,19 @@ Or from within Claude Code:
 /plugin marketplace add https://github.com/kylesnowschwartz/SimpleClaude
 /plugin install simpleclaude
 /plugin install sc-hooks
+/plugin install sc-output-styles
 /plugin install sc-extras
 ```
 
 **What's included:**
 - **simpleclaude**: 4+1 core commands and 6 specialized agents
 - **sc-hooks** _(optional)_: Session management, tool monitoring, and notification hooks
+- **sc-output-styles** _(optional)_: 8 curated output styles (personality-driven: Linus, Austen, Starfleet; structured: HTML, JSON, Markdown, Semantic Markdown, YAML)
 - **sc-extras** _(optional)_: 7 advanced utility commands for debugging, GitHub workflows, git worktrees, task validation, command creation, feature discovery, and pre-commit setup
 
-### Option 2: Full Installation (Plugins + Auxiliary Components)
+### Option 2: Clone and Install with Ruby Script
 
-Clone the repository and run the interactive installer to also get output styles, status lines, and settings template:
+Clone the repository and run the interactive installer for additional components like status lines:
 
 ```bash
 # Clone the repository
@@ -51,14 +56,15 @@ cd SimpleClaude
 # Preview what will be installed
 ./scripts/install.rb --dry-run
 
-# Run interactive installer (installs plugins + status-lines + output-styles)
+# Run interactive installer (installs plugins + status-lines)
 ./scripts/install.rb
 ```
 
-**Additional components:**
-- Output styles for custom response formatting
+**Additional components via script:**
 - Status line for session information display
 - Settings template _(manual configuration required)_
+
+**Note:** Output styles are now installed via the `sc-output-styles` plugin (Option 1 above).
 
 ## Updating
 
@@ -74,8 +80,9 @@ claude plugin marketplace update simpleclaude
 
 # Update installed plugins
 claude plugin install simpleclaude@simpleclaude
-claude plugin install sc-hooks@simpleclaude     # if installed
-claude plugin install sc-extras@simpleclaude    # if installed
+claude plugin install sc-hooks@simpleclaude         # if installed
+claude plugin install sc-output-styles@simpleclaude # if installed
+claude plugin install sc-extras@simpleclaude        # if installed
 
 # Update auxiliary components (optional)
 ./scripts/install.rb
@@ -145,13 +152,11 @@ This lightweight approach replaces previous heavyweight framework systems with f
 
 ```
 SimpleClaude/
-├── simple-claude/
-│   ├── commands/simpleclaude/    # 4+1 intent-based commands
-│   ├── commands/extras/          # Optional experimental commands
-│   ├── agents/                   # Lightweight agent definitions
-│   ├── hooks/                    # Claude Code hook system
-│   ├── output-styles/            # Custom output formatting styles
-│   └── settings.example.json     # Example settings configuration
+├── plugins/
+│   ├── simpleclaude/             # Core plugin: 4+1 commands & 6 agents
+│   ├── sc-hooks/                 # Hooks plugin: session management & notifications
+│   ├── sc-output-styles/         # Output styles plugin: 8 curated styles
+│   └── sc-extras/                # Extras plugin: 7 utility commands
 ├── scripts/
 │   └── install.rb                # Installation/update script
 ├── docs/                         # Documentation

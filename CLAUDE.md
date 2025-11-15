@@ -22,7 +22,7 @@ This file provides guidance to [Claude Code](https://github.com/anthropics/claud
 
 ## Versioning
 
-- Current version: 2.1.0
+- Current version: 2.2.0
 - Follow [SemVer](https://semver.org/): fix = patch, feat = minor, breaking = major
 - **Assess each commit: does it warrant a release?** Bug fixes and new features should trigger releases
 - Release process:

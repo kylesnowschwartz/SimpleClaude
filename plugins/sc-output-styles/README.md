@@ -33,8 +33,9 @@ Curated output styles for Claude Code that modify how Claude communicates and fo
 
 ## Important Notes
 
-- Output styles replace Claude's default software engineering instructions
-- Unlike CLAUDE.md (which supplements), these completely redefine the communication style
+- All SimpleClaude output styles have `keep-coding-instructions: true`, preserving Claude Code's full software engineering capabilities
+- Output styles modify communication style while maintaining coding, testing, and development features
+- Unlike CLAUDE.md (which supplements), output styles redefine how Claude communicates but keep technical capabilities intact
 - Use personality styles for different work contexts (direct debugging, learning, formal documentation)
 - Use structured styles when integrating Claude's output with other tools
 
@@ -44,6 +45,7 @@ All styles are standard markdown files with frontmatter. Check the `output-style
 
 Frontmatter fields:
 - `description`: Brief explanation of the style's purpose
+- `keep-coding-instructions`: Set to `true` to retain coding capabilities (recommended for all SimpleClaude styles)
 
 ## License
 
