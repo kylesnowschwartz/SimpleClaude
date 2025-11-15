@@ -73,6 +73,26 @@
         "validation",
         "claude-code"
       ]
+    },
+    {
+      "name": "sc-output-styles",
+      "description": "Curated output styles for Claude Code: personality-driven (Linus, Austen, Starfleet) and structured formats (YAML, HTML, Markdown)",
+      "version": "2.1.0",
+      "author": {
+        "name": "Kyle Snow Schwartz"
+      },
+      "source": "./plugins/sc-output-styles",
+      "homepage": "https://github.com/kylesnowschwartz/SimpleClaude",
+      "repository": "https://github.com/kylesnowschwartz/SimpleClaude",
+      "license": "MIT",
+      "category": "productivity",
+      "keywords": [
+        "output-styles",
+        "personality",
+        "formatting",
+        "structured-output",
+        "claude-code"
+      ]
     }
   ]
 }
