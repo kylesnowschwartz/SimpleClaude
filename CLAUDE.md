@@ -4,8 +4,9 @@ This file provides guidance to [Claude Code](https://github.com/anthropics/claud
 
 ## Critical Rules
 
-- **important** `simple-claude/` is the source directory for SimpleClaude's commands and agents
+- **important** `plugins/` contains all SimpleClaude plugins (simpleclaude, sc-hooks, sc-output-styles, sc-extras)
 - Command changes: update commands consistently across all 4+1 core-commands (sc-plan, sc-work, sc-explore, sc-review, sc-workflow)
+- Plugin structure: Each plugin in `plugins/` has `.claude-plugin/plugin.json`, plus optional `commands/`, `agents/`, `hooks/`, `output-styles/` directories
 
 ## Build Commands
 
@@ -14,11 +15,15 @@ This file provides guidance to [Claude Code](https://github.com/anthropics/claud
 
 ## Architecture
 
-- SimpleClaude: 4+1 intent-based commands that understand user goals and orchestrate intelligent workflows
-- **Lightweight agent architecture**: Commands spawn focused agents via `Task()` calls for token-efficient execution
-- **5 lightweight agents**: Each handles specific responsibilities (context analysis, documentation retrieval, testing, research)
+SimpleClaude consists of 4 plugins:
+- **simpleclaude**: Core framework with 4+1 intent-based commands and 6 specialized agents
+- **sc-hooks**: Session management, tool monitoring, and notification system
+- **sc-output-styles**: 8 curated output styles (personality-driven + structured formats)
+- **sc-extras**: 7 utility commands for advanced workflows
+
+**Lightweight agent architecture**: Commands spawn focused agents via `Task()` calls for token-efficient execution
+- **6 specialized agents**: code-architect, code-explorer, code-reviewer, repo-documentation-expert, test-runner, web-search-researcher
 - Token-efficient through isolated agent contexts and focused task delegation
-- Command template is located at `simple-claude/commands/simpleclaude/TEMPLATE.md`
 
 ## Versioning
 
