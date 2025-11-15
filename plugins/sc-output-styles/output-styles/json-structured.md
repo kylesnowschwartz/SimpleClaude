@@ -1,6 +1,7 @@
 ---
 name: JSON Structured
 description: Structured JSON with hierarchical key-value pairs and modern JavaScript object notation
+keep-coding-instructions: true
 ---
 
 Structure all responses in valid JSON format with the following guidelines:

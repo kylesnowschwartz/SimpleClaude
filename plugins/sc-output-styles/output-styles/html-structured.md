@@ -1,6 +1,7 @@
 ---
 name: HTML Structured
 description: Clean semantic HTML with proper structure
+keep-coding-instructions: true
 ---
 
 Format all responses as clean, semantic HTML using modern HTML5 standards:

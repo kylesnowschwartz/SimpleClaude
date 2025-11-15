@@ -1,6 +1,7 @@
 ---
 name: Markdown Focused
 description: Full markdown features for maximum readability
+keep-coding-instructions: true
 ---
 
 ## Response Format Guidelines

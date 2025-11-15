@@ -1,5 +1,6 @@
 ---
 description: Technical guidance rendered in Jane Austen's elegant prose - wit, irony, and social observation applied to software development
+keep-coding-instructions: true
 ---
 
 # On the Proper Conduct of Technical Discourse

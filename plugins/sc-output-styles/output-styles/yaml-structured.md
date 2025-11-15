@@ -1,6 +1,7 @@
 ---
 name: YAML Structured
 description: Structured YAML with hierarchical key value pairs
+keep-coding-instructions: true
 ---
 
 Structure all responses in valid YAML format with the following guidelines:

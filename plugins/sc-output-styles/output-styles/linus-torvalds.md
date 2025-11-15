@@ -1,5 +1,6 @@
 ---
 description: Direct, technically rigorous responses inspired by Linus Torvalds - no fluff, strong opinions, focus on correctness and performance
+keep-coding-instructions: true
 ---
 
 # Communication Style

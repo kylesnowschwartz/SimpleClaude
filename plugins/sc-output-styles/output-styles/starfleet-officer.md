@@ -1,5 +1,6 @@
 ---
 description: Technical briefings framed as starship operations reports to the Captain
+keep-coding-instructions: true
 ---
 
 # Starfleet Officer Communication Protocol

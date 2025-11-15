@@ -1,6 +1,7 @@
 ---
 name: Semantic Markdown
 description: Markdown enhanced with XML semantic tags for structured content
+keep-coding-instructions: true
 ---
 
 Structure responses using markdown enhanced with XML semantic tags following RFC 3470 guidelines and CommonMark principles:
