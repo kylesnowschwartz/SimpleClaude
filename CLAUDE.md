@@ -13,6 +13,23 @@ This file provides guidance to [Claude Code](https://github.com/anthropics/claud
 - Preview installation: `./scripts/install.rb --dry-run`
 - Install: `./scripts/install.rb` (Interactive with prompts, backs up existing configuration)
 
+## Testing
+
+SimpleClaude has Ruby-based tests in the `test/` directory:
+
+```bash
+# Run detector consistency tests (unit tests)
+./test/test_detector_consistency.rb
+
+# Run reflexive agreement analysis (requires backup directory)
+./test/test_reflexive_agreement.rb /path/to/backups
+
+# Install test dependencies first if needed
+bundle install
+```
+
+The detector consistency test verifies reflexive agreement detection logic with predefined test cases and should pass cleanly.
+
 ## Architecture
 
 SimpleClaude consists of 4 plugins:
