@@ -134,20 +134,6 @@ Each command automatically spawns appropriate agents:
 
 This lightweight approach replaces previous heavyweight framework systems with focused, token-efficient specialized agents.
 
-## Documentation
-
-- [Project Vision](docs/VISION.md) - Philosophy, features, and architecture
-- [Command Creation Guide](docs/AI_SLASH_COMMAND_CREATION_GUIDE.md) - How to create new slash commands
-- [Hooks Usage Guide](docs/HOOKS_GUIDE.md) - How to create new slash commands
-
-## Development
-
-### Development Workflow
-
-1. **Make changes** to `simple-claude/commands/` or `simple-claude/agents/`
-2. **Test commands** in real projects
-3. **Update documentation** if needed
-
 ### Project Structure
 
 ```
@@ -166,11 +152,3 @@ SimpleClaude/
 ## Acknowledgments
 
 SimpleClaude was inspired by [SuperClaude](https://github.com/NomenAK/SuperClaude) which demonstrated effective patterns for natural language command interfaces. SimpleClaude builds on concepts pioneered by the SuperClaude project and I thank NomenAK for putting in the hard yards with SuperClaude - an awesome project with powerful features.
-
-## Contributing
-
-SimpleClaude follows a user-driven development approach:
-
-1. Test the commands in real projects
-2. Report issues with specific use cases
-3. Suggest improvements based on actual needs
