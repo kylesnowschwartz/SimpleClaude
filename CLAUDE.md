@@ -57,6 +57,24 @@ SimpleClaude consists of 4 plugins:
   7. Tag: `git tag vX.X.X`
   8. Push: `git push && git push --tags`
 
+## Vendored Dependencies
+
+The `claude_hooks` gem is vendored into `plugins/sc-hooks/vendor/claude_hooks/` - no gem installation required for end users.
+
+### Updating vendored claude_hooks
+
+```bash
+./scripts/vendor-claude-hooks.sh
+```
+
+This fetches the latest from the fork, strips dev files, and updates the vendor directory. Commit the changes afterward.
+
+### Check for updates without applying
+
+```bash
+./scripts/vendor-claude-hooks.sh --check
+```
+
 ## Development Workflow
 
 - Commits: use conventional format (feat:, fix:, docs:, refactor:)

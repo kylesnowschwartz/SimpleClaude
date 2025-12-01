@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-require 'claude_hooks'
+require_relative '../../vendor/claude_hooks/lib/claude_hooks'
 
 # Basic Notification Handler
 #
