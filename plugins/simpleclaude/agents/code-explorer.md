@@ -1,6 +1,37 @@
 ---
 name: code-explorer
-description: Deeply analyzes existing codebase features by tracing execution paths, mapping architecture layers, understanding patterns and abstractions, and documenting dependencies to inform new development
+description: |
+  Use this agent when the user needs to understand how existing code works before making changes. Examples:
+
+  <example>
+  Context: User needs to modify a feature but doesn't understand its implementation.
+  user: "How does the payment processing work in this codebase?"
+  assistant: "I'll use the code-explorer to trace the payment flow from entry point through all processing layers."
+  <commentary>
+  Payment processing typically spans multiple files and layers. User needs the full picture
+  before touching anything - this is exploration, not architecture design.
+  </commentary>
+  </example>
+
+  <example>
+  Context: User encountered unexpected behavior and wants to understand why.
+  user: "Where does the session timeout get configured and enforced?"
+  assistant: "Let me use the code-explorer to trace session handling through the codebase and find all the relevant configuration points."
+  <commentary>
+  Session management is often scattered across middleware, config, and auth code. User needs
+  to understand the current implementation before making changes.
+  </commentary>
+  </example>
+
+  <example>
+  Context: User is onboarding to an unfamiliar codebase.
+  user: "Walk me through how API requests are handled in this app"
+  assistant: "I'll use the code-explorer to map the request lifecycle from routing through controllers to response."
+  <commentary>
+  Understanding request flow is foundational for working in any web app. Agent will trace
+  the actual code paths rather than guessing from conventions.
+  </commentary>
+  </example>
 tools: Glob, Grep, LS, Read, NotebookRead, WebFetch, TodoWrite, WebSearch, KillShell, BashOutput
 model: sonnet
 color: yellow
