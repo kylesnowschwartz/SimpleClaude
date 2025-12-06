@@ -154,7 +154,6 @@ module SimpleClaude
         code-reviewer.md
         context-analyzer.md
         repo-documentation-expert.md
-        repo-documentation-finder.md
         test-runner.md
         web-search-researcher.md
       ].map { |f| File.join(@target_dir, 'agents', f) }
