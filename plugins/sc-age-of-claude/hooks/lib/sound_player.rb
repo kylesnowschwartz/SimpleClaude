@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'rbconfig'
+require_relative '../../../lib/sound_config'
 
 # SoundPlayer Module for Age of Claude
 #
@@ -11,7 +12,10 @@ require 'rbconfig'
 #   SoundPlayer.play('dialogue_yes.wav')
 #   SoundPlayer.play_random(['sound1.wav', 'sound2.wav'])
 #
-# Disable via environment:
+# Sound mode controlled by:
+#   ~/.config/claude/sounds.conf (SOUND_MODE=aoe to enable)
+#
+# Override via environment:
 #   CLAUDE_DISABLE_SOUNDS=1
 #   SIMPLE_CLAUDE_DISABLE_SOUNDS=1
 
@@ -47,9 +51,14 @@ module SoundPlayer
 
     private
 
-    # Check if sounds are disabled via environment
+    # Check if sounds are disabled
+    # AoE sounds only play when SOUND_MODE=aoe, unless overridden by env vars
     def sounds_disabled?
-      ENV['CLAUDE_DISABLE_SOUNDS'] || ENV.fetch('SIMPLE_CLAUDE_DISABLE_SOUNDS', nil)
+      # Env vars take precedence
+      return true if ENV['CLAUDE_DISABLE_SOUNDS'] || ENV['SIMPLE_CLAUDE_DISABLE_SOUNDS']
+
+      # Only play when sound mode is 'aoe'
+      !SoundConfig.aoe?
     end
 
     # Resolve sound file path using plugin-relative paths

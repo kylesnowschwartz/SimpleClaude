@@ -2,13 +2,15 @@
 # frozen_string_literal: true
 
 require_relative '../../../vendor/claude_hooks/lib/claude_hooks'
+require_relative '../../../lib/sound_config'
 
 # Notification Handler
 #
 # PURPOSE: Handle Claude Code notifications (permission requests, idle warnings, MCP input)
 # TRIGGERS: permission_prompt, elicitation_dialog, idle_prompt (filtered via hooks.json matcher)
 # DISABLE: Set SIMPLE_CLAUDE_DISABLE_NOTIFICATIONS=1 to skip notifications entirely
-# SOUND:   Set SIMPLE_CLAUDE_DISABLE_NOTIFICATION_SOUND=1 to disable notification sound
+# SOUND:   Controlled by ~/.config/claude/sounds.conf (SOUND_MODE=off|glass|aoe)
+#          Or override with SIMPLE_CLAUDE_DISABLE_NOTIFICATION_SOUND=1
 
 class NotificationHandler < ClaudeHooks::Notification
   def call
@@ -43,7 +45,12 @@ class NotificationHandler < ClaudeHooks::Notification
                  'Notification'
                end
 
-    sound_arg = ENV['SIMPLE_CLAUDE_DISABLE_NOTIFICATION_SOUND'] ? '' : ' sound name "glass"'
+    # Sound controlled by SoundConfig (glass mode) or env var override
+    sound_arg = if ENV['SIMPLE_CLAUDE_DISABLE_NOTIFICATION_SOUND'] || !SoundConfig.glass?
+                  ''
+                else
+                  ' sound name "glass"'
+                end
     script = %(display notification "#{escape_quotes(truncate_message(message))}" with title "#{title}" subtitle "#{subtitle}"#{sound_arg})
 
     # Fire and forget - don't block on osascript
