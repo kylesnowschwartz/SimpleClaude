@@ -3,7 +3,7 @@
 
 require 'json'
 require 'fileutils'
-require_relative '../plugins/sc-hooks/hooks/handlers/reflexive_agreement_detector'
+require_relative '../plugins/sc-hooks/hooks/lib/reflexive_agreement_detector'
 
 # Test Harness for Reflexive Agreement Detection
 #
@@ -36,21 +36,19 @@ class ReflexiveAgreementTester
     if sample
       # Sample 100 random files for quick testing
       transcript_files = transcript_files.sample(100)
-      puts "Sampling 100 random transcripts for quick analysis"
+      puts 'Sampling 100 random transcripts for quick analysis'
     elsif limit
       transcript_files = transcript_files.first(limit)
       puts "Limiting analysis to #{limit} transcripts"
     end
 
     puts "Analyzing #{transcript_files.size} transcript files..."
-    puts "-" * 80
+    puts '-' * 80
 
     transcript_files.each_with_index do |file, idx|
       analyze_transcript(file)
 
-      if (idx + 1) % 100 == 0
-        puts "Processed #{idx + 1}/#{transcript_files.size} files..."
-      end
+      puts "Processed #{idx + 1}/#{transcript_files.size} files..." if ((idx + 1) % 100).zero?
     end
 
     print_results
@@ -59,7 +57,7 @@ class ReflexiveAgreementTester
   private
 
   def find_transcript_files
-    Dir.glob(File.join(@backup_dir, '**', '*.jsonl')).sort
+    Dir.glob(File.join(@backup_dir, '**', '*.jsonl'))
   end
 
   def analyze_transcript(file)
@@ -75,7 +73,7 @@ class ReflexiveAgreementTester
         next
       end
     end
-  rescue => e
+  rescue StandardError => e
     puts "Error reading #{file}: #{e.message}"
   end
 
@@ -128,7 +126,7 @@ class ReflexiveAgreementTester
     # Save ALL examples for review
     @results[:examples][category] << {
       first_sentence: first_sentence,
-      full_text: full_text[0, 500],  # Show more context (500 chars)
+      full_text: full_text[0, 500], # Show more context (500 chars)
       file: File.basename(file),
       reason: reason
     }
@@ -136,18 +134,18 @@ class ReflexiveAgreementTester
 
   def print_results
     puts "\n"
-    puts "=" * 80
-    puts "REFLEXIVE AGREEMENT DETECTION TEST RESULTS"
-    puts "=" * 80
+    puts '=' * 80
+    puts 'REFLEXIVE AGREEMENT DETECTION TEST RESULTS'
+    puts '=' * 80
     puts
 
     puts "Total assistant messages analyzed: #{@results[:total_messages]}"
     puts "Messages with agreement pattern in first sentence: #{@results[:total_with_agreement_pattern]}"
     puts
 
-    if @results[:total_with_agreement_pattern] > 0
-      puts "BREAKDOWN OF AGREEMENT MESSAGES:"
-      puts "-" * 80
+    if @results[:total_with_agreement_pattern].positive?
+      puts 'BREAKDOWN OF AGREEMENT MESSAGES:'
+      puts '-' * 80
 
       trigger_pct = (@results[:would_trigger].to_f / @results[:total_with_agreement_pattern] * 100).round(1)
       tool_pct = (@results[:skipped_tool_use].to_f / @results[:total_with_agreement_pattern] * 100).round(1)
@@ -169,23 +167,23 @@ class ReflexiveAgreementTester
   end
 
   def print_examples
-    puts "=" * 80
-    puts "ALL EXAMPLES (for review)"
-    puts "=" * 80
+    puts '=' * 80
+    puts 'ALL EXAMPLES (for review)'
+    puts '=' * 80
 
     # Print each category with ALL examples
-    [:would_trigger, :skipped_tool_use, :skipped_pivot, :skipped_substantive].each do |category|
+    %i[would_trigger skipped_tool_use skipped_pivot skipped_substantive].each do |category|
       examples = @results[:examples][category]
       next if examples.empty?
 
       puts
       puts "#{category.to_s.upcase.gsub('_', ' ')} (#{examples.size} total)"
-      puts "-" * 80
+      puts '-' * 80
 
       examples.each_with_index do |ex, idx|
         puts
         puts "#{idx + 1}. #{ex[:first_sentence]}"
-        puts "   #{ex[:full_text]}#{ex[:full_text].length >= 500 ? '...' : ''}"
+        puts "   #{ex[:full_text]}#{'...' if ex[:full_text].length >= 500}"
         puts "   [#{ex[:file]}]"
         puts
       end
@@ -199,11 +197,11 @@ if __FILE__ == $PROGRAM_NAME
 
   unless Dir.exist?(backup_dir)
     puts "Error: Directory not found: #{backup_dir}"
-    puts "Usage: #{$0} [backup_directory]"
+    puts "Usage: #{$PROGRAM_NAME} [backup_directory]"
     exit 1
   end
 
-  puts "Reflexive Agreement Detection Test Harness"
+  puts 'Reflexive Agreement Detection Test Harness'
   puts "Backup directory: #{backup_dir}"
   puts
 

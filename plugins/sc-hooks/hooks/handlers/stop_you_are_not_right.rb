@@ -3,7 +3,7 @@
 
 require_relative '../../vendor/claude_hooks/lib/claude_hooks'
 require 'json'
-require_relative 'reflexive_agreement_detector'
+require_relative '../lib/reflexive_agreement_detector'
 
 # Stop Hook for Real-Time Reflexive Agreement Correction
 #
@@ -55,7 +55,7 @@ class StopYouAreNotRight < ClaudeHooks::Stop
       first_sentence = extract_first_sentence(text)
       log "Reflexive agreement detected: '#{first_sentence}'"
     else
-      log "Not reflexive agreement"
+      log 'Not reflexive agreement'
     end
 
     is_reflexive

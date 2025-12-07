@@ -4,7 +4,7 @@
 require_relative '../../vendor/claude_hooks/lib/claude_hooks'
 require 'json'
 require 'rbconfig'
-require_relative 'transcript_parser'
+require_relative '../lib/transcript_parser'
 
 # CopyMessageHandler
 #

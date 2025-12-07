@@ -2,7 +2,7 @@
 # frozen_string_literal: true
 
 require 'json'
-require_relative '../plugins/sc-hooks/hooks/handlers/reflexive_agreement_detector'
+require_relative '../plugins/sc-hooks/hooks/lib/reflexive_agreement_detector'
 
 # Simple test to verify the detector works consistently
 class TestDetectorConsistency
