@@ -11,19 +11,25 @@ require_relative '../../../vendor/claude_hooks/lib/claude_hooks'
 require 'json'
 
 require_relative '../handlers/copy_message_handler'
+require_relative '../handlers/trigger_skills_handler'
 
 begin
   # Read input data from Claude Code
   input_data = JSON.parse($stdin.read)
 
-  # Initialize and execute all handlers
+  # Initialize all handlers
   copy_message_handler = CopyMessageHandler.new(input_data)
+  trigger_skills_handler = TriggerSkillsHandler.new(input_data)
 
   # Execute handlers
   copy_message_handler.call
+  trigger_skills_handler.call
 
-  # Use the single handler's output directly
-  merged_output = copy_message_handler.output
+  # Merge outputs from all handlers
+  merged_output = ClaudeHooks::Output::UserPromptSubmit.merge(
+    copy_message_handler.output,
+    trigger_skills_handler.output
+  )
 
   # Output result and exit with appropriate code
   merged_output.output_and_exit
