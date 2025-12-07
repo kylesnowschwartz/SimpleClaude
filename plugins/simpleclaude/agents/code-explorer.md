@@ -1,8 +1,7 @@
 ---
 name: code-explorer
-description: |
-  Use this agent when the user needs to understand how existing code works before making changes. Examples:
-
+description: >-
+  Use this agent when the user needs to understand how existing code works before making changes.
   <example>
   Context: User needs to modify a feature but doesn't understand its implementation.
   user: "How does the payment processing work in this codebase?"

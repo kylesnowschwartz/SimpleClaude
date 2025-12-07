@@ -1,8 +1,7 @@
 ---
 name: repo-documentation-expert
-description: |
-  Use this agent when the user needs official documentation, API references, or implementation examples from library source repositories. Examples:
-
+description: >-
+  Use this agent when the user needs official documentation, API references, or implementation examples from library source repositories.
   <example>
   Context: User needs to understand a Ruby gem's validation DSL.
   user: "How do I define custom predicates in dry-validation?"

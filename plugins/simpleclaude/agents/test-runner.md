@@ -1,8 +1,7 @@
 ---
 name: test-runner
-description: |
-  Use this agent proactively after code changes to run tests and analyze failures. Examples:
-
+description: >-
+  Use this agent proactively after code changes to run tests and analyze failures.
   <example>
   Context: User has made code changes and tests need verification.
   user: "Run the tests for the user authentication module"
