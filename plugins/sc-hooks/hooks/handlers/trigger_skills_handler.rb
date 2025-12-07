@@ -6,11 +6,6 @@ require_relative '../../../vendor/claude_hooks/lib/claude_hooks'
 # TriggerSkillsHandler
 #
 # PURPOSE: Remind Claude to check <available_skills> for relevant skills
-# TRIGGERS: Every user prompt submission
-#
-# No algorithmic matching - just nudge Claude to leverage its existing
-# knowledge of available skills from the system prompt.
-
 class TriggerSkillsHandler < ClaudeHooks::UserPromptSubmit
   def call
     prompt_text = current_prompt.to_s.strip
@@ -22,7 +17,7 @@ class TriggerSkillsHandler < ClaudeHooks::UserPromptSubmit
 
     reminder = <<~CONTEXT
       Consider: Does this request match any skill in <available_skills>?
-      If a skill would help, invoke it with: skill: "skill-name"
+      If a skill would help, use the Skill tool to invoke it.
     CONTEXT
 
     add_additional_context!(reminder)
