@@ -1,7 +1,7 @@
 ---
 name: web-search-researcher
-description: >-
-  Use this agent when the user needs current information from the web that isn't in your training data.
+description: Use this agent when the user needs current information from the web that isn't in your training data. Examples:
+
   <example>
   Context: User needs information about recent releases or changes.
   user: "What's new in Rails 8?"

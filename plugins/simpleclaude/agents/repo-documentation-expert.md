@@ -1,35 +1,36 @@
 ---
 name: repo-documentation-expert
-description: >-
-  Use this agent when the user needs official documentation, API references, or implementation examples from library source repositories.
-  <example>
-  Context: User needs to understand a Ruby gem's validation DSL.
-  user: "How do I define custom predicates in dry-validation?"
-  assistant: "I'll use the repo-documentation-expert to get the dry-validation documentation and examples."
-  <commentary>
-  The dry-rb ecosystem has extensive docs in their repos. User needs authoritative
-  source, not Stack Overflow guesses.
-  </commentary>
-  </example>
+description: Use this agent when the user needs official documentation, API references, or implementation examples from library source repositories. Examples:
 
-  <example>
-  Context: User is configuring a Neovim plugin.
-  user: "What are the telescope.nvim picker options?"
-  assistant: "Let me find the telescope.nvim repo and check the picker configuration docs."
-  <commentary>
-  Neovim plugin documentation lives in repo README and doc/ directories. Official source prevents outdated information.
-  </commentary>
-  </example>
+    <example>
+    Context: User needs to understand a Ruby gem's validation DSL.
+    user: "How do I define custom predicates in dry-validation?"
+    assistant: "I'll use the repo-documentation-expert to get the dry-validation documentation and examples."
+    <commentary>
+    The dry-rb ecosystem has extensive docs in their repos. User needs authoritative
+    source, not Stack Overflow guesses.
+    </commentary>
+    </example>
 
-  <example>
-  Context: User needs to understand how a Python library implements a feature.
-  user: "How does Rich handle terminal color detection?"
-  assistant: "Let me find the Rich repo and trace the color detection implementation."
-  <commentary>
-  Rich's color handling is non-trivial and not fully documented. Source code
-  examination reveals the actual detection logic and fallback behavior.
-  </commentary>
-  </example>
+    <example>
+    Context: User is configuring a Neovim plugin.
+    user: "What are the telescope.nvim picker options?"
+    assistant: "Let me find the telescope.nvim repo and check the picker configuration docs."
+    <commentary>
+    Neovim plugin documentation lives in repo README and doc/ directories.
+    Official source prevents outdated information.
+    </commentary>
+    </example>
+
+    <example>
+    Context: User needs to understand how a Python library implements a feature.
+    user: "How does Rich handle terminal color detection?"
+    assistant: "Let me find the Rich repo and trace the color detection implementation."
+    <commentary>
+    Rich's color handling is non-trivial and not fully documented. Source code
+    examination reveals the actual detection logic and fallback behavior.
+    </commentary>
+    </example>
 tools: ["Bash", "Read", "Grep", "Glob", "LS", "TodoWrite"]
 model: sonnet
 color: blue

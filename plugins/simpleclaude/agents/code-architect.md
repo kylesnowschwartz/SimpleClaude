@@ -1,7 +1,7 @@
 ---
 name: code-architect
-description: >-
-  Use this agent when the user needs a comprehensive implementation plan before writing code.
+description: Use this agent when the user needs a comprehensive implementation plan before writing code. Examples:
+
   <example>
   Context: User wants to add a significant new feature to an existing codebase.
   user: "I need to add user authentication to this Rails app"

@@ -1,7 +1,7 @@
 ---
 name: code-reviewer
-description: >-
-  Use this agent when code needs review for bugs, security issues, or adherence to project standards.
+description: Use this agent when code needs review for bugs, security issues, or adherence to project standards. Examples:
+
   <example>
   Context: User has finished implementing a feature and wants validation before committing.
   user: "Review my changes before I commit"
