@@ -9,7 +9,7 @@ module ClaudeHooks
     end
 
     def self.input_fields
-      %w[message]
+      %w[message notification_type]
     end
 
     # === INPUT DATA ACCESS ===
@@ -17,6 +17,11 @@ module ClaudeHooks
     def message
       @input_data['message']
     end
-    alias_method :notification_message, :message
+    alias notification_message message
+
+    # Returns the notification type: permission_prompt, idle_prompt, auth_success, elicitation_dialog
+    def notification_type
+      @input_data['notification_type']
+    end
   end
 end

@@ -3,6 +3,7 @@
   "hooks": {
     "Notification": [
       {
+        "matcher": "permission_prompt|elicitation_dialog|idle_prompt",
         "hooks": [
           {
             "type": "command",
