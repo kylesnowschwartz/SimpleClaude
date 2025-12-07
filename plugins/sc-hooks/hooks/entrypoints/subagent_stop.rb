@@ -10,18 +10,11 @@
 require_relative '../../vendor/claude_hooks/lib/claude_hooks'
 require 'json'
 
-# Require all SubagentStop handler classes
 require_relative '../handlers/subagent_stop_handler'
-
-# Add additional handler requires here as needed:
-# require_relative '../handlers/subagent_stop/result_processor'
-# require_relative '../handlers/subagent_stop/performance_tracker'
-# require_relative '../handlers/subagent_stop/cache_manager'
 
 begin
   # Read input data from Claude Code
   input_data = JSON.parse($stdin.read)
-
 
   hook = SubagentStopHandler.new(input_data)
   hook.call

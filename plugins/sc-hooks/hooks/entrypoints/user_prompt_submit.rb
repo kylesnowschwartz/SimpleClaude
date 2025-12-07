@@ -10,15 +10,7 @@
 require_relative '../../vendor/claude_hooks/lib/claude_hooks'
 require 'json'
 
-# Require all UserPromptSubmit handler classes
-# require_relative '../handlers/user_prompt_submit_handler.rb'
 require_relative '../handlers/copy_message_handler'
-
-# Add additional handler requires here as needed:
-# require_relative '../handlers/user_prompt_submit_handler'
-# require_relative '../handlers/user_prompt_submit/append_rules'
-# require_relative '../handlers/user_prompt_submit/log_user_prompt'
-# require_relative '../handlers/user_prompt_submit/validate_content'
 
 begin
   # Read input data from Claude Code

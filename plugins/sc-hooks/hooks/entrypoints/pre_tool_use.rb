@@ -10,18 +10,11 @@
 require_relative '../../vendor/claude_hooks/lib/claude_hooks'
 require 'json'
 
-# Require all PreToolUse handler classes
 require_relative '../handlers/pre_tool_use_handler'
-
-# Add additional handler requires here as needed:
-# require_relative '../handlers/pre_tool_use/security_validator'
-# require_relative '../handlers/pre_tool_use/rate_limiter'
-# require_relative '../handlers/pre_tool_use/audit_logger'
 
 begin
   # Read input data from Claude Code
   input_data = JSON.parse($stdin.read)
-
 
   hook = PreToolUseHandler.new(input_data)
   hook.call

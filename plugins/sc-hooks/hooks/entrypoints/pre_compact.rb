@@ -10,18 +10,11 @@
 require_relative '../../vendor/claude_hooks/lib/claude_hooks'
 require 'json'
 
-# Require all PreCompact handler classes
 require_relative '../handlers/pre_compact_handler'
-
-# Add additional handler requires here as needed:
-# require_relative '../handlers/pre_compact/transcript_backupper'
-# require_relative '../handlers/pre_compact/insight_extractor'
-# require_relative '../handlers/pre_compact/summary_generator'
 
 begin
   # Read input data from Claude Code
   input_data = JSON.parse($stdin.read)
-
 
   hook = PreCompactHandler.new(input_data)
   hook.call
