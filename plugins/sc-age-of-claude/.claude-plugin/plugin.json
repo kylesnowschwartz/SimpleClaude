@@ -3,7 +3,9 @@
   "version": "1.0.0",
   "description": "Age of Empires sound effects for Claude Code events",
   "author": {
-    "name": "Kyle"
+    "name": "Kyle Snow Schwartz"
   },
-  "keywords": ["sounds", "age-of-empires", "notifications"]
+  "homepage": "https://github.com/kylesnowschwartz/SimpleClaude",
+  "repository": "https://github.com/kylesnowschwartz/SimpleClaude",
+  "license": "MIT"
 }
