@@ -16,19 +16,17 @@ Control which plugin handles notification sounds:
 
 Config file: `~/.config/claude/sounds.conf`
 
-## Current State
-
-!`cat ~/.config/claude/sounds.conf 2>/dev/null || echo "SOUND_MODE=glass (default - file not created yet)"`
-
 $ARGUMENTS
 
 ## Instructions
 
-If mode argument provided:
-1. Validate mode is one of: off, glass, aoe
-2. Create ~/.config/claude directory if needed
-3. Write SOUND_MODE={mode} to ~/.config/claude/sounds.conf
-4. Confirm the change took effect
+1. First, read current state: `cat ~/.config/claude/sounds.conf 2>/dev/null || echo "(not set - defaults to glass)"`
+
+2. If mode argument provided:
+   - Validate mode is one of: off, glass, aoe
+   - Create ~/.config/claude directory if needed
+   - Write SOUND_MODE={mode} to ~/.config/claude/sounds.conf
+   - Confirm the change took effect
 
 Example responses:
 - "Sound mode set to `aoe` - Age of Empires sounds enabled"
