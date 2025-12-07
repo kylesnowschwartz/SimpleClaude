@@ -31,6 +31,7 @@ description: |
   examination reveals the actual detection logic and fallback behavior.
   </commentary>
   </example>
+tools: ["Bash", "Read", "Grep", "Glob", "LS", "TodoWrite"]
 model: sonnet
 color: blue
 ---

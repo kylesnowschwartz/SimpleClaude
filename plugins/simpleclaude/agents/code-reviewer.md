@@ -32,7 +32,7 @@ description: |
   report high-confidence violations only.
   </commentary>
   </example>
-tools: Glob, Grep, LS, Read, NotebookRead, WebFetch, TodoWrite, WebSearch, KillShell, BashOutput
+tools: ["Bash", "Read", "Grep", "Glob", "LS", "TodoWrite"]
 model: sonnet
 color: red
 ---

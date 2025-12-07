@@ -32,7 +32,7 @@ description: |
   leaving fix decisions to the main agent.
   </commentary>
   </example>
-tools: Bash, Read, Grep, Glob
+tools: ["Bash", "Read", "Grep", "Glob", "TodoWrite"]
 model: sonnet
 color: yellow
 ---

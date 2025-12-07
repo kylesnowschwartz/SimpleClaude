@@ -32,7 +32,7 @@ description: |
   the actual code paths rather than guessing from conventions.
   </commentary>
   </example>
-tools: Glob, Grep, LS, Read, NotebookRead, WebFetch, TodoWrite, WebSearch, KillShell, BashOutput
+tools: ["Bash", "Read", "Grep", "Glob", "LS", "TodoWrite"]
 model: sonnet
 color: yellow
 ---

@@ -32,6 +32,7 @@ description: |
   and recent discussions to provide current state.
   </commentary>
   </example>
+tools: ["WebSearch", "WebFetch", "TodoWrite"]
 model: sonnet
 color: pink
 ---

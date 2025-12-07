@@ -75,6 +75,72 @@ This fetches the latest from the fork, strips dev files, and updates the vendor 
 ./scripts/vendor-claude-hooks.sh --check
 ```
 
+## Agent Tool Permissions
+
+When defining `tools` in agent frontmatter, follow the principle of least privilege while keeping agents useful.
+
+### Safe Tools (side-effect free)
+
+These tools are safe to grant liberally - they read state but don't modify it:
+
+| Tool | Purpose |
+|------|---------|
+| `Read` | Read file contents |
+| `Grep` | Search file contents |
+| `Glob` | Find files by pattern |
+| `LS` | List directory contents |
+| `NotebookRead` | Read Jupyter notebooks |
+| `TodoWrite` | Track agent progress (helpful for complex tasks) |
+| `WebSearch` | Search the web |
+| `WebFetch` | Fetch web page content |
+| `AskUserQuestion` | Request user input |
+| `BashOutput` | Read background process output |
+| `KillShell` | Terminate background processes |
+
+### Restricted Tools (modify state)
+
+Grant these only when the agent's purpose requires modification:
+
+| Tool | Purpose | Grant when |
+|------|---------|------------|
+| `Write` | Create/overwrite files | Agent generates code/docs |
+| `Edit` | Modify existing files | Agent refactors/fixes code |
+| `NotebookEdit` | Modify Jupyter notebooks | Agent works with notebooks |
+| `Bash` | Execute shell commands | Agent needs rg/fd/semtools/git |
+
+### Special Tools
+
+| Tool | Purpose | Notes |
+|------|---------|-------|
+| `Task` | Spawn sub-agents | Rarely needed in agents |
+| `Skill` | Invoke skills | Rarely needed in agents |
+| `SlashCommand` | Run slash commands | Rarely needed in agents |
+| `ExitPlanMode` | Exit plan mode | Internal use |
+
+### Recommended Sets
+
+```yaml
+# Analysis/Documentation/Research agents
+tools: ["Bash", "Read", "Grep", "Glob", "LS", "TodoWrite", "WebSearch", "WebFetch"]
+
+# Test runner agents
+tools: ["Bash", "Read", "Grep", "Glob", "TodoWrite"]
+
+# Web-only research agents
+tools: ["WebSearch", "WebFetch", "TodoWrite"]
+
+# Generator agents (need to write files)
+tools: ["Bash", "Read", "Write", "Edit", "Grep", "Glob", "LS", "TodoWrite"]
+```
+
+### Format
+
+Use JSON array with quoted strings:
+```yaml
+tools: ["Read", "Grep", "Glob"]  # Correct
+tools: Read, Grep, Glob          # Wrong (parsed as string)
+```
+
 ## Development Workflow
 
 - Commits: use conventional format (feat:, fix:, docs:, refactor:)
