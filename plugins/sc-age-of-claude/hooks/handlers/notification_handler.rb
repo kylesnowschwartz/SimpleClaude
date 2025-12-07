@@ -4,28 +4,32 @@ require_relative '../lib/sound_player'
 
 # Age of Claude Notification Handler
 #
-# Plays notification sounds when Claude needs attention:
-# - Permission requests
-# - Idle for 60+ seconds
-# - MCP tool input required
+# Plays deterministic notification sounds based on notification type:
+# - permission_prompt: wololo (priest converting you to approve)
+# - idle_prompt: "I need food" (Claude is starving for input)
+# - elicitation_dialog: villager select (awaiting your command)
 
 class AgeOfClaudeNotificationHandler < ClaudeHooks::Notification
-  POSSIBLE_SOUNDS = [
-    'dialogue_hey_im_in_your_town.wav',
-    'dialogue_i_need_food.wav',
-    'villager_select4.WAV',
-    'priest_convert_wololo5.WAV'
-  ].freeze
+  # Deterministic mapping: each notification type gets one consistent sound
+  NOTIFICATION_SOUNDS = {
+    'permission_prompt' => 'priest_convert_wololo5.WAV',
+    'idle_prompt' => 'dialogue_i_need_food.wav',
+    'elicitation_dialog' => 'villager_select4.WAV'
+  }.freeze
+
+  DEFAULT_SOUND = 'dialogue_hey_im_in_your_town.wav'
 
   def call
-    log "Age of Claude: Notification - #{message}"
+    type = notification_type || 'unknown'
+    log "Age of Claude: Notification (#{type}) - #{message}"
 
-    success = SoundPlayer.play_random(POSSIBLE_SOUNDS, self)
+    sound = NOTIFICATION_SOUNDS[type] || DEFAULT_SOUND
+    success = SoundPlayer.play(sound, self)
 
     if success
-      log 'Age of Claude: Played notification sound'
+      log "Age of Claude: Played #{sound} for #{type}"
     else
-      log 'Age of Claude: Failed to play notification sound', level: :warn
+      log "Age of Claude: Failed to play #{sound}", level: :warn
     end
 
     output_data

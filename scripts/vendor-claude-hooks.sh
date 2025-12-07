@@ -2,7 +2,7 @@
 # Vendor claude_hooks from GitHub fork
 #
 # This script fetches the claude_hooks library source and vendors it into
-# the sc-hooks plugin. Run this when updating to a new version.
+# plugins/vendor/ for use by all hook-enabled plugins. Run when updating.
 #
 # Usage: ./scripts/vendor-claude-hooks.sh [--check]
 #   --check   Only check if update is available, don't vendor
@@ -11,7 +11,7 @@ set -euo pipefail
 
 REPO_URL="https://github.com/kylesnowschwartz/claude_hooks.git"
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-VENDOR_DIR="$REPO_ROOT/plugins/sc-hooks/vendor/claude_hooks"
+VENDOR_DIR="$REPO_ROOT/plugins/vendor/claude_hooks"
 
 check_only=false
 if [[ "${1:-}" == "--check" ]]; then

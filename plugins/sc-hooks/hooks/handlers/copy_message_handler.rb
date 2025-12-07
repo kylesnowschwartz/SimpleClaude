@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-require_relative '../../vendor/claude_hooks/lib/claude_hooks'
+require_relative '../../../vendor/claude_hooks/lib/claude_hooks'
 require 'json'
 require 'rbconfig'
 require_relative '../lib/transcript_parser'

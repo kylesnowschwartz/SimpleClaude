@@ -4,9 +4,9 @@
 # Age of Claude - SessionEnd entrypoint
 # Plays farewell sounds when Claude session ends
 
-# Add sc-hooks vendor to load path for claude_hooks gem
-sc_hooks_vendor = File.expand_path('../../../../sc-hooks/vendor/claude_hooks/lib', __dir__)
-$LOAD_PATH.unshift(sc_hooks_vendor) unless $LOAD_PATH.include?(sc_hooks_vendor)
+# Add shared vendor to load path for claude_hooks gem
+vendor_path = File.expand_path('../../../vendor/claude_hooks/lib', __dir__)
+$LOAD_PATH.unshift(vendor_path) unless $LOAD_PATH.include?(vendor_path)
 
 require 'claude_hooks'
 require 'json'
