@@ -31,7 +31,7 @@ description: Use this agent when code needs review for bugs, security issues, or
   report high-confidence violations only.
   </commentary>
   </example>
-tools: ["Bash", "Read", "Grep", "Glob", "LS", "TodoWrite"]
+tools: Bash, Read, Grep, Glob, LS, TodoWrite
 color: red
 ---
 

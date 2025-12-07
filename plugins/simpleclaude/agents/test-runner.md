@@ -31,7 +31,7 @@ description: Use this agent proactively after code changes to run tests and anal
   leaving fix decisions to the main agent.
   </commentary>
   </example>
-tools: ["Bash", "Read", "Grep", "Glob", "TodoWrite"]
+tools: Bash, Read, Grep, Glob, TodoWrite
 color: yellow
 ---
 

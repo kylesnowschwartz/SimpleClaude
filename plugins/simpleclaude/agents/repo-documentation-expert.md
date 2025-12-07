@@ -31,7 +31,7 @@ description: Use this agent when the user needs official documentation, API refe
     examination reveals the actual detection logic and fallback behavior.
     </commentary>
     </example>
-tools: ["Bash", "Read", "Grep", "Glob", "LS", "TodoWrite"]
+tools: Bash, Read, Grep, Glob, LS, TodoWrite, WebSearch, WebFetch
 color: blue
 ---
 

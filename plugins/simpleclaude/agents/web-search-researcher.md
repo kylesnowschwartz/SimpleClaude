@@ -31,7 +31,7 @@ description: Use this agent when the user needs current information from the web
   and recent discussions to provide current state.
   </commentary>
   </example>
-tools: ["WebSearch", "WebFetch", "TodoWrite"]
+tools: WebSearch, WebFetch, TodoWrite
 color: pink
 ---
 

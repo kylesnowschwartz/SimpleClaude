@@ -31,7 +31,7 @@ description: Use this agent when the user needs a comprehensive implementation p
   This is architecture work, not code exploration.
   </commentary>
   </example>
-tools: ["Bash", "Read", "Grep", "Glob", "LS", "TodoWrite"]
+tools: Bash, Read, Grep, Glob, LS, TodoWrite
 color: green
 ---
 

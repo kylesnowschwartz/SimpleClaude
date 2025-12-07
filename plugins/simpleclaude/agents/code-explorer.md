@@ -31,7 +31,7 @@ description: Use this agent when the user needs to understand how existing code 
   the actual code paths rather than guessing from conventions.
   </commentary>
   </example>
-tools: ["Bash", "Read", "Grep", "Glob", "LS", "TodoWrite"]
+tools: Bash, Read, Grep, Glob, LS, TodoWrite
 color: yellow
 ---
 

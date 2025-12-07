@@ -122,24 +122,16 @@ Grant these only when the agent's purpose requires modification:
 
 ```yaml
 # Analysis/Documentation/Research agents
-tools: ["Bash", "Read", "Grep", "Glob", "LS", "TodoWrite", "WebSearch", "WebFetch"]
+tools: Bash, Read, Grep, Glob, LS, TodoWrite, WebSearch, WebFetch
 
 # Test runner agents
-tools: ["Bash", "Read", "Grep", "Glob", "TodoWrite"]
+tools: Bash, Read, Grep, Glob, TodoWrite
 
 # Web-only research agents
-tools: ["WebSearch", "WebFetch", "TodoWrite"]
+tools: WebSearch, WebFetch, TodoWrite
 
 # Generator agents (need to write files)
-tools: ["Bash", "Read", "Write", "Edit", "Grep", "Glob", "LS", "TodoWrite"]
-```
-
-### Format
-
-Use JSON array with quoted strings:
-```yaml
-tools: ["Read", "Grep", "Glob"]  # Correct
-tools: Read, Grep, Glob          # Wrong (parsed as string)
+tools: Bash, Read, Write, Edit, Grep, Glob, LS, TodoWrite
 ```
 
 ## Development Workflow
