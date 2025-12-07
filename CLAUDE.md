@@ -4,7 +4,7 @@ This file provides guidance to [Claude Code](https://github.com/anthropics/claud
 
 ## Critical Rules
 
-- **important** `plugins/` contains all SimpleClaude plugins (simpleclaude, sc-hooks, sc-output-styles, sc-extras)
+- **important** `plugins/` contains all SimpleClaude plugins (simpleclaude, sc-hooks, sc-output-styles, sc-extras, sc-age-of-claude)
 - Command changes: update commands consistently across all 4+1 core-commands (sc-plan, sc-work, sc-explore, sc-review, sc-workflow)
 - Plugin structure: Each plugin in `plugins/` has `.claude-plugin/plugin.json`, plus optional `commands/`, `agents/`, `hooks/`, `output-styles/` directories
 
@@ -32,11 +32,12 @@ The detector consistency test verifies reflexive agreement detection logic with 
 
 ## Architecture
 
-SimpleClaude consists of 4 plugins:
+SimpleClaude consists of 5 plugins:
 - **simpleclaude**: Core framework with 4+1 intent-based commands and 6 specialized agents
 - **sc-hooks**: Session management, tool monitoring, and notification system
 - **sc-output-styles**: 8 curated output styles (personality-driven + structured formats)
 - **sc-extras**: 7 utility commands for advanced workflows
+- **sc-age-of-claude**: Age of Empires sound effects for Claude Code events
 
 **Lightweight agent architecture**: Commands spawn focused agents via `Task()` calls for token-efficient execution
 - **6 specialized agents**: code-architect, code-explorer, code-reviewer, repo-documentation-expert, test-runner, web-search-researcher
@@ -44,7 +45,7 @@ SimpleClaude consists of 4 plugins:
 
 ## Versioning
 
-- Current version: 2.4.0
+- Current version: 2.5.0
 - Follow [SemVer](https://semver.org/): fix = patch, feat = minor, breaking = major
 - **Assess each commit: does it warrant a release?** Bug fixes and new features should trigger releases
 - Release process:

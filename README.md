@@ -26,6 +26,9 @@ claude plugin install sc-output-styles
 
 # Install extra utilities (optional)
 claude plugin install sc-extras
+
+# Install Age of Empires sounds (optional, fun)
+claude plugin install sc-age-of-claude
 ```
 
 Or from within Claude Code:
@@ -36,6 +39,7 @@ Or from within Claude Code:
 /plugin install sc-hooks
 /plugin install sc-output-styles
 /plugin install sc-extras
+/plugin install sc-age-of-claude
 ```
 
 **What's included:**
@@ -43,6 +47,7 @@ Or from within Claude Code:
 - **sc-hooks** _(optional)_: Session management, tool monitoring, and notification hooks
 - **sc-output-styles** _(optional)_: 8 curated output styles (personality-driven: Linus, Austen, Starfleet; structured: HTML, JSON, Markdown, Semantic Markdown, YAML)
 - **sc-extras** _(optional)_: 7 advanced utility commands for debugging, GitHub workflows, git worktrees, task validation, command creation, feature discovery, and pre-commit setup
+- **sc-age-of-claude** _(optional)_: Age of Empires sound effects for Claude Code events
 
 ### Option 2: Clone and Install with Ruby Script
 
@@ -110,6 +115,8 @@ claude plugin install sc-extras@simpleclaude        # if installed
 /sc-extras:sc-pre-commit-setup
 /sc-extras:sc-validate-task
 /sc-extras:sc-worktrees
+
+/sc-hooks:sc-sounds aoe   # Switch to Age of Empires notification sounds
 ```
 
 ## Architecture
@@ -142,7 +149,9 @@ SimpleClaude/
 │   ├── simpleclaude/             # Core plugin: 4+1 commands & 6 agents
 │   ├── sc-hooks/                 # Hooks plugin: session management & notifications
 │   ├── sc-output-styles/         # Output styles plugin: 8 curated styles
-│   └── sc-extras/                # Extras plugin: 7 utility commands
+│   ├── sc-extras/                # Extras plugin: 7 utility commands
+│   ├── sc-age-of-claude/         # Sound effects plugin: AoE themed audio
+│   └── vendor/                   # Shared vendored dependencies
 ├── scripts/
 │   └── install.rb                # Installation/update script
 ├── docs/                         # Documentation
