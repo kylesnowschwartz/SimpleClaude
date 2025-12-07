@@ -32,7 +32,6 @@ description: Use this agent when the user needs official documentation, API refe
     </commentary>
     </example>
 tools: ["Bash", "Read", "Grep", "Glob", "LS", "TodoWrite"]
-model: sonnet
 color: blue
 ---
 

@@ -32,7 +32,6 @@ description: Use this agent when the user needs a comprehensive implementation p
   </commentary>
   </example>
 tools: ["Bash", "Read", "Grep", "Glob", "LS", "TodoWrite"]
-model: sonnet
 color: green
 ---
 

@@ -32,7 +32,6 @@ description: Use this agent proactively after code changes to run tests and anal
   </commentary>
   </example>
 tools: ["Bash", "Read", "Grep", "Glob", "TodoWrite"]
-model: sonnet
 color: yellow
 ---
 

@@ -32,7 +32,6 @@ description: Use this agent when the user needs to understand how existing code 
   </commentary>
   </example>
 tools: ["Bash", "Read", "Grep", "Glob", "LS", "TodoWrite"]
-model: sonnet
 color: yellow
 ---
 

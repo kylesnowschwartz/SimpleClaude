@@ -32,7 +32,6 @@ description: Use this agent when the user needs current information from the web
   </commentary>
   </example>
 tools: ["WebSearch", "WebFetch", "TodoWrite"]
-model: sonnet
 color: pink
 ---
 

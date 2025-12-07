@@ -32,7 +32,6 @@ description: Use this agent when code needs review for bugs, security issues, or
   </commentary>
   </example>
 tools: ["Bash", "Read", "Grep", "Glob", "LS", "TodoWrite"]
-model: sonnet
 color: red
 ---
 
