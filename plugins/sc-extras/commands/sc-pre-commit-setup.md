@@ -230,7 +230,12 @@ if [ $result -eq 1 ] && [ -n "$original_staged_files" ]; then
 
   # Re-stage only originally staged files (which now include hook modifications)
   echo "$original_staged_files" | while IFS= read -r file; do
-    git add "$file"
+    if [ -f "$file" ]; then
+      git add "$file"
+    else
+      # File was deleted - stage the deletion
+      git rm --cached --ignore-unmatch "$file" 2>/dev/null || true
+    fi
   done
 
   echo "Pre-commit: Auto-formatted files and preserved original staging intent"
