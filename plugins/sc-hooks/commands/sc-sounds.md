@@ -18,7 +18,7 @@ Config file: `~/.config/claude/sounds.conf`
 
 ## Current State
 
-!`mkdir -p ~/.config/claude && test -f ~/.config/claude/sounds.conf || echo "SOUND_MODE=glass" > ~/.config/claude/sounds.conf; cat ~/.config/claude/sounds.conf`
+!`cat ~/.config/claude/sounds.conf 2>/dev/null || echo "SOUND_MODE=glass (default - file not created yet)"`
 
 $ARGUMENTS
 
