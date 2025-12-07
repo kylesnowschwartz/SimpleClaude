@@ -1,0 +1,9 @@
+{
+  "name": "sc-age-of-claude",
+  "version": "1.0.0",
+  "description": "Age of Empires sound effects for Claude Code events",
+  "author": {
+    "name": "Kyle"
+  },
+  "keywords": ["sounds", "age-of-empires", "notifications"]
+}
