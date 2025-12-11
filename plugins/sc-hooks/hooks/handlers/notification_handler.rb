@@ -2,7 +2,7 @@
 # frozen_string_literal: true
 
 require_relative '../../vendor/claude_hooks/lib/claude_hooks'
-require_relative '../../../lib/sound_config'
+require_relative '../../lib/sound_config'
 
 # Notification Handler
 #

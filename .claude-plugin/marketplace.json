@@ -36,7 +36,7 @@
     {
       "name": "sc-hooks",
       "description": "SimpleClaude hooks for session management, tool monitoring, and notifications",
-      "version": "2.4.0",
+      "version": "2.4.1",
       "author": {
         "name": "Kyle Snow Schwartz"
       },
@@ -97,7 +97,7 @@
     {
       "name": "sc-age-of-claude",
       "description": "Age of Empires sound effects for Claude Code events - wololo your way through coding sessions",
-      "version": "1.1.0",
+      "version": "1.1.1",
       "author": {
         "name": "Kyle Snow Schwartz"
       },

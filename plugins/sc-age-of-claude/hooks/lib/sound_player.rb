@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require 'rbconfig'
-require_relative '../../../lib/sound_config'
+require_relative '../../lib/sound_config'
 
 # SoundPlayer Module for Age of Claude
 #
