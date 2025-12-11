@@ -28,6 +28,7 @@ class SessionStartHandler < ClaudeHooks::SessionStart
 
     backup_projects_directory
     acknowledge_current_date
+    acknowledge_available_skills
 
     allow_continue!
     suppress_output!
