@@ -18,10 +18,6 @@ class TriggerSkillsHandler < ClaudeHooks::UserPromptSubmit
     reminder = <<~CONTEXT
       <mandatory_skill_check>
         SKILL CHECK: Scan skill descriptions in <available_skills> for keyword matches against this request. If ANY match, INVOKE the Skill tool BEFORE responding.
-
-        Your first line of response MUST be either:
-        - A Skill tool invocation, OR
-        - "No skill match: Continuing with general-knowledge response."
       </mandatory_skill_check>
     CONTEXT
 
