@@ -7,7 +7,7 @@
 # It reads JSON input from STDIN, executes all configured handlers, merges their outputs,
 # and returns the final result to Claude Code via STDOUT.
 
-require_relative '../../../vendor/claude_hooks/lib/claude_hooks'
+require_relative '../../vendor/claude_hooks/lib/claude_hooks'
 require 'json'
 
 # Require all PostToolUse handler classes

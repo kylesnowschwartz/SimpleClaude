@@ -5,7 +5,7 @@
 # Plays Age of Empires sounds when Claude needs attention
 
 # Add shared vendor to load path for claude_hooks gem
-vendor_path = File.expand_path('../../../vendor/claude_hooks/lib', __dir__)
+vendor_path = File.expand_path('../../vendor/claude_hooks/lib', __dir__)
 $LOAD_PATH.unshift(vendor_path) unless $LOAD_PATH.include?(vendor_path)
 
 require 'claude_hooks'

@@ -2,7 +2,7 @@
 # Vendor claude_hooks from GitHub fork
 #
 # This script fetches the claude_hooks library source and vendors it into
-# plugins/vendor/ for use by all hook-enabled plugins. Run when updating.
+# each hook-enabled plugin's vendor/ directory. Run when updating.
 #
 # Usage: ./scripts/vendor-claude-hooks.sh [--check]
 #   --check   Only check if update is available, don't vendor
@@ -11,17 +11,20 @@ set -euo pipefail
 
 REPO_URL="https://github.com/kylesnowschwartz/claude_hooks.git"
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-VENDOR_DIR="$REPO_ROOT/plugins/vendor/claude_hooks"
+
+# Plugins that need claude_hooks vendored
+HOOK_PLUGINS=("sc-hooks" "sc-age-of-claude")
 
 check_only=false
 if [[ "${1:-}" == "--check" ]]; then
   check_only=true
 fi
 
-# Get current vendored version
+# Get current vendored version (check first plugin)
+first_plugin_vendor="$REPO_ROOT/plugins/${HOOK_PLUGINS[0]}/vendor/claude_hooks"
 current_version="none"
-if [[ -f "$VENDOR_DIR/lib/claude_hooks/version.rb" ]]; then
-  current_version=$(grep -oE "VERSION = '[^']+'" "$VENDOR_DIR/lib/claude_hooks/version.rb" | grep -oE "[0-9]+\.[0-9]+\.[0-9]+")
+if [[ -f "$first_plugin_vendor/lib/claude_hooks/version.rb" ]]; then
+  current_version=$(grep -oE "VERSION = '[^']+'" "$first_plugin_vendor/lib/claude_hooks/version.rb" | grep -oE "[0-9]+\.[0-9]+\.[0-9]+")
 fi
 
 # Get latest version from GitHub
@@ -43,32 +46,36 @@ fi
 echo ""
 echo "Updating claude_hooks..."
 
-# Clean existing vendor
-rm -rf "$VENDOR_DIR"
-mkdir -p "$(dirname "$VENDOR_DIR")"
+# Clone to temp location
+TEMP_DIR=$(mktemp -d)
+trap 'rm -rf "$TEMP_DIR"' EXIT
 
-# Clone fresh (shallow)
-git clone --depth 1 "$REPO_URL" "$VENDOR_DIR"
+git clone --depth 1 "$REPO_URL" "$TEMP_DIR/claude_hooks"
 
-# Remove git metadata - this is now plain source
-rm -rf "$VENDOR_DIR/.git"
+# Remove git metadata and dev files
+rm -rf "$TEMP_DIR/claude_hooks/.git"
+rm -rf "$TEMP_DIR/claude_hooks/.github"
+rm -rf "$TEMP_DIR/claude_hooks/test"
+rm -rf "$TEMP_DIR/claude_hooks/docs"
+rm -rf "$TEMP_DIR/claude_hooks/example_dotclaude"
+rm -f "$TEMP_DIR/claude_hooks/.gitignore"
+rm -f "$TEMP_DIR/claude_hooks/Gemfile"
+rm -f "$TEMP_DIR/claude_hooks/Gemfile.lock"
+rm -f "$TEMP_DIR/claude_hooks/claude_hooks.gemspec"
+rm -f "$TEMP_DIR/claude_hooks/Rakefile"
+rm -f "$TEMP_DIR/claude_hooks/.rubocop.yml"
+rm -f "$TEMP_DIR/claude_hooks/.rspec"
 
-# Remove dev/test files we don't need at runtime
-rm -rf "$VENDOR_DIR/.github"
-rm -rf "$VENDOR_DIR/test"
-rm -rf "$VENDOR_DIR/docs"
-rm -rf "$VENDOR_DIR/example_dotclaude"
-rm -f "$VENDOR_DIR/.gitignore"
-rm -f "$VENDOR_DIR/Gemfile"
-rm -f "$VENDOR_DIR/Gemfile.lock"
-rm -f "$VENDOR_DIR/claude_hooks.gemspec"
-rm -f "$VENDOR_DIR/Rakefile"
-rm -f "$VENDOR_DIR/.rubocop.yml"
-rm -f "$VENDOR_DIR/.rspec"
+# Copy to each hook-enabled plugin
+for plugin in "${HOOK_PLUGINS[@]}"; do
+  vendor_dir="$REPO_ROOT/plugins/$plugin/vendor/claude_hooks"
+  echo "Vendoring into $plugin..."
+  rm -rf "$vendor_dir"
+  mkdir -p "$(dirname "$vendor_dir")"
+  cp -r "$TEMP_DIR/claude_hooks" "$vendor_dir"
+done
 
 # Verify
-new_version=$(grep -oE "VERSION = '[^']+'" "$VENDOR_DIR/lib/claude_hooks/version.rb" | grep -oE "[0-9]+\.[0-9]+\.[0-9]+")
+new_version=$(grep -oE "VERSION = '[^']+'" "$first_plugin_vendor/lib/claude_hooks/version.rb" | grep -oE "[0-9]+\.[0-9]+\.[0-9]+")
 echo ""
-echo "Vendored claude_hooks $new_version"
-echo "Files:"
-find "$VENDOR_DIR" -type f | sed "s|$REPO_ROOT/||" | sort
+echo "Vendored claude_hooks $new_version into ${#HOOK_PLUGINS[@]} plugins"

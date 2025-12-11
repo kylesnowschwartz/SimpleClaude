@@ -60,7 +60,7 @@ SimpleClaude consists of 5 plugins:
 
 ## Vendored Dependencies
 
-The `claude_hooks` gem is vendored into `plugins/vendor/claude_hooks/` - shared by all hook-enabled plugins (sc-hooks, sc-age-of-claude). No gem installation required for end users.
+The `claude_hooks` gem is vendored into each hook-enabled plugin's `vendor/claude_hooks/` directory (sc-hooks, sc-age-of-claude). This duplication is necessary because Claude Code's plugin cache copies each plugin individually, breaking shared sibling directories. No gem installation required for end users.
 
 ### Updating vendored claude_hooks
 
@@ -68,7 +68,7 @@ The `claude_hooks` gem is vendored into `plugins/vendor/claude_hooks/` - shared 
 ./scripts/vendor-claude-hooks.sh
 ```
 
-This fetches the latest from the fork, strips dev files, and updates the vendor directory. Commit the changes afterward.
+This fetches the latest from the fork, strips dev files, and copies to each hook-enabled plugin. Commit the changes afterward.
 
 ### Check for updates without applying
 

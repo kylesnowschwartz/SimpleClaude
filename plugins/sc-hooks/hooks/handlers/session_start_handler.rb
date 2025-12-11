@@ -2,7 +2,7 @@
 # frozen_string_literal: true
 
 require 'date'
-require_relative '../../../vendor/claude_hooks/lib/claude_hooks'
+require_relative '../../vendor/claude_hooks/lib/claude_hooks'
 
 # SessionStart Handler
 #
