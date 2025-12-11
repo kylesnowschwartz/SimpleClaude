@@ -74,6 +74,13 @@ class SessionStartHandler < ClaudeHooks::SessionStart
     context_message = "Current local date and time: #{day_of_week}, #{current_time}"
     add_additional_context!("#{context_message}. Acknowledge the current date and time in your first response.")
   end
+
+  def acknowledge_available_skills
+    reminder = <<~CONTEXT
+      You have specialized skills available. State each of your <available_skills> in a formatted list in your first response.
+    CONTEXT
+    add_additional_context!(reminder)
+  end
 end
 
 # Testing support - run this file directly to test with sample data
