@@ -11,7 +11,7 @@ This directory contains base Ruby classes and entrypoints for all 8 Claude Code 
    # From the SimpleClaude repository root
    ./scripts/install.rb
    ```
-   This installs three plugins: `simpleclaude` (core), `sc-hooks` (session management), and `sc-extras` (utilities).
+   This installs three plugins: `simpleclaude-core` (core), `sc-hooks` (session management), and `sc-extras` (utilities).
 
 2. **Install the claude_hooks gem:**
    ```bash

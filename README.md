@@ -1,6 +1,6 @@
 # SimpleClaude
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) [![Version](https://img.shields.io/badge/version-2.5.0-blue.svg)](https://github.com/kylesnowschwartz/SimpleClaude) [![GitHub issues](https://img.shields.io/github/issues/kylesnowschwartz/SimpleClaude)](https://github.com/kylesnowschwartz/SimpleClaude/issues)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) [![Version](https://img.shields.io/badge/version-3.0.0-blue.svg)](https://github.com/kylesnowschwartz/SimpleClaude) [![GitHub issues](https://img.shields.io/github/issues/kylesnowschwartz/SimpleClaude)](https://github.com/kylesnowschwartz/SimpleClaude/issues)
 
 A practical minimalist AI assistant framework that transforms complex AI interactions into natural conversations. Comes with a set of user-commands, sub-agents, hooks, and utilities designed for real-world software development tasks.
 
@@ -16,7 +16,7 @@ claude plugin marketplace add https://github.com/kylesnowschwartz/SimpleClaude
 
 # Install core framework (required)
 # Installs 4+1 commands and 6 specialized agents
-claude plugin install simpleclaude
+claude plugin install simpleclaude-core
 
 # Install hooks (optional but recommended)
 claude plugin install sc-hooks
@@ -35,7 +35,7 @@ Or from within Claude Code:
 
 ```bash
 /plugin marketplace add https://github.com/kylesnowschwartz/SimpleClaude
-/plugin install simpleclaude
+/plugin install simpleclaude-core
 /plugin install sc-hooks
 /plugin install sc-output-styles
 /plugin install sc-extras
@@ -43,7 +43,7 @@ Or from within Claude Code:
 ```
 
 **What's included:**
-- **simpleclaude**: 4+1 core commands and 6 specialized agents
+- **simpleclaude-core**: 4+1 core commands and 6 specialized agents
 - **sc-hooks** _(optional)_: Session management, tool monitoring, and notification hooks
 - **sc-output-styles** _(optional)_: 8 curated output styles (personality-driven: Linus, Austen, Starfleet; structured: HTML, JSON, Markdown, Semantic Markdown, YAML)
 - **sc-extras** _(optional)_: 7 advanced utility commands for debugging, GitHub workflows, git worktrees, task validation, command creation, feature discovery, and pre-commit setup
@@ -84,7 +84,7 @@ git pull
 claude plugin marketplace update simpleclaude
 
 # Update installed plugins
-claude plugin install simpleclaude@simpleclaude
+claude plugin install simpleclaude-core@simpleclaude
 claude plugin install sc-hooks@simpleclaude         # if installed
 claude plugin install sc-output-styles@simpleclaude # if installed
 claude plugin install sc-extras@simpleclaude        # if installed
@@ -102,11 +102,11 @@ claude plugin install sc-extras@simpleclaude        # if installed
 ## Quick Start
 
 ```bash
-/simpleclaude:sc-plan "How should I add authentication to this app? Use the Code code-explorer and code-architect agents to help plan it out."
-/simpleclaude:sc-work "Add JWT authentication with login/logout. First use the code-architect agent to design the architecture, then implement it."
-/simpleclaude:sc-explore "How does the current database layer work? Use the code-explorer agent to analyze it." 
-/simpleclaude:sc-review "Check security vulnerabilities in auth module. Use the code-reviewer agent to help find issues."
-/simpleclaude:sc-workflow "Start structured development process for adding OAuth support. Use code-explorer, code-architect, and code-reviewer agents as needed."
+/simpleclaude-core:sc-plan "How should I add authentication to this app? Use the Code code-explorer and code-architect agents to help plan it out."
+/simpleclaude-core:sc-work "Add JWT authentication with login/logout. First use the code-architect agent to design the architecture, then implement it."
+/simpleclaude-core:sc-explore "How does the current database layer work? Use the code-explorer agent to analyze it."
+/simpleclaude-core:sc-review "Check security vulnerabilities in auth module. Use the code-reviewer agent to help find issues."
+/simpleclaude-core:sc-workflow "Start structured development process for adding OAuth support. Use code-explorer, code-architect, and code-reviewer agents as needed."
 
 /sc-extras:sc-create-command
 /sc-extras:sc-eastereggs
@@ -146,7 +146,7 @@ This lightweight approach replaces previous heavyweight framework systems with f
 ```
 SimpleClaude/
 ├── plugins/
-│   ├── simpleclaude/             # Core plugin: 4+1 commands & 6 agents
+│   ├── simpleclaude-core/        # Core plugin: 4+1 commands & 6 agents
 │   ├── sc-hooks/                 # Hooks plugin: session management & notifications
 │   ├── sc-output-styles/         # Output styles plugin: 8 curated styles
 │   ├── sc-extras/                # Extras plugin: 7 utility commands
