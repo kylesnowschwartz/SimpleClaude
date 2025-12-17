@@ -27,9 +27,15 @@ class SessionStartHandler < ClaudeHooks::SessionStart
     log "Session starting for project: #{project_name}"
 
     backup_projects_directory
-    acknowledge_current_date
-    acknowledge_available_skills
+    reminder = <<~CONTEXT
+      #{acknowledge_current_date}
 
+      ---
+
+      #{acknowledge_available_skills}
+    CONTEXT
+
+    add_additional_context!(reminder)
     allow_continue!
     suppress_output!
 
@@ -72,15 +78,16 @@ class SessionStartHandler < ClaudeHooks::SessionStart
     day_of_week = Date.today.strftime('%A')
 
     # Use additionalContext for Claude instructions (will be minimally visible)
-    context_message = "Current local date and time: #{day_of_week}, #{current_time}"
-    add_additional_context!("#{context_message}. Acknowledge the current date and time in your first response.")
+    <<~CONTEXT
+      Current local date and time: #{day_of_week}, #{current_time}.
+      Acknowledge the current date and time in your first response.
+    CONTEXT
   end
 
   def acknowledge_available_skills
-    reminder = <<~CONTEXT
+    <<~CONTEXT
       You have specialized skills available. State each of your <available_skills> in a formatted list in your first response.
     CONTEXT
-    add_additional_context!(reminder)
   end
 end
 
