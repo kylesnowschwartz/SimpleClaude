@@ -1,3 +1,8 @@
+---
+description: "Manage Git worktrees for parallel development sessions"
+argument-hint: "[optional] worktree command (list, create, remove, prune)"
+---
+
 # sc-worktrees: Git Worktrees for Parallel Claude Code Sessions
 
 Git worktrees let you work on multiple branches simultaneously in separate directories. Perfect for parallel Claude Code sessions without losing context.

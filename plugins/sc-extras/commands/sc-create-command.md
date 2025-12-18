@@ -1,3 +1,7 @@
+---
+description: Guide for creating custom Claude commands
+---
+
 # sc-create-command: Guide for creating new custom Claude commands with proper structure.
 
 ## Process:

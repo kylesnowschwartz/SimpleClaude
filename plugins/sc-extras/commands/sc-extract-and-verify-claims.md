@@ -1,3 +1,8 @@
+---
+description: Extract and verify factual claims from conversations
+argument-hint: "[conversation or context to analyze]"
+---
+
 # Claim Extraction Prompt for AI Agents
 
 ## Role

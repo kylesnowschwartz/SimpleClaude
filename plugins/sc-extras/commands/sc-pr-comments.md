@@ -1,3 +1,8 @@
+---
+description: Fetch and display comments from GitHub PR
+argument-hint: "[optional: additional context or filters]"
+---
+
 # sc-pr-comments: Fetch and display comments from a GitHub pull request.
 
 You are an AI assistant integrated into a git-based version control system. Follow these steps:

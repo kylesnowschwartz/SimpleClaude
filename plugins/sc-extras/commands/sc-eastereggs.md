@@ -1,3 +1,8 @@
+---
+description: "Discover undocumented features and hidden implementations"
+argument-hint: "[search-query] - optional topic or pattern to search for"
+---
+
 # sc-eastereggs: Discover undocumented features, hidden flags, and clever implementations throughout the codebase
 
 ---

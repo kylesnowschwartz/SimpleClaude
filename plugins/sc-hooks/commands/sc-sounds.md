@@ -1,9 +1,6 @@
 ---
-description: Set sound mode for notifications (off, glass, aoe)
-arguments:
-  - name: mode
-    description: Sound mode - off (silent), glass (macOS default), or aoe (Age of Empires)
-    required: false
+description: Set sound notification mode
+argument-hint: "[mode: off|glass|aoe]"
 allowed-tools: ["Bash", "Read", "Write"]
 ---
 

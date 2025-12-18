@@ -1,3 +1,8 @@
+---
+description: Research, analyze, and explore to build understanding
+argument-hint: Research query or topic to explore
+---
+
 # sc-explore: Research and Understanding Command
 
 **Purpose**: I need to understand something - conducts research, analysis, codebase exploration, and knowledge synthesis to build understanding

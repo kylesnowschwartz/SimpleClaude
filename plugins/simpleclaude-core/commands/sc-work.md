@@ -1,3 +1,8 @@
+---
+description: Build, fix, or modify code - handles all implementation tasks
+argument-hint: Description of what to build, fix, or modify
+---
+
 # sc-work: Universal Implementation Command
 
 **Purpose**: I need to build/fix/modify something - handles all implementation tasks from creating new features to fixing bugs to refactoring code

@@ -1,3 +1,8 @@
+---
+description: Strategic planning and analysis for requirements and roadmaps
+argument-hint: Planning task or requirement to analyze
+---
+
 # sc-plan: Strategic Planning and Analysis
 
 **Purpose**: I need to think through something - analyzes requirements, creates actionable roadmaps, and establishes clear direction for development work

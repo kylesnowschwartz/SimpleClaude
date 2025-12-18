@@ -1,3 +1,8 @@
+---
+description: Systematic root cause analysis using Five Whys method
+argument-hint: Problem statement or issue to analyze
+---
+
 # sc-five-whys: Autonomous Root Cause Analysis Protocol
 
 _A systematic approach to finding root causes in software problems._

@@ -1,3 +1,8 @@
+---
+description: Validate a completed task against its original requirements
+argument-hint: "[task-description] - Description of the task to validate"
+---
+
 # sc-validate-task: Single Task Validation Protocol
 
 _Focused validation of specific completed tasks or todo items._

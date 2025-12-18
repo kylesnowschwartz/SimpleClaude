@@ -1,3 +1,8 @@
+---
+description: Verify code quality, security, performance, and architecture
+argument-hint: Describe what to review (code quality, security, performance, architecture)
+---
+
 # sc-review: Quality Verification and Assessment
 
 **Purpose**: I need to verify quality/security/performance - comprehensive analysis covering code quality, security scanning, performance profiling, and architecture assessment

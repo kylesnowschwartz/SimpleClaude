@@ -1,3 +1,7 @@
+---
+description: Set up pre-commit framework with language-specific hooks
+---
+
 # sc-pre-commit-setup-2: Streamlined Pre-commit Framework Setup
 
 **Purpose**: Set up pre-commit framework with repository-specific hooks and intelligent auto-restaging behavior for seamless development workflow.
