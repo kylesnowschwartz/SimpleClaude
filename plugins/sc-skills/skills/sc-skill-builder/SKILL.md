@@ -1,12 +1,12 @@
 ---
-name: sc-create-agent-skills
-description: Expert guidance for creating, writing, building, and refining Claude Code Skills. Use when working with SKILL.md files, authoring new skills, improving existing skills, or understanding skill structure and best practices.
+name: sc-skill-builder
+description: Guide for creating, auditing, and packaging Claude Code skills. This skill should be used when building new skills, improving existing skills, understanding skill structure, or packaging skills for distribution.
 ---
 
 <essential_principles>
 ## How Skills Work
 
-Skills are modular, filesystem-based capabilities that provide domain expertise on demand. This skill teaches how to create effective skills.
+Skills are modular, filesystem-based capabilities that provide domain expertise on demand.
 
 ### 1. Skills Are Prompts
 
@@ -27,32 +27,36 @@ skill-name/
 ├── workflows/            # Step-by-step procedures (FOLLOW)
 ├── references/           # Domain knowledge (READ)
 ├── templates/            # Output structures (COPY + FILL)
-└── scripts/              # Reusable code (EXECUTE)
+└── scripts/              # Executable code (RUN)
 ```
-
-SKILL.md asks "what do you want to do?" → routes to workflow → workflow specifies which references to read.
-
-**When to use each folder:**
-- **workflows/** - Multi-step procedures Claude follows
-- **references/** - Domain knowledge Claude reads for context
-- **templates/** - Consistent output structures Claude copies and fills (plans, specs, configs)
-- **scripts/** - Executable code Claude runs as-is (deploy, setup, API calls)
 
 ### 4. Pure XML Structure
 
-No markdown headings (#, ##, ###) in skill body. Use semantic XML tags:
-```xml
-<objective>...</objective>
-<process>...</process>
-<success_criteria>...</success_criteria>
-```
-
-Keep markdown formatting within content (bold, lists, code blocks).
+No markdown headings in skill body. Use semantic XML tags (`<objective>`, `<quick_start>`, `<success_criteria>`).
 
 ### 5. Progressive Disclosure
 
-SKILL.md under 500 lines. Split detailed content into reference files. Load only what's needed for the current workflow.
+SKILL.md under 500 lines. Split detailed content into reference files. Load only what's needed.
 </essential_principles>
+
+<quick_start>
+## Tooling
+
+Initialize a new skill:
+```bash
+python scripts/init_skill.py my-skill-name --path /path/to/skills/
+```
+
+Validate a skill:
+```bash
+python scripts/quick_validate.py /path/to/skill-name/
+```
+
+Package for distribution:
+```bash
+python scripts/package_skill.py /path/to/skill-name/
+```
+</quick_start>
 
 <intake>
 What would you like to do?
@@ -61,6 +65,7 @@ What would you like to do?
 2. Audit/modify existing skill
 3. Add component (workflow/reference/template/script)
 4. Get guidance
+5. Package skill for distribution
 
 **Wait for response before proceeding.**
 </intake>
@@ -68,34 +73,26 @@ What would you like to do?
 <routing>
 | Response | Next Action | Workflow |
 |----------|-------------|----------|
-| 1, "create", "new", "build" | Ask: "Task-execution skill or domain expertise skill?" | Route to appropriate create workflow |
-| 2, "audit", "modify", "existing" | Ask: "Path to skill?" | Route to appropriate workflow |
-| 3, "add", "component" | Ask: "Add what? (workflow/reference/template/script)" | workflows/add-{type}.md |
+| 1, "create", "new", "build" | Ask: "Task-execution skill or domain expertise skill?" | Route to create workflow |
+| 2, "audit", "modify", "existing" | Ask: "Path to skill?" | Route to audit/verify workflow |
+| 3, "add", "component" | Ask: "Add what? (workflow/reference)" | workflows/add-{type}.md |
 | 4, "guidance", "help" | General guidance | workflows/get-guidance.md |
+| 5, "package", "distribute" | Run packaging script | See quick_start |
 
 **Progressive disclosure for option 1 (create):**
-- If user selects "Task-execution skill" → workflows/create-new-skill.md
-- If user selects "Domain expertise skill" → workflows/create-domain-expertise-skill.md
+- Task-execution skill → workflows/create-new-skill.md
+- Domain expertise skill → workflows/create-domain-expertise-skill.md
 
-**Progressive disclosure for option 3 (add component):**
-- If user specifies workflow → workflows/add-workflow.md
-- If user specifies reference → workflows/add-reference.md
-- If user specifies template → workflows/add-template.md
-- If user specifies script → workflows/add-script.md
-
-**Intent-based routing (if user provides clear intent without selecting menu):**
+**Intent-based routing:**
 - "audit this skill", "check skill", "review" → workflows/audit-skill.md
 - "verify content", "check if current" → workflows/verify-skill.md
-- "create domain expertise", "exhaustive knowledge base" → workflows/create-domain-expertise-skill.md
-- "create skill for X", "build new skill" → workflows/create-new-skill.md
-- "add workflow", "add reference", etc. → workflows/add-{type}.md
 - "upgrade to router" → workflows/upgrade-to-router.md
 
 **After reading the workflow, follow it exactly.**
 </routing>
 
 <quick_reference>
-## Skill Structure Quick Reference
+## Skill Structure
 
 **Simple skill (single file):**
 ```yaml
@@ -106,7 +103,6 @@ description: What it does and when to use it.
 
 <objective>What this skill does</objective>
 <quick_start>Immediate actionable guidance</quick_start>
-<process>Step-by-step procedure</process>
 <success_criteria>How to know it worked</success_criteria>
 ```
 
@@ -125,13 +121,8 @@ workflows/:
 references/:
   Domain knowledge, patterns, examples
 
-templates/:
-  Output structures Claude copies and fills
-  (plans, specs, configs, documents)
-
 scripts/:
   Executable code Claude runs as-is
-  (deploy, setup, API calls, data processing)
 ```
 </quick_reference>
 
@@ -140,11 +131,14 @@ scripts/:
 
 All in `references/`:
 
-**Structure:** recommended-structure.md, skill-structure.md
-**Principles:** core-principles.md, be-clear-and-direct.md, use-xml-tags.md
-**Patterns:** common-patterns.md, workflows-and-validation.md
-**Assets:** using-templates.md, using-scripts.md
-**Advanced:** executable-code.md, api-security.md, iteration-and-testing.md
+**Structure:** skill-structure.md
+**Principles:** authoring-principles.md
+**XML Tags:** use-xml-tags.md
+**Patterns:** common-patterns.md
+**Scripts:** using-scripts.md
+**Templates:** using-templates.md
+**Validation:** workflows-and-validation.md
+**Security:** api-security.md
 </reference_index>
 
 <workflows_index>
@@ -155,13 +149,11 @@ All in `workflows/`:
 | Workflow | Purpose |
 |----------|---------|
 | create-new-skill.md | Build a skill from scratch |
-| create-domain-expertise-skill.md | Build exhaustive domain knowledge base for build/ |
+| create-domain-expertise-skill.md | Build exhaustive domain knowledge base |
 | audit-skill.md | Analyze skill against best practices |
 | verify-skill.md | Check if content is still accurate |
 | add-workflow.md | Add a workflow to existing skill |
 | add-reference.md | Add a reference to existing skill |
-| add-template.md | Add a template to existing skill |
-| add-script.md | Add a script to existing skill |
 | upgrade-to-router.md | Convert simple skill to router pattern |
 | get-guidance.md | Help decide what kind of skill to build |
 </workflows_index>
@@ -185,8 +177,8 @@ A well-structured skill:
 - Has valid YAML frontmatter
 - Uses pure XML structure (no markdown headings in body)
 - Has essential principles inline in SKILL.md
-- Routes directly to appropriate workflows based on user intent
+- Routes to appropriate workflows based on user intent
 - Keeps SKILL.md under 500 lines
-- Asks minimal clarifying questions only when truly needed
+- Asks minimal clarifying questions
 - Has been tested with real usage
 </success_criteria>

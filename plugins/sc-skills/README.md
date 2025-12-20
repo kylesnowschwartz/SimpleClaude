@@ -12,14 +12,13 @@ Skills and agents for frontend design, plugin development, and PR workflows.
 | `sc-design-iterator` | Iterative design improvement (5x, 10x iterations) |
 | `sc-design-implementation-reviewer` | Review design implementation accuracy |
 
-### Skills (4)
+### Skills (3)
 
 | Skill | Purpose |
 |-------|---------|
 | `sc-frontend-design` | Frontend design patterns and best practices |
 | `sc-gemini-imagegen` | Image generation with Gemini API |
-| `sc-skill-creator` | Guide for creating effective skills |
-| `sc-create-agent-skills` | Agent-assisted skill creation with router pattern |
+| `sc-skill-builder` | Create, audit, and package Claude Code skills |
 
 ### Commands (3)
 
@@ -27,7 +26,7 @@ Skills and agents for frontend design, plugin development, and PR workflows.
 |---------|---------|
 | `/sc-generate-command` | Create new slash commands |
 | `/sc-heal-skill` | Fix broken or outdated skills |
-| `/sc-create-agent-skill` | Create new skills with expert guidance |
+| `/sc-skill-builder` | Create, audit, or package skills with expert guidance |
 
 ## Usage
 
@@ -58,7 +57,13 @@ Generate a logo for 'Acme Corp' using sc-gemini-imagegen
 ### Create Skills
 
 ```
-/sc-create-agent-skill "Rails testing patterns"
+/sc-skill-builder "Rails testing patterns"
+```
+
+Or audit an existing skill:
+
+```
+/sc-skill-builder audit path/to/my-skill
 ```
 
 ## Requirements
