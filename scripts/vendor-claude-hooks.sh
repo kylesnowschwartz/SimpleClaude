@@ -13,7 +13,7 @@ REPO_URL="https://github.com/kylesnowschwartz/claude_hooks.git"
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 
 # Plugins that need claude_hooks vendored
-HOOK_PLUGINS=("sc-hooks" "sc-age-of-claude")
+HOOK_PLUGINS=("sc-hooks")
 
 check_only=false
 if [[ "${1:-}" == "--check" ]]; then

@@ -29,8 +29,7 @@ module SimpleClaude
       { name: 'simpleclaude-core', desc: 'core framework (5 commands + 6 agents)', required: true },
       { name: 'sc-hooks', desc: 'session management and notifications' },
       { name: 'sc-extras', desc: '7 utility commands' },
-      { name: 'sc-output-styles', desc: '8 output style personalities' },
-      { name: 'sc-age-of-claude', desc: 'Age of Empires sound effects' }
+      { name: 'sc-output-styles', desc: '8 output style personalities' }
     ].freeze
 
     COLORS = { green: "\e[32m", yellow: "\e[33m", red: "\e[31m", blue: "\e[34m", reset: "\e[0m" }.freeze

@@ -2,23 +2,20 @@
 
 # SoundConfig Module
 #
-# Shared configuration for notification sounds across SimpleClaude plugins.
-# Both sc-hooks and sc-age-of-claude read this to determine which plugin
-# should play sounds.
+# Configuration for notification sounds in sc-hooks.
 #
 # Config file: ~/.config/claude/sounds.conf
-# Format: SOUND_MODE=off|glass|aoe
+# Format: SOUND_MODE=off|glass
 #
 # Valid modes:
-#   off   - No sounds from any plugin (visual notifications only)
-#   glass - macOS notification sound (sc-hooks default)
-#   aoe   - Age of Empires themed sounds (sc-age-of-claude)
+#   off   - No sounds (visual notifications only)
+#   glass - macOS notification sound (default)
 #
 # Default: glass (maintains backward compatibility)
 
 module SoundConfig
   CONFIG_PATH = File.expand_path('~/.config/claude/sounds.conf')
-  VALID_MODES = %w[off glass aoe].freeze
+  VALID_MODES = %w[off glass].freeze
   DEFAULT_MODE = 'glass'
 
   class << self
@@ -38,11 +35,6 @@ module SoundConfig
     # Check if glass (macOS notification) sounds should play
     def glass?
       mode == 'glass'
-    end
-
-    # Check if Age of Empires sounds should play
-    def aoe?
-      mode == 'aoe'
     end
 
     # Check if all sounds are disabled
