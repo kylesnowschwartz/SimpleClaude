@@ -8,26 +8,26 @@ Skills and agents for frontend design, plugin development, and PR workflows.
 
 | Agent | Purpose |
 |-------|---------|
-| `figma-design-sync` | Sync implementation with Figma designs |
-| `design-iterator` | Iterative design improvement (5x, 10x iterations) |
-| `design-implementation-reviewer` | Review design implementation accuracy |
+| `sc-figma-design-sync` | Sync implementation with Figma designs |
+| `sc-design-iterator` | Iterative design improvement (5x, 10x iterations) |
+| `sc-design-implementation-reviewer` | Review design implementation accuracy |
 
 ### Skills (4)
 
 | Skill | Purpose |
 |-------|---------|
-| `frontend-design` | Frontend design patterns and best practices |
-| `gemini-imagegen` | Image generation with Gemini API |
-| `skill-creator` | Guide for creating effective skills |
-| `create-agent-skills` | Agent-assisted skill creation with router pattern |
+| `sc-frontend-design` | Frontend design patterns and best practices |
+| `sc-gemini-imagegen` | Image generation with Gemini API |
+| `sc-skill-creator` | Guide for creating effective skills |
+| `sc-create-agent-skills` | Agent-assisted skill creation with router pattern |
 
 ### Commands (3)
 
 | Command | Purpose |
 |---------|---------|
-| `/generate_command` | Create new slash commands |
-| `/heal-skill` | Fix broken or outdated skills |
-| `/create-agent-skill` | Create new skills with expert guidance |
+| `/sc-generate-command` | Create new slash commands |
+| `/sc-heal-skill` | Fix broken or outdated skills |
+| `/sc-create-agent-skill` | Create new skills with expert guidance |
 
 ## Usage
 
@@ -52,19 +52,19 @@ Iterate on the hero section 10 times to improve the visual balance
 Generate images with Gemini:
 
 ```
-Generate a logo for 'Acme Corp' using gemini-imagegen
+Generate a logo for 'Acme Corp' using sc-gemini-imagegen
 ```
 
 ### Create Skills
 
 ```
-/create-agent-skill "Rails testing patterns"
+/sc-create-agent-skill "Rails testing patterns"
 ```
 
 ## Requirements
 
 - Node.js (for Playwright MCP)
-- `GEMINI_API_KEY` environment variable (for gemini-imagegen skill)
+- `GEMINI_API_KEY` environment variable (for sc-gemini-imagegen skill)
 
 ## Future
 
