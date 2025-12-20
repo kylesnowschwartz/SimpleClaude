@@ -13,12 +13,12 @@ class TriggerSkillsHandler < ClaudeHooks::UserPromptSubmit
     # Skip if empty or already invoking a skill/command
     return if prompt_text.empty?
     return if prompt_text.match?(/^skill:\s*["']?[\w:-]+/i) # skill: "name" or skill: "plugin:name"
-    return if prompt_text.match?(%r(^/[\w:-]+)) # /command or /plugin:command
+    return if prompt_text.match?(%r{^/[\w:-]+}) # /command or /plugin:command
 
     reminder = <<~CONTEXT
-      <mandatory_skill_check>
-        SKILL CHECK: Scan skill descriptions in <available_skills> for keyword matches against this request. If ANY match, INVOKE the Skill tool BEFORE responding.
-      </mandatory_skill_check>
+      <skill_check>
+        MANDATORY: Check skill names in <verified_skills> for relevant matches to the User request. Invoke matching skills BEFORE responding. Skills enable you to perform your role effectively.
+      </skill_check>
     CONTEXT
 
     add_additional_context!(reminder)

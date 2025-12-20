@@ -1,6 +1,7 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
+require 'English'
 require 'date'
 require_relative '../../vendor/claude_hooks/lib/claude_hooks'
 
@@ -85,9 +86,30 @@ class SessionStartHandler < ClaudeHooks::SessionStart
   end
 
   def acknowledge_available_skills
-    <<~CONTEXT
-      You have specialized skills available. State each of your <available_skills> in a formatted list in your first response.
-    CONTEXT
+    skills = collect_skills
+    if skills.empty?
+      <<~CONTEXT
+        You have specialized skills available. State each of your <available_skills> in a formatted list in your first response.
+      CONTEXT
+    else
+      <<~CONTEXT
+        <verified_skills>
+        #{skills}
+        </verified_skills>
+
+        You have specialized skills available. State each of your <verified_skills> in a formatted list in your first response.
+      CONTEXT
+    end
+  end
+
+  def collect_skills
+    script_path = File.expand_path('../../scripts/collect-skills.sh', __dir__)
+    return '' unless File.exist?(script_path)
+
+    output = `bash "#{script_path}" 2>/dev/null`
+    return '' unless $CHILD_STATUS.success?
+
+    output.strip
   end
 end
 
