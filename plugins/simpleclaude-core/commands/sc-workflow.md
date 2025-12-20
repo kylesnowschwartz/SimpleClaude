@@ -38,7 +38,7 @@ Initial request: $ARGUMENTS
 **Goal**: Understand relevant existing code and patterns at both high and low levels
 
 **Actions**:
-1. Launch 2-3 code-explorer agents in parallel. Each agent should:
+1. Launch 2-3 sc-code-explorer agents in parallel. Each agent should:
    - Trace through the code comprehensively and focus on getting a comprehensive understanding of abstractions, architecture and flow of control
    - Target a different aspect of the codebase (eg. similar features, high level understanding, architectural understanding, user experience, etc)
    - Include a list of 5-10 key files to read
@@ -85,8 +85,8 @@ If the user says "whatever you think is best", provide your recommendation and g
    - Existing dependencies that will be used differently
    - APIs with potential version mismatches or deprecations
 
-2. For each significant external dependency, launch web-search-researcher or
-repo-documentation-expert agents to:
+2. For each significant external dependency, launch sc-web-search-researcher or
+sc-repo-documentation-expert agents to:
    - Get current API documentation and examples
    - Identify constraints, limitations, and patterns
    - Flag breaking changes or deprecations vs. existing codebase usage
@@ -107,7 +107,7 @@ repo-documentation-expert agents to:
 **Goal**: Design multiple implementation approaches with different trade-offs
 
 **Actions**:
-1. Launch 2-3 code-architect agents in parallel with different focuses: minimal changes (smallest change, maximum reuse), clean architecture (maintainability, elegant abstractions), or pragmatic balance (speed + quality)
+1. Launch 2-3 sc-code-architect agents in parallel with different focuses: minimal changes (smallest change, maximum reuse), clean architecture (maintainability, elegant abstractions), or pragmatic balance (speed + quality)
 2. Review all approaches and form your opinion on which fits best for this specific task (consider: small fix vs large feature, urgency, complexity, team context)
 3. Present to user: brief summary of each approach, trade-offs comparison, **your recommendation with reasoning**, concrete implementation differences
 4. **Ask user which approach they prefer**
@@ -135,7 +135,7 @@ repo-documentation-expert agents to:
 **Goal**: Ensure code is simple, DRY, elegant, easy to read, and functionally correct
 
 **Actions**:
-1. Launch 3 code-reviewer agents in parallel with different focuses: simplicity/DRY/elegance, bugs/functional correctness, project conventions/abstractions
+1. Launch 3 sc-code-reviewer agents in parallel with different focuses: simplicity/DRY/elegance, bugs/functional correctness, project conventions/abstractions
 2. Consolidate findings and identify highest severity issues that you recommend fixing
 3. **Present findings to user and ask what they want to do** (fix now, fix later, or proceed as-is)
 4. Address issues based on user decision

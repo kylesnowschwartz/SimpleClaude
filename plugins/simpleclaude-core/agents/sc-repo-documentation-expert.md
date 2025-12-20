@@ -1,5 +1,5 @@
 ---
-name: repo-documentation-expert
+name: sc-repo-documentation-expert
 description: Use this agent when the user needs official documentation, API references, or implementation examples from library source repositories. Examples:
 
     <example>

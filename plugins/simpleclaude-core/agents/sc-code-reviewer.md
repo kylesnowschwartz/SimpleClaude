@@ -1,5 +1,5 @@
 ---
-name: code-reviewer
+name: sc-code-reviewer
 description: Use this agent when code needs review for bugs, security issues, or adherence to project standards. Examples:
 
   <example>

@@ -19,12 +19,12 @@ argument-hint: Planning task or requirement to analyze
 
 **Direct Agent Rules (ALWAYS delegate these):**
 
-- **Documentation lookups** → Use `repository-documentation-expert`
-- **Test execution** → Use `test-runner`
-- **Web searches** → Use `web-search-researcher`
-- **Deep codebase analysis** → Use `code-explorer`
-- **Architecture design** → Use `code-architect`
-- **Code quality review** → Use `code-reviewer`
+- **Documentation lookups** → Use `sc-repo-documentation-expert`
+- **Test execution** → Use `sc-test-runner`
+- **Web searches** → Use `sc-web-search-researcher`
+- **Deep codebase analysis** → Use `sc-code-explorer`
+- **Architecture design** → Use `sc-code-architect`
+- **Code quality review** → Use `sc-code-reviewer`
 
 **Context Preservation:**
 

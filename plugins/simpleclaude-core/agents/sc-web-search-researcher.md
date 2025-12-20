@@ -1,5 +1,5 @@
 ---
-name: web-search-researcher
+name: sc-web-search-researcher
 description: Use this agent when the user needs current information from the web that isn't in your training data. Examples:
 
   <example>

@@ -14,21 +14,21 @@
 
 **Direct Agent Rules (ALWAYS delegate these):**
 
-- **Documentation lookups** → Use `repository-documentation-expert`
-- **Test execution** → Use `test-runner`
-- **Web searches** → Use `web-search-researcher`
-- **Deep codebase analysis** → Use `code-explorer`
-- **Architecture design** → Use `code-architect`
-- **Code quality review** → Use `code-reviewer`
+- **Documentation lookups** → Use `sc-repo-documentation-expert`
+- **Test execution** → Use `sc-test-runner`
+- **Web searches** → Use `sc-web-search-researcher`
+- **Deep codebase analysis** → Use `sc-code-explorer`
+- **Architecture design** → Use `sc-code-architect`
+- **Code quality review** → Use `sc-code-reviewer`
 
 **Available Agents:**
 
-- `code-explorer` - Deeply analyzes existing codebase features by tracing execution paths and mapping architecture
-- `code-architect` - Designs feature architectures by analyzing existing patterns and providing implementation blueprints
-- `code-reviewer` - Reviews code for bugs, security vulnerabilities, and adherence to project conventions
-- `repository-documentation-expert` - Finds documentation from Context7, local repos, and GitHub repositories
-- `test-runner` - Executes tests and analyzes failures
-- `web-search-researcher` - Searches web for current information
+- `sc-code-explorer` - Deeply analyzes existing codebase features by tracing execution paths and mapping architecture
+- `sc-code-architect` - Designs feature architectures by analyzing existing patterns and providing implementation blueprints
+- `sc-code-reviewer` - Reviews code for bugs, security vulnerabilities, and adherence to project conventions
+- `sc-repo-documentation-expert` - Finds documentation from Context7, local repos, and GitHub repositories
+- `sc-test-runner` - Executes tests and analyzes failures
+- `sc-web-search-researcher` - Searches web for current information
 
 **Context Preservation:**
 

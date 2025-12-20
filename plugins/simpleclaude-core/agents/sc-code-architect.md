@@ -1,5 +1,5 @@
 ---
-name: code-architect
+name: sc-code-architect
 description: Use this agent when the user needs a comprehensive implementation plan before writing code. Examples:
 
   <example>

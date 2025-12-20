@@ -39,7 +39,7 @@ SimpleClaude consists of 4 plugins:
 - **sc-extras**: 7 utility commands for advanced workflows
 
 **Lightweight agent architecture**: Commands spawn focused agents via `Task()` calls for token-efficient execution
-- **6 specialized agents**: code-architect, code-explorer, code-reviewer, repo-documentation-expert, test-runner, web-search-researcher
+- **6 specialized agents**: sc-code-architect, sc-code-explorer, sc-code-reviewer, sc-repo-documentation-expert, sc-test-runner, sc-web-search-researcher
 - Token-efficient through isolated agent contexts and focused task delegation
 
 ## Versioning

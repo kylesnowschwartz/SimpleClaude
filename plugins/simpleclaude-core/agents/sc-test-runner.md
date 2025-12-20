@@ -1,5 +1,5 @@
 ---
-name: test-runner
+name: sc-test-runner
 description: Use this agent proactively after code changes to run tests and analyze failures. Examples:
 
   <example>

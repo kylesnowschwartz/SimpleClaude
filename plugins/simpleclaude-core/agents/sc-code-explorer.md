@@ -1,5 +1,5 @@
 ---
-name: code-explorer
+name: sc-code-explorer
 description: Use this agent when the user needs to understand how existing code works before making changes. Examples:
 
   <example>

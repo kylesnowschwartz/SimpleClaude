@@ -127,12 +127,12 @@ SimpleClaude uses a **lightweight agent architecture** with intent-based command
 
 Each command automatically spawns appropriate agents:
 
-- `code-explorer` - Deeply analyzes existing codebase features by tracing execution paths and mapping architecture
-- `code-architect` - Designs feature architectures by analyzing existing patterns and providing implementation blueprints
-- `code-reviewer` - Reviews code for bugs, security vulnerabilities, and adherence to project conventions
-- `repo-documentation-expert` - Finds documentation from Context7, local repos, and GitHub repositories
-- `test-runner` - Runs tests and analyzes failures without making fixes
-- `web-search-researcher` - Searches web for current information and research
+- `sc-code-explorer` - Deeply analyzes existing codebase features by tracing execution paths and mapping architecture
+- `sc-code-architect` - Designs feature architectures by analyzing existing patterns and providing implementation blueprints
+- `sc-code-reviewer` - Reviews code for bugs, security vulnerabilities, and adherence to project conventions
+- `sc-repo-documentation-expert` - Finds documentation from Context7, local repos, and GitHub repositories
+- `sc-test-runner` - Runs tests and analyzes failures without making fixes
+- `sc-web-search-researcher` - Searches web for current information and research
 
 This lightweight approach replaces previous heavyweight framework systems with focused, token-efficient specialized agents.
 
