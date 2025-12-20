@@ -1,7 +1,7 @@
 {
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
   "name": "simpleclaude",
-  "version": "3.0.1",
+  "version": "3.0.2",
   "description": "Practical minimalist AI assistant framework with specialized agents",
   "owner": {
     "name": "Kyle Snow Schwartz",
@@ -91,27 +91,6 @@
         "personality",
         "formatting",
         "structured-output",
-        "claude-code"
-      ]
-    },
-    {
-      "name": "sc-age-of-claude",
-      "description": "Age of Empires sound effects for Claude Code events - wololo your way through coding sessions",
-      "version": "1.1.1",
-      "author": {
-        "name": "Kyle Snow Schwartz"
-      },
-      "source": "./plugins/sc-age-of-claude",
-      "homepage": "https://github.com/kylesnowschwartz/SimpleClaude",
-      "repository": "https://github.com/kylesnowschwartz/SimpleClaude",
-      "license": "MIT",
-      "category": "fun",
-      "keywords": [
-        "sounds",
-        "age-of-empires",
-        "notifications",
-        "audio",
-        "fun",
         "claude-code"
       ]
     }
