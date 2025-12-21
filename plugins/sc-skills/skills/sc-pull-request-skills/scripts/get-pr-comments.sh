@@ -56,13 +56,24 @@ else
   exit 1
 fi
 
-# Fetch review threads with GraphQL
+# Fetch review threads and PR-level comments with GraphQL
 gh api graphql -f query='
 query($owner: String!, $name: String!, $pr: Int!) {
   repository(owner: $owner, name: $name) {
     pullRequest(number: $pr) {
       url
       title
+      comments(first: 100) {
+        nodes {
+          id
+          databaseId
+          author {
+            login
+          }
+          body
+          createdAt
+        }
+      }
       reviewThreads(first: 100) {
         nodes {
           id
@@ -89,6 +100,15 @@ query($owner: String!, $name: String!, $pr: Int!) {
   .data.repository.pullRequest | {
     url,
     title,
+    prComments: [
+      .comments.nodes[] | {
+        id: .id,
+        databaseId: .databaseId,
+        author: .author.login,
+        body: .body,
+        createdAt: .createdAt
+      }
+    ],
     threads: [
       .reviewThreads.nodes[]
       | select(.isResolved == false)
