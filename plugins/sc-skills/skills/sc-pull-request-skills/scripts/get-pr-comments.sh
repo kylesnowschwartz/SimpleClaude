@@ -1,28 +1,60 @@
 #!/usr/bin/env bash
 # get-pr-comments.sh - Fetch unresolved PR review comments
 #
-# Usage: get-pr-comments.sh [PR_NUMBER]
-#        If PR_NUMBER is omitted, uses the current branch's PR
+# Usage: get-pr-comments.sh [PR_NUMBER | PR_URL]
+#        get-pr-comments.sh owner/repo PR_NUMBER
 #
-# Output: JSON array of unresolved review threads with comments
+#        If no args, uses the current branch's PR
+#
+# Output: JSON with unresolved review threads and comments
 
 set -euo pipefail
 
-# Get PR number from argument or detect from current branch
-if [[ $# -ge 1 ]]; then
-  PR_NUMBER="$1"
-else
+# Parse arguments
+if [[ $# -eq 0 ]]; then
+  # No args - detect from current branch
   PR_NUMBER=$(gh pr view --json number --jq '.number' 2>/dev/null || echo "")
   if [[ -z "$PR_NUMBER" ]]; then
-    echo "Error: No PR number provided and no PR found for current branch" >&2
+    echo "Error: No PR found for current branch" >&2
     exit 1
   fi
-fi
+  REPO_INFO=$(gh repo view --json owner,name --jq '"\(.owner.login)/\(.name)"')
+  OWNER=$(echo "$REPO_INFO" | cut -d'/' -f1)
+  REPO=$(echo "$REPO_INFO" | cut -d'/' -f2)
 
-# Get repository owner and name
-REPO_INFO=$(gh repo view --json owner,name --jq '"\(.owner.login)/\(.name)"')
-OWNER=$(echo "$REPO_INFO" | cut -d'/' -f1)
-REPO=$(echo "$REPO_INFO" | cut -d'/' -f2)
+elif [[ $# -eq 1 ]]; then
+  # Single arg - could be PR number or URL
+  if [[ "$1" =~ ^https://github.com/([^/]+)/([^/]+)/pull/([0-9]+) ]]; then
+    # GitHub URL format
+    OWNER="${BASH_REMATCH[1]}"
+    REPO="${BASH_REMATCH[2]}"
+    PR_NUMBER="${BASH_REMATCH[3]}"
+  elif [[ "$1" =~ ^[0-9]+$ ]]; then
+    # Just a number - use current repo
+    PR_NUMBER="$1"
+    REPO_INFO=$(gh repo view --json owner,name --jq '"\(.owner.login)/\(.name)"')
+    OWNER=$(echo "$REPO_INFO" | cut -d'/' -f1)
+    REPO=$(echo "$REPO_INFO" | cut -d'/' -f2)
+  else
+    echo "Error: Invalid argument. Use PR number, URL, or 'owner/repo PR_NUMBER'" >&2
+    exit 1
+  fi
+
+elif [[ $# -eq 2 ]]; then
+  # Two args - owner/repo and PR number
+  if [[ "$1" =~ ^([^/]+)/([^/]+)$ ]]; then
+    OWNER="${BASH_REMATCH[1]}"
+    REPO="${BASH_REMATCH[2]}"
+    PR_NUMBER="$2"
+  else
+    echo "Error: First arg must be owner/repo format" >&2
+    exit 1
+  fi
+
+else
+  echo "Usage: get-pr-comments.sh [PR_NUMBER | PR_URL | owner/repo PR_NUMBER]" >&2
+  exit 1
+fi
 
 # Fetch review threads with GraphQL
 gh api graphql -f query='
