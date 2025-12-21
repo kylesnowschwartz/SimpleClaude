@@ -26,6 +26,9 @@ claude plugin install sc-output-styles
 
 # Install extra utilities (optional)
 claude plugin install sc-extras
+
+# Install skills plugin (optional)
+claude plugin install sc-skills
 ```
 
 Or from within Claude Code:
@@ -36,6 +39,7 @@ Or from within Claude Code:
 /plugin install sc-hooks
 /plugin install sc-output-styles
 /plugin install sc-extras
+/plugin install sc-skills
 ```
 
 **What's included:**
@@ -43,6 +47,7 @@ Or from within Claude Code:
 - **sc-hooks** _(optional)_: Session management, tool monitoring, and notification hooks
 - **sc-output-styles** _(optional)_: 8 curated output styles (personality-driven: Linus, Austen, Starfleet; structured: HTML, JSON, Markdown, Semantic Markdown, YAML)
 - **sc-extras** _(optional)_: 7 advanced utility commands for debugging, GitHub workflows, git worktrees, task validation, command creation, feature discovery, and pre-commit setup
+- **sc-skills** _(optional)_: Skills for frontend design (Figma sync), Gemini image generation, and skill development tooling
 
 ### Option 2: Clone and Install with Ruby Script
 
@@ -83,6 +88,7 @@ claude plugin install simpleclaude-core@simpleclaude
 claude plugin install sc-hooks@simpleclaude         # if installed
 claude plugin install sc-output-styles@simpleclaude # if installed
 claude plugin install sc-extras@simpleclaude        # if installed
+claude plugin install sc-skills@simpleclaude        # if installed
 
 # Update auxiliary components (optional)
 ./scripts/install.rb
@@ -145,7 +151,7 @@ SimpleClaude/
 │   ├── sc-hooks/                 # Hooks plugin: session management & notifications
 │   ├── sc-output-styles/         # Output styles plugin: 8 curated styles
 │   ├── sc-extras/                # Extras plugin: 7 utility commands
-│   └── vendor/                   # Shared vendored dependencies
+│   └── sc-skills/                # Skills plugin: frontend design, image gen, skill builder
 ├── scripts/
 │   └── install.rb                # Installation/update script
 ├── docs/                         # Documentation
