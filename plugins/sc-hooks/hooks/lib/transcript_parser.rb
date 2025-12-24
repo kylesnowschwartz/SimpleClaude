@@ -102,8 +102,9 @@ module TranscriptParser
     content_array.filter_map do |block|
       case block
       when Hash
-        # Skip tool_use entries as they don't contain displayable text
-        next if block['type'] == 'tool_use' || block[:type] == 'tool_use'
+        # Skip tool_use and thinking entries as they don't contain displayable text
+        block_type = block['type'] || block[:type]
+        next if %w[tool_use thinking].include?(block_type)
 
         # Handle structured content blocks (e.g., {type: 'text', text: 'content'})
         block['text'] || block[:text] || block.dig('content', 'text') ||
@@ -113,7 +114,7 @@ module TranscriptParser
       else
         block.to_s if block.respond_to?(:to_s)
       end
-    end.join('')
+    end.join
   end
 
   # Extract text from hash-based content
