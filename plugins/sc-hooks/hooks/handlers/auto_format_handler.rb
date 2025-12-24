@@ -20,6 +20,7 @@ require 'shellwords'
 # - Python: ruff format (automatically uses existing Black/isort/flake8 configs)
 # - YAML: yamlfmt with default configuration, prettier as fallback
 # - JavaScript/TypeScript: eslint with --fix, prettier as fallback
+# - Go: goimports (imports + formatting), gofmt as fallback
 
 class AutoFormatHandler < ClaudeHooks::PostToolUse
   DEFAULT_SKIP_PATTERNS = %w[
@@ -188,6 +189,12 @@ class AutoFormatHandler < ClaudeHooks::PostToolUse
         { name: 'eslint', command: 'eslint', args: ['--fix'] }
       elsif command_available?('prettier')
         { name: 'prettier', command: 'prettier', args: ['--write'] }
+      end
+    when '.go'
+      if command_available?('goimports')
+        { name: 'goimports', command: 'goimports', args: ['-w'] }
+      elsif command_available?('gofmt')
+        { name: 'gofmt', command: 'gofmt', args: ['-w'] }
       end
     end
   end
