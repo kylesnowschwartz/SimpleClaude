@@ -29,11 +29,11 @@ class SessionStartHandler < ClaudeHooks::SessionStart
 
     backup_projects_directory
     reminder = <<~CONTEXT
-      #{acknowledge_current_date}
+    #{acknowledge_current_date}
 
-      ---
+    ---
 
-      #{acknowledge_available_skills}
+    #{acknowledge_available_skills}
     CONTEXT
 
     add_additional_context!(reminder)
@@ -80,8 +80,8 @@ class SessionStartHandler < ClaudeHooks::SessionStart
 
     # Use additionalContext for Claude instructions (will be minimally visible)
     <<~CONTEXT
-      Current local date and time: #{day_of_week}, #{current_time}.
-      Acknowledge the current date and time in your first response.
+    Current local date and time: #{day_of_week}, #{current_time}.
+    Acknowledge the current date and time in your first response.
     CONTEXT
   end
 
@@ -89,17 +89,18 @@ class SessionStartHandler < ClaudeHooks::SessionStart
     skills = collect_skills
     if skills.empty?
       <<~CONTEXT
-        You have specialized skills available. State each of your <available_skills> in a formatted list in your first response.
+      You have specialized skills available. In your first response, acknowledge your ability to invoke any of your <available_skills> using the Skill tool. Skip this step if the current session was resumed or continued from a previous session.
       CONTEXT
-    else
+        else
       <<~CONTEXT
-        <verified_skills>
-        #{skills}
-        </verified_skills>
+      <verified_skills>
+      #{skills}
+      </verified_skills>
 
-        You have specialized skills available. State each of your <verified_skills> in a formatted list in your first response.
+      You have specialized skills available. In your first response, output a formatted table of your <verified_skills> and acknowledge your ability to invoke any of your <verified_skills> using the Skill tool. Skip this step if the current session was resumed or continued from a previous session.
       CONTEXT
     end
+
   end
 
   def collect_skills
