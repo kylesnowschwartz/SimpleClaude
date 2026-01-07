@@ -47,7 +47,7 @@ Or from within Claude Code:
 - **sc-hooks** _(optional)_: Session management, tool monitoring, and notification hooks
 - **sc-output-styles** _(optional)_: 8 curated output styles (personality-driven: Linus, Austen, Starfleet; structured: HTML, JSON, Markdown, Semantic Markdown, YAML)
 - **sc-extras** _(optional)_: 7 advanced utility commands for debugging, GitHub workflows, git worktrees, task validation, command creation, feature discovery, and pre-commit setup
-- **sc-skills** _(optional)_: Skills for frontend design (Figma sync), Gemini image generation, and skill development tooling
+- **sc-skills** _(optional)_: Skills for frontend design, iterative design improvement, Gemini image generation, PR automation, and skill development tooling
 
 ### Option 2: Clone and Install with Ruby Script
 
