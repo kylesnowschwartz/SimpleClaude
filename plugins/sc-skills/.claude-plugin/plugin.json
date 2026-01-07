@@ -11,8 +11,14 @@
   "mcpServers": {
     "playwright": {
       "type": "stdio",
-      "command": "npx",
-      "args": ["-y", "@playwright/mcp@latest", "--extension"]
+      "command": "bash",
+      "args": [
+        "${CLAUDE_PLUGIN_ROOT}/scripts/playwright-mcp-wrapper.sh"
+      ],
+      "env": {
+        "PLAYWRIGHT_USER_DATA_DIR": "",
+        "PLAYWRIGHT_MCP_EXTENSION_TOKEN": ""
+      }
     }
   }
 }

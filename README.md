@@ -151,7 +151,7 @@ SimpleClaude/
 │   ├── sc-hooks/                 # Hooks plugin: session management & notifications
 │   ├── sc-output-styles/         # Output styles plugin: 8 curated styles
 │   ├── sc-extras/                # Extras plugin: 7 utility commands
-│   └── sc-skills/                # Skills plugin: frontend design, image gen, skill builder
+│   └── sc-skills/                # Skills plugin: frontend design, image gen
 ├── scripts/
 │   └── install.rb                # Installation/update script
 ├── docs/                         # Documentation
