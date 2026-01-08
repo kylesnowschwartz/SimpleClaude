@@ -17,16 +17,9 @@ argument-hint: Describe what to review (code quality, security, performance, arc
 - Complex analysis requiring multiple perspectives
 - Operations that produce verbose intermediate output
 
-**Direct Agent Rules (ALWAYS delegate these):**
-
-- **Documentation lookups** → Use `sc-repo-documentation-expert`
-- **Test execution** → Use `sc-test-runner`
-- **Web searches** → Use `sc-web-search-researcher`
-- **Deep codebase analysis** → Use `sc-code-explorer`
-- **Architecture design** → Use `sc-code-architect`
-- **Code quality review** → Use `sc-code-reviewer`
-
 **Available Agents:**
+
+Delegate context-specific tasks to these specialized sub-agents as needed in parallel:
 
 - `sc-code-explorer` - Deeply analyzes existing codebase features by tracing execution paths and mapping architecture
 - `sc-code-architect` - Designs feature architectures by analyzing existing patterns and providing implementation blueprints
@@ -34,13 +27,6 @@ argument-hint: Describe what to review (code quality, security, performance, arc
 - `sc-repo-documentation-expert` - Finds documentation from Context7, local repos, and GitHub repositories
 - `sc-test-runner` - Executes tests and analyzes failures
 - `sc-web-search-researcher` - Searches web for current information
-
-**Context Preservation:**
-
-- **Keep only**: user request, actionable recommendations, code changes, summary, next steps
-- **Discard**: intermediate outputs, full docs, verbose logs, exploratory reads
-
-**Processing Pipeline**: Parse → Classify → Validate → Route → Execute → Synthesize
 
 ## Intent Recognition and Semantic Transformation
 

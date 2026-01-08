@@ -1,6 +1,6 @@
 ---
 description: Interactive wizard to create context packets for agent tasks
-argument-hint: [optional: title or short description of the work]
+argument-hint: "[optional: title or short description of the work]"
 ---
 
 # sc-context-wizard: Agent Context Packet Builder
