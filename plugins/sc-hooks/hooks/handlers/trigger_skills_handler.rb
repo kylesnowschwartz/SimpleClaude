@@ -17,7 +17,7 @@ class TriggerSkillsHandler < ClaudeHooks::UserPromptSubmit
 
     reminder = <<~CONTEXT
       <skill_check>
-        MANDATORY: Check skill names in <verified_skills> for relevant matches to the User request. Invoke matching skills BEFORE responding. Skills enable you to perform your role effectively.
+        MANDATORY: Check skill names in <available_skills> for relevant matches to the User request. Invoke matching skills BEFORE responding. Skills enable you to perform your role effectively.
       </skill_check>
     CONTEXT
 

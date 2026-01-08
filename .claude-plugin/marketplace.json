@@ -1,7 +1,7 @@
 {
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
   "name": "simpleclaude",
-  "version": "3.2.0",
+  "version": "3.2.1",
   "description": "Practical minimalist AI assistant framework with specialized agents",
   "owner": {
     "name": "Kyle Snow Schwartz",
@@ -36,7 +36,7 @@
     {
       "name": "sc-hooks",
       "description": "SimpleClaude hooks for session management, tool monitoring, and notifications",
-      "version": "2.5.0",
+      "version": "2.6.2",
       "author": {
         "name": "Kyle Snow Schwartz"
       },

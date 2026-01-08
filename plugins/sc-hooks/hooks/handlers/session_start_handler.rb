@@ -1,7 +1,6 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-require 'English'
 require 'date'
 require_relative '../../vendor/claude_hooks/lib/claude_hooks'
 
@@ -28,15 +27,7 @@ class SessionStartHandler < ClaudeHooks::SessionStart
     log "Session starting for project: #{project_name}"
 
     backup_projects_directory
-    reminder = <<~CONTEXT
-    #{acknowledge_current_date}
-
-    ---
-
-    #{acknowledge_available_skills}
-    CONTEXT
-
-    add_additional_context!(reminder)
+    add_additional_context!(acknowledge_current_date)
     allow_continue!
     suppress_output!
 
@@ -80,37 +71,9 @@ class SessionStartHandler < ClaudeHooks::SessionStart
 
     # Use additionalContext for Claude instructions (will be minimally visible)
     <<~CONTEXT
-    Current local date and time: #{day_of_week}, #{current_time}.
-    Acknowledge the current date and time in your first response.
+      Current local date and time: #{day_of_week}, #{current_time}.
+      Acknowledge the current date and time in your first response.
     CONTEXT
-  end
-
-  def acknowledge_available_skills
-    skills = collect_skills
-    if skills.empty?
-      <<~CONTEXT
-      You have specialized skills available. In your first response, acknowledge your ability to invoke any of your <available_skills> using the Skill tool. Skip this step if the current session was resumed or continued from a previous session.
-      CONTEXT
-        else
-      <<~CONTEXT
-      <verified_skills>
-      #{skills}
-      </verified_skills>
-
-      You have specialized skills available. In your first response, output a formatted table of your <verified_skills> and acknowledge your ability to invoke any of your <verified_skills> using the Skill tool. Skip this step if the current session was resumed or continued from a previous session.
-      CONTEXT
-    end
-
-  end
-
-  def collect_skills
-    script_path = File.expand_path('../../scripts/collect-skills.sh', __dir__)
-    return '' unless File.exist?(script_path)
-
-    output = `bash "#{script_path}" 2>/dev/null`
-    return '' unless $CHILD_STATUS.success?
-
-    output.strip
   end
 end
 
