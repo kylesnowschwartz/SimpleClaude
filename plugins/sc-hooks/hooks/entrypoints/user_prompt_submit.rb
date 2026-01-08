@@ -12,6 +12,7 @@ require 'json'
 
 require_relative '../handlers/copy_message_handler'
 require_relative '../handlers/trigger_skills_handler'
+require_relative '../handlers/github_url_handler'
 
 begin
   # Read input data from Claude Code
@@ -20,15 +21,18 @@ begin
   # Initialize all handlers
   copy_message_handler = CopyMessageHandler.new(input_data)
   trigger_skills_handler = TriggerSkillsHandler.new(input_data)
+  github_url_handler = GitHubUrlHandler.new(input_data)
 
   # Execute handlers
   copy_message_handler.call
   trigger_skills_handler.call
+  github_url_handler.call
 
   # Merge outputs from all handlers
   merged_output = ClaudeHooks::Output::UserPromptSubmit.merge(
     copy_message_handler.output,
-    trigger_skills_handler.output
+    trigger_skills_handler.output,
+    github_url_handler.output
   )
 
   # Output result and exit with appropriate code
