@@ -97,7 +97,7 @@
     {
       "name": "sc-skills",
       "description": "Skills and agents for frontend design, image generation, and skill development tooling",
-      "version": "1.3.0",
+      "version": "2.0.1",
       "author": {
         "name": "Kyle Snow Schwartz"
       },
