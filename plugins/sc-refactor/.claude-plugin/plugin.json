@@ -1,0 +1,9 @@
+{
+  "name": "sc-refactor",
+  "version": "1.0.0",
+  "description": "Unified review, refactoring, and cleanup workflows with specialized analysis agents",
+  "author": "Kyle Snow Schwartz",
+  "homepage": "https://github.com/kylesnowschwartz/SimpleClaude",
+  "repository": "https://github.com/kylesnowschwartz/SimpleClaude",
+  "license": "MIT"
+}
