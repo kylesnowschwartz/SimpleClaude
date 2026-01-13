@@ -16,6 +16,39 @@ triggers:
 
 Routes review and refactoring requests to specialized agents based on intent.
 
+## Execution Instructions
+
+When this skill is activated, follow this workflow:
+
+### Step 1: Context Check
+```
+Check if .agent-history/context-packet-*.md exists for current branch/task.
+If missing AND request is complex (multi-agent workflow):
+  - Invoke: /sc-extras:sc-context-wizard scoped to the review request
+  - Wait for context packet creation before proceeding
+If missing AND request is simple (single agent):
+  - Proceed with the request directly
+```
+
+### Step 2: Intent Detection
+Parse the user's request and match to a workflow:
+
+| Keywords | Workflow | Action |
+|----------|----------|--------|
+| "review", "check", "validate", "PR", "production" | Production Review | Run `/sc-refactor:sc-production-review` |
+| "health", "full", "comprehensive", "all" | Codebase Health | Run `/sc-refactor:sc-codebase-health` |
+| "dead code", "unused", "orphan", "delete" | Dead Code | Spawn `sc-dead-code-detector` agent |
+| "duplicate", "DRY", "repeated" | Duplication | Spawn `sc-duplication-hunter` agent |
+| "abstract", "simplify", "YAGNI", "over-engineer" | Abstraction | Spawn `sc-abstraction-critic` agent |
+| "naming", "consistency", "convention" | Naming | Spawn `sc-naming-auditor` agent |
+| "test", "organization", "structure" | Test Org | Spawn `sc-test-organizer` agent |
+| "complete", "structural", "cleanup" | Structural | Spawn `sc-structural-reviewer` agent |
+
+### Step 3: Execute
+- For commands: Invoke via Skill tool
+- For single agents: Spawn via Task tool with appropriate prompt
+- For agent pairs: Spawn both in parallel via Task tool
+
 ## Quick Reference
 
 | Intent | Agents | Focus |
