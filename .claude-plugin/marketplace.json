@@ -114,6 +114,28 @@
         "plugin-development",
         "claude-code"
       ]
+    },
+    {
+      "name": "sc-refactor",
+      "description": "Unified review, refactoring, and cleanup workflows with specialized analysis agents",
+      "version": "1.0.0",
+      "author": {
+        "name": "Kyle Snow Schwartz"
+      },
+      "source": "./plugins/sc-refactor",
+      "homepage": "https://github.com/kylesnowschwartz/SimpleClaude",
+      "repository": "https://github.com/kylesnowschwartz/SimpleClaude",
+      "license": "MIT",
+      "category": "code-quality",
+      "keywords": [
+        "code-review",
+        "refactoring",
+        "dead-code",
+        "duplication",
+        "cleanup",
+        "agents",
+        "claude-code"
+      ]
     }
   ]
 }

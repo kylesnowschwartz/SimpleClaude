@@ -74,6 +74,17 @@ All agents report in this structure:
 
 ## Related Components
 
-- **Agents**: sc-duplication-hunter, sc-abstraction-critic, sc-naming-auditor, sc-dead-code-detector, sc-test-organizer
-- **Existing**: sc-code-reviewer (simpleclaude-core), sc-structural-reviewer (simpleclaude-core)
-- **Commands**: sc-codebase-health (orchestrator for full analysis)
+**Agents (sc-refactor)**:
+- sc-duplication-hunter - Copy-paste, structural, logic duplication
+- sc-abstraction-critic - YAGNI violations, over-engineering
+- sc-naming-auditor - Convention violations, semantic drift
+- sc-dead-code-detector - Unreferenced exports, orphan files
+- sc-test-organizer - Test structure, missing tests
+- sc-structural-reviewer - Change completeness, dependency hygiene
+
+**Agents (simpleclaude-core)**:
+- sc-code-reviewer - Bugs, security, CLAUDE.md compliance
+
+**Commands (sc-refactor)**:
+- `/sc-refactor:sc-production-review` - Combined functional + structural review
+- `/sc-refactor:sc-codebase-health` - Full parallel analysis (all 5 agents)
