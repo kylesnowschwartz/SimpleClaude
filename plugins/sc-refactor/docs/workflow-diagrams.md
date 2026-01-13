@@ -1,10 +1,17 @@
 # SC-Refactor Workflow Diagrams
 
-Sequence diagrams showing user flows through the sc-refactor-review skill.
+Sequence diagrams showing user flows through the sc-refactor plugin.
 
-## 1. Skill Router (Entry Point)
+## Invocation Patterns
 
-All requests enter through the skill, which checks for context and routes to workflows.
+There are two ways to use this plugin:
+
+1. **Automatic (Skill)**: User says "review my code" → skill triggers → Claude spawns appropriate agents
+2. **Manual (Command)**: User types `/sc-refactor:sc-production-review` → command executes
+
+## 1. Skill Router (Automatic Triggering)
+
+When user requests match trigger phrases, the skill loads and guides Claude to spawn agents.
 
 ```
 %% Flow: SC-Refactor Skill Router

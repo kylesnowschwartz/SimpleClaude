@@ -1,6 +1,6 @@
 ---
 name: sc-refactor-review
-description: Use this skill when performing code review, refactoring analysis, or cleanup tasks. Routes to specialized agents based on review type. Requires context packet for focused analysis - will invoke context-wizard if none provided.
+description: This skill should be used when the user asks to review code, find dead code, check for duplication, simplify a codebase, find refactoring opportunities, do code cleanup, check naming consistency, or analyze test organization. Routes to specialized analysis agents based on the type of review requested.
 triggers:
   - "review my code"
   - "find dead code"
@@ -10,87 +10,57 @@ triggers:
   - "code cleanup"
   - "naming consistency"
   - "test organization"
+  - "codebase health"
 ---
 
 # SC Refactor Review Skill
 
-Routes review and refactoring requests to specialized agents based on intent.
+Guidance for routing review and refactoring requests to specialized agents.
 
-## Execution Instructions
+## Routing Table
 
-When this skill is activated, follow this workflow:
+Match the user's request to the appropriate agents:
 
-### Step 1: Context Check
+| User Intent | Agents to Spawn | Focus |
+|-------------|-----------------|-------|
+| "review", "check", "validate", "PR" | sc-code-reviewer + sc-structural-reviewer | Bugs, security, completeness |
+| "health", "full", "comprehensive" | All 5 agents in parallel | Complete analysis |
+| "dead code", "unused", "orphan" | sc-dead-code-detector | Unreferenced exports, orphan files |
+| "duplicate", "DRY", "repeated" | sc-duplication-hunter | Copy-paste, structural, logic duplication |
+| "simplify", "YAGNI", "over-engineer" | sc-abstraction-critic | Unnecessary complexity |
+| "naming", "consistency", "convention" | sc-naming-auditor | Convention violations, semantic drift |
+| "test organization", "test structure" | sc-test-organizer | Test file organization, missing tests |
+| "structural", "complete", "cleanup" | sc-structural-reviewer | Change completeness, dependency hygiene |
+
+## Agent Spawning
+
+### Single Agent
 ```
-Check if .agent-history/context-packet-*.md exists for current branch/task.
-If missing AND request is complex (multi-agent workflow):
-  - Invoke: /sc-extras:sc-context-wizard scoped to the review request
-  - Wait for context packet creation before proceeding
-If missing AND request is simple (single agent):
-  - Proceed with the request directly
-```
-
-### Step 2: Intent Detection
-Parse the user's request and match to a workflow:
-
-| Keywords | Workflow | Action |
-|----------|----------|--------|
-| "review", "check", "validate", "PR", "production" | Production Review | Run `/sc-refactor:sc-production-review` |
-| "health", "full", "comprehensive", "all" | Codebase Health | Run `/sc-refactor:sc-codebase-health` |
-| "dead code", "unused", "orphan", "delete" | Dead Code | Spawn `sc-dead-code-detector` agent |
-| "duplicate", "DRY", "repeated" | Duplication | Spawn `sc-duplication-hunter` agent |
-| "abstract", "simplify", "YAGNI", "over-engineer" | Abstraction | Spawn `sc-abstraction-critic` agent |
-| "naming", "consistency", "convention" | Naming | Spawn `sc-naming-auditor` agent |
-| "test", "organization", "structure" | Test Org | Spawn `sc-test-organizer` agent |
-| "complete", "structural", "cleanup" | Structural | Spawn `sc-structural-reviewer` agent |
-
-### Step 3: Execute
-- For commands: Invoke via Skill tool
-- For single agents: Spawn via Task tool with appropriate prompt
-- For agent pairs: Spawn both in parallel via Task tool
-
-## Quick Reference
-
-| Intent | Agents | Focus |
-|--------|--------|-------|
-| Code review (production) | sc-code-reviewer + sc-structural-reviewer | Bugs, security, completeness |
-| Code review (feature branch) | sc-code-reviewer | High-confidence issues only |
-| Simplification | sc-abstraction-critic + sc-duplication-hunter | Unnecessary complexity |
-| Dead code removal | sc-dead-code-detector + sc-structural-reviewer | Unreferenced code |
-| Cleanup | sc-naming-auditor + sc-test-organizer | Consistency, structure |
-| Full codebase health | All 5 agents (parallel) | Comprehensive analysis |
-
-## Context Requirement
-
-This skill works best with a context packet specifying:
-- What was changed/implemented
-- What areas to focus on
-- What to ignore (intentional patterns)
-
-If no context packet is provided, invoke `/sc-extras:sc-context-wizard` scoped to the review request before proceeding.
-
-## Routing Logic
-
-```
-1. Check for context packet (@.agent-history/context-packet-*.md)
-   - If missing: invoke context-wizard first
-
-2. Parse intent from request:
-   - "review" / "check" / "validate" -> Code Review flow
-   - "simplify" / "refactor" / "clean up" -> Refactoring flow
-   - "dead code" / "unused" / "delete" -> Dead Code flow
-   - "naming" / "consistency" -> Naming flow
-   - "test" / "organization" -> Test Organization flow
-   - "health" / "full" / "comprehensive" -> All Agents flow
-
-3. Spawn appropriate agents (parallel when multiple)
-
-4. Synthesize findings into unified report
+Task(
+  subagent_type: "sc-refactor:sc-[agent-name]",
+  prompt: "Analyze [target] for [focus area]. Report findings with confidence scores."
+)
 ```
 
-## Output Format
+### Multiple Agents (Parallel)
+Spawn all relevant agents in a single message with `run_in_background: true`:
+```
+Task(subagent_type: "sc-refactor:sc-agent-1", run_in_background: true, prompt: "...")
+Task(subagent_type: "sc-refactor:sc-agent-2", run_in_background: true, prompt: "...")
+```
 
-All agents report in this structure:
+### Full Health Check (5 Agents)
+```
+Task(subagent_type: "sc-refactor:sc-duplication-hunter", run_in_background: true, ...)
+Task(subagent_type: "sc-refactor:sc-abstraction-critic", run_in_background: true, ...)
+Task(subagent_type: "sc-refactor:sc-naming-auditor", run_in_background: true, ...)
+Task(subagent_type: "sc-refactor:sc-dead-code-detector", run_in_background: true, ...)
+Task(subagent_type: "sc-refactor:sc-test-organizer", run_in_background: true, ...)
+```
+
+## Output Synthesis
+
+After agents complete, synthesize findings:
 
 ```
 ## [Category] Analysis
@@ -105,19 +75,21 @@ All agents report in this structure:
 - [actionable next step]
 ```
 
-## Related Components
+## Available Agents
 
-**Agents (sc-refactor)**:
-- sc-duplication-hunter - Copy-paste, structural, logic duplication
-- sc-abstraction-critic - YAGNI violations, over-engineering
-- sc-naming-auditor - Convention violations, semantic drift
-- sc-dead-code-detector - Unreferenced exports, orphan files
-- sc-test-organizer - Test structure, missing tests
-- sc-structural-reviewer - Change completeness, dependency hygiene
+**sc-refactor plugin:**
+- `sc-duplication-hunter` - Copy-paste, structural, logic duplication
+- `sc-abstraction-critic` - YAGNI violations, over-engineering
+- `sc-naming-auditor` - Convention violations, semantic drift
+- `sc-dead-code-detector` - Unreferenced exports, orphan files
+- `sc-test-organizer` - Test structure, missing tests
+- `sc-structural-reviewer` - Change completeness, dependency hygiene
 
-**Agents (simpleclaude-core)**:
-- sc-code-reviewer - Bugs, security, CLAUDE.md compliance
+**simpleclaude-core plugin:**
+- `sc-code-reviewer` - Bugs, security, CLAUDE.md compliance
 
-**Commands (sc-refactor)**:
-- `/sc-refactor:sc-production-review` - Combined functional + structural review
-- `/sc-refactor:sc-codebase-health` - Full parallel analysis (all 5 agents)
+## Manual Commands
+
+Users can also invoke these workflows directly:
+- `/sc-refactor:sc-production-review` - Functional + structural review
+- `/sc-refactor:sc-codebase-health` - All 5 agents parallel
