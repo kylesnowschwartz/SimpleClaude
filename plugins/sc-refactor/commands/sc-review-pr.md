@@ -316,4 +316,4 @@ Ticket context used:
 - Subjective improvements
 - "Best practice" suggestions
 
-When uncertain, admit it, and seek guidance from the User. False positives erode trust.
+_Remember, when uncertainty arises, admit it, and seek guidance from the User. False positives erode trust, as does overengineering nitpicks._

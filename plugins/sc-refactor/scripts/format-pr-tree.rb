@@ -39,6 +39,7 @@ def format_tree(data)
     path = thread['path']
     line_num = thread['line']
     location = line_num ? "#{path}:#{line_num}" : path
+    location += ' [RESOLVED]' if thread['isResolved']
 
     lines << location
 

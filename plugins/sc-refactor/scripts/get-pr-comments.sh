@@ -1,14 +1,22 @@
 #!/usr/bin/env bash
-# get-pr-comments.sh - Fetch unresolved PR review comments
+# get-pr-comments.sh - Fetch PR review comments
 #
-# Usage: get-pr-comments.sh [PR_NUMBER | PR_URL]
-#        get-pr-comments.sh owner/repo PR_NUMBER
+# Usage: get-pr-comments.sh [--all] [PR_NUMBER | PR_URL]
+#        get-pr-comments.sh [--all] owner/repo PR_NUMBER
 #
 #        If no args, uses the current branch's PR
+#        --all: Include resolved threads (default: unresolved only)
 #
-# Output: JSON with unresolved review threads and comments
+# Output: JSON with review threads and comments
 
 set -euo pipefail
+
+# Parse --all flag
+INCLUDE_RESOLVED=false
+if [[ "${1:-}" == "--all" ]]; then
+  INCLUDE_RESOLVED=true
+  shift
+fi
 
 # Parse arguments
 if [[ $# -eq 0 ]]; then
@@ -52,8 +60,15 @@ elif [[ $# -eq 2 ]]; then
   fi
 
 else
-  echo "Usage: get-pr-comments.sh [PR_NUMBER | PR_URL | owner/repo PR_NUMBER]" >&2
+  echo "Usage: get-pr-comments.sh [--all] [PR_NUMBER | PR_URL | owner/repo PR_NUMBER]" >&2
   exit 1
+fi
+
+# Build jq filter based on --all flag
+if [[ "$INCLUDE_RESOLVED" == "true" ]]; then
+  THREAD_FILTER=""
+else
+  THREAD_FILTER="| select(.isResolved == false)"
 fi
 
 # Fetch review threads and PR-level comments with GraphQL
@@ -96,7 +111,7 @@ query($owner: String!, $name: String!, $pr: Int!) {
       }
     }
   }
-}' -f owner="$OWNER" -f name="$REPO" -F pr="$PR_NUMBER" | jq '
+}' -f owner="$OWNER" -f name="$REPO" -F pr="$PR_NUMBER" | jq --arg filter "$THREAD_FILTER" '
   .data.repository.pullRequest | {
     url,
     title,
@@ -111,11 +126,12 @@ query($owner: String!, $name: String!, $pr: Int!) {
     ],
     threads: [
       .reviewThreads.nodes[]
-      | select(.isResolved == false)
+      '"$THREAD_FILTER"'
       | {
           threadId: .id,
           path: .path,
           line: .line,
+          isResolved: .isResolved,
           isOutdated: .isOutdated,
           comments: [
             .comments.nodes[] | {

@@ -4,49 +4,21 @@ description: Resolve all PR comments using parallel processing
 argument-hint: "[optional: PR number or current PR]"
 ---
 
-Resolve all PR comments using parallel processing with the sc-pr-comment-resolver agent. Consider any additional user arguments in ARGUMENTS
+Resolve all PR comments using parallel processing with the sc-pr-comment-resolver agent. Consider any additional user arguments in $ARGUMENTS
 
 ## Workflow
 
 ### 1. Analyze
 
-Get current branch and PR context, then fetch all unresolved comments:
+Use the `/sc-refactor:sc-pr-comments` skill to fetch and display all unresolved comments as a formatted tree. Unresolved threads are displayed by default. Pass `--all` if user wants context from resolved threads.
+
+For programmatic access to comment data (spawning agents), use the raw JSON:
 
 ```bash
-gh pr status
-gh pr view --json number,url,headRefName
+"${CLAUDE_PLUGIN_ROOT}/scripts/get-pr-comments.sh" $ARGUMENTS
 ```
 
-For the current or specified PR, get all review comments:
-
-```bash
-gh api repos/{owner}/{repo}/pulls/{pr_number}/comments --jq '.[] | {id, path, line, body, in_reply_to_id}'
-```
-
-Get review threads to identify unresolved comments:
-
-```bash
-gh api graphql -f query='
-query($owner: String!, $name: String!, $pr: Int!) {
-  repository(owner: $owner, name: $name) {
-    pullRequest(number: $pr) {
-      reviewThreads(first: 100) {
-        nodes {
-          isResolved
-          comments(first: 10) {
-            nodes {
-              id
-              body
-              path
-              line
-            }
-          }
-        }
-      }
-    }
-  }
-}' -f owner=OWNER -f name=REPO -F pr=PR_NUMBER
-```
+This returns JSON with `threads[]` containing `path`, `line`, `threadId`, and `comments[]` with `body` and `author`.
 
 ### 2. Plan
 
@@ -89,5 +61,3 @@ After all agents complete:
 - Any additional suggestions are presented as that, just suggestions
 
 _Rembember, you are guiding a team of parallel agents to help fixup Pull Request feedback and then report the results back to the user for review_
-
-$ARGUMENTS
