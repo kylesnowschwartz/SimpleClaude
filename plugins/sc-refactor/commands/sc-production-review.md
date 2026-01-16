@@ -1,10 +1,15 @@
 ---
 description: Comprehensive pre-merge review with multi-phase validation pipeline
 allowed-tools: Task, Read, Bash, Grep, Glob, TodoWrite
-argument-hint: [PR-number-or-branch]
+argument-hint: "[PR-number-or-branch]"
 ---
 
 Run a production-ready code review with gate checks, parallel analysis, and finding validation.
+
+<pr-number>
+  pr number can be infered from $ARGUMENTS
+  or if no arguments are provided, infer from the working branch.
+</pr-number>
 
 **Agent assumptions:**
 - All tools are functional. Do not make exploratory calls.

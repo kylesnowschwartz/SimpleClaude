@@ -1,7 +1,7 @@
 ---
 description: Run parallel analysis agents for comprehensive codebase health check
 allowed-tools: Task, Read, Bash, AskUserQuestion, TodoWrite
-argument-hint: [target-directory]
+argument-hint: "[target-directory]"
 ---
 
 Analyze the codebase at $ARGUMENTS (or current directory if not specified) for code quality issues.
