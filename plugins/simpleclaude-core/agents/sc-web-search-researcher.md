@@ -1,36 +1,6 @@
 ---
 name: sc-web-search-researcher
-description: Use this agent when the user needs current information from the web that isn't in your training data. Examples:
-
-  <example>
-  Context: User needs information about recent releases or changes.
-  user: "What's new in Rails 8?"
-  assistant: "I'll use the web-search-researcher to find current documentation and release notes for Rails 8."
-  <commentary>
-  Recent release information requires web search. Training data cutoff means agent needs
-  to fetch current docs, not rely on potentially outdated knowledge.
-  </commentary>
-  </example>
-
-  <example>
-  Context: User needs to research best practices or current recommendations.
-  user: "What's the recommended way to handle authentication in Next.js 15?"
-  assistant: "Let me use the web-search-researcher to find current best practices and official recommendations for Next.js 15 authentication."
-  <commentary>
-  Framework best practices evolve rapidly. Web search gets current recommendations
-  rather than potentially outdated patterns from training data.
-  </commentary>
-  </example>
-
-  <example>
-  Context: User needs to verify current status of a service or API.
-  user: "Is the OpenAI API having issues right now?"
-  assistant: "I'll use the web-search-researcher to check current status pages and recent reports about OpenAI API availability."
-  <commentary>
-  Real-time status information requires web access. Agent will check status pages
-  and recent discussions to provide current state.
-  </commentary>
-  </example>
+description: Research current information from the web beyond training data cutoff
 tools: WebSearch, WebFetch, TodoWrite
 color: pink
 ---

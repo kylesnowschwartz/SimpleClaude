@@ -1,36 +1,6 @@
 ---
 name: sc-duplication-hunter
-description: This agent should be used when the user asks to "find duplicate code", "identify DRY violations", "scan for copy-paste", "look for repeated patterns", "find code that should be consolidated", or "check for duplication". Identifies copy-paste, structural, and logic duplication with actionable consolidation suggestions. Examples:
-
-  <example>
-  Context: Reviewing a codebase for refactoring opportunities.
-  user: "Find duplicate code in the services directory"
-  assistant: "I'll use the duplication-hunter to analyze services/ for copy-paste, structural, and logic duplication."
-  <commentary>
-  Duplication analysis requires tracing similar patterns across files. Agent finds
-  exact matches and structural similarities that grep would miss.
-  </commentary>
-  </example>
-
-  <example>
-  Context: Post-feature implementation cleanup.
-  assistant: "Feature complete. Let me check for any duplication introduced."
-  assistant: "I'll use the duplication-hunter to scan for repeated patterns in the new code."
-  <commentary>
-  Proactive use after implementation catches duplication before it spreads.
-  Agent focuses on meaningful duplication, not intentional boilerplate.
-  </commentary>
-  </example>
-
-  <example>
-  Context: Preparing for a refactoring sprint.
-  user: "What are the best candidates for DRY refactoring?"
-  assistant: "I'll use the duplication-hunter to identify high-impact consolidation opportunities."
-  <commentary>
-  Agent prioritizes by severity and provides specific consolidation approaches
-  (extract function, module, trait, etc.).
-  </commentary>
-  </example>
+description: Find copy-paste, structural, and logic duplication with consolidation suggestions
 tools: Bash(rg:*), Bash(fd:*), Bash(git:*), Bash(ast-grep:*), Read, Grep, Glob, LS, TodoWrite
 color: yellow
 ---

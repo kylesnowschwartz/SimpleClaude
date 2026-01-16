@@ -1,36 +1,6 @@
 ---
 name: sc-dead-code-detector
-description: This agent should be used when the user asks to "find dead code", "find unused code", "what code can we delete", "find orphan files", "find unreferenced exports", "clean up unused functions", "find debug statements", "find leftover console.log", "find TODO comments", or "clean up after AI session". Identifies orphan files, unused exports, commented code, debug statements, annotation cruft, and unused imports. Examples:
-
-  <example>
-  Context: Cleaning up after removing a feature.
-  user: "I removed the export feature, did I get everything?"
-  assistant: "I'll use the dead-code-detector to find any remaining references or orphaned code."
-  <commentary>
-  Feature removal often leaves traces. Agent finds orphaned imports,
-  unused helpers, and stale configuration.
-  </commentary>
-  </example>
-
-  <example>
-  Context: Reducing bundle size or compile time.
-  user: "What code can we safely delete?"
-  assistant: "I'll use the dead-code-detector to identify unreferenced exports and orphan files."
-  <commentary>
-  Dead code adds maintenance burden and confusion. Agent proves code is
-  dead by tracing references.
-  </commentary>
-  </example>
-
-  <example>
-  Context: Codebase archaeology before major refactoring.
-  user: "How much cruft has accumulated in this codebase?"
-  assistant: "I'll use the dead-code-detector to catalog commented code, ancient TODOs, and unused modules."
-  <commentary>
-  Agent quantifies technical debt from abandoned code, helping prioritize
-  cleanup efforts.
-  </commentary>
-  </example>
+description: Find orphan files, unused exports, commented code, debug statements, TODO cruft, and unused imports
 tools: Bash(rg:*), Bash(fd:*), Bash(git:*), Read, Grep, Glob, LS, TodoWrite
 color: red
 ---

@@ -1,36 +1,6 @@
 ---
 name: sc-code-architect
-description: Use this agent when the user needs a comprehensive implementation plan before writing code. Examples:
-
-  <example>
-  Context: User wants to add a significant new feature to an existing codebase.
-  user: "I need to add user authentication to this Rails app"
-  assistant: "I'll use the code-architect agent to analyze your codebase patterns and design a complete authentication implementation plan."
-  <commentary>
-  Authentication touches multiple layers (routes, controllers, models, middleware). User needs
-  an architectural blueprint before diving into code, not piecemeal implementation.
-  </commentary>
-  </example>
-
-  <example>
-  Context: User is starting work on a feature but unsure how it fits with existing code.
-  user: "How should I implement caching for the API responses?"
-  assistant: "Let me use the code-architect to analyze your existing patterns and design a caching architecture that integrates cleanly."
-  <commentary>
-  Caching strategy depends heavily on existing infrastructure. Agent will find current patterns
-  (Redis? In-memory? HTTP caching?) and design something consistent.
-  </commentary>
-  </example>
-
-  <example>
-  Context: User needs to refactor or restructure part of the codebase.
-  user: "Plan out how to split this monolith into separate services"
-  assistant: "I'll use the code-architect to map the current architecture, identify service boundaries, and create a migration blueprint."
-  <commentary>
-  Service extraction requires understanding dependencies, data flows, and integration points.
-  This is architecture work, not code exploration.
-  </commentary>
-  </example>
+description: Design comprehensive implementation plans and architecture blueprints
 tools: Bash, Read, Grep, Glob, LS, TodoWrite
 color: green
 ---

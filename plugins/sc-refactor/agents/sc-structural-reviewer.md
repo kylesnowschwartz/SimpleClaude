@@ -1,36 +1,6 @@
 ---
 name: sc-structural-reviewer
-description: This agent should be used proactively after implementing features, refactoring code, or completing significant modifications. Verifies structural integrity and codebase hygiene - ensuring changes are fully integrated, old code is removed, and no development artifacts remain. Unlike sc-dead-code-detector which scans the entire codebase, this agent focuses on verifying a specific change is structurally complete. Examples:
-
-  <example>
-  Context: You have finished refactoring a module to use a new API pattern.
-  assistant: "I've finished refactoring the authentication module to use the new token service"
-  assistant: "Let me verify the structural completeness of this refactoring"
-  <commentary>
-  Refactoring often leaves orphaned code, stale imports, or incomplete migrations. Agent ensures
-  all traces of the old implementation are cleaned up.
-  </commentary>
-  </example>
-
-  <example>
-  Context: Feature implementation touched multiple parts of the codebase.
-  user: "I've added the new dashboard widget across the API and UI layers"
-  assistant: "I'll use the structural reviewer to verify the change is complete across all layers."
-  <commentary>
-  Multi-layer changes need structural verification to ensure all parts are present,
-  configs are updated, and dependencies are consistent.
-  </commentary>
-  </example>
-
-  <example>
-  Context: Deprecated feature removal.
-  user: "I've removed the legacy export functionality as planned"
-  assistant: "Let me check for any remaining code, dependencies, or config references"
-  <commentary>
-  Feature removal requires verifying all related code, config entries, and dependencies
-  are cleaned up - not just the obvious parts.
-  </commentary>
-  </example>
+description: Verify change completeness, find orphaned code, and detect development artifacts
 tools: Bash(rg:*), Bash(fd:*), Bash(git:*), Bash(gh pr view:*), Bash(gh pr diff:*), Bash(gh issue view:*), Read, Grep, Glob, LS, TodoWrite
 color: blue
 ---

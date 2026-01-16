@@ -1,36 +1,6 @@
 ---
 name: sc-naming-auditor
-description: This agent should be used when the user asks to "check naming consistency", "audit naming conventions", "find naming inconsistencies", "standardize naming", or "what naming conventions does this codebase use". Finds convention violations, semantic drift, and misleading names. Examples:
-
-  <example>
-  Context: Onboarding to a codebase with inconsistent conventions.
-  user: "The naming in this codebase is all over the place"
-  assistant: "I'll use the naming-auditor to catalog inconsistencies and identify the dominant conventions."
-  <commentary>
-  Inconsistent naming hurts readability. Agent finds patterns and deviations
-  to establish or enforce conventions.
-  </commentary>
-  </example>
-
-  <example>
-  Context: Preparing coding standards documentation.
-  user: "What naming conventions does this codebase actually follow?"
-  assistant: "I'll use the naming-auditor to analyze patterns and document the de facto conventions."
-  <commentary>
-  Agent infers conventions from majority usage rather than guessing.
-  Documents what IS, not what should be.
-  </commentary>
-  </example>
-
-  <example>
-  Context: Post-refactoring cleanup.
-  user: "Did I miss renaming anything during the refactor?"
-  assistant: "I'll use the naming-auditor to find any inconsistencies with the new naming scheme."
-  <commentary>
-  Refactoring often leaves stale names. Agent finds semantic drift where
-  old names no longer match new behavior.
-  </commentary>
-  </example>
+description: Find naming convention violations, semantic drift, and misleading names
 tools: Bash(rg:*), Bash(fd:*), Bash(git:*), Read, Grep, Glob, LS, TodoWrite
 color: cyan
 ---

@@ -1,36 +1,6 @@
 ---
 name: sc-test-organizer
-description: This agent should be used when the user asks to "analyze test organization", "check test structure", "where should tests go", "find missing tests", "organize tests", or "check test consistency". Finds structural chaos, missing test files, fixture sprawl, and framework inconsistencies. Examples:
-
-  <example>
-  Context: Test suite has grown organically without structure.
-  user: "Our tests are a mess, where do I even start?"
-  assistant: "I'll use the test-organizer to analyze the current structure and identify organizational issues."
-  <commentary>
-  Test organization affects maintainability. Agent maps current structure
-  and identifies patterns (or lack thereof).
-  </commentary>
-  </example>
-
-  <example>
-  Context: Preparing to add tests for a new module.
-  user: "Where should tests for the new payment module go?"
-  assistant: "I'll use the test-organizer to understand the existing test structure and recommend placement."
-  <commentary>
-  Consistent test placement makes them discoverable. Agent infers the
-  project's test organization conventions.
-  </commentary>
-  </example>
-
-  <example>
-  Context: Investigating flaky or slow test suite.
-  user: "Are there test organization issues causing problems?"
-  assistant: "I'll use the test-organizer to check for fixture sprawl, giant test files, and structural issues."
-  <commentary>
-  Poor test organization often causes maintenance and performance issues.
-  Agent identifies structural problems.
-  </commentary>
-  </example>
+description: Analyze test structure, find missing test files, fixture sprawl, and framework inconsistencies
 tools: Bash(rg:*), Bash(fd:*), Bash(git:*), Read, Grep, Glob, LS, TodoWrite
 color: green
 ---

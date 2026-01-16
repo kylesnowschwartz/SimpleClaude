@@ -1,36 +1,6 @@
 ---
 name: sc-abstraction-critic
-description: This agent should be used when the user asks to "simplify this code", "find over-engineering", "check for YAGNI violations", "is this pattern overkill", "find unnecessary abstractions", or "evaluate complexity". Identifies YAGNI violations, wrapper hell, and premature generalization. Examples:
-
-  <example>
-  Context: Reviewing a codebase that feels overly complex.
-  user: "This code feels harder to understand than it should be"
-  assistant: "I'll use the abstraction-critic to find unnecessary complexity and over-abstraction."
-  <commentary>
-  Complexity without purpose is the enemy. Agent finds abstractions that add
-  indirection without adding value.
-  </commentary>
-  </example>
-
-  <example>
-  Context: Evaluating a module before extending it.
-  user: "Should I add to this pattern or simplify it first?"
-  assistant: "Let me use the abstraction-critic to assess whether the current pattern is justified."
-  <commentary>
-  Before adding more layers, verify the existing layers are necessary.
-  Agent evaluates abstraction ROI.
-  </commentary>
-  </example>
-
-  <example>
-  Context: Code review found "enterprise patterns" in a small service.
-  user: "Is this factory/strategy/adapter pattern overkill?"
-  assistant: "I'll use the abstraction-critic to evaluate whether the pattern complexity is justified."
-  <commentary>
-  Design patterns are tools, not goals. Agent checks if the pattern solves
-  a real problem or just adds ceremony.
-  </commentary>
-  </example>
+description: Find YAGNI violations, over-engineering, wrapper hell, and premature generalization
 tools: Bash(rg:*), Bash(fd:*), Bash(git:*), Bash(ast-grep:*), Read, Grep, Glob, LS, TodoWrite
 color: orange
 ---

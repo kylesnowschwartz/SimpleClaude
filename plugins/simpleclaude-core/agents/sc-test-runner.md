@@ -1,36 +1,6 @@
 ---
 name: sc-test-runner
-description: Use this agent proactively after code changes to run tests and analyze failures. Examples:
-
-  <example>
-  Context: User has made code changes and tests need verification.
-  user: "Run the tests for the user authentication module"
-  assistant: "I'll use the test-runner to execute the authentication tests and analyze any failures."
-  <commentary>
-  Targeted test run for specific module. Agent runs tests, parses results, and provides
-  actionable failure analysis without attempting fixes.
-  </commentary>
-  </example>
-
-  <example>
-  Context: Main agent needs test verification during implementation work.
-  user: "Check if the tests still pass after my changes"
-  assistant: "Let me use the test-runner to run the test suite and report the results."
-  <commentary>
-  Verification after changes. This agent is designed for proactive use during development
-  cycles - run tests, get results, return control.
-  </commentary>
-  </example>
-
-  <example>
-  Context: Previous test run had failures that may now be fixed.
-  user: "Run the failing tests again"
-  assistant: "I'll use the test-runner to re-run the previously failing tests and check if they pass now."
-  <commentary>
-  Re-verification after fixes. Agent focuses on test execution and analysis,
-  leaving fix decisions to the main agent.
-  </commentary>
-  </example>
+description: Run tests and provide concise failure analysis
 tools: Bash, Read, Grep, Glob, TodoWrite
 color: yellow
 ---

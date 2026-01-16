@@ -1,36 +1,6 @@
 ---
 name: sc-code-reviewer
-description: Use this agent when code needs review for bugs, security issues, or adherence to project standards. Examples:
-
-  <example>
-  Context: User has finished implementing a feature and wants validation before committing.
-  user: "Review my changes before I commit"
-  assistant: "I'll use the code-reviewer to check your unstaged changes for bugs, security issues, and adherence to project conventions."
-  <commentary>
-  Pre-commit review catches issues early. Agent reviews against CLAUDE.md guidelines and
-  uses confidence scoring to avoid false-positive noise.
-  </commentary>
-  </example>
-
-  <example>
-  Context: User suspects there might be issues with their implementation.
-  user: "Can you check this authentication code for security vulnerabilities?"
-  assistant: "Let me use the code-reviewer to analyze the authentication implementation for security issues and common vulnerabilities."
-  <commentary>
-  Security review requires systematic analysis. User is asking for expert review,
-  not exploration or architecture work.
-  </commentary>
-  </example>
-
-  <example>
-  Context: User wants to ensure code quality before a PR.
-  user: "Is this implementation following our project patterns?"
-  assistant: "I'll use the code-reviewer to check your changes against the project's established conventions in CLAUDE.md."
-  <commentary>
-  Convention adherence review. Agent will compare against documented standards and
-  report high-confidence violations only.
-  </commentary>
-  </example>
+description: Review code for bugs, security issues, and adherence to project standards
 tools: Bash, Read, Grep, Glob, LS, TodoWrite
 color: red
 ---
