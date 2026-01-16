@@ -1,6 +1,6 @@
 ---
 name: sc-test-organizer
-description: Use this agent to analyze test organization and structure. Finds structural chaos, missing test files, and framework inconsistencies. Examples:
+description: This agent should be used when the user asks to "analyze test organization", "check test structure", "where should tests go", "find missing tests", "organize tests", or "check test consistency". Finds structural chaos, missing test files, fixture sprawl, and framework inconsistencies. Examples:
 
   <example>
   Context: Test suite has grown organically without structure.
@@ -31,7 +31,7 @@ description: Use this agent to analyze test organization and structure. Finds st
   Agent identifies structural problems.
   </commentary>
   </example>
-tools: Bash(rg:*), Bash(fd:*), Read, Grep, Glob, LS, TodoWrite
+tools: Bash(rg:*), Bash(fd:*), Bash(git:*), Read, Grep, Glob, LS, TodoWrite
 color: green
 ---
 

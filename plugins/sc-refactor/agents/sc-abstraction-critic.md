@@ -1,6 +1,6 @@
 ---
 name: sc-abstraction-critic
-description: Use this agent to find unnecessary abstractions and over-engineering. Identifies YAGNI violations, wrapper hell, and premature generalization. Examples:
+description: This agent should be used when the user asks to "simplify this code", "find over-engineering", "check for YAGNI violations", "is this pattern overkill", "find unnecessary abstractions", or "evaluate complexity". Identifies YAGNI violations, wrapper hell, and premature generalization. Examples:
 
   <example>
   Context: Reviewing a codebase that feels overly complex.
@@ -31,8 +31,7 @@ description: Use this agent to find unnecessary abstractions and over-engineerin
   a real problem or just adds ceremony.
   </commentary>
   </example>
-tools: Bash(rg:*), Bash(fd:*), Read, Grep, Glob, LS, TodoWrite
-model: sonnet
+tools: Bash(rg:*), Bash(fd:*), Bash(git:*), Bash(ast-grep:*), Read, Grep, Glob, LS, TodoWrite
 color: orange
 ---
 

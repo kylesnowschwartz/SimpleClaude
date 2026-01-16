@@ -1,6 +1,6 @@
 ---
 name: sc-dead-code-detector
-description: Use this agent to find unreferenced and dead code. Identifies orphan files, unused exports, commented code, and TODO graveyards. Examples:
+description: This agent should be used when the user asks to "find dead code", "find unused code", "what code can we delete", "find orphan files", "find unreferenced exports", or "clean up unused functions". Identifies orphan files, unused exports, commented code, and TODO graveyards. Examples:
 
   <example>
   Context: Cleaning up after removing a feature.
@@ -31,7 +31,7 @@ description: Use this agent to find unreferenced and dead code. Identifies orpha
   cleanup efforts.
   </commentary>
   </example>
-tools: Bash(rg:*), Bash(fd:*), Read, Grep, Glob, LS, TodoWrite
+tools: Bash(rg:*), Bash(fd:*), Bash(git:*), Read, Grep, Glob, LS, TodoWrite
 color: red
 ---
 

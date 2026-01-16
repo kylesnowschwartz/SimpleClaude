@@ -1,6 +1,6 @@
 ---
 name: sc-naming-auditor
-description: Use this agent to audit naming consistency across a codebase. Finds convention violations, semantic drift, and misleading names. Examples:
+description: This agent should be used when the user asks to "check naming consistency", "audit naming conventions", "find naming inconsistencies", "standardize naming", or "what naming conventions does this codebase use". Finds convention violations, semantic drift, and misleading names. Examples:
 
   <example>
   Context: Onboarding to a codebase with inconsistent conventions.
@@ -31,7 +31,7 @@ description: Use this agent to audit naming consistency across a codebase. Finds
   old names no longer match new behavior.
   </commentary>
   </example>
-tools: Bash(rg:*), Bash(fd:*), Read, Grep, Glob, LS, TodoWrite
+tools: Bash(rg:*), Bash(fd:*), Bash(git:*), Read, Grep, Glob, LS, TodoWrite
 color: cyan
 ---
 

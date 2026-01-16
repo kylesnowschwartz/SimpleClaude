@@ -1,4 +1,5 @@
 ---
+name: sc-production-review
 description: Comprehensive pre-merge review with multi-phase validation pipeline
 allowed-tools: Task, Read, Bash, Grep, Glob, TodoWrite
 argument-hint: "[PR-number-or-branch]"

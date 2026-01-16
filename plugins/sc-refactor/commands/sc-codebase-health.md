@@ -1,4 +1,5 @@
 ---
+name: sc-codebase-health
 description: Run parallel analysis agents for comprehensive codebase health check
 allowed-tools: Task, Read, Bash, AskUserQuestion, TodoWrite
 argument-hint: "[target-directory]"

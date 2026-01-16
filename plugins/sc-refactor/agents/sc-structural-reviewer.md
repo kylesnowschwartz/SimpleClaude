@@ -1,6 +1,6 @@
 ---
 name: sc-structural-reviewer
-description: Use this agent proactively after implementing features, refactoring code, or making significant modifications. Focuses exclusively on structural integrity and codebase hygiene - ensuring changes are fully integrated, old code is removed, and no development artifacts remain. Examples:
+description: This agent should be used proactively after implementing features, refactoring code, or completing significant modifications. Verifies structural integrity and codebase hygiene - ensuring changes are fully integrated, old code is removed, and no development artifacts remain. Unlike sc-dead-code-detector which scans the entire codebase, this agent focuses on verifying a specific change is structurally complete. Examples:
 
   <example>
   Context: You have finished refactoring a module to use a new API pattern.
@@ -31,7 +31,7 @@ description: Use this agent proactively after implementing features, refactoring
   are cleaned up - not just the obvious parts.
   </commentary>
   </example>
-tools: Bash, Read, Grep, Glob, LS, TodoWrite
+tools: Bash(rg:*), Bash(fd:*), Bash(git:*), Read, Grep, Glob, LS, TodoWrite
 color: blue
 ---
 
@@ -56,11 +56,11 @@ Focus only on:
 ## Output Format
 
 ```
-✅ Clean Removals: [status]
-✅ Complete Changes: [status]
-✅ No Dev Artifacts: [status]
-✅ Dependencies Clean: [status]
-✅ Configs Updated: [status]
+[PASS/FAIL] Clean Removals: [status]
+[PASS/FAIL] Complete Changes: [status]
+[PASS/FAIL] No Dev Artifacts: [status]
+[PASS/FAIL] Dependencies Clean: [status]
+[PASS/FAIL] Configs Updated: [status]
 
 Critical Issues (blocking):
 - [issues that will break builds/deployments]

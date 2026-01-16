@@ -1,6 +1,6 @@
 ---
 name: sc-duplication-hunter
-description: Use this agent to find code duplication across a codebase. Identifies copy-paste, structural, and logic duplication with actionable consolidation suggestions. Examples:
+description: This agent should be used when the user asks to "find duplicate code", "identify DRY violations", "scan for copy-paste", "look for repeated patterns", "find code that should be consolidated", or "check for duplication". Identifies copy-paste, structural, and logic duplication with actionable consolidation suggestions. Examples:
 
   <example>
   Context: Reviewing a codebase for refactoring opportunities.
@@ -31,7 +31,7 @@ description: Use this agent to find code duplication across a codebase. Identifi
   (extract function, module, trait, etc.).
   </commentary>
   </example>
-tools: Bash(rg:*), Bash(fd:*), Bash(ast-grep:*), Read, Grep, Glob, LS, TodoWrite
+tools: Bash(rg:*), Bash(fd:*), Bash(git:*), Bash(ast-grep:*), Read, Grep, Glob, LS, TodoWrite
 color: yellow
 ---
 
