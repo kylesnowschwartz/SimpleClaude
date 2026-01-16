@@ -1,7 +1,7 @@
 ---
 name: sc-codebase-health
 description: Run parallel analysis agents for comprehensive codebase health check
-allowed-tools: Task, Read, Bash, AskUserQuestion, TodoWrite
+allowed-tools: Task, Read, Bash, Grep, Glob, TodoWrite, AskUserQuestion, WebFetch
 argument-hint: "[target-directory]"
 ---
 
@@ -14,9 +14,12 @@ If not, briefly ask: "What areas should I focus on? (or 'all' for comprehensive 
 
 ## Phase 2: Launch Analysis Agents
 
-Launch ALL relevant agents simultaneously using Task with `run_in_background: true`:
+Launch ALL 6 agents simultaneously using Task with `run_in_background: true`:
 
 ```
+Task(subagent_type: "sc-refactor:sc-structural-reviewer", run_in_background: true,
+     prompt: "Analyze [target] for structural completeness. Focus on: [context areas]")
+
 Task(subagent_type: "sc-refactor:sc-duplication-hunter", run_in_background: true,
      prompt: "Analyze [target] for code duplication. Focus on: [context areas]")
 

@@ -14,7 +14,8 @@ Reference guide for routing review and refactoring requests to specialized agent
 | Command | Use When | Invokes |
 |---------|----------|---------|
 | `/sc-refactor:sc-review-pr` | Reviewing a PR for quality with ticket context | sc-code-reviewer + sc-structural-reviewer |
-| `/sc-refactor:sc-production-review` | Gate-checking a PR before merge | Multi-phase validation pipeline |
+| `/sc-refactor:sc-cleanup` | Post-AI session cleanup (debug statements, duplicates) | 4 agents (dead-code, duplication, naming, test) |
+| `/sc-refactor:sc-audit` | Verify structural completeness (wiring, configs) | sc-structural-reviewer |
 | `/sc-refactor:sc-codebase-health` | Full codebase analysis | All 6 agents in parallel |
 
 ### Agents
@@ -33,18 +34,20 @@ External dependency (from simpleclaude-core):
 
 ## Routing Table
 
-Match the user's request to the appropriate agents:
+Match the user's request to the appropriate command or agents:
 
-| User Intent | Agents to Spawn |
-|-------------|-----------------|
-| "review", "check", "validate", "PR" | sc-code-reviewer + sc-structural-reviewer |
-| "health", "full", "comprehensive" | All 6 agents in parallel |
+| User Intent | Route To |
+|-------------|----------|
+| "review PR", "check my PR", "PR review" | `/sc-review-pr` |
+| "clean up", "after AI session", "find debug", "console.log" | `/sc-cleanup` |
+| "audit", "structural check", "verify wiring", "missing config" | `/sc-audit` |
+| "health check", "full analysis", "comprehensive" | `/sc-codebase-health` |
 | "dead code", "unused", "orphan" | sc-dead-code-detector |
 | "duplicate", "DRY", "repeated" | sc-duplication-hunter |
 | "simplify", "YAGNI", "over-engineer" | sc-abstraction-critic |
 | "naming", "consistency", "convention" | sc-naming-auditor |
 | "test organization", "test structure" | sc-test-organizer |
-| "structural", "complete", "cleanup" | sc-structural-reviewer |
+| "structural", "complete changes" | sc-structural-reviewer |
 
 ## Agent Spawning
 
@@ -105,16 +108,27 @@ Context-aware PR review with ticket integration. Gathers:
 
 Then runs parallel review agents focused on the PR diff.
 
-### sc-production-review
+### sc-cleanup
 
-Multi-phase validation pipeline for pre-merge checks:
-1. Context gathering (haiku agents)
-2. Change summary (sonnet)
-3. Parallel review (sonnet + opus)
-4. Finding validation (per finding)
-5. Filtered report
+Post-AI session cleanup. Spawns 4 agents to find:
+- Debug statements (console.log, print, debugger, binding.pry)
+- Code duplication (AI rewrote instead of reusing)
+- Naming inconsistencies
+- Test organization issues
 
-Gate-focused: only reports validated, high-confidence issues.
+Offers auto-fix for immediate issues (debug removal, dead code deletion).
+
+### sc-audit
+
+Structural completeness verification. Uses sc-structural-reviewer to check:
+- Route registration
+- ENV variable documentation
+- Database migrations
+- Barrel file exports
+- Documentation updates
+- Related file renames (CSS, tests, stories)
+
+Reports PASS/FAIL per category with fix suggestions.
 
 ### sc-codebase-health
 

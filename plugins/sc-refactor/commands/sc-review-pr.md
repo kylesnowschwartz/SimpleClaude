@@ -1,7 +1,7 @@
 ---
 name: sc-review-pr
 description: Context-aware PR review with ticket integration and multi-phase validation
-allowed-tools: Task, Read, Bash, Grep, Glob, TodoWrite, WebFetch
+allowed-tools: Task, Read, Bash, Grep, Glob, TodoWrite, AskUserQuestion, WebFetch
 argument-hint: "[PR-number-or-URL]"
 ---
 

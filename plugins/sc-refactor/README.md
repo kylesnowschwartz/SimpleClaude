@@ -22,7 +22,8 @@ This plugin provides post-implementation validation workflows. Use it to:
 | Command | Purpose |
 |---------|---------|
 | `/sc-refactor:sc-review-pr [PR#]` | Context-aware PR review with ticket integration |
-| `/sc-refactor:sc-production-review [PR#]` | Gate-check PR before merge |
+| `/sc-refactor:sc-cleanup [dir]` | Post-AI session cleanup (debug statements, duplicates) |
+| `/sc-refactor:sc-audit [dir]` | Verify structural completeness (wiring, configs) |
 | `/sc-refactor:sc-codebase-health [dir]` | Full codebase health analysis |
 
 ## Agents
@@ -48,13 +49,21 @@ All agents are read-only (analysis only) and report findings with confidence sco
 
 Gathers PR metadata, linked ticket context, and CLAUDE.md guidelines, then runs parallel review agents.
 
-### Production Gate Check
+### Post-AI Cleanup
 
 ```
-/sc-refactor:sc-production-review 42
+/sc-refactor:sc-cleanup src/
 ```
 
-Multi-phase validation pipeline with finding validation. Only reports high-confidence, validated issues.
+Find debug statements, duplicate code, naming inconsistencies after AI coding sessions. Offers auto-fix.
+
+### Structural Audit
+
+```
+/sc-refactor:sc-audit src/
+```
+
+Verify routes registered, ENV vars documented, migrations complete, exports updated, docs current.
 
 ### Codebase Health
 
@@ -68,11 +77,12 @@ Runs all 6 agents in parallel, produces categorized report with quick wins and r
 
 The skill routes requests automatically:
 
-- "Review my PR" -> sc-review-pr workflow
+- "Review my PR" -> sc-review-pr
+- "Clean up after AI session" -> sc-cleanup
+- "Check structural completeness" -> sc-audit
+- "Run a health check" -> sc-codebase-health
 - "Find dead code" -> sc-dead-code-detector
 - "Check for duplication" -> sc-duplication-hunter
-- "Simplify this codebase" -> sc-abstraction-critic
-- "Run a health check" -> sc-codebase-health
 
 ## Version
 

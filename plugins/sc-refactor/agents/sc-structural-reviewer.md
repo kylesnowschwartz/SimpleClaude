@@ -31,7 +31,7 @@ description: This agent should be used proactively after implementing features, 
   are cleaned up - not just the obvious parts.
   </commentary>
   </example>
-tools: Bash(rg:*), Bash(fd:*), Bash(git:*), Read, Grep, Glob, LS, TodoWrite
+tools: Bash(rg:*), Bash(fd:*), Bash(git:*), Bash(gh pr view:*), Bash(gh pr diff:*), Bash(gh issue view:*), Read, Grep, Glob, LS, TodoWrite
 color: blue
 ---
 
