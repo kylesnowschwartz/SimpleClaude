@@ -1,7 +1,7 @@
 {
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
   "name": "simpleclaude",
-  "version": "3.3.0",
+  "version": "4.0.0",
   "description": "Practical minimalist AI assistant framework with specialized agents",
   "owner": {
     "name": "Kyle Snow Schwartz",
@@ -96,8 +96,8 @@
     },
     {
       "name": "sc-skills",
-      "description": "Skills and agents for frontend design, image generation, and skill development tooling",
-      "version": "2.0.1",
+      "description": "Skills and agents for frontend design and browser testing",
+      "version": "3.0.0",
       "author": {
         "name": "Kyle Snow Schwartz"
       },
@@ -117,7 +117,7 @@
     },
     {
       "name": "sc-refactor",
-      "description": "Unified review, refactoring, and cleanup workflows with specialized analysis agents",
+      "description": "Unified review, refactoring, PR comment resolution, and cleanup workflows with specialized analysis agents",
       "version": "1.0.0",
       "author": {
         "name": "Kyle Snow Schwartz"

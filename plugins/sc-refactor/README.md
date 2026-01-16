@@ -91,7 +91,7 @@ The skill routes requests automatically:
 
 ## Version
 
-0.1.0 (pre-release)
+1.0.0
 
 ## License
 

@@ -1,7 +1,7 @@
 {
   "name": "sc-skills",
-  "version": "2.0.1",
-  "description": "Skills and agents for frontend design, plugin development, and PR workflows",
+  "version": "3.0.0",
+  "description": "Skills and agents for frontend design and browser testing",
   "author": {
     "name": "Kyle Snow Schwartz"
   },
