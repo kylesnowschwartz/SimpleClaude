@@ -14,6 +14,8 @@ Reference guide for routing review and refactoring requests to specialized agent
 | Command | Use When | Invokes |
 |---------|----------|---------|
 | `/sc-refactor:sc-review-pr` | Reviewing a PR for quality with ticket context | sc-code-reviewer + sc-structural-reviewer |
+| `/sc-refactor:sc-pr-comments` | View unresolved PR review comments | Scripts (GraphQL) |
+| `/sc-refactor:sc-resolve-pr-parallel` | Batch resolve all PR comments | sc-pr-comment-resolver (parallel) |
 | `/sc-refactor:sc-cleanup` | Post-AI session cleanup (debug statements, duplicates) | 4 agents (dead-code, duplication, naming, test) |
 | `/sc-refactor:sc-audit` | Verify structural completeness (wiring, configs) | sc-structural-reviewer |
 | `/sc-refactor:sc-codebase-health` | Full codebase analysis | All 6 agents in parallel |
@@ -28,6 +30,7 @@ Reference guide for routing review and refactoring requests to specialized agent
 | `sc-naming-auditor` | Convention violations, semantic drift | cyan |
 | `sc-dead-code-detector` | Unreferenced exports, orphan files, commented code | red |
 | `sc-test-organizer` | Test structure, missing tests, fixture sprawl | green |
+| `sc-pr-comment-resolver` | Implement PR review comment changes | blue |
 
 External dependency (from simpleclaude-core):
 - `sc-code-reviewer` - Bugs, security, CLAUDE.md compliance
@@ -39,6 +42,8 @@ Match the user's request to the appropriate command or agents:
 | User Intent | Route To |
 |-------------|----------|
 | "review PR", "check my PR", "PR review" | `/sc-review-pr` |
+| "PR comments", "view comments", "unresolved comments" | `/sc-pr-comments` |
+| "resolve comments", "fix PR feedback", "address review" | `/sc-resolve-pr-parallel` |
 | "clean up", "after AI session", "find debug", "console.log" | `/sc-cleanup` |
 | "audit", "structural check", "verify wiring", "missing config" | `/sc-audit` |
 | "health check", "full analysis", "comprehensive" | `/sc-codebase-health` |

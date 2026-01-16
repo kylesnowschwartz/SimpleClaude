@@ -22,6 +22,8 @@ This plugin provides post-implementation validation workflows. Use it to:
 | Command | Purpose |
 |---------|---------|
 | `/sc-refactor:sc-review-pr [PR#]` | Context-aware PR review with ticket integration |
+| `/sc-refactor:sc-pr-comments [PR#]` | Fetch unresolved PR review comments |
+| `/sc-refactor:sc-resolve-pr-parallel [PR#]` | Batch resolve all PR comments in parallel |
 | `/sc-refactor:sc-cleanup [dir]` | Post-AI session cleanup (debug statements, duplicates) |
 | `/sc-refactor:sc-audit [dir]` | Verify structural completeness (wiring, configs) |
 | `/sc-refactor:sc-codebase-health [dir]` | Full codebase health analysis |
@@ -36,8 +38,9 @@ This plugin provides post-implementation validation workflows. Use it to:
 | `sc-naming-auditor` | Convention violations, semantic drift |
 | `sc-dead-code-detector` | Unreferenced exports, orphan files |
 | `sc-test-organizer` | Test structure, missing tests |
+| `sc-pr-comment-resolver` | Implement PR review comment changes |
 
-All agents are read-only (analysis only) and report findings with confidence scores.
+Analysis agents are read-only. `sc-pr-comment-resolver` makes targeted code changes.
 
 ## Usage
 
@@ -78,6 +81,8 @@ Runs all 6 agents in parallel, produces categorized report with quick wins and r
 The skill routes requests automatically:
 
 - "Review my PR" -> sc-review-pr
+- "Show PR comments" -> sc-pr-comments
+- "Fix PR feedback" -> sc-resolve-pr-parallel
 - "Clean up after AI session" -> sc-cleanup
 - "Check structural completeness" -> sc-audit
 - "Run a health check" -> sc-codebase-health

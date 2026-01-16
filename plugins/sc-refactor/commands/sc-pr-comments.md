@@ -9,7 +9,7 @@ argument-hint: "[PR number | PR URL | owner/repo PR_NUMBER]"
 Fetch unresolved review comments as an ASCII tree:
 
 ```bash
-"${CLAUDE_PLUGIN_ROOT}/skills/sc-pull-request-skills/scripts/get-pr-comments.sh" $ARGUMENTS | ruby "${CLAUDE_PLUGIN_ROOT}/skills/sc-pull-request-skills/scripts/format-pr-tree.rb"
+"${CLAUDE_PLUGIN_ROOT}/scripts/get-pr-comments.sh" $ARGUMENTS | ruby "${CLAUDE_PLUGIN_ROOT}/scripts/format-pr-tree.rb"
 ```
 
 **Input formats:**
