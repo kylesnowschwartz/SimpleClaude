@@ -2,33 +2,22 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) [![Version](https://img.shields.io/badge/version-4.1.0-blue.svg)](https://github.com/kylesnowschwartz/SimpleClaude) [![GitHub issues](https://img.shields.io/github/issues/kylesnowschwartz/SimpleClaude)](https://github.com/kylesnowschwartz/SimpleClaude/issues)
 
-A practical minimalist AI assistant framework that transforms complex AI interactions into natural conversations. Comes with a set of user-commands, sub-agents, hooks, and utilities designed for real-world software development tasks.
+A practical minimalist AI assistant framework that transforms complex AI interactions into natural conversations. Comes with a set of user-commands, sub-agents, hooks, and utilities designed for real-world software development tasks. Completely dogfooded by its creator for building production software in the workplace and for personal projects. Expect frequent updates, enhancements, and breaking changes.
 
 ## Installation
 
 ### Option 1: Direct from GitHub (Recommended)
 
-Install SimpleClaude plugins directly without cloning:
+Install SimpleClaude plugins directly from the commandline:
 
 ```bash
-# Add SimpleClaude marketplace from GitHub
 claude plugin marketplace add https://github.com/kylesnowschwartz/SimpleClaude
-
-# Install core framework (required)
-# Installs 4+1 commands and 6 specialized agents
 claude plugin install simpleclaude-core
-
-# Install hooks (optional but recommended)
 claude plugin install sc-hooks
-
-# Install output styles (optional but recommended)
 claude plugin install sc-output-styles
-
-# Install extra utilities (optional)
 claude plugin install sc-extras
-
-# Install skills plugin (optional)
 claude plugin install sc-skills
+claude plugin install sc-refactor
 ```
 
 Or from within Claude Code:
@@ -40,84 +29,56 @@ Or from within Claude Code:
 /plugin install sc-output-styles
 /plugin install sc-extras
 /plugin install sc-skills
+/plugin install sc-refactor
 ```
 
 **What's included:**
 - **simpleclaude-core**: 4+1 core commands and 6 specialized agents
 - **sc-hooks** _(optional)_: Session management, tool monitoring, and notification hooks
 - **sc-output-styles** _(optional)_: 8 curated output styles (personality-driven: Linus, Austen, Starfleet; structured: HTML, JSON, Markdown, Semantic Markdown, YAML)
-- **sc-extras** _(optional)_: 7 advanced utility commands for debugging, GitHub workflows, git worktrees, task validation, command creation, feature discovery, and pre-commit setup
-- **sc-skills** _(optional)_: Skills for frontend design, iterative design improvement, Gemini image generation, PR automation, and skill development tooling
-
-### Option 2: Clone and Install with Ruby Script
-
-Clone the repository and run the interactive installer for additional components like status lines:
-
-```bash
-# Clone the repository
-git clone https://github.com/kylesnowschwartz/SimpleClaude.git
-cd SimpleClaude
-
-# Preview what will be installed
-./scripts/install.rb --dry-run
-
-# Run interactive installer (installs plugins + status-lines)
-./scripts/install.rb
-```
-
-**Additional components via script:**
-- Status line for session information display
-- Settings template _(manual configuration required)_
-
-**Note:** Output styles are now installed via the `sc-output-styles` plugin (Option 1 above).
+- **sc-extras** _(optional)_: 11 utility commands for mermaid diagrams, root cause analysis, claim verification, pre-commit setup, git worktrees, task validation, and more
+- **sc-skills** _(optional)_: Playwright testing, frontend design iteration, Gemini image generation, and command generation tools
+- **sc-refactor** _(optional)_: PR review with ticket integration, codebase health checks, and 9 specialized analysis agents for refactoring workflows
 
 ## Updating
 
 ### Via Claude Code CLI
 
 ```bash
-# Pull latest changes
-cd SimpleClaude
-git pull
-
-# Update marketplace registration
 claude plugin marketplace update simpleclaude
-
-# Update installed plugins
 claude plugin install simpleclaude-core@simpleclaude
-claude plugin install sc-hooks@simpleclaude         # if installed
-claude plugin install sc-output-styles@simpleclaude # if installed
-claude plugin install sc-extras@simpleclaude        # if installed
-claude plugin install sc-skills@simpleclaude        # if installed
-
-# Update auxiliary components (optional)
-./scripts/install.rb
+claude plugin install sc-hooks@simpleclaude
+claude plugin install sc-output-styles@simpleclaude
+claude plugin install sc-extras@simpleclaude
+claude plugin install sc-skills@simpleclaude
+claude plugin install sc-refactor@simpleclaude
 ```
-
-### Via Claude Code Interactive UI
-
-1. Open Claude Code
-2. `/plugin`
-3. Follow prompts to update installed plugins and marketplace registration
 
 ## Quick Start
 
 ```bash
-/simpleclaude-core:sc-plan "How should I add authentication to this app? Use the Code code-explorer and code-architect agents to help plan it out."
-/simpleclaude-core:sc-work "Add JWT authentication with login/logout. First use the code-architect agent to design the architecture, then implement it."
-/simpleclaude-core:sc-explore "How does the current database layer work? Use the code-explorer agent to analyze it."
-/simpleclaude-core:sc-review "Check security vulnerabilities in auth module. Use the code-reviewer agent to help find issues."
-/simpleclaude-core:sc-workflow "Start structured development process for adding OAuth support. Use code-explorer, code-architect, and code-reviewer agents as needed."
+# Core development commands
+/simpleclaude-core:sc-plan "How should I add authentication to this app?"
+/simpleclaude-core:sc-work "Add JWT authentication with login/logout"
+/simpleclaude-core:sc-explore "How does the current database layer work?"
+/simpleclaude-core:sc-review "Check security vulnerabilities in auth module"
+/simpleclaude-core:sc-workflow "Start structured development for OAuth support"
 
-/sc-extras:sc-create-command
-/sc-extras:sc-eastereggs
-/sc-extras:sc-five-whys
-/sc-extras:sc-pr-comments
-/sc-extras:sc-pre-commit-setup
-/sc-extras:sc-validate-task
-/sc-extras:sc-worktrees
+# PR review and refactoring
+/sc-refactor:sc-review-pr 42              # Full PR review with ticket context
+/sc-refactor:sc-pr-comments 42            # Fetch unresolved PR comments
+/sc-refactor:sc-resolve-pr-parallel 42    # Batch resolve PR feedback
+/sc-refactor:sc-cleanup src/              # Post-AI session cleanup
+/sc-refactor:sc-codebase-health src/      # Full codebase health analysis
 
-/sc-hooks:sc-sounds       # Configure notification sounds
+# Utilities
+/sc-extras:sc-five-whys                   # Root cause analysis
+/sc-extras:sc-mermaid-flowchart           # Generate architecture diagrams
+/sc-extras:sc-pre-commit-setup            # Set up pre-commit hooks
+/sc-extras:sc-validate-task               # Validate completed work
+/sc-extras:sc-worktrees                   # Manage git worktrees
+
+/sc-hooks:sc-sounds                       # Configure notification sounds
 ```
 
 ## Architecture
@@ -150,8 +111,9 @@ SimpleClaude/
 │   ├── simpleclaude-core/        # Core plugin: 4+1 commands & 6 agents
 │   ├── sc-hooks/                 # Hooks plugin: session management & notifications
 │   ├── sc-output-styles/         # Output styles plugin: 8 curated styles
-│   ├── sc-extras/                # Extras plugin: 7 utility commands
-│   └── sc-skills/                # Skills plugin: frontend design, image gen
+│   ├── sc-extras/                # Extras plugin: 11 utility commands
+│   ├── sc-skills/                # Skills plugin: Playwright, design iteration, image gen
+│   └── sc-refactor/              # Refactor plugin: PR review & 9 analysis agents
 ├── scripts/
 │   └── install.rb                # Installation/update script
 ├── docs/                         # Documentation
