@@ -1,6 +1,6 @@
 ---
 name: sc-refactor-review
-description: This skill should be used when the user asks to "review code", "find dead code", "check for duplication", "simplify the codebase", "find refactoring opportunities", "do code cleanup", "check naming consistency", "analyze test organization", "run codebase health check", or "review my PR". Routes to specialized analysis agents based on the type of review requested.
+description: This skill should be used when the user asks to "review code", "find dead code", "check for duplication", "simplify the codebase", "find refactoring opportunities", "do code cleanup", "check naming consistency", "analyze test organization", "run codebase health check", "review my PR", "refactor this code", "extract method", "rename variable", or "consolidate duplicates". Routes to specialized analysis agents or refactoring workflow based on the type of request.
 ---
 
 # SC Refactor Review Skill
@@ -13,6 +13,7 @@ Reference guide for routing review and refactoring requests to specialized agent
 
 | Command | Use When | Invokes |
 |---------|----------|---------|
+| `/sc-refactor:sc-refactor` | Refactor code (plan or execute) | sc-refactor-planner + sc-refactor-executor |
 | `/sc-refactor:sc-review-pr` | Reviewing a PR for quality with ticket context | sc-code-reviewer + sc-structural-reviewer |
 | `/sc-refactor:sc-pr-comments` | View unresolved PR review comments | Scripts (GraphQL) |
 | `/sc-refactor:sc-resolve-pr-parallel` | Batch resolve all PR comments | sc-pr-comment-resolver (parallel) |
@@ -24,6 +25,8 @@ Reference guide for routing review and refactoring requests to specialized agent
 
 | Agent | Focus | Color |
 |-------|-------|-------|
+| `sc-refactor-planner` | Analyze code, recommend refactoring opportunities | yellow |
+| `sc-refactor-executor` | Execute ONE surgical refactoring with test verification | green |
 | `sc-structural-reviewer` | Change completeness, orphaned code, dev artifacts | blue |
 | `sc-duplication-hunter` | Copy-paste, structural, logic duplication | yellow |
 | `sc-abstraction-critic` | YAGNI violations, over-engineering, wrapper hell | orange |
@@ -41,6 +44,8 @@ Match the user's request to the appropriate command or agents:
 
 | User Intent | Route To |
 |-------------|----------|
+| "refactor", "extract method", "rename", "consolidate", "inline" | `/sc-refactor` |
+| "refactoring opportunities", "what should I refactor" | `/sc-refactor` (plan mode) |
 | "review PR", "check my PR", "PR review" | `/sc-review-pr` |
 | "PR comments", "view comments", "unresolved comments" | `/sc-pr-comments` |
 | "resolve comments", "fix PR feedback", "address review" | `/sc-resolve-pr-parallel` |
@@ -134,6 +139,30 @@ Structural completeness verification. Uses sc-structural-reviewer to check:
 - Related file renames (CSS, tests, stories)
 
 Reports PASS/FAIL per category with fix suggestions.
+
+### sc-refactor
+
+Surgical code refactoring workflow with two modes:
+
+**Plan Mode** (no specific action given):
+1. Invokes sc-refactor-planner to analyze target
+2. Presents prioritized recommendations
+3. User selects one to execute
+
+**Execute Mode** (specific action given):
+1. Invokes sc-refactor-executor with the specific refactoring
+2. Executor runs tests, makes change, verifies behavior preserved
+3. Reports success/failure with files modified
+
+Example usage:
+- `/sc-refactor src/utils` - Analyze for opportunities
+- `/sc-refactor extract duplicate validation in auth.ts` - Execute specific refactoring
+
+Key constraints:
+- ONE refactoring per invocation
+- Tests must pass before and after
+- Zero behavioral changes
+- Does NOT auto-commit
 
 ### sc-codebase-health
 
