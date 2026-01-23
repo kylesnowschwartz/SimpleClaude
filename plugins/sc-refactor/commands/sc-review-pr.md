@@ -43,15 +43,24 @@ Task(subagent_type: "general-purpose", model: "haiku", run_in_background: true,
 
 # Agent 2: CLAUDE.md Finder
 Task(subagent_type: "general-purpose", model: "haiku", run_in_background: true,
-     prompt: "Find all CLAUDE.md files relevant to this PR:
+     prompt: "Find all CLAUDE.md files in the repository being reviewed.
 
-              1. Check for root CLAUDE.md and .claude/CLAUDE.md
-              2. Get list of changed files from: gh pr view $ARGUMENTS --json files
-              3. For each unique directory containing changed files, check for CLAUDE.md
+              Step 1: Get the repository root
+              - Run: gh pr view $ARGUMENTS --json headRepository --jq '.headRepository.name'
+              - Get local path by finding it: fd -t d -d 3 '<repo-name>' ~/Code 2>/dev/null | head -1
+              - Or use pwd if already in the repo directory
+
+              Step 2: Search for ALL CLAUDE.md files in that repo
+              - Run: fd -t f 'CLAUDE.md' <repo-path> 2>/dev/null
+              - This finds CLAUDE.md at any depth (root, .claude/, subdirectories)
+
+              Step 3: Read each file found
+              - Use the Read tool on each CLAUDE.md path
 
               Return:
-              - List of CLAUDE.md paths found
-              - Brief summary of key guidelines from each")
+              - Full paths to all CLAUDE.md files found
+              - Brief summary of key guidelines from each
+              - 'No CLAUDE.md files found' if none exist")
 
 # Agent 3: Ticket Extractor
 Task(subagent_type: "general-purpose", model: "haiku", run_in_background: true,

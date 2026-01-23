@@ -1,5 +1,5 @@
 ---
-name: sc-audit
+name: sc-structural-check
 description: Structural completeness audit - verify wiring, configs, and nothing is missing
 allowed-tools: Task, Read, Bash, Grep, Glob, TodoWrite, AskUserQuestion, WebFetch
 argument-hint: "[target-directory-or-feature]"

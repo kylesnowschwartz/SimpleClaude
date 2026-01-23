@@ -1,5 +1,6 @@
 ---
 description: Validate a completed task against its original requirements
+allowed-tools: Task, Read, Bash, Grep, Glob, TodoWrite, AskUserQuestion, WebFetch
 argument-hint: "[task-description] - Description of the task to validate"
 ---
 
@@ -9,7 +10,7 @@ _Focused validation of specific completed tasks or todo items._
 
 ## Usage:
 
-`/sc-validate-task [task-description]`
+`/sc-validate-task` $ARGUMENTS
 
 ## Process:
 
@@ -17,7 +18,7 @@ _Focused validation of specific completed tasks or todo items._
 
 **Identify exactly what was supposed to be accomplished:**
 
-- Task description from ${ARGUMENTS} or conversation context
+- Task description from $ARGUMENTS or conversation context
 - Original requirement or todo item
 - Expected deliverable or outcome
 - Success criteria (implicit or explicit)
@@ -69,9 +70,9 @@ Task: [Original requirement]
 
 ## Validation Decision Matrix:
 
-**✅ VALIDATED** - Task is complete and working correctly
-**❌ NEEDS FIXES** - Task has issues that must be resolved
-**⚠️ PARTIAL** - Task is mostly complete but has minor issues
+**VALIDATED** - Task is complete and working correctly
+**NEEDS FIXES** - Task has issues that must be resolved
+**PARTIAL** - Task is mostly complete but has minor issues
 
 ## Output Template:
 
@@ -94,7 +95,7 @@ Task: [Original requirement]
 **Edge Cases**: [Boundary conditions checked]
 
 ## Validation Results
-**Status**: ✅ VALIDATED | ❌ NEEDS FIXES | ⚠️ PARTIAL
+**Status**: VALIDATED | NEEDS FIXES | PARTIAL
 **Evidence**: [Specific proof the task works/doesn't work]
 **Confidence**: [High/Medium/Low based on testing]
 
@@ -102,9 +103,9 @@ Task: [Original requirement]
 - **[Priority]**: [Specific problem with location and fix needed]
 
 ## Decision
-- **If ✅**: Task complete, ready for next todo
-- **If ❌**: [Specific fixes needed before marking complete]
-- **If ⚠️**: [What works, what needs attention, acceptable to proceed?]
+- **If VALIDATED**: Task complete, ready for next todo
+- **If NEEDS FIXES**: [Specific fixes needed before marking complete]
+- **If PARTIAL**: [What works, what needs attention, acceptable to proceed?]
 ```
 
 ## Smart Patterns:
@@ -129,5 +130,3 @@ Task: [Original requirement]
 ---
 
 _Remember: This is task-specific validation, not comprehensive code review. Stay focused on whether this one thing was completed correctly._
-
-${ARGUMENTS}

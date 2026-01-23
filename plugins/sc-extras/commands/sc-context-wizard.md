@@ -1,4 +1,5 @@
 ---
+name: sc-context-wizard
 description: Interactive wizard to create context packets for agent tasks
 argument-hint: "[optional: title or short description of the work]"
 ---

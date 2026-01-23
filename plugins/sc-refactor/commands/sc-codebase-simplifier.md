@@ -1,4 +1,5 @@
 ---
+name: sc-codebase-simplifier
 description: Run 5 parallel agents to analyze codebase quality (duplication, abstractions, naming, dead code, tests)
 allowed-tools: Task, Read, Bash, AskUserQuestion, TodoWrite
 argument-hint: [target-directory]
