@@ -1,51 +1,96 @@
 # SimpleClaude release automation
+# All plugins share one version. Simple.
+
+set shell := ["zsh", "-cu"]
 
 default:
     @just --list
 
-# Commits since last release
-changes:
-    #!/usr/bin/env zsh
-    git log --oneline $(git describe --tags --abbrev=0)..HEAD
+# Show current version and commits since last release
+status:
+    @echo "Version: $(cat VERSION)"
+    @echo ""
+    @echo "Commits since last release:"
+    @git log --oneline $(git describe --tags --abbrev=0 2>/dev/null || echo HEAD~10)..HEAD
 
-# Plugins changed since last release
-affected:
+# Bump version (patch|minor|major) and update all files
+bump type:
     #!/usr/bin/env zsh
-    git diff --name-only $(git describe --tags --abbrev=0)..HEAD | grep -E '^plugins/' | cut -d'/' -f2 | sort -u
+    set -e
 
-# Current versions
-versions:
-    #!/usr/bin/env zsh
-    echo "marketplace: $(cat VERSION)"
-    for p in simpleclaude-core sc-hooks sc-extras sc-output-styles sc-skills sc-refactor; do
-        [[ -f "plugins/$p/.claude-plugin/plugin.json" ]] && printf "%-18s %s\n" "$p:" "$(jq -r .version plugins/$p/.claude-plugin/plugin.json)"
+    # Parse current version
+    v=$(cat VERSION)
+    IFS='.' read -r M m p <<< "$v"
+
+    # Calculate new version
+    case {{type}} in
+        patch) new="$M.$m.$((p+1))" ;;
+        minor) new="$M.$((m+1)).0" ;;
+        major) new="$((M+1)).0.0" ;;
+        *) echo "Usage: just bump patch|minor|major" && exit 1 ;;
+    esac
+
+    echo "Bumping $v → $new"
+
+    # Update VERSION file
+    echo "$new" > VERSION
+
+    # Update README badge
+    sed -i '' "s/version-[0-9]*\.[0-9]*\.[0-9]*-blue/version-$new-blue/" README.md
+
+    # Update CLAUDE.md
+    sed -i '' "s/Current version: [0-9]*\.[0-9]*\.[0-9]*/Current version: $new/" CLAUDE.md
+
+    # Update marketplace.json top-level version
+    jq --arg v "$new" '.version = $v' .claude-plugin/marketplace.json | sponge .claude-plugin/marketplace.json
+
+    # Update all plugin versions (marketplace.json and individual plugin.json files)
+    for plugin in simpleclaude-core sc-hooks sc-extras sc-output-styles sc-skills sc-refactor; do
+        # Update marketplace.json entry
+        jq --arg name "$plugin" --arg v "$new" \
+            '(.plugins[] | select(.name == $name)).version = $v' \
+            .claude-plugin/marketplace.json | sponge .claude-plugin/marketplace.json
+
+        # Update plugin's own plugin.json
+        f="plugins/$plugin/.claude-plugin/plugin.json"
+        if [[ -f "$f" ]]; then
+            jq --arg v "$new" '.version = $v' "$f" | sponge "$f"
+        fi
     done
 
-# Set marketplace version
-set-version version:
-    #!/usr/bin/env zsh
-    echo "{{version}}" > VERSION
-    sed -i '' 's/version-[0-9]*\.[0-9]*\.[0-9]*-blue/version-{{version}}-blue/' README.md
-    sed -i '' 's/Current version: [0-9]*\.[0-9]*\.[0-9]*/Current version: {{version}}/' CLAUDE.md
-    jq '.version = "{{version}}"' .claude-plugin/marketplace.json | sponge .claude-plugin/marketplace.json
+    echo "Done. Run 'just release' when ready."
 
-# Bump plugin (patch|minor|major)
-bump plugin type:
+# Commit, tag, and push the release
+release:
     #!/usr/bin/env zsh
-    f="plugins/{{plugin}}/.claude-plugin/plugin.json"
-    v=$(jq -r .version "$f"); IFS='.' read -r M m p <<< "$v"
-    case {{type}} in patch) n="$M.$m.$((p+1))";; minor) n="$M.$((m+1)).0";; major) n="$((M+1)).0.0";; esac
-    echo "{{plugin}}: $v → $n"
-    jq --arg v "$n" '.version=$v' "$f" | sponge "$f"
-    jq --arg name "{{plugin}}" --arg v "$n" '(.plugins[]|select(.name==$name)).version=$v' .claude-plugin/marketplace.json | sponge .claude-plugin/marketplace.json
+    set -e
 
-# Bump all affected plugins
-bump-affected type:
-    #!/usr/bin/env zsh
-    for p in $(just affected); do just bump "$p" {{type}}; done
+    v=$(cat VERSION)
 
-# Commit, tag, push
-release version:
-    git add -u && git commit -m "chore: Bump version to v{{version}}"
-    git tag v{{version}}
+    # Safety: ensure we're on main and up to date
+    branch=$(git branch --show-current)
+    if [[ "$branch" != "main" ]]; then
+        echo "Error: must be on main branch (currently on $branch)"
+        exit 1
+    fi
+
+    git fetch origin main
+    behind=$(git rev-list HEAD..origin/main --count)
+    if [[ "$behind" -gt 0 ]]; then
+        echo "Error: $behind commit(s) behind origin/main"
+        echo "Run 'git pull --rebase' first"
+        exit 1
+    fi
+
+    # Check for uncommitted changes (should have version bump staged)
+    if git diff --cached --quiet; then
+        echo "Error: nothing staged. Run 'just bump' first, then 'git add -u'"
+        exit 1
+    fi
+
+    # Commit, tag, push
+    git commit -m "chore: Bump version to v$v"
+    git tag "v$v"
     git push && git push --tags
+
+    echo "Released v$v"
