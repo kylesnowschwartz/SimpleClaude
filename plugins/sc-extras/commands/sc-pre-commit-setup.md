@@ -1,4 +1,5 @@
 ---
+name: sc-pre-commit-setup
 description: Set up pre-commit framework with language-specific hooks
 ---
 

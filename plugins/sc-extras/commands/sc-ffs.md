@@ -1,4 +1,5 @@
 ---
+name: sc-ffs
 description: Old man yells at Claude
 ---
 

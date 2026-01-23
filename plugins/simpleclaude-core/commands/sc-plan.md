@@ -1,4 +1,5 @@
 ---
+name: sc-plan
 description: Strategic planning and analysis for requirements and roadmaps
 argument-hint: Planning task or requirement to analyze
 ---

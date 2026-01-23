@@ -1,4 +1,5 @@
 ---
+name: sc-validate-task
 description: Validate a completed task against its original requirements
 allowed-tools: Task, Read, Bash, Grep, Glob, TodoWrite, AskUserQuestion, WebFetch
 argument-hint: "[task-description] - Description of the task to validate"

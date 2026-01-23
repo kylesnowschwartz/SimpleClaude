@@ -1,4 +1,5 @@
 ---
+name: sc-five-whys
 description: Systematic root cause analysis using Five Whys method
 argument-hint: Problem statement or issue to analyze
 ---

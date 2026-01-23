@@ -1,4 +1,5 @@
 ---
+name: sc-mermaid-flowchart
 argument-hint: [ System, scope, and purpose ]
 description: Create a useful mermaid diagram for the requested system
 ---

@@ -1,4 +1,5 @@
 ---
+name: sc-review
 description: Verify code quality, security, performance, and architecture
 argument-hint: Describe what to review (code quality, security, performance, architecture)
 ---

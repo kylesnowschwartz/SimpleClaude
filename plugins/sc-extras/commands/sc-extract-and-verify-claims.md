@@ -1,4 +1,5 @@
 ---
+name: sc-extract-and-verify-claims
 description: Extract and verify factual claims from conversations
 argument-hint: "[conversation or context to analyze]"
 ---

@@ -1,4 +1,5 @@
 ---
+name: sc-eastereggs
 description: "Discover undocumented features and hidden implementations"
 argument-hint: "[search-query] - optional topic or pattern to search for"
 ---

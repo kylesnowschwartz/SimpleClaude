@@ -1,4 +1,5 @@
 ---
+name: sc-mermaid-sequence
 description: Generate mermaid-ascii compliant sequence diagrams
 argument-hint: "[flow description]"
 allowed-tools: Read, Write, Bash(cat:*), Bash(mermaid-ascii:*), Bash(mkdir:*)

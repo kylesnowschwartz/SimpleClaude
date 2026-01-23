@@ -1,4 +1,5 @@
 ---
+name: copy-response
 description: Copy last N responses to clipboard
 argument-hint: "[count]"
 ---

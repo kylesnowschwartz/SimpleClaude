@@ -1,4 +1,5 @@
 ---
+name: sc-work
 description: Build, fix, or modify code - handles all implementation tasks
 argument-hint: Description of what to build, fix, or modify
 ---

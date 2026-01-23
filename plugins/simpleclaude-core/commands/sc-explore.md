@@ -1,4 +1,5 @@
 ---
+name: sc-explore
 description: Research, analyze, and explore to build understanding
 argument-hint: Research query or topic to explore
 ---

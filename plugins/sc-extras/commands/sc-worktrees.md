@@ -1,4 +1,5 @@
 ---
+name: sc-worktrees
 description: "Manage Git worktrees for parallel development sessions"
 argument-hint: "[optional] worktree command (list, create, remove, prune)"
 ---

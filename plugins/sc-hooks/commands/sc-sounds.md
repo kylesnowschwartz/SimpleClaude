@@ -1,4 +1,5 @@
 ---
+name: sc-sounds
 description: Set sound notification mode
 argument-hint: "[mode: off|glass]"
 allowed-tools: ["Bash", "Read", "Write"]
