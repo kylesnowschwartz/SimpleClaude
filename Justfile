@@ -58,7 +58,7 @@ bump type:
         fi
     done
 
-    echo "Done. Run 'just release' when ready."
+    echo "'Just bump' done. Changes are now ready to release. Run 'just release' after confirmation with the user."
 
 # Commit, tag, and push the release
 release:
