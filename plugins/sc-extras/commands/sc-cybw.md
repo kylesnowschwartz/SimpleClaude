@@ -1,6 +1,6 @@
 ---
 name: sc-cybw
-description: Old man yells at Claude
+description: Surfaces adversarial information intelligently
 argument-hint: "Could you be wrong about [target statement or conclusion]?"
 ---
 
