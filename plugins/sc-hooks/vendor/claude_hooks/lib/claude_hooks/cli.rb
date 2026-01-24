@@ -17,14 +17,12 @@ module ClaudeHooks
       #   ClaudeHooks::CLI.run_hook(YourHookClass) do |input_data|
       #     input_data['debug_mode'] = true
       #   end
-      def run_hook(hook_class, input_data = nil, &block)
+      def run_hook(hook_class, input_data = nil)
         # If no input data provided, read from STDIN
         input_data ||= read_stdin_input
 
         # Apply customization block if provided
-        if block_given?
-          yield(input_data)
-        end
+        yield(input_data) if block_given?
 
         # Create and execute the hook
         hook = hook_class.new(input_data)
@@ -49,13 +47,11 @@ module ClaudeHooks
       #     input_data['custom_field'] = 'test_value'
       #     input_data['user_name'] = 'TestUser'
       #   end
-      def test_runner(hook_class, &block)
+      def test_runner(hook_class)
         input_data = read_stdin_input
 
         # Apply customization block if provided
-        if block_given?
-          yield(input_data)
-        end
+        yield(input_data) if block_given?
 
         run_hook(hook_class, input_data)
       end
@@ -70,7 +66,7 @@ module ClaudeHooks
       #     input_data['prompt'] = 'Custom test prompt'
       #     input_data['debug'] = true
       #   end
-      def run_with_sample_data(hook_class, sample_data = {}, &block)
+      def run_with_sample_data(hook_class, sample_data = {})
         default_sample = {
           'session_id' => 'test-session',
           'transcript_path' => '/tmp/test_transcript.md',
@@ -82,9 +78,7 @@ module ClaudeHooks
         merged_data = default_sample.merge(sample_data)
 
         # Apply customization block if provided
-        if block_given?
-          yield(merged_data)
-        end
+        yield(merged_data) if block_given?
 
         run_hook(hook_class, merged_data)
       end
@@ -118,9 +112,9 @@ module ClaudeHooks
       #      )
       #      merged.output_and_exit
       #    end
-      def entrypoint(hook_class = nil, &block)
+      def entrypoint(hook_class = nil)
         # Read and parse input from STDIN
-        input_data = JSON.parse(STDIN.read)
+        input_data = JSON.parse($stdin.read)
 
         if block_given?
           # Custom block form
@@ -131,11 +125,10 @@ module ClaudeHooks
           hook.call
           hook.output_and_exit
         else
-          raise ArgumentError, "Either provide a hook_class or a block"
+          raise ArgumentError, 'Either provide a hook_class or a block'
         end
-
       rescue JSON::ParserError => e
-        STDERR.puts "JSON parsing error: #{e.message}"
+        warn "JSON parsing error: #{e.message}"
         error_response = {
           continue: false,
           stopReason: "JSON parsing error: #{e.message}",
@@ -143,12 +136,11 @@ module ClaudeHooks
         }
         response = JSON.generate(error_response)
         puts response
-        STDERR.puts response
+        warn response
         exit 1
-
       rescue StandardError => e
-        STDERR.puts "Hook execution error: #{e.message}"
-        STDERR.puts e.backtrace.join("\n") if e.backtrace
+        warn "Hook execution error: #{e.message}"
+        warn e.backtrace.join("\n") if e.backtrace
 
         error_response = {
           continue: false,
@@ -157,14 +149,14 @@ module ClaudeHooks
         }
         response = JSON.generate(error_response)
         puts response
-        STDERR.puts response
+        warn response
         exit 1
       end
 
       private
 
       def read_stdin_input
-        stdin_content = STDIN.read.strip
+        stdin_content = $stdin.read.strip
         return {} if stdin_content.empty?
 
         JSON.parse(stdin_content)
@@ -173,8 +165,8 @@ module ClaudeHooks
       end
 
       def handle_error(error, hook_class)
-        STDERR.puts "Error in #{hook_class.name} hook: #{error.message}"
-        STDERR.puts error.backtrace.join("\n") if error.backtrace
+        warn "Error in #{hook_class.name} hook: #{error.message}"
+        warn error.backtrace.join("\n") if error.backtrace
 
         # Output error response in Claude Code format
         error_response = {
@@ -185,7 +177,7 @@ module ClaudeHooks
 
         response = JSON.generate(error_response)
         puts response
-        STDERR.puts response
+        warn response
         exit 1
       end
     end

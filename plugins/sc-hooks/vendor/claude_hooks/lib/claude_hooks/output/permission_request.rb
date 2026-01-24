@@ -4,7 +4,7 @@ require_relative 'base'
 
 module ClaudeHooks
   module Output
-    class PreToolUse < Base
+    class PermissionRequest < Base
       # === PERMISSION DECISION ACCESSORS ===
 
       def permission_decision
@@ -28,11 +28,6 @@ module ClaudeHooks
       def denied?
         permission_decision == 'deny'
       end
-      alias blocked? denied?
-
-      def should_ask_permission?
-        permission_decision == 'ask'
-      end
 
       def input_updated?
         !updated_input.nil?
@@ -40,18 +35,15 @@ module ClaudeHooks
 
       # === EXIT CODE LOGIC ===
       #
-      # PreToolUse hooks use the advanced JSON API with exit code 0.
-      # Per Anthropic guidance: when using structured JSON with permissionDecision,
-      # always output to stdout with exit 0 (not stderr with exit 2).
-      # The permissionDecision field ('allow', 'deny', 'ask') controls behavior.
-      # Reference: https://github.com/anthropics/claude-code/issues/10875
+      # PermissionRequest hooks use the advanced JSON API with exit code 0.
+      # Following the same pattern as PreToolUse (permission-based hooks).
       def exit_code
         0
       end
 
       # === OUTPUT STREAM LOGIC ===
       #
-      # PreToolUse hooks always output to stdout when using the JSON API.
+      # PermissionRequest hooks always output to stdout when using the JSON API.
       def output_stream
         :stdout
       end
@@ -66,9 +58,10 @@ module ClaudeHooks
         merged = super
         merged_data = merged.data
 
-        # PreToolUse specific merge: deny > ask > allow (most restrictive wins)
+        # PermissionRequest specific merge: deny > allow (most restrictive wins)
         permission_decision = 'allow'
         permission_reasons = []
+        updated_inputs = []
 
         compacted_outputs.each do |output|
           output_data = output.respond_to?(:data) ? output.data : output
@@ -76,33 +69,23 @@ module ClaudeHooks
           next unless output_data.dig('hookSpecificOutput', 'permissionDecision')
 
           current_decision = output_data['hookSpecificOutput']['permissionDecision']
-          case current_decision
-          when 'deny'
-            permission_decision = 'deny'
-          when 'ask'
-            permission_decision = 'ask' unless permission_decision == 'deny'
-          end
+          permission_decision = 'deny' if current_decision == 'deny'
 
           reason = output_data.dig('hookSpecificOutput', 'permissionDecisionReason')
           permission_reasons << reason if reason && !reason.empty?
+
+          updated = output_data.dig('hookSpecificOutput', 'updatedInput')
+          updated_inputs << updated if updated
         end
 
-        merged_data['hookSpecificOutput'] ||= { 'hookEventName' => 'PreToolUse' }
+        merged_data['hookSpecificOutput'] ||= { 'hookEventName' => 'PermissionRequest' }
         merged_data['hookSpecificOutput']['permissionDecision'] = permission_decision
         merged_data['hookSpecificOutput']['permissionDecisionReason'] = if permission_reasons.any?
                                                                           permission_reasons.join('; ')
                                                                         else
                                                                           ''
                                                                         end
-
-        # If any output has updatedInput, use the last one (most recent wins)
-        updated_inputs = []
-        compacted_outputs.each do |output|
-          output_data = output.respond_to?(:data) ? output.data : output
-          updated = output_data.dig('hookSpecificOutput', 'updatedInput')
-          updated_inputs << updated if updated
-        end
-
+        # Last updated input wins
         merged_data['hookSpecificOutput']['updatedInput'] = updated_inputs.last if updated_inputs.any?
 
         new(merged_data)

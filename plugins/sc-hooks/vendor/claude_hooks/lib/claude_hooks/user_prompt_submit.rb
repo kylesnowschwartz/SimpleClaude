@@ -17,8 +17,8 @@ module ClaudeHooks
     def prompt
       @input_data['user_prompt'] || @input_data['prompt']
     end
-    alias_method :user_prompt, :prompt
-    alias_method :current_prompt, :prompt
+    alias user_prompt prompt
+    alias current_prompt prompt
 
     # === OUTPUT DATA HELPERS ===
 
@@ -28,7 +28,7 @@ module ClaudeHooks
         'additionalContext' => context
       }
     end
-    alias_method :add_context!, :add_additional_context!
+    alias add_context! add_additional_context!
 
     def empty_additional_context!
       @output_data['hookSpecificOutput'] = nil

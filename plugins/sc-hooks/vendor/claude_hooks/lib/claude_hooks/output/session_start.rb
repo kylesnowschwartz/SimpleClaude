@@ -22,9 +22,9 @@ module ClaudeHooks
       def self.merge(*outputs)
         compacted_outputs = outputs.compact
         return compacted_outputs.first if compacted_outputs.length == 1
-        return super(*outputs) if compacted_outputs.empty?
+        return super if compacted_outputs.empty?
 
-        merged = super(*outputs)
+        merged = super
         merged_data = merged.data
         contexts = []
 

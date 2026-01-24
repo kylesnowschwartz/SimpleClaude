@@ -43,10 +43,10 @@ module ClaudeHooks
       # === JSON SERIALIZATION ===
 
       # Convert to JSON string (same as existing stringify_output)
-      def to_json(*args)
-        JSON.generate(@data, *args)
+      def to_json(*)
+        JSON.generate(@data, *)
       end
-      alias_method :stringify, :to_json
+      alias stringify to_json
 
       # === EXECUTION CONTROL ===
 
@@ -59,7 +59,7 @@ module ClaudeHooks
         when :stdout
           $stdout.puts to_json
         when :stderr
-          $stderr.puts to_json
+          warn to_json
         else
           raise "Unknown output stream: #{stream}"
         end
@@ -72,7 +72,7 @@ module ClaudeHooks
 
       # Determine the exit code based on hook-specific logic
       def exit_code
-        raise NotImplementedError, "Subclasses must implement exit_code"
+        raise NotImplementedError, 'Subclasses must implement exit_code'
       end
 
       # Determine the output stream (:stdout or :stderr)
@@ -95,7 +95,7 @@ module ClaudeHooks
         }
 
         return compacted_outputs.first if compacted_outputs.length == 1
-        return self.new(merged_data) if compacted_outputs.empty?
+        return new(merged_data) if compacted_outputs.empty?
 
         # Apply base merge logic
         compacted_outputs.each do |output|
@@ -103,11 +103,13 @@ module ClaudeHooks
 
           merged_data['continue'] = false if output_data['continue'] == false
           merged_data['suppressOutput'] = true if output_data['suppressOutput'] == true
-          merged_data['stopReason'] = [merged_data['stopReason'], output_data['stopReason']].compact.reject(&:empty?).join('; ')
-          merged_data['systemMessage'] = [merged_data['systemMessage'], output_data['systemMessage']].compact.reject(&:empty?).join('; ')
+          merged_data['stopReason'] =
+            [merged_data['stopReason'], output_data['stopReason']].compact.reject(&:empty?).join('; ')
+          merged_data['systemMessage'] =
+            [merged_data['systemMessage'], output_data['systemMessage']].compact.reject(&:empty?).join('; ')
         end
 
-        self.new(merged_data)
+        new(merged_data)
       end
 
       # === FACTORY ===
@@ -119,6 +121,8 @@ module ClaudeHooks
           UserPromptSubmit.new(data)
         when 'PreToolUse'
           PreToolUse.new(data)
+        when 'PermissionRequest'
+          PermissionRequest.new(data)
         when 'PostToolUse'
           PostToolUse.new(data)
         when 'Stop'

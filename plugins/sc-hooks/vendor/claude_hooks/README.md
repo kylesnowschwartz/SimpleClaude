@@ -36,7 +36,7 @@ A Ruby DSL (Domain Specific Language) for creating Claude Code hooks. This will 
 ## 🚀 Quick Start
 
 > [!TIP]
-> Examples are available in [`example_dotclaude/hooks/`](example_dotclaude/hooks/). The GithubGuard in particular is a good example of a solid hook. You can also check [Kyle's hooks for some great examples](https://github.com/kylesnowschwartz/dotfiles/blob/main/claude/hooks)
+> Examples are available in [`example_dotclaude/hooks/`](example_dotclaude/hooks/). The GithubGuard in particular is a good example of a solid hook. You can also check [SimpleClaude's hooks for some great examples](https://github.com/kylesnowschwartz/SimpleClaude/tree/main/plugins/sc-hooks)
 
 Here's how to create a simple hook:
 
@@ -268,6 +268,7 @@ The framework supports the following hook types:
 | **[UserPromptSubmit](docs/API/USER_PROMPT_SUBMIT.md)** | `ClaudeHooks::UserPromptSubmit` | Hooks that run before the user's prompt is processed |
 | **[Notification](docs/API/NOTIFICATION.md)** | `ClaudeHooks::Notification` | Hooks that run when Claude Code sends notifications |
 | **[PreToolUse](docs/API/PRE_TOOL_USE.md)** | `ClaudeHooks::PreToolUse` | Hooks that run before a tool is used |
+| **[PermissionRequest](docs/API/PERMISSION_REQUEST.md)** | `ClaudeHooks::PermissionRequest` | Hooks that run when Claude requests permission |
 | **[PostToolUse](docs/API/POST_TOOL_USE.md)** | `ClaudeHooks::PostToolUse` | Hooks that run after a tool is used |
 | **[Stop](docs/API/STOP.md)** | `ClaudeHooks::Stop` | Hooks that run when Claude Code finishes responding |
 | **[SubagentStop](docs/API/SUBAGENT_STOP.md)** | `ClaudeHooks::SubagentStop` | Hooks that run when subagent tasks complete |
@@ -390,11 +391,12 @@ The framework supports all existing hook types with their respective input field
 
 | Hook Type | Input Fields |
 |-----------|--------------|
-| **Common**  | `session_id`, `transcript_path`, `cwd`, `hook_event_name` |
+| **Common**  | `session_id`, `transcript_path`, `cwd`, `hook_event_name`, `permission_mode` |
 | **UserPromptSubmit**  | `prompt` |
-| **PreToolUse**  | `tool_name`, `tool_input` |
-| **PostToolUse**  | `tool_name`, `tool_input`, `tool_response` |
-| **Notification**  | `message` |
+| **PreToolUse**  | `tool_name`, `tool_input`, `tool_use_id` |
+| **PermissionRequest**  | `tool_name`, `tool_input`, `tool_use_id` |
+| **PostToolUse**  | `tool_name`, `tool_input`, `tool_response`, `tool_use_id` |
+| **Notification**  | `message`, `notification_type` |
 | **Stop**  | `stop_hook_active` |
 | **SubagentStop**  | `stop_hook_active` |
 | **PreCompact**  | `trigger`, `custom_instructions` |
@@ -410,6 +412,7 @@ The framework supports all existing hook types with their respective input field
 - [🚀 Session Start Hooks](docs/API/SESSION_START.md)
 - [🖋️ User Prompt Submit Hooks](docs/API/USER_PROMPT_SUBMIT.md)
 - [🛠️ Pre-Tool Use Hooks](docs/API/PRE_TOOL_USE.md)
+- [🔐 Permission Request Hooks](docs/API/PERMISSION_REQUEST.md)
 - [🔧 Post-Tool Use Hooks](docs/API/POST_TOOL_USE.md)
 - [📝 Pre-Compact Hooks](docs/API/PRE_COMPACT.md)
 - [⏹️ Stop Hooks](docs/API/STOP.md)

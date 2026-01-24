@@ -9,7 +9,7 @@ module ClaudeHooks
     end
 
     def self.input_fields
-      %w[tool_name tool_input tool_response]
+      %w[tool_name tool_input tool_response tool_use_id]
     end
 
     # === INPUT DATA ACCESS ===
@@ -26,6 +26,10 @@ module ClaudeHooks
       @input_data['tool_response']
     end
 
+    def tool_use_id
+      @input_data['tool_use_id'] || @input_data['toolUseId']
+    end
+
     # === OUTPUT DATA HELPERS ===
 
     def block_tool!(reason = '')
@@ -33,7 +37,7 @@ module ClaudeHooks
       @output_data['reason'] = reason
     end
 
-    def approve_tool!(reason = '')
+    def approve_tool!(_reason = '')
       @output_data['decision'] = nil
       @output_data['reason'] = nil
     end
@@ -44,6 +48,6 @@ module ClaudeHooks
         'additionalContext' => context
       }
     end
-    alias_method :add_context!, :add_additional_context!
+    alias add_context! add_additional_context!
   end
 end

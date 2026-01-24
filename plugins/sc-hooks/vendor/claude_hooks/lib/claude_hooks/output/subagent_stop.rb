@@ -6,7 +6,7 @@ module ClaudeHooks
   module Output
     class SubagentStop < Stop
       def self.merge(*outputs)
-        merged = super(*outputs)
+        merged = super
         new(merged.data)
       end
     end

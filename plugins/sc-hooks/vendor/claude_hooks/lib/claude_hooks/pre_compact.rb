@@ -30,9 +30,7 @@ module ClaudeHooks
     # === UTILITY HELPERS ===
 
     def backup_transcript!(backup_file_path)
-      unless Dir.exist?(File.dirname(backup_file_path))
-        FileUtils.mkdir_p(File.dirname(backup_file_path))
-      end
+      FileUtils.mkdir_p(File.dirname(backup_file_path))
 
       transcript_content = read_transcript
       File.write(backup_file_path, transcript_content)

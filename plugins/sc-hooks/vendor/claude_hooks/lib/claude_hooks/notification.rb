@@ -19,9 +19,8 @@ module ClaudeHooks
     end
     alias notification_message message
 
-    # Returns the notification type: permission_prompt, idle_prompt, auth_success, elicitation_dialog
     def notification_type
-      @input_data['notification_type']
+      @input_data['notification_type'] || @input_data['notificationType']
     end
   end
 end

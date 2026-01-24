@@ -18,6 +18,7 @@ Think WITH the user, not FOR them. The goal is to surface what they can't see in
 
 Apply these operations as the situation demands:
 
+<operations>
 | Operation | Purpose | When to Use |
 |-----------|---------|-------------|
 | **Assumptions** | Surface hidden beliefs | Any proposal or plan |
@@ -26,6 +27,7 @@ Apply these operations as the situation demands:
 | **Opposition** | Steelman the alternative | Strong positions |
 | **Meta-question** | Find what they should ask | Stuck or circular thinking |
 | **Exclusion** | Define by what's NOT | Scope creep or vague goals |
+</operations>
 
 ### Core Questions
 

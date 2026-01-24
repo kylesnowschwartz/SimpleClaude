@@ -4,7 +4,7 @@ require_relative 'base'
 
 module ClaudeHooks
   module Output
-    # Note: In Stop hooks, 'decision: block' actually means "force Claude to continue"
+    # NOTE: In Stop hooks, 'decision: block' actually means "force Claude to continue"
     # This is counterintuitive but matches Claude Code's expected behavior
     class Stop < Base
       # === DECISION ACCESSORS ===
@@ -16,7 +16,7 @@ module ClaudeHooks
       def reason
         @data['reason'] || ''
       end
-      alias_method :continue_instructions, :reason
+      alias continue_instructions reason
 
       # === SEMANTIC HELPERS ===
 
@@ -54,9 +54,9 @@ module ClaudeHooks
       def self.merge(*outputs)
         compacted_outputs = outputs.compact
         return compacted_outputs.first if compacted_outputs.length == 1
-        return super(*outputs) if compacted_outputs.empty?
+        return super if compacted_outputs.empty?
 
-        merged = super(*outputs)
+        merged = super
         merged_data = merged.data
 
         # A blocking reason is actually a "continue instructions"
@@ -66,11 +66,11 @@ module ClaudeHooks
           output_data = output.respond_to?(:data) ? output.data : output
 
           # Handle decision - if any hook says 'block', respect that
-          if output_data['decision'] == 'block'
-            merged_data['decision'] = 'block'
-            reason = output_data['reason']
-            blocking_reasons << reason if reason && !reason.empty?
-          end
+          next unless output_data['decision'] == 'block'
+
+          merged_data['decision'] = 'block'
+          reason = output_data['reason']
+          blocking_reasons << reason if reason && !reason.empty?
         end
 
         # Combine all blocking reasons / continue instructions

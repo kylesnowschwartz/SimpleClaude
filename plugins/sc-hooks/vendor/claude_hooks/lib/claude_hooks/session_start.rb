@@ -26,7 +26,7 @@ module ClaudeHooks
         'additionalContext' => context
       }
     end
-    alias_method :add_context!, :add_additional_context!
+    alias add_context! add_additional_context!
 
     def empty_additional_context!
       @output_data['hookSpecificOutput'] = nil

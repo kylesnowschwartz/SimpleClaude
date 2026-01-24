@@ -5,9 +5,71 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.0.2] - 2025-12-01 (Fork)
+## [1.1.1] - 2026-01-24
 
-This release is from [kylesnowschwartz/claude_hooks](https://github.com/kylesnowschwartz/claude_hooks), a fork of the original [gabriel-dehan/claude_hooks](https://github.com/gabriel-dehan/claude_hooks).
+### Changed
+
+- Applied RuboCop autocorrections across entire codebase
+- Added `.rubocop.yml` with sane defaults (disabled useless metrics cops)
+- Fixed line length violations in gemspec and example code
+- Renamed `get_transcript_size` to `transcript_size` (accessor naming convention)
+
+### Notes
+
+- Style-only release, no functional changes
+- All 48 Ruby files now pass RuboCop with zero offenses
+
+## [1.1.0] - 2026-01-04
+
+### Added
+
+- **New PermissionRequest hook type** - Handles permission request events from Claude Code
+  - New `ClaudeHooks::PermissionRequest` hook class
+  - New `ClaudeHooks::Output::PermissionRequest` output class
+  - Methods: `allow_permission!`, `deny_permission!`, `update_input_and_allow!`
+  - Semantic helpers: `allowed?`, `denied?`, `input_updated?`
+  - Exit code 0 with stdout (JSON API pattern)
+  - Merge logic: deny > allow (most restrictive wins)
+
+- **permission_mode field** - Added to all hooks as common input field
+  - Values: `default`, `plan`, `acceptEdits`, `dontAsk`, `bypassPermissions`
+  - Accessible via `permission_mode` method on all hook instances
+  - Defaults to `'default'` when not provided
+  - Supports both snake_case (`permission_mode`) and camelCase (`permissionMode`)
+
+- **tool_use_id field** - Added to PreToolUse and PostToolUse hooks
+  - Unique identifier for each tool use event (e.g., `"toolu_01ABC123..."`)
+  - Accessible via `tool_use_id` method
+  - Supports both snake_case and camelCase input
+
+- **notification_type field** - Added to Notification hook
+  - Values: `permission_prompt`, `idle_prompt`, `auth_success`, `elicitation_dialog`
+  - Accessible via `notification_type` method
+  - Enables filtering notifications by type using matchers
+
+- **updatedInput support** - Added to PreToolUse hook
+  - New method: `update_tool_input!(hash)` for modifying tool input before execution
+  - Output helpers: `input_updated?`, `updated_input`
+  - Automatically sets `permissionDecision` to `'allow'`
+  - Merge logic: last updatedInput wins (most recent transformation)
+  - Works seamlessly with existing approval/denial methods
+
+### Changed
+
+- Updated all hook classes to include new input fields where applicable
+- Enhanced PreToolUse output class with updatedInput merge logic
+- Updated main module to require PermissionRequest classes
+- Updated output factory to support PermissionRequest hook type
+
+### Notes
+
+- **All changes are backward compatible** - Existing hooks continue to work without modification
+- New fields are optional with sensible defaults
+- No breaking changes to existing APIs
+- Aligns with Anthropic's Claude Code Hooks documentation as of January 2026
+- Total hook types: 10 (added PermissionRequest)
+
+## [1.0.2] - 2026-01-04
 
 ### Fixed
 

@@ -33,7 +33,7 @@ module ClaudeHooks
       @output_data['decision'] = 'block'
       @output_data['reason'] = instructions
     end
-    alias_method :block!, :continue_with_instructions!
+    alias block! continue_with_instructions!
 
     # Ensure Claude stops normally (default behavior)
     def ensure_stopping!

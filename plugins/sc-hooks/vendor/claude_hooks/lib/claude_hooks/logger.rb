@@ -20,18 +20,18 @@ module ClaudeHooks
       class_prefix = "[#{timestamp}] [#{level.upcase}] [#{@source}]"
 
       # For multiline strings, prepend a newline for better formatting
-      if message.include?("\n")
-        log_entry = "#{class_prefix}\n#{message}"
-      else
-        log_entry = "#{class_prefix} #{message}"
-      end
+      log_entry = if message.include?("\n")
+                    "#{class_prefix}\n#{message}"
+                  else
+                    "#{class_prefix} #{message}"
+                  end
 
       begin
         write_to_session_log(log_entry)
-      rescue => e
+      rescue StandardError => e
         # Fallback to STDERR if file logging fails
-        STDERR.puts log_entry
-        STDERR.puts "Warning: Failed to write to session log: #{e.message}"
+        warn log_entry
+        warn "Warning: Failed to write to session log: #{e.message}"
       end
     end
 
@@ -47,18 +47,18 @@ module ClaudeHooks
     def write_to_session_log(log_entry)
       log_file_path = File.join(
         Configuration.logs_directory,
-        "hooks",
+        'hooks',
         "session-#{safe_session_id}.log"
       )
 
       # Ensure log directory exists
       log_dir = File.dirname(log_file_path)
-      FileUtils.mkdir_p(log_dir) unless Dir.exist?(log_dir)
+      FileUtils.mkdir_p(log_dir)
 
       # Write to file (thread-safe append mode)
       File.open(log_file_path, 'a') do |file|
         file.puts log_entry
-        file.flush  # Ensure immediate write
+        file.flush # Ensure immediate write
       end
     end
   end

@@ -27,11 +27,23 @@ if [[ -f "$first_plugin_vendor/lib/claude_hooks/version.rb" ]]; then
   current_version=$(grep -oE "VERSION = '[^']+'" "$first_plugin_vendor/lib/claude_hooks/version.rb" | grep -oE "[0-9]+\.[0-9]+\.[0-9]+")
 fi
 
-# Get latest version from GitHub
-latest_version=$(curl -sL "https://raw.githubusercontent.com/kylesnowschwartz/claude_hooks/main/lib/claude_hooks/version.rb" | grep -oE "VERSION = '[^']+'" | grep -oE "[0-9]+\.[0-9]+\.[0-9]+" || echo "unknown")
+# Get latest version and commit SHA from GitHub
+github_api_response=$(curl -sL "https://api.github.com/repos/kylesnowschwartz/claude_hooks/branches/main")
+expected_sha=$(echo "$github_api_response" | grep -o '"sha": "[^"]*"' | head -1 | cut -d'"' -f4)
+if [[ -z "$expected_sha" ]]; then
+  echo "ERROR: Failed to fetch expected commit SHA from GitHub API"
+  exit 1
+fi
+
+latest_version=$(curl -sL "https://raw.githubusercontent.com/kylesnowschwartz/claude_hooks/main/lib/claude_hooks/version.rb" | grep -oE "VERSION = '[^']+'" | grep -oE "[0-9]+\.[0-9]+\.[0-9]+")
+if [[ -z "$latest_version" ]]; then
+  echo "ERROR: Failed to fetch latest version from GitHub"
+  exit 1
+fi
 
 echo "Current vendored version: $current_version"
 echo "Latest version on GitHub: $latest_version"
+echo "Expected commit SHA:      ${expected_sha:0:12}..."
 
 if [[ "$current_version" == "$latest_version" ]]; then
   echo "Already up to date."
@@ -51,6 +63,17 @@ TEMP_DIR=$(mktemp -d)
 trap 'rm -rf "$TEMP_DIR"' EXIT
 
 git clone --depth 1 "$REPO_URL" "$TEMP_DIR/claude_hooks"
+
+# Verify commit SHA matches expected (checksum verification via git integrity)
+cloned_sha=$(git -C "$TEMP_DIR/claude_hooks" rev-parse HEAD)
+if [[ "$cloned_sha" != "$expected_sha" ]]; then
+  echo "ERROR: Checksum verification failed!"
+  echo "  Expected SHA: $expected_sha"
+  echo "  Cloned SHA:   $cloned_sha"
+  echo "This could indicate a MITM attack or race condition. Aborting."
+  exit 1
+fi
+echo "Checksum verified: $cloned_sha"
 
 # Remove git metadata and dev files
 rm -rf "$TEMP_DIR/claude_hooks/.git"

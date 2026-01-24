@@ -32,12 +32,8 @@ module ClaudeHooks
       # Returns nil if CLAUDE_PROJECT_DIR environment variable is not set
       def project_claude_dir
         @project_claude_dir ||= begin
-          project_dir = ENV['CLAUDE_PROJECT_DIR']
-          if project_dir
-            File.expand_path(File.join(project_dir, '.claude'))
-          else
-            nil
-          end
+          project_dir = ENV.fetch('CLAUDE_PROJECT_DIR', nil)
+          File.expand_path(File.join(project_dir, '.claude')) if project_dir
         end
       end
 
@@ -46,7 +42,7 @@ module ClaudeHooks
       def base_dir
         @base_dir ||= begin
           # Check for legacy environment variable first
-          env_base_dir = ENV["#{ENV_PREFIX}BASE_DIR"]
+          env_base_dir = ENV.fetch("#{ENV_PREFIX}BASE_DIR", nil)
           if env_base_dir
             File.expand_path(env_base_dir)
           else
@@ -71,34 +67,31 @@ module ClaudeHooks
       # Get the full path for a file/directory relative to project_claude_dir
       # Returns nil if CLAUDE_PROJECT_DIR environment variable is not set
       def project_path_for(relative_path)
-        if project_claude_dir
-          File.join(project_claude_dir, relative_path)
-        else
-          nil
-        end
+        return unless project_claude_dir
+
+        File.join(project_claude_dir, relative_path)
       end
 
       # Get the log directory path (always relative to home_claude_dir)
       def logs_directory
         log_dir = get_config_value('LOG_DIR', 'logDirectory') || 'logs'
         if log_dir.start_with?('/')
-          log_dir  # Absolute path
+          log_dir # Absolute path
         else
-          File.join(home_claude_dir, log_dir)  # Always relative to home_claude_dir
+          File.join(home_claude_dir, log_dir) # Always relative to home_claude_dir
         end
       end
-
 
       # Get any configuration value by key
       # First checks ENV with prefix, then config file, then returns default
       def get_config_value(env_key, config_key = nil, default = nil)
         # Check environment variable first
-        env_value = ENV["#{ENV_PREFIX}#{env_key}"]
+        env_value = ENV.fetch("#{ENV_PREFIX}#{env_key}", nil)
         return env_value if env_value
 
         # Check config file using provided key or converted env_key
         file_key = config_key || env_key_to_config_key(env_key)
-        config_value = config.dig(file_key)
+        config_value = config[file_key]
         return config_value if config_value
 
         # Return default
@@ -106,7 +99,7 @@ module ClaudeHooks
       end
 
       # Allow access to any config value using method_missing
-      def method_missing(method_name, *args, &block)
+      def method_missing(method_name, *args, &)
         # Convert method name to ENV key format (e.g., my_custom_setting -> MY_CUSTOM_SETTING)
         env_key = method_name.to_s.upcase
         # Convert snake_case method name to camelCase for config file lookup
@@ -131,7 +124,7 @@ module ClaudeHooks
       def snake_case_to_camel_case(snake_str)
         # Convert snake_case to camelCase (e.g., user_name -> userName)
         parts = snake_str.split('_')
-        parts.first + parts[1..-1].map(&:capitalize).join
+        parts.first + parts[1..].map(&:capitalize).join
       end
 
       def config_file_path
@@ -143,13 +136,7 @@ module ClaudeHooks
       end
 
       def project_config_file_path
-        @project_config_file_path ||= begin
-          if project_claude_dir
-            File.join(project_claude_dir, 'config/config.json')
-          else
-            nil
-          end
-        end
+        @project_config_file_path ||= (File.join(project_claude_dir, 'config/config.json') if project_claude_dir)
       end
 
       def load_config
@@ -228,7 +215,7 @@ module ClaudeHooks
         else
           # Convert SCREAMING_SNAKE_CASE to camelCase
           parts = env_key.downcase.split('_')
-          parts.first + parts[1..-1].map(&:capitalize).join
+          parts.first + parts[1..].map(&:capitalize).join
         end
       end
     end

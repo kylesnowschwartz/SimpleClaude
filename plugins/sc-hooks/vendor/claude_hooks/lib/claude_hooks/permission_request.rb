@@ -3,9 +3,9 @@
 require_relative 'base'
 
 module ClaudeHooks
-  class PreToolUse < Base
+  class PermissionRequest < Base
     def self.hook_type
-      'PreToolUse'
+      'PermissionRequest'
     end
 
     def self.input_fields
@@ -28,7 +28,7 @@ module ClaudeHooks
 
     # === OUTPUT DATA HELPERS ===
 
-    def approve_tool!(reason = '')
+    def allow_permission!(reason = '')
       @output_data['hookSpecificOutput'] = {
         'hookEventName' => hook_event_name,
         'permissionDecision' => 'allow',
@@ -36,7 +36,7 @@ module ClaudeHooks
       }
     end
 
-    def block_tool!(reason = '')
+    def deny_permission!(reason = '')
       @output_data['hookSpecificOutput'] = {
         'hookEventName' => hook_event_name,
         'permissionDecision' => 'deny',
@@ -44,23 +44,13 @@ module ClaudeHooks
       }
     end
 
-    def ask_for_permission!(reason = '')
+    def update_input_and_allow!(updated_input, reason = '')
       @output_data['hookSpecificOutput'] = {
         'hookEventName' => hook_event_name,
-        'permissionDecision' => 'ask',
-        'permissionDecisionReason' => reason
+        'permissionDecision' => 'allow',
+        'permissionDecisionReason' => reason,
+        'updatedInput' => updated_input
       }
-    end
-
-    def update_tool_input!(updated_input)
-      @output_data['hookSpecificOutput'] ||= {
-        'hookEventName' => hook_event_name,
-        'permissionDecision' => 'allow'
-      }
-      @output_data['hookSpecificOutput']['updatedInput'] = updated_input
-
-      # Ensure permission decision is 'allow' when updating input
-      @output_data['hookSpecificOutput']['permissionDecision'] = 'allow'
     end
   end
 end

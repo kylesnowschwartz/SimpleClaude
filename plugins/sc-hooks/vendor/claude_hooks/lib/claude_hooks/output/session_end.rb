@@ -4,7 +4,7 @@ require_relative 'base'
 
 module ClaudeHooks
   module Output
-    # Note: SessionEnd hooks cannot block session termination - they're for cleanup only
+    # NOTE: SessionEnd hooks cannot block session termination - they're for cleanup only
     class SessionEnd < Base
       # === EXIT CODE LOGIC ===
 
@@ -16,7 +16,7 @@ module ClaudeHooks
       # === MERGE HELPER ===
 
       def self.merge(*outputs)
-        merged = super(*outputs)
+        merged = super
         new(merged.data)
       end
     end
