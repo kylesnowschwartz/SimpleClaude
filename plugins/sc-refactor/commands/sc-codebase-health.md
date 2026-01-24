@@ -9,7 +9,7 @@ Analyze the codebase at $ARGUMENTS (or current directory if not specified) for c
 
 ## Phase 1: Check Context
 
-If a context packet exists (@.agent-history/context-packet-*.md), use it to focus the analysis.
+If a context packet exists !`fd 'context-packet-.*\.md' .agent-history/`, use it to focus the analysis.
 If not, briefly ask: "What areas should I focus on? (or 'all' for comprehensive scan)"
 
 ## Phase 2: Launch Analysis Agents
