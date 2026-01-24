@@ -58,7 +58,11 @@ bump type:
         fi
     done
 
-    echo "'Just bump' done. Changes are now ready to release. Run 'just release' after confirmation with the user."
+    # Stage all version files
+    git add VERSION README.md CLAUDE.md .claude-plugin/marketplace.json
+    git add plugins/*/.claude-plugin/plugin.json 2>/dev/null || true
+
+    echo "'Just bump' done. Changes staged and ready. Run 'just release' to commit, tag, and push."
 
 # Commit, tag, and push the release
 release:
@@ -84,7 +88,7 @@ release:
 
     # Check for uncommitted changes (should have version bump staged)
     if git diff --cached --quiet; then
-        echo "Error: nothing staged. Run 'just bump' first, then 'git add -u'"
+        echo "Error: nothing staged. Run 'just bump' first."
         exit 1
     fi
 
