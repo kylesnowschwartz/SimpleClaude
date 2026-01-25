@@ -8,23 +8,23 @@ require_relative '../lib/transcript_parser'
 
 # CopyMessageHandler
 #
-# PURPOSE: Handle /sc-hooks:copy-prompt and /sc-hooks:copy-response commands
-# TRIGGERS: When user submits a prompt starting with '/sc-hooks:copy-prompt' or '/sc-hooks:copy-response'
+# PURPOSE: Handle /sc-copy-prompt and /sc-copy-response commands
+# TRIGGERS: When user submits a prompt starting with '/sc-copy-prompt' or '/sc-copy-response'
 #
 # COMMAND FORMATS:
-# - /sc-hooks:copy-prompt [number]    - Copy last N prompts (default: 1, most recent)
-# - /sc-hooks:copy-prompt 5           - Copy the last 5 prompts
-# - /sc-hooks:copy-response [number]  - Copy last N responses (default: 1, most recent)
-# - /sc-hooks:copy-response 5         - Copy the last 5 responses
+# - /sc-copy-prompt [number]    - Copy last N prompts (default: 1, most recent)
+# - /sc-copy-prompt 5           - Copy the last 5 prompts
+# - /sc-copy-response [number]  - Copy last N responses (default: 1, most recent)
+# - /sc-copy-response 5         - Copy the last 5 responses
 
 class CopyMessageHandler < ClaudeHooks::UserPromptSubmit
   def call
-    return unless current_prompt.start_with?('/sc-hooks:copy-prompt', '/sc-hooks:copy-response')
+    return unless current_prompt.start_with?('/sc-copy-prompt', '/sc-copy-response')
 
     log "Processing copy command: #{current_prompt}"
 
     # Determine message type and parse command arguments
-    message_type = current_prompt.start_with?('/sc-hooks:copy-prompt') ? 'prompt' : 'response'
+    message_type = current_prompt.start_with?('/sc-copy-prompt') ? 'prompt' : 'response'
     args = parse_copy_command(current_prompt, message_type)
 
     begin
@@ -55,7 +55,7 @@ class CopyMessageHandler < ClaudeHooks::UserPromptSubmit
 
     # Parse number from command (default to 1 if no number specified)
     case command
-    when %r{^/sc-hooks:copy-#{type}\s+(\d+)$}
+    when %r{^/sc-copy-#{type}\s+(\d+)$}
       args[:number] = ::Regexp.last_match(1).to_i
     end
 
@@ -207,7 +207,7 @@ end
 # Testing support - run this file directly to test with sample data
 if __FILE__ == $PROGRAM_NAME
   ClaudeHooks::CLI.test_runner(CopyMessageHandler) do |input_data|
-    input_data['prompt'] = '/sc-hooks:copy-prompt 1'
+    input_data['prompt'] = '/sc-copy-prompt 1'
     input_data['session_id'] = 'test-session-01'
   end
 end

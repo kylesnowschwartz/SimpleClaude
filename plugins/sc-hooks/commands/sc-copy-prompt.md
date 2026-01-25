@@ -1,6 +1,6 @@
 ---
-name: copy-response
-description: Copy last N responses to clipboard
+name: sc-copy-prompt
+description: Copy last N prompts to clipboard
 argument-hint: "[count]"
 ---
 
