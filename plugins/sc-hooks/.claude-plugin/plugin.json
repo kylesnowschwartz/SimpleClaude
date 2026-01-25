@@ -1,6 +1,6 @@
 {
   "name": "sc-hooks",
-  "version": "4.4.1",
+  "version": "4.4.2",
   "description": "SimpleClaude hooks for session management, tool monitoring, and notifications",
   "author": {
     "name": "Kyle Snow Schwartz"
