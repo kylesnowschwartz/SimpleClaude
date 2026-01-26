@@ -6,11 +6,16 @@ argument-hint: "[--all] [PR number | PR URL | owner/repo PR_NUMBER]"
 
 # Fetch PR Comments
 
-Fetch review comments as an ASCII tree from the PR in $ARGUMENTS:
+Fetch PR feedback as an ASCII tree from the PR in $ARGUMENTS:
 
 ```bash
 "${CLAUDE_PLUGIN_ROOT}/scripts/get-pr-comments.sh" $ARGUMENTS | ruby "${CLAUDE_PLUGIN_ROOT}/scripts/format-pr-tree.rb"
 ```
+
+**Output sections:**
+- `Reviews`: Main review bodies with state (APPROVED/CHANGES_REQUESTED/COMMENTED) - the substantive feedback
+- `PR Comments`: General discussion comments not attached to specific code
+- `[file:line]`: Line-specific review threads on code
 
 **Options:**
 - `--all`: Include resolved threads (marked with `[RESOLVED]`). Use when user wants full context, history, or to understand what was already addressed.

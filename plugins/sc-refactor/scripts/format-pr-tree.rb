@@ -9,15 +9,32 @@ require 'json'
 def format_tree(data)
   return 'No PR data' unless data
 
+  reviews = data['reviews'] || []
   pr_comments = data['prComments'] || []
   threads = data['threads'] || []
 
-  return 'All review threads resolved.' if pr_comments.empty? && threads.empty?
+  return 'All review threads resolved.' if reviews.empty? && pr_comments.empty? && threads.empty?
 
   lines = []
   lines << data['title'].to_s
   lines << data['url']
   lines << ''
+
+  # Review bodies (main substantive feedback)
+  unless reviews.empty?
+    lines << 'Reviews'
+    reviews.each do |review|
+      author = review['author']
+      state = review['state']
+      body = review['body'].to_s.strip
+
+      lines << "└── @#{author} (#{state}):"
+      body.each_line do |body_line|
+        lines << "    #{body_line.rstrip}"
+      end
+    end
+    lines << '' unless pr_comments.empty? || threads.empty?
+  end
 
   # PR-level comments (not attached to files)
   unless pr_comments.empty?

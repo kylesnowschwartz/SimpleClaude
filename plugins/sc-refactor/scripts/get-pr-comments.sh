@@ -71,13 +71,25 @@ else
   THREAD_FILTER="| select(.isResolved == false)"
 fi
 
-# Fetch review threads and PR-level comments with GraphQL
+# Fetch reviews, review threads and PR-level comments with GraphQL
 gh api graphql -f query='
 query($owner: String!, $name: String!, $pr: Int!) {
   repository(owner: $owner, name: $name) {
     pullRequest(number: $pr) {
       url
       title
+      reviews(first: 100) {
+        nodes {
+          id
+          databaseId
+          author {
+            login
+          }
+          state
+          body
+          createdAt
+        }
+      }
       comments(first: 100) {
         nodes {
           id
@@ -115,6 +127,18 @@ query($owner: String!, $name: String!, $pr: Int!) {
   .data.repository.pullRequest | {
     url,
     title,
+    reviews: [
+      .reviews.nodes[]
+      | select(.body != null and (.body | length) > 0)
+      | {
+          id: .id,
+          databaseId: .databaseId,
+          author: .author.login,
+          state: .state,
+          body: .body,
+          createdAt: .createdAt
+        }
+    ],
     prComments: [
       .comments.nodes[] | {
         id: .id,
