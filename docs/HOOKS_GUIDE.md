@@ -58,6 +58,7 @@ After installing the `sc-hooks` plugin, hooks are located at:
 ~/.claude/plugins/sc-hooks/hooks/  # Plugin hooks directory
 ├── handlers/                      # Business logic classes
 │   ├── auto_format_handler.rb     # Auto-formatting for file edits
+│   ├── coding_best_practices_handler.rb  # Coding guidelines (Ousterhout/Boswell)
 │   ├── copy_message_handler.rb    # Copy messages to clipboard
 │   ├── session_start_handler.rb   # Session initialization
 │   ├── user_prompt_submit_handler.rb  # Prompt modification

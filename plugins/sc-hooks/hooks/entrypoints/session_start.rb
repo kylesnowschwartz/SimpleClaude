@@ -13,14 +13,27 @@ require 'json'
 # Require all SessionStart handler classes
 # Add additional handler requires here as needed:
 require_relative '../handlers/session_start_handler'
+require_relative '../handlers/coding_best_practices_handler'
 
 begin
   # Read input data from Claude Code
   input_data = JSON.parse($stdin.read)
 
-  hook = SessionStartHandler.new(input_data)
-  hook.call
-  hook.output_and_exit
+  # Run all handlers, collect their outputs
+  handlers = [
+    SessionStartHandler,
+    CodingBestPracticesHandler
+  ]
+
+  outputs = handlers.map do |handler_class|
+    handler = handler_class.new(input_data)
+    handler.call
+    handler.output
+  end
+
+  # Use library's merge to combine outputs properly
+  merged = ClaudeHooks::Output::SessionStart.merge(*outputs)
+  merged.output_and_exit
 rescue JSON::ParserError => e
   warn "[SessionStart] JSON parsing error: #{e.message}"
   puts JSON.generate({
