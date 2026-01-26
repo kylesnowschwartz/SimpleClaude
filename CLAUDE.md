@@ -33,13 +33,13 @@ The detector consistency test verifies reflexive agreement detection logic with 
 ## Architecture
 
 SimpleClaude consists of 4 plugins:
-- **simpleclaude-core**: Core framework with 4+1 intent-based commands and 6 specialized agents
+- **simpleclaude-core**: Core framework with 4+1 intent-based commands and 7 specialized agents
 - **sc-hooks**: Session management, tool monitoring, and notification system
 - **sc-output-styles**: 8 curated output styles (personality-driven + structured formats)
 - **sc-extras**: 7 utility commands for advanced workflows
 
 **Lightweight agent architecture**: Commands spawn focused agents via `Task()` calls for token-efficient execution
-- **6 specialized agents**: sc-code-architect, sc-code-explorer, sc-code-reviewer, sc-repo-documentation-expert, sc-test-runner, sc-web-search-researcher
+- **7 specialized agents**: sc-code-architect, sc-code-explorer, sc-code-reviewer, sc-repo-documentation-expert, sc-test-runner, sc-web-search-researcher
 - Token-efficient through isolated agent contexts and focused task delegation
 
 ## Versioning

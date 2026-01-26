@@ -33,7 +33,7 @@ Or from within Claude Code:
 ```
 
 **What's included:**
-- **simpleclaude-core**: 4+1 core commands and 6 specialized agents
+- **simpleclaude-core**: 4+1 core commands and 7 specialized agents
 - **sc-hooks** _(optional)_: Session management, tool monitoring, and notification hooks
 - **sc-output-styles** _(optional)_: 8 curated output styles (personality-driven: Linus, Austen, Starfleet; structured: HTML, JSON, Markdown, Semantic Markdown, YAML)
 - **sc-extras** _(optional)_: 11 utility commands for mermaid diagrams, root cause analysis, claim verification, pre-commit setup, git worktrees, task validation, and more
@@ -86,7 +86,7 @@ claude plugin install sc-refactor@simpleclaude
 SimpleClaude uses a **lightweight agent architecture** with intent-based commands:
 
 - **4+1 Command Structure**: Intent-based interfaces that understand user goals
-- **6 Core Agents**: Context-specific assistants spawned via `Task()` calls
+- **7 Core Agents**: Context-specific assistants spawned via `Task()` calls
 - **Token-Efficient Design**: Agents work in isolation with focused context
 - **Clean Separation**: Commands understand intent, agents execute specialized tasks
 
@@ -97,6 +97,7 @@ Each command automatically spawns appropriate agents:
 - `sc-code-explorer` - Deeply analyzes existing codebase features by tracing execution paths and mapping architecture
 - `sc-code-architect` - Designs feature architectures by analyzing existing patterns and providing implementation blueprints
 - `sc-code-reviewer` - Reviews code for bugs, security vulnerabilities, and adherence to project conventions
+- `sc-github-researcher` - Discovers and evaluates open source projects on GitHub using structured search
 - `sc-repo-documentation-expert` - Finds documentation from Context7, local repos, and GitHub repositories
 - `sc-test-runner` - Runs tests and analyzes failures without making fixes
 - `sc-web-search-researcher` - Searches web for current information and research
@@ -108,7 +109,7 @@ This lightweight approach replaces previous heavyweight framework systems with f
 ```
 SimpleClaude/
 ├── plugins/
-│   ├── simpleclaude-core/        # Core plugin: 4+1 commands & 6 agents
+│   ├── simpleclaude-core/        # Core plugin: 4+1 commands & 7 agents
 │   ├── sc-hooks/                 # Hooks plugin: session management & notifications
 │   ├── sc-output-styles/         # Output styles plugin: 8 curated styles
 │   ├── sc-extras/                # Extras plugin: 11 utility commands

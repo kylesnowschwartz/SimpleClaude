@@ -10,7 +10,7 @@
   "plugins": [
     {
       "name": "simpleclaude-core",
-      "description": "Core SimpleClaude framework with 4+1 intent-based commands and 6 specialized agents for token-efficient execution",
+      "description": "Core SimpleClaude framework with 4+1 intent-based commands and 7 specialized agents for token-efficient execution",
       "version": "4.4.2",
       "author": {
         "name": "Kyle Snow Schwartz"
