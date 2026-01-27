@@ -16,8 +16,7 @@
         "${CLAUDE_PLUGIN_ROOT}/scripts/playwright-mcp-wrapper.sh"
       ],
       "env": {
-        "PLAYWRIGHT_USER_DATA_DIR": "",
-        "PLAYWRIGHT_MCP_EXTENSION_TOKEN": ""
+        "PLAYWRIGHT_USER_DATA_DIR": ""
       }
     }
   }
