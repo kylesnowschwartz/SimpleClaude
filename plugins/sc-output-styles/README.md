@@ -12,6 +12,8 @@ Curated output styles for Claude Code that modify how Claude communicates and fo
 
 - **starfleet-officer** - Professional Starfleet protocols with structured reports (SITREP format). Clear command language with tactical awareness and crew safety focus.
 
+- **mayo-clinic** - Authoritative health-guide style adapted for technical topics. Clear explanations, practical self-care steps, and explicit escalation triggers. Calm, confident tone that builds competence.
+
 ### Structured Output Styles
 
 - **html-structured** - Responses formatted as semantic HTML with proper tags, indentation, and structure.
