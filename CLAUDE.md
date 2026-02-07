@@ -138,3 +138,53 @@ tools: Bash, Read, Write, Edit, Grep, Glob, LS, TodoWrite
 - Commits: use conventional format (feat:, fix:, docs:, refactor:)
 - Consider release for meaningful changes following SemVer practices
 - Reference ./docs/AI_SLASH_COMMAND_CREATION_GUIDE.md if creating a new slash (/) command
+
+### Local Plugin Dev Verification
+
+Test hooks and plugins against a real project without interference from the installed (cached) version:
+
+```bash
+# cd into the TARGET project first (sets cwd correctly for hooks)
+cd /path/to/target-project
+
+# --setting-sources local   prevents cached marketplace plugins from loading
+# --plugin-dir              loads only the dev version of the plugin
+# --output-format stream-json  shows hook events in the output stream
+claude -p "your test prompt" \
+  --plugin-dir /path/to/SimpleClaude/plugins/sc-hooks \
+  --setting-sources local \
+  --output-format stream-json \
+  --model haiku \
+  --dangerously-skip-permissions \
+  --max-turns 5
+```
+
+Key flags:
+- **`--setting-sources local`**: Disables all user/marketplace plugins, loads ONLY `--plugin-dir` ones
+- **`--plugin-dir`**: Loads the dev plugin from source (not the installed cache)
+- **`--output-format stream-json`**: Shows hook_started/hook_response events (SessionStart hooks visible; PostToolUse/Stop hooks appear as synthetic user messages)
+- **`--dangerously-skip-permissions`**: Skips tool permission prompts for non-interactive testing
+- **`--max-turns N`**: Caps turns to prevent runaway sessions
+
+Ruby-level smoke tests (no Claude session needed):
+```bash
+# Syntax check all hook files
+ruby -c plugins/sc-hooks/hooks/concerns/file_handler_support.rb
+ruby -c plugins/sc-hooks/hooks/handlers/auto_format_handler.rb
+ruby -c plugins/sc-hooks/hooks/handlers/lint_check_handler.rb
+
+# Load-test the require chain
+ruby -e "require_relative 'plugins/sc-hooks/hooks/handlers/lint_check_handler'; puts 'OK'"
+
+# Integration test with mock input data
+ruby -e '
+require_relative "plugins/sc-hooks/hooks/handlers/lint_check_handler"
+handler = LintCheckHandler.new({
+  "session_id" => "test", "cwd" => Dir.pwd,
+  "transcript_path" => "/tmp/x", "hook_event_name" => "Stop",
+  "permission_mode" => "default", "stop_hook_active" => false
+})
+handler.call
+puts "Decision: #{handler.output.decision || "none"}"
+'
+```

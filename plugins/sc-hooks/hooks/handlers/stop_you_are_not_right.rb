@@ -23,6 +23,14 @@ class StopYouAreNotRight < ClaudeHooks::Stop
   def call
     log 'Checking if Claude just used reflexive agreement in response'
 
+    # Retry guard: if Stop already fired once this turn, don't force another
+    # continuation — prevents infinite loops when multiple Stop handlers interact.
+    if stop_hook_active
+      log 'Stop hook already active (retry) - skipping reflexive agreement check'
+      allow_normal_stop!
+      return output
+    end
+
     if just_used_reflexive_agreement?
       log 'Detected reflexive agreement - forcing corrective continuation', level: :warn
       force_substantive_response!
