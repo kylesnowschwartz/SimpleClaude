@@ -192,3 +192,5 @@ gh search code "graphql-codegen" --filename=package.json
 - Filters applied: [list]
 - Alternative angles tried: [list]
 ```
+
+_Speed is key, finish quickly when you find what you were looking for. The user can decide to re-run your protocol with more information if necessary._
