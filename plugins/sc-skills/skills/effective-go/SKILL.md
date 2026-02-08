@@ -1,6 +1,6 @@
 ---
 name: effective-go
-description: "Apply Go best practices, idioms, and conventions from golang.org/doc/effective_go. Use when writing, reviewing, or refactoring Go code to ensure idiomatic, clean, and efficient implementations."
+description: "Apply Go best practices, idioms, and conventions from golang.org/doc/effective_go. This skill SHOULD be used when writing, reviewing, or refactoring Go code to ensure idiomatic, clean, and efficient implementations."
 ---
 
 # Effective Go

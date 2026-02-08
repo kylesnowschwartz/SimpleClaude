@@ -1,6 +1,6 @@
 ---
 name: sc-code-explorer
-description: Trace and understand feature implementations across codebases
+description: Trace and understand feature implementations across codebases. This agent SHOULD be used when investigating how existing features work or tracing code paths.
 tools: Bash, Read, Grep, Glob, LS, TodoWrite
 color: yellow
 ---

@@ -1,6 +1,6 @@
 ---
 name: sc-abstraction-critic
-description: Find YAGNI violations, over-engineering, wrapper hell, and premature generalization
+description: Find YAGNI violations, over-engineering, wrapper hell, and premature generalization. This agent SHOULD be used for codebase simplification and identifying unnecessary complexity.
 tools: Bash(rg:*), Bash(fd:*), Bash(git:*), Bash(ast-grep:*), Read, Grep, Glob, LS, TodoWrite
 color: orange
 ---

@@ -2,7 +2,7 @@
 name: sc-think
 description: >
   Socratic thinking partner for decisions, debugging mental models, and working through uncertainty.
-  This skill should be used when the user says "I'm stuck", "should I", "can't decide",
+  This skill SHOULD be used when the user says "I'm stuck", "should I", "can't decide",
   "not sure if", "is this the right approach", "what do you think about", "help me think through",
   "review my plan", "am I missing something", "what am I assuming", "let me think", "brainstorm",
   "help me figure out", "sanity check", "does this make sense", or expresses uncertainty

@@ -1,6 +1,6 @@
 ---
 name: sc-claude-md-improver
-description: Audit and improve CLAUDE.md files in repositories. Use when user asks to check, audit, update, improve, or fix CLAUDE.md files. Scans for all CLAUDE.md files, evaluates quality against templates, outputs quality report, then makes targeted updates. Also use when the user mentions "CLAUDE.md maintenance" or "project memory optimization".
+description: Audit and improve CLAUDE.md files in repositories. This skill SHOULD be used when the user asks to check, audit, update, improve, or fix CLAUDE.md files. Scans for all CLAUDE.md files, evaluates quality against templates, outputs quality report, then makes targeted updates. This skill SHOULD also be used when the user mentions "CLAUDE.md maintenance" or "project memory optimization".
 tools: Read, Glob, Grep, Bash, Edit
 ---
 

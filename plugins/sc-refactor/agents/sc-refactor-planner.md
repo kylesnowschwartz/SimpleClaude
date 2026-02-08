@@ -1,6 +1,6 @@
 ---
 name: sc-refactor-planner
-description: Analyze code and recommend refactoring opportunities with prioritized, actionable suggestions
+description: Analyze code and recommend refactoring opportunities with prioritized, actionable suggestions. This agent SHOULD be used when planning refactoring strategy before execution.
 tools: Bash(rg:*), Bash(fd:*), Bash(git:*), Bash(ast-grep:*), Read, Grep, Glob, LS, TodoWrite
 color: yellow
 ---

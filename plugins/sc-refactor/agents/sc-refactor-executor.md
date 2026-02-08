@@ -1,6 +1,6 @@
 ---
 name: sc-refactor-executor
-description: Execute ONE specific refactoring surgically with behavior preservation and test verification
+description: Execute ONE specific refactoring surgically with behavior preservation and test verification. This agent SHOULD be used when applying a single, targeted refactoring with guaranteed behavior preservation.
 tools: Read, Edit, Write, Grep, Glob, Bash, LS, TodoWrite
 color: green
 ---

@@ -1,6 +1,6 @@
 ---
 name: sc-naming-auditor
-description: Find naming convention violations, semantic drift, and misleading names
+description: Find naming convention violations, semantic drift, and misleading names. This agent SHOULD be used when auditing naming consistency and readability across a codebase.
 tools: Bash(rg:*), Bash(fd:*), Bash(git:*), Read, Grep, Glob, LS, TodoWrite
 color: cyan
 ---

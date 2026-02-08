@@ -1,6 +1,6 @@
 ---
 name: sc-code-reviewer
-description: Review code for bugs, security issues, and adherence to project standards
+description: Review code for bugs, security issues, and adherence to project standards. This agent SHOULD be used when reviewing code changes for quality, security, and standards compliance.
 tools: Bash, Read, Grep, Glob, LS, TodoWrite
 color: red
 ---

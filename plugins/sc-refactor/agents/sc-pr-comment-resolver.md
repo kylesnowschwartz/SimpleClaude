@@ -1,6 +1,6 @@
 ---
 name: sc-pr-comment-resolver
-description: Address individual PR review comments by implementing requested changes and reporting resolution
+description: Address individual PR review comments by implementing requested changes and reporting resolution. This agent SHOULD be used when resolving GitHub PR review feedback programmatically.
 tools: Bash(git status:*), Bash(git diff:*), Bash(git log:*), Bash(git show:*), Bash(bundle exec rspec:*), Bash(bundle exec rubocop:*), Bash(ruby:*), Bash(rg:*), Bash(fd:*), Bash(jq:*), Bash(wc:*), Bash(grep:*), Bash(head:*), Bash(tail:*), Read, Write, Edit, Grep, Glob, LS, TodoWrite
 color: blue
 ---

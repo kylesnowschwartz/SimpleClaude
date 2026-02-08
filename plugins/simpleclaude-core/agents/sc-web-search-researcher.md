@@ -1,6 +1,6 @@
 ---
 name: sc-web-search-researcher
-description: Research current information from the web beyond training data cutoff
+description: Research current information from the web beyond training data cutoff. This agent SHOULD be used when needing current information, recent releases, or data beyond the training cutoff.
 tools: WebSearch, WebFetch, TodoWrite
 color: pink
 ---

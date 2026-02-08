@@ -1,6 +1,6 @@
 ---
 name: sc-structural-reviewer
-description: Verify change completeness, find orphaned code, and detect development artifacts
+description: Verify change completeness, find orphaned code, and detect development artifacts. This agent SHOULD be used after implementation to verify nothing was missed or left behind.
 tools: Bash(rg:*), Bash(fd:*), Bash(git:*), Bash(gh pr view:*), Bash(gh pr diff:*), Bash(gh issue view:*), Read, Grep, Glob, LS, TodoWrite
 color: blue
 ---

@@ -1,6 +1,6 @@
 ---
 name: effective-neovim
-description: "This skill should be used when writing, reviewing, or refactoring Neovim plugins in Lua. Apply Neovim community best practices, plugin architecture patterns, and idiomatic Lua style to ensure clean, maintainable plugins."
+description: "This skill SHOULD be used when writing, reviewing, or refactoring Neovim plugins in Lua. Apply Neovim community best practices, plugin architecture patterns, and idiomatic Lua style to ensure clean, maintainable plugins."
 ---
 
 # Effective Neovim

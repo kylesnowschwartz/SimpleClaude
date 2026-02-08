@@ -1,6 +1,6 @@
 ---
 name: hud-first
-description: This skill should be used when the user asks to "build an AI assistant", "create a chatbot", "make an agent that does X for me", "design a copilot feature", "automate this workflow with AI", or requests delegation-style AI features. Offers a reframe from copilot patterns (conversation, delegation) to HUD patterns (ambient awareness, perception augmentation).
+description: This skill SHOULD be used when the user asks to "build an AI assistant", "create a chatbot", "make an agent that does X for me", "design a copilot feature", "automate this workflow with AI", or requests delegation-style AI features. Offers a reframe from copilot patterns (conversation, delegation) to HUD patterns (ambient awareness, perception augmentation).
 ---
 
 <objective>

@@ -1,6 +1,6 @@
 ---
 name: jq
-description: This skill should be used when the user asks to "get the version from package.json", "what dependencies are in this project", "extract field from JSON", "check tsconfig settings", "parse API response", "get scripts from package.json", or when needing specific fields from JSON files without loading the entire file.
+description: This skill SHOULD be used when the user asks to "get the version from package.json", "what dependencies are in this project", "extract field from JSON", "check tsconfig settings", "parse API response", "get scripts from package.json", or when needing specific fields from JSON files without loading the entire file.
 ---
 
 # jq: JSON Query Tool

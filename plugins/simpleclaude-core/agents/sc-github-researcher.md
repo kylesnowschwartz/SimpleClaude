@@ -1,6 +1,6 @@
 ---
 name: sc-github-researcher
-description: Discover and evaluate open source projects on GitHub using structured search
+description: Discover and evaluate open source projects on GitHub using structured search. This agent SHOULD be used when finding, comparing, or evaluating open source libraries and tools.
 tools: Bash, Read, Grep, Glob, LS, TodoWrite, WebFetch
 color: purple
 ---

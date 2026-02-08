@@ -1,6 +1,6 @@
 ---
 name: mq
-description: This skill should be used when the user asks to "get code blocks from README", "extract links from markdown", "find all headers in this doc", "pull the table from documentation", "what code examples are in this file", or when needing specific elements (code, links, headers, tables) from large Markdown files without loading the entire file.
+description: This skill SHOULD be used when the user asks to "get code blocks from README", "extract links from markdown", "find all headers in this doc", "pull the table from documentation", "what code examples are in this file", or when needing specific elements (code, links, headers, tables) from large Markdown files without loading the entire file.
 ---
 
 # mq: Markdown Query and Extraction Tool

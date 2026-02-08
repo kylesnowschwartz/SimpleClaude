@@ -1,6 +1,6 @@
 ---
 name: sc-repo-documentation-expert
-description: Find official documentation and examples from library source repositories
+description: Find official documentation and examples from library source repositories. This agent SHOULD be used when needing accurate, up-to-date documentation from upstream library sources.
 tools: Bash, Read, Grep, Glob, LS, TodoWrite, WebSearch, WebFetch
 color: blue
 ---

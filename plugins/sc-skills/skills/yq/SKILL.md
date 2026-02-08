@@ -1,6 +1,6 @@
 ---
 name: yq
-description: This skill should be used when the user asks to "get a field from docker-compose", "extract value from yaml", "what services are in this compose file", "get the image from kubernetes manifest", "pull workflow triggers from github actions", "check the version in pubspec.yaml", or when needing specific fields from YAML/JSON config files without loading the entire file.
+description: This skill SHOULD be used when the user asks to "get a field from docker-compose", "extract value from yaml", "what services are in this compose file", "get the image from kubernetes manifest", "pull workflow triggers from github actions", "check the version in pubspec.yaml", or when needing specific fields from YAML/JSON config files without loading the entire file.
 ---
 
 # yq: YAML/JSON Query Tool

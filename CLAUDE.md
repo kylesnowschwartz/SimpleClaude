@@ -7,6 +7,7 @@ This file provides guidance to [Claude Code](https://github.com/anthropics/claud
 - **important** `plugins/` contains all SimpleClaude plugins (simpleclaude-core, sc-hooks, sc-output-styles, sc-extras)
 - Command changes: update commands consistently across all 4+1 core-commands (sc-plan, sc-work, sc-explore, sc-review, sc-workflow)
 - Plugin structure: Each plugin in `plugins/` has `.claude-plugin/plugin.json`, plus optional `commands/`, `agents/`, `hooks/`, `output-styles/` directories
+- Description metadata: Use RFC 2119 obligation language (uppercase SHOULD/MUST) in `description` fields of SKILL.md and agent frontmatter to signal activation intent to AI agents
 
 ## Build Commands
 

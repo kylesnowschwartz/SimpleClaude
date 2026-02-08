@@ -1,6 +1,6 @@
 ---
 name: rg
-description: This skill should be used when the user asks to "search for pattern in codebase", "find all uses of function", "grep for string across files", "find TODO comments", "search in specific file types", "count occurrences", or when needing efficient text search with context, line numbers, or special flags.
+description: This skill SHOULD be used when the user asks to "search for pattern in codebase", "find all uses of function", "grep for string across files", "find TODO comments", "search in specific file types", "count occurrences", or when needing efficient text search with context, line numbers, or special flags.
 ---
 
 # rg: Ripgrep Text Search

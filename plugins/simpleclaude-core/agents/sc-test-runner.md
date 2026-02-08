@@ -1,6 +1,6 @@
 ---
 name: sc-test-runner
-description: Run tests and provide concise failure analysis
+description: Run tests and provide concise failure analysis. This agent SHOULD be used when executing test suites and diagnosing test failures.
 tools: Bash, Read, Grep, Glob, TodoWrite
 color: yellow
 ---

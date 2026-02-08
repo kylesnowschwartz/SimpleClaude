@@ -1,6 +1,6 @@
 ---
 name: sc-design-iterator
-description: Iteratively refine UI designs through N cycles of screenshot, analyze, implement, repeat
+description: Iteratively refine UI designs through N cycles of screenshot, analyze, implement, repeat. This agent SHOULD be used for progressive visual refinement of web interfaces.
 color: violet
 ---
 

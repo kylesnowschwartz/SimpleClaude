@@ -1,6 +1,6 @@
 ---
 name: sc-code-architect
-description: Design comprehensive implementation plans and architecture blueprints
+description: Design comprehensive implementation plans and architecture blueprints. This agent SHOULD be used when planning new features, system design, or architectural decisions before implementation.
 tools: Bash, Read, Grep, Glob, LS, TodoWrite
 color: green
 ---

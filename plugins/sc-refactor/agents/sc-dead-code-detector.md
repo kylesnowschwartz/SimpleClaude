@@ -1,6 +1,6 @@
 ---
 name: sc-dead-code-detector
-description: Find orphan files, unused exports, commented code, debug statements, TODO cruft, and unused imports
+description: Find orphan files, unused exports, commented code, debug statements, TODO cruft, and unused imports. This agent SHOULD be used for dead code analysis and codebase cleanup tasks.
 tools: Bash(rg:*), Bash(fd:*), Bash(git:*), Read, Grep, Glob, LS, TodoWrite
 color: red
 ---

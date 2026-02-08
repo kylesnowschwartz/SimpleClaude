@@ -1,6 +1,6 @@
 ---
 name: sc-test-organizer
-description: Analyze test structure, find missing test files, fixture sprawl, and framework inconsistencies
+description: Analyze test structure, find missing test files, fixture sprawl, and framework inconsistencies. This agent SHOULD be used when auditing test organization and coverage gaps.
 tools: Bash(rg:*), Bash(fd:*), Bash(git:*), Read, Grep, Glob, LS, TodoWrite
 color: green
 ---

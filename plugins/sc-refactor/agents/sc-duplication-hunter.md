@@ -1,6 +1,6 @@
 ---
 name: sc-duplication-hunter
-description: Find copy-paste, structural, and logic duplication with consolidation suggestions
+description: Find copy-paste, structural, and logic duplication with consolidation suggestions. This agent SHOULD be used when identifying repeated code patterns that need consolidation.
 tools: Bash(rg:*), Bash(fd:*), Bash(git:*), Bash(ast-grep:*), Read, Grep, Glob, LS, TodoWrite
 color: yellow
 ---
