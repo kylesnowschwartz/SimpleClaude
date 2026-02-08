@@ -1,6 +1,6 @@
 {
   "name": "simpleclaude-core",
-  "version": "4.7.0",
+  "version": "4.8.0",
   "description": "Core SimpleClaude framework with 4+1 intent-based commands and 7 specialized agents",
   "author": {
     "name": "Kyle Snow Schwartz"
