@@ -1,6 +1,6 @@
 ---
 name: sc-refactor-review
-description: This skill should be used when the user asks to "review code", "find dead code", "check for duplication", "simplify the codebase", "find refactoring opportunities", "do code cleanup", "check naming consistency", "analyze test organization", "run codebase health check", "review my PR", "refactor this code", "extract method", "rename variable", or "consolidate duplicates". Routes to specialized analysis agents or refactoring workflow based on the type of request.
+description: This skill SHOULD be used when the user asks to "review code", "find dead code", "check for duplication", "simplify the codebase", "find refactoring opportunities", "do code cleanup", "check naming consistency", "analyze test organization", "run codebase health check", "review my PR", "refactor this code", "extract method", "rename variable", "consolidate duplicates", "adversarial review", "red team review", "find ways to break this", "multi-model review", or "get multiple AI opinions on this code". Routes to specialized analysis agents, refactoring workflow, or multi-model adversarial review based on the type of request.
 ---
 
 # SC Refactor Review Skill
@@ -20,6 +20,7 @@ Reference guide for routing review and refactoring requests to specialized agent
 | `/sc-refactor:sc-cleanup` | Post-AI session cleanup (debug statements, duplicates) | 4 agents (dead-code, duplication, naming, test) |
 | `/sc-refactor:sc-audit` | Verify structural completeness (wiring, configs) | sc-structural-reviewer |
 | `/sc-refactor:sc-codebase-health` | Full codebase analysis | All 6 agents in parallel |
+| `/sc-refactor:sc-adversarial-review` | Multi-model adversarial review | Codex CLI + Gemini CLI + Claude |
 
 ### Agents
 
@@ -52,6 +53,7 @@ Match the user's request to the appropriate command or agents:
 | "clean up", "after AI session", "find debug", "console.log" | `/sc-cleanup` |
 | "audit", "structural check", "verify wiring", "missing config" | `/sc-audit` |
 | "health check", "full analysis", "comprehensive" | `/sc-codebase-health` |
+| "adversarial review", "red team", "break this code", "multi-model" | `/sc-adversarial-review` |
 | "dead code", "unused", "orphan" | sc-dead-code-detector |
 | "duplicate", "DRY", "repeated" | sc-duplication-hunter |
 | "simplify", "YAGNI", "over-engineer" | sc-abstraction-critic |
@@ -174,3 +176,19 @@ Comprehensive health check running all 6 agents in parallel. Produces:
 - Items to skip (not worth effort)
 
 Offers auto-fix for quick wins after analysis.
+
+### sc-adversarial-review
+
+Multi-model adversarial review using external AI CLIs. Runs OpenAI Codex, Google Gemini, and Claude in parallel against the same target with an attacker's mindset.
+
+Value: Model diversity. Different architectures find different blind spots. Findings categorized as:
+- **Consensus** (multiple models agree) — highest confidence
+- **Unique** (one model only) — investigate
+- **Divergent** (models disagree) — most interesting
+
+Requires: `codex` and/or `gemini` CLI installed. Degrades gracefully to whichever is available + Claude.
+
+Example usage:
+- `/sc-adversarial-review` — Review uncommitted changes
+- `/sc-adversarial-review branch` — Review current branch vs main
+- `/sc-adversarial-review src/auth/` — Review specific directory
