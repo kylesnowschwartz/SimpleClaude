@@ -31,8 +31,9 @@ Read the target and classify it. The user may include a hint in $ARGUMENTS (e.g.
 | **Plan/Design** | PLAN.md, DESIGN.md, ARCHITECTURE.md, .agent-history/ docs, implementation plans, ADRs | What's missing, infeasible, or underestimated? |
 | **Reasoning** | Analysis documents, investigations, decision records, arguments, trade-off evaluations | Where does the logic fail or the evidence fall short? |
 | **Communication** | Emails, PR descriptions, RFCs, proposals, announcements, documentation for humans | What will be misunderstood or misinterpreted? |
+| **General** | Config files, schemas, diagrams, prompt definitions, mixed-content, or anything that doesn't clearly match above | What's inconsistent, incomplete, or misleading? |
 
-If ambiguous, ask the user with AskUserQuestion.
+Default to **General** when classification is uncertain rather than forcing a bad fit. The user can always override via a hint in $ARGUMENTS.
 
 Check CLI availability: `codex --version` and `gemini --version`. Proceed with whatever's available. If neither is installed, stop and tell the user to install them.
 
@@ -57,6 +58,9 @@ Select the core prompt based on content type, then adapt it to each CLI's interf
 
 **Communication:**
 > Review this communication adversarially from the reader's perspective. For each finding state: WHAT will confuse the reader, WHY it's ambiguous, and WHAT misinterpretation is likely. Focus on: unclear expectations, missing context, assumptions about reader knowledge, ambiguous phrasing, wrong tone for audience, and action items that aren't explicit.
+
+**General:**
+> Critique this artifact adversarially. For each finding state: WHAT is wrong or missing, WHY it matters, and WHAT consequence follows. Focus on: internal inconsistencies, unstated assumptions, completeness gaps, fitness for its stated purpose, and ways it could silently fail or mislead.
 
 ### CLI invocation
 
@@ -110,6 +114,12 @@ Select analysis lenses based on content type:
 - **Action clarity**: If the reader has to do something, is it unambiguous what, when, and why?
 - **Tone calibration**: Does the tone match the relationship, stakes, and audience expectations?
 
+### General lenses
+- **Internal consistency**: Does the artifact contradict itself? Do different sections agree on facts, terminology, and intent?
+- **Completeness**: What's defined but not used? Referenced but not defined? Implied but not stated?
+- **Fitness for purpose**: Does this actually achieve what it claims to? Where does it fall short of its own stated goals?
+- **Silent failure modes**: How could this be used correctly yet produce wrong results? What guardrails are missing?
+
 ## Phase 4: Synthesize
 
 Read `/tmp/adversarial-codex.txt` and `/tmp/adversarial-gemini.txt`. Combine with your Phase 3 findings.
@@ -129,13 +139,13 @@ Read `/tmp/adversarial-codex.txt` and `/tmp/adversarial-gemini.txt`. Combine wit
 
 Severity ordering by content type:
 
-| Code | Plan/Design | Reasoning | Communication |
-|------|-------------|-----------|---------------|
-| data loss | missing critical step | invalid conclusion | dangerous ambiguity |
-| incorrect behavior | infeasible assumption | insufficient evidence | missing action items |
-| security vulnerability | unacknowledged risk | logical fallacy | wrong audience assumption |
-| performance issue | underestimated complexity | confirmation bias | unclear expectations |
-| maintainability | missing alternative | unstated premise | tone mismatch |
+| Code | Plan/Design | Reasoning | Communication | General |
+|------|-------------|-----------|---------------|---------|
+| data loss | missing critical step | invalid conclusion | dangerous ambiguity | internal contradiction |
+| incorrect behavior | infeasible assumption | insufficient evidence | missing action items | completeness gap |
+| security vulnerability | unacknowledged risk | logical fallacy | wrong audience assumption | silent failure mode |
+| performance issue | underestimated complexity | confirmation bias | unclear expectations | unfit for purpose |
+| maintainability | missing alternative | unstated premise | tone mismatch | unstated assumption |
 
 ### Output Format
 
@@ -144,7 +154,7 @@ Severity ordering by content type:
 
 **Models**: [which participated]
 **Scope**: [uncommitted | branch vs main | specific path]
-**Content type**: [Code | Plan/Design | Reasoning | Communication]
+**Content type**: [Code | Plan/Design | Reasoning | Communication | General]
 
 ## Consensus Findings
 
