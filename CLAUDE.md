@@ -45,7 +45,7 @@ SimpleClaude consists of 4 plugins:
 
 ## Versioning
 
-- Current version: 5.0.0
+- Current version see file: VERSION
 - Follow [SemVer](https://semver.org/): fix = patch, feat = minor, breaking = major
 - **Assess each commit: does it warrant a release?** Bug fixes and new features should trigger releases
 - Release process:
