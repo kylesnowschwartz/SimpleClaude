@@ -20,52 +20,63 @@ For each iteration cycle, you must:
 
 **Always screenshot only the element or area you're working on, NOT the full page.** This keeps context focused and reduces noise.
 
+Browser automation uses `playwright-cli` commands via Bash.
+
 ### Setup: Set Appropriate Window Size
 
-Before starting iterations, resize the browser to fit your target area:
+Before starting iterations, open a browser and resize to fit your target area:
 
+```bash
+playwright-cli open http://localhost:3000
+playwright-cli resize 1200 800
 ```
-browser_resize with width and height appropriate for the component:
-- Small component (button, card): 800x600
-- Medium section (hero, features): 1200x800
-- Full page section: 1440x900
-```
+
+Size guidelines:
+- Small component (button, card): 800 600
+- Medium section (hero, features): 1200 800
+- Full page section: 1440 900
 
 ### Taking Element Screenshots
 
-Use `browser_take_screenshot` with element targeting:
+Use `playwright-cli screenshot` with element targeting:
 
-1. First, take a `browser_snapshot` to get element references
+1. First, take a snapshot to get element references
 2. Find the `ref` for your target element (e.g., a section, div, or component)
 3. Screenshot that specific element:
 
-```
-browser_take_screenshot with:
-- element: "Hero section" (human-readable description)
-- ref: "E123" (exact ref from snapshot)
+```bash
+playwright-cli snapshot
+playwright-cli screenshot e45
 ```
 
 ### Fallback: Viewport Screenshots
 
 If the element doesn't have a clear ref, ensure the browser viewport shows only your target area:
 
-1. Use `browser_resize` to set viewport to component dimensions
-2. Scroll the element into view using `browser_evaluate`
-3. Take a viewport screenshot (no element/ref params)
+1. Use `playwright-cli resize` to set viewport to component dimensions
+2. Scroll the element into view using `playwright-cli eval`
+3. Take a viewport screenshot (no element ref)
+
+```bash
+playwright-cli resize 800 600
+playwright-cli eval "document.querySelector('.target').scrollIntoView()"
+playwright-cli screenshot
+```
 
 ### Example Workflow
 
-```
-1. browser_resize(width: 1200, height: 800)
-2. browser_navigate to page
-3. browser_snapshot to see element refs
-4. browser_take_screenshot(element: "Features grid", ref: "E45")
-5. [analyze and implement changes]
-6. browser_take_screenshot(element: "Features grid", ref: "E45")
-7. [repeat...]
+```bash
+playwright-cli open http://localhost:3000
+playwright-cli resize 1200 800
+playwright-cli snapshot
+playwright-cli screenshot e45
+# [analyze and implement changes]
+playwright-cli reload
+playwright-cli screenshot e45
+# [repeat...]
 ```
 
-**Never use `fullPage: true`** - it captures unnecessary content and bloats context.
+**Never use full-page screenshots** - they capture unnecessary content and bloat context.
 
 ## Design Principles to Apply
 
@@ -167,7 +178,7 @@ When invoked, you should:
 2. Confirm the target component/file path
 3. Confirm the number of iterations requested (default: 10)
 4. Optionally confirm any competitor sites to research
-5. Set up browser with `browser_resize` for appropriate viewport
+5. Open browser with `playwright-cli open` and resize for appropriate viewport
 6. Begin the iteration cycle
 
 Start by taking an initial screenshot of the target element to establish baseline, then proceed with systematic improvements.

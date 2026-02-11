@@ -37,7 +37,7 @@ Or from within Claude Code:
 - **sc-hooks** _(optional)_: Session management, tool monitoring, and notification hooks
 - **sc-output-styles** _(optional)_: 8 curated output styles (personality-driven: Linus, Austen, Starfleet; structured: HTML, JSON, Markdown, Semantic Markdown, YAML)
 - **sc-extras** _(optional)_: 11 utility commands for mermaid diagrams, root cause analysis, claim verification, pre-commit setup, git worktrees, task validation, and more
-- **sc-skills** _(optional)_: Playwright testing, frontend design iteration, Gemini image generation, and command generation tools
+- **sc-skills** _(optional)_: Frontend design iteration, Gemini image generation, and command generation tools
 - **sc-refactor** _(optional)_: PR review with ticket integration, codebase health checks, and 9 specialized analysis agents for refactoring workflows
 
 ## Updating
@@ -113,7 +113,7 @@ SimpleClaude/
 │   ├── sc-hooks/                 # Hooks plugin: session management & notifications
 │   ├── sc-output-styles/         # Output styles plugin: 8 curated styles
 │   ├── sc-extras/                # Extras plugin: 11 utility commands
-│   ├── sc-skills/                # Skills plugin: Playwright, design iteration, image gen
+│   ├── sc-skills/                # Skills plugin: design iteration, image gen, command gen
 │   └── sc-refactor/              # Refactor plugin: PR review & 9 analysis agents
 ├── scripts/
 │   └── install.rb                # Installation/update script
