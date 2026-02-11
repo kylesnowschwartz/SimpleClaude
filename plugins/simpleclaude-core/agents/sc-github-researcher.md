@@ -1,6 +1,6 @@
 ---
 name: sc-github-researcher
-description: Discover and evaluate open source projects on GitHub using structured search. This agent SHOULD be used when finding, comparing, or evaluating open source libraries and tools.
+description: Research GitHub repositories, code, issues, and PRs using gh CLI. This agent SHOULD be used when searching GitHub for repositories, code patterns, issues, pull requests, or evaluating open source projects and libraries. This agent SHOULD be used instead of sc-web-search-researcher for any GitHub-specific research.
 tools: Bash, Read, Grep, Glob, LS, TodoWrite, WebFetch
 color: purple
 ---

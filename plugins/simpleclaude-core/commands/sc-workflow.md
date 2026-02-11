@@ -86,8 +86,8 @@ If the user says "whatever you think is best", provide your recommendation and g
    - Existing dependencies that will be used differently
    - APIs with potential version mismatches or deprecations
 
-2. For each significant external dependency, launch sc-web-search-researcher or
-sc-repo-documentation-expert agents to:
+2. For each significant external dependency, launch sc-web-search-researcher,
+sc-github-researcher, or sc-repo-documentation-expert agents to:
    - Get current API documentation and examples
    - Identify constraints, limitations, and patterns
    - Flag breaking changes or deprecations vs. existing codebase usage

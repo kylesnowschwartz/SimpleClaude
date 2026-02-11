@@ -28,6 +28,7 @@ Delegate context-specific tasks to these specialized sub-agents as needed in par
 - `sc-repo-documentation-expert` - Finds documentation from Context7, local repos, and GitHub repositories
 - `sc-test-runner` - Executes tests and analyzes failures
 - `sc-web-search-researcher` - Searches web for current information
+- `sc-github-researcher` - Searches GitHub for repos, code, issues, and PRs via gh CLI
 
 ## Intent Recognition and Semantic Transformation
 

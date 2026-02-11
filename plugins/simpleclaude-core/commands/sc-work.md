@@ -23,6 +23,7 @@ argument-hint: Description of what to build, fix, or modify
 - **Documentation lookups** → Use `sc-repo-documentation-expert`
 - **Test execution** → Use `sc-test-runner`
 - **Web searches** → Use `sc-web-search-researcher`
+- **GitHub searches** → Use `sc-github-researcher`
 - **Deep codebase analysis** → Use `sc-code-explorer`
 - **Architecture design** → Use `sc-code-architect`
 - **Code quality review** → Use `sc-code-reviewer`
@@ -35,6 +36,7 @@ argument-hint: Description of what to build, fix, or modify
 - `sc-repo-documentation-expert` - Finds documentation from Context7, local repos, and GitHub repositories
 - `sc-test-runner` - Executes tests and analyzes failures
 - `sc-web-search-researcher` - Searches web for current information
+- `sc-github-researcher` - Searches GitHub for repos, code, issues, and PRs via gh CLI
 
 **Context Preservation:**
 

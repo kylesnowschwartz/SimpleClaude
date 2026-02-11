@@ -1,6 +1,6 @@
 ---
 name: sc-web-search-researcher
-description: Research current information from the web beyond training data cutoff. This agent SHOULD be used when needing current information, recent releases, or data beyond the training cutoff.
+description: Research current information from the web beyond training data cutoff. This agent SHOULD be used when needing current information, recent releases, or data beyond the training cutoff. This agent SHOULD NOT be used for GitHub-specific searches — use sc-github-researcher instead.
 tools: WebSearch, WebFetch, TodoWrite
 color: pink
 ---
