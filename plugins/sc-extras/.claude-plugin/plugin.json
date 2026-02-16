@@ -1,6 +1,6 @@
 {
   "name": "sc-extras",
-  "version": "5.2.1",
+  "version": "5.2.2",
   "description": "Optional SimpleClaude utilities for debugging, git workflows, and task validation",
   "author": {
     "name": "Kyle Snow Schwartz"
