@@ -66,10 +66,12 @@ Select the core prompt based on content type, then adapt it to each CLI's interf
 
 **Codex** — map scope to the correct subcommand and flags:
 
+Note: `codex review` does not allow combining `--base`/`--uncommitted` with a `[PROMPT]` positional argument (they are mutually exclusive in clap). For scopes that need a custom prompt, pipe the diff to `codex exec` instead.
+
 | Scope | Command |
 |-------|---------|
-| Uncommitted/staged | `codex review --uncommitted "ADVERSARIAL_PROMPT"` |
-| Branch vs main | `codex review --base main "ADVERSARIAL_PROMPT"` |
+| Uncommitted/staged | `git diff HEAD \| codex exec -s read-only "ADVERSARIAL_PROMPT"` |
+| Branch vs main | `git diff main...HEAD \| codex exec -s read-only "ADVERSARIAL_PROMPT"` |
 | File or directory | `codex exec -s read-only "ADVERSARIAL_PROMPT for [path]"` |
 
 Capture output: `2>&1 \| tee /tmp/adversarial-codex.txt`

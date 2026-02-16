@@ -67,18 +67,21 @@ Set default in `~/.gemini/settings.json`:
 
 ### Code Review (most common use)
 
+**Important**: `codex review` treats `--base`, `--uncommitted`, `--commit`, and `[PROMPT]` as mutually exclusive modes. You cannot combine a custom prompt with `--base` or `--uncommitted`. To review with custom instructions, pipe the diff to `codex exec` instead.
+
 ```bash
-# Review uncommitted changes
+# Review uncommitted changes (default instructions)
 codex review --uncommitted
 
-# Review branch against main
+# Review branch against main (default instructions)
 codex review --base main
 
-# Review specific commit
+# Review specific commit (default instructions)
 codex review --commit <SHA>
 
-# Review with custom instructions
-codex review --base main "Focus on error handling and security"
+# Review with custom instructions — pipe diff to exec
+git diff main...HEAD | codex exec -s read-only "Focus on error handling and security"
+git diff HEAD | codex exec -s read-only "Check for race conditions"
 
 # Review with title context
 codex review --uncommitted --title "Add user auth middleware"
@@ -180,7 +183,11 @@ gemini -p "Analyze src/auth/ and critique the token refresh strategy"
 ### Review a Branch Before PR
 
 ```bash
-codex review --base main "Review for correctness, test coverage, and maintainability"
+# Default review (no custom prompt needed)
+codex review --base main
+
+# Custom review instructions — pipe diff to exec
+git diff main...HEAD | codex exec -s read-only "Review for correctness, test coverage, and maintainability"
 ```
 
 ## Important
