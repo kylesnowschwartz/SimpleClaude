@@ -70,9 +70,9 @@ Note: `codex review` does not allow combining `--base`/`--uncommitted` with a `[
 
 | Scope | Command |
 |-------|---------|
-| Uncommitted/staged | `git diff HEAD \| codex exec -s read-only "ADVERSARIAL_PROMPT"` |
-| Branch vs main | `git diff main...HEAD \| codex exec -s read-only "ADVERSARIAL_PROMPT"` |
-| File or directory | `codex exec -s read-only "ADVERSARIAL_PROMPT for [path]"` |
+| Uncommitted/staged | `git diff HEAD \| codex exec --skip-git-repo-check -s read-only "ADVERSARIAL_PROMPT"` |
+| Branch vs main | `git diff main...HEAD \| codex exec --skip-git-repo-check -s read-only "ADVERSARIAL_PROMPT"` |
+| File or directory | `codex exec --skip-git-repo-check -s read-only "ADVERSARIAL_PROMPT for [path]"` |
 
 Capture output: `2>&1 \| tee /tmp/adversarial-codex.txt`
 
