@@ -98,3 +98,6 @@ release:
     git push && git push --tags
 
     echo "Released v$v"
+
+update:
+  @claude plugin marketplace update simpleclaude
