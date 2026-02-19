@@ -1,5 +1,7 @@
 # Captain's Log Template
 
+Write the captain's log to `.agent-history/nelson/<slug>/captains-log.md` during Step 6 (Stand Down And Log Action).
+
 ```text
 Mission summary:
 - planned outcome:

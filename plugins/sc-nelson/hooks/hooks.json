@@ -1,0 +1,27 @@
+{
+  "description": "Nelson mission lifecycle hooks: session resumption and stop-gate enforcement",
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/entrypoints/session-start.sh",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/entrypoints/stop.sh",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  }
+}

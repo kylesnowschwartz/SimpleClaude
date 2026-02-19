@@ -8,6 +8,28 @@ argument-hint: "[mission description]"
 
 Execute this workflow for the user's mission.
 
+## Mission Directory
+
+Before Step 1, create the mission persistence directory. Derive the slug from the mission name (lowercase, dashes, no special characters).
+
+```
+mkdir -p .agent-history/nelson/<mission-slug>/
+```
+
+Initialize `mission-state.json`:
+```json
+{
+  "mission_name": "<mission name>",
+  "mission_slug": "<mission-slug>",
+  "started_at": "<ISO 8601 timestamp>",
+  "phase": "sailing_orders",
+  "mode": null,
+  "team_name": null
+}
+```
+
+Write this file via the Write tool to `.agent-history/nelson/<mission-slug>/mission-state.json`.
+
 ## 1. Issue Sailing Orders
 
 - Write one sentence for `outcome`, `metric`, and `deadline`.
@@ -16,6 +38,8 @@ Execute this workflow for the user's mission.
 - Define stop criteria and required handoff artifacts.
 
 You MUST read `references/admiralty-templates/sailing-orders.md` and use the sailing-orders template when the user does not provide structure.
+
+**Persistence:** Write sailing orders to `.agent-history/nelson/<slug>/sailing-orders.md` using the Write tool. Update `mission-state.json` phase to `"sailing_orders"`.
 
 ## 2. Form The Squadron
 
@@ -36,6 +60,48 @@ You MUST read `references/squadron-composition.md` for selection rules.
 You MUST read `references/crew-roles.md` for ship naming and crew composition.
 You MUST consult the Standing Orders table below before forming the squadron.
 
+**Tool wiring by mode:**
+
+- **agent-team**: Create the team first, then spawn captains into it:
+  ```
+  TeamCreate(team_name="<mission-slug>")
+
+  Task(
+    subagent_type: "general-purpose",
+    team_name: "<mission-slug>",
+    name: "hms-<ship-name>",
+    run_in_background: true,
+    prompt: "<crew briefing from references/admiralty-templates/crew-briefing.md>"
+  )
+  ```
+
+- **subagents**: Spawn captains without a team (they report only to admiral):
+  ```
+  Task(
+    subagent_type: "general-purpose",
+    name: "hms-<ship-name>",
+    run_in_background: true,
+    prompt: "<crew briefing>"
+  )
+  ```
+
+- **single-session**: No spawning. Admiral executes directly.
+
+- **Red-cell navigator** (read-only):
+  ```
+  Task(
+    subagent_type: "Explore",
+    team_name: "<mission-slug>",    # if agent-team mode
+    name: "red-cell",
+    run_in_background: true,
+    prompt: "<red-cell briefing>"
+  )
+  ```
+
+- **Read-only crew roles** (Navigating Officer, Coxswain): use `subagent_type: "Explore"`.
+
+**Persistence:** Update `mission-state.json`: set `phase` to `"squadron_formed"`, `mode` to the selected mode, and `team_name` to the slug (if agent-team mode) or null.
+
 ## 3. Draft Battle Plan
 
 - Split mission into independent tasks with clear deliverables.
@@ -51,6 +117,22 @@ You MUST consult the Standing Orders table below when assigning files or if scop
 **Before proceeding to Step 4:** Verify sailing orders exist, squadron is formed, and every task has an owner, deliverable, and action station tier.
 
 **Crew Briefing:** When spawning each teammate via `Task()`, you MUST include a crew briefing using the template from `references/admiralty-templates/crew-briefing.md`. Teammates do NOT inherit the lead's conversation context — they start with a clean slate and need explicit mission context to operate independently.
+
+**Tool wiring:**
+
+Create each task via TaskCreate, wire dependencies, and assign owners:
+```
+TaskCreate(
+  subject: "<Task Name>",
+  description: "Owner: <captain>\nShip: <ship>\nDeliverable: <what>\nStation: <tier>\nFiles: <ownership>\nValidation: <required>",
+  activeForm: "<present-continuous description>"
+)
+
+TaskUpdate(taskId=<id>, addBlockedBy=[<dep-ids>])
+TaskUpdate(taskId=<id>, owner="hms-<ship>")
+```
+
+**Persistence:** Write the battle plan to `.agent-history/nelson/<slug>/battle-plan.md`. Update `mission-state.json` phase to `"battle_plan"`.
 
 ## 4. Run Quarterdeck Rhythm
 
@@ -68,6 +150,14 @@ You MUST consult the Standing Orders table below when assigning files or if scop
 You MUST use `references/admiralty-templates/quarterdeck-report.md` for the quarterdeck report template.
 You MUST consult the Standing Orders table below if admiral is doing implementation or tasks are drifting from scope.
 You MUST use `references/commendations.md` for recognition signals and graduated correction.
+
+**Tool wiring:**
+
+- Check progress: `TaskList()` — maps directly to pending/in_progress/completed tracking.
+- Coordinate: `SendMessage(type="message", recipient="hms-<ship>", content=<orders>, summary=<brief>)`
+- Agents mark own tasks: `TaskUpdate(taskId=<id>, status="in_progress"|"completed")`
+
+**Persistence:** Write each checkpoint report to `.agent-history/nelson/<slug>/quarterdeck-NNN.md` (zero-padded, incrementing: 001, 002, ...). On the first checkpoint, update `mission-state.json` phase to `"executing"`.
 
 ## 5. Set Action Stations
 
@@ -99,6 +189,13 @@ You MUST consult the Standing Orders table below if tasks lack a tier or red-cel
 
 You MUST use `references/admiralty-templates/captains-log.md` for the captain's log template.
 You MUST use `references/commendations.md` for Mentioned in Despatches criteria.
+
+**Tool wiring:**
+
+1. Write captain's log to `.agent-history/nelson/<slug>/captains-log.md`.
+2. Shutdown agents: `SendMessage(type="shutdown_request", recipient="hms-<ship>")` for each captain.
+3. Cleanup: `TeamDelete()` (if agent-team mode was used).
+4. Update `mission-state.json` phase to `"stand_down"`.
 
 ## Standing Orders
 

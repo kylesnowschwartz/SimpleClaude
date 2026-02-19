@@ -39,6 +39,29 @@ Marine Deployment Brief (include in marine's Task prompt):
 == END BRIEFING ==
 ```
 
+## Spawning a Captain
+
+```
+Task(
+  subagent_type: "general-purpose"
+  team_name:     "<mission-slug>"           # Only in agent-team mode
+  name:          "hms-<ship-name>"          # Required for SendMessage addressing
+  run_in_background: true
+  prompt: """
+  == CREW BRIEFING ==
+  [... briefing content from template above ...]
+  == END BRIEFING ==
+  """
+)
+
+For read-only roles (Navigating Officer, Coxswain):
+  subagent_type: "Explore"
+
+For crew members spawned by captains (not admiral):
+  Omit team_name. Captains spawn crew via Task() directly.
+  name: "<role-abbr>-hms-<ship>"  (e.g., "pwo-hms-argyll")
+```
+
 ## Field notes
 
 - **Mission** — Copy verbatim from sailing orders so the teammate shares the same outcome/metric framing.
