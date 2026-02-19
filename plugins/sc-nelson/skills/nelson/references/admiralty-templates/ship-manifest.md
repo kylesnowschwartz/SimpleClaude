@@ -5,6 +5,7 @@ Ship:
 - Name:
 - Captain:
 - Task:
+- Worktree: .worktrees/<slug>-hms-<ship>
 - Crew manifest:
   - [Role Abbr]: [Sub-task description]
   - [Role Abbr]: [Sub-task description]

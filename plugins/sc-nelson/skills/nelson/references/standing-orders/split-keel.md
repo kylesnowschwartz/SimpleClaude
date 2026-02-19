@@ -1,10 +1,16 @@
 # Standing Order: Split Keel
 
-Do not assign the same file to multiple captains.
+Plan merge order before captains begin work.
 
-**Symptoms:**
-- Captains overwrite each other's changes.
-- Frequent merge conflicts on the same artifact.
-- Admiral spends coordination time reconciling divergent edits.
+Each captain works in an isolated git worktree, so textual file conflicts during execution are eliminated. Semantic conflicts (interface changes, shared abstractions) can still occur — verification at consolidation catches these. The remaining tactical risk is merge order — merging in the wrong sequence creates unnecessary conflicts.
 
-**Remedy:** Assign exclusive file ownership in the battle plan. If two tasks must touch the same file, serialize them or split the file into independent modules first.
+**Merge ordering rules:**
+- Foundational changes (types, interfaces, shared utilities) merge first.
+- Dependent changes (consumers of those interfaces) merge after their dependencies.
+- If two ships will modify the same file heavily, plan them as sequential tasks (`blockedBy`) rather than parallel work.
+
+**Symptoms of poor merge ordering:**
+- Consolidation produces conflicts that could have been avoided by merging in dependency order.
+- Admiral spends consolidation time resolving conflicts that stem from sequencing, not substance.
+
+**Remedy:** Add a "Merge order" section to the battle plan. Order branches topologically by task dependency — tasks with no blockers merge first, then tasks that depended on them, and so on.

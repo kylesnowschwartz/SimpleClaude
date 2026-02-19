@@ -9,7 +9,7 @@ Choose the first condition that matches.
 1. Quick recon of unfamiliar area → **Recce Marine**
 2. Targeted fix or small implementation to unblock ship → **Assault Marine**
 3. Quick config/build/infra task → **Sapper**
-4. Sustained work, own deliverable, needs file ownership → **NOT a marine.** Request a new ship from the admiral.
+4. Sustained work, own deliverable, needs its own worktree → **NOT a marine.** Request a new ship from the admiral.
 5. Work that subdivides the ship's main deliverable → **NOT a marine.** Crew the role instead.
 
 ## Marine Specialisations

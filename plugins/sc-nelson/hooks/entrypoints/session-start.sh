@@ -3,6 +3,7 @@
 #
 # Reads cwd from stdin JSON, scans for mission-state.json files that aren't
 # in stand_down phase, and provides resumption instructions if found.
+# Also detects orphaned worktrees from active missions.
 
 set -euo pipefail
 
@@ -33,6 +34,28 @@ for STATE_FILE in "$NELSON_DIR"/*/mission-state.json; do
       ACTIVE_MISSIONS="$ACTIVE_MISSIONS\n"
     fi
     ACTIVE_MISSIONS="${ACTIVE_MISSIONS}- ${MISSION_NAME} (phase: ${PHASE}, slug: ${MISSION_SLUG})"
+
+    # Check for active worktrees belonging to this mission
+    WORKTREE_DIR="$CWD/.worktrees"
+    if [ -d "$WORKTREE_DIR" ]; then
+      WORKTREE_INFO=""
+      for WT in "$WORKTREE_DIR"/"${MISSION_SLUG}"-hms-*/; do
+        [ -d "$WT" ] || continue
+        WT_NAME=$(basename "$WT")
+        WT_STATUS=""
+        if [ -d "$WT/.git" ] || [ -f "$WT/.git" ]; then
+          WT_STATUS=$(cd "$WT" && git status --porcelain 2>/dev/null | head -5)
+        fi
+        if [ -n "$WT_STATUS" ]; then
+          WORKTREE_INFO="${WORKTREE_INFO}\n    - ${WT_NAME} (uncommitted changes)"
+        else
+          WORKTREE_INFO="${WORKTREE_INFO}\n    - ${WT_NAME} (clean)"
+        fi
+      done
+      if [ -n "$WORKTREE_INFO" ]; then
+        ACTIVE_MISSIONS="${ACTIVE_MISSIONS}\n  Worktrees:${WORKTREE_INFO}"
+      fi
+    fi
   fi
 done
 
@@ -51,7 +74,8 @@ To resume, follow the session resumption procedure in references/damage-control/
 1. Read .agent-history/nelson/<slug>/mission-state.json for current phase
 2. Read the latest quarterdeck-NNN.md for last known state
 3. Run TaskList() to get current task statuses
-4. Re-issue sailing orders from .agent-history/nelson/<slug>/sailing-orders.md
+4. Check .worktrees/ for active worktrees — verify status and uncommitted work
+5. Re-issue sailing orders from .agent-history/nelson/<slug>/sailing-orders.md
 EOF
 )
 

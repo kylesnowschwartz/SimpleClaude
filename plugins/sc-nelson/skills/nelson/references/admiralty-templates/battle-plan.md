@@ -5,13 +5,24 @@ Task ID:
 - Name:
 - Owner:
 - Ship (if crewed):
+- Worktree: .worktrees/<slug>-hms-<ship>
 - Crew manifest (if crewed):
 - Deliverable:
 - Dependencies:
 - Station tier (0-3):
-- File ownership (if code):
 - Validation required:
 - Rollback note required: yes/no
+```
+
+## Merge Order
+
+Add this section at the end of every multi-agent battle plan. Order branches topologically by task dependency — tasks with no blockers merge first.
+
+```text
+Merge order:
+1. hms-<ship-1> (no dependencies)
+2. hms-<ship-2> (after ship-1)
+3. hms-<ship-3> (after ship-1 and ship-2)
 ```
 
 ## TaskCreate Mapping
@@ -21,7 +32,7 @@ Each task in the battle plan becomes a TaskCreate call:
 ```
 TaskCreate(
   subject:     "<Task Name>"
-  description: "Owner: <captain>\nShip: <ship>\nDeliverable: <what>\nStation: <tier>\nFiles: <ownership>\nValidation: <required>"
+  description: "Owner: <captain>\nShip: <ship>\nWorktree: .worktrees/<slug>-hms-<ship>\nDeliverable: <what>\nStation: <tier>\nValidation: <required>"
   activeForm:  "<present-continuous description>"
 )
 

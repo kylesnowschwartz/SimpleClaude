@@ -6,6 +6,9 @@ argument-hint: "[mission description]"
 
 # Nelson
 
+!`command -v jq >/dev/null || echo 'WARNING: jq not found — Nelson hooks require jq for session resumption'`
+!`git rev-parse --is-inside-work-tree >/dev/null 2>&1 || echo 'WARNING: not inside a git repository — Nelson requires git'`
+
 Execute this workflow for the user's mission.
 
 ## Mission Directory
@@ -24,7 +27,9 @@ Initialize `mission-state.json`:
   "started_at": "<ISO 8601 timestamp>",
   "phase": "sailing_orders",
   "mode": null,
-  "team_name": null
+  "team_name": null,
+  "parent_branch": null,
+  "worktrees": null
 }
 ```
 
@@ -60,6 +65,31 @@ You MUST read `references/squadron-composition.md` for selection rules.
 You MUST read `references/crew-roles.md` for ship naming and crew composition.
 You MUST consult the Standing Orders table below before forming the squadron.
 
+**Worktree setup (subagents and agent-team modes only):**
+
+For each captain, create an isolated worktree:
+
+```bash
+PARENT_BRANCH=$(git branch --show-current)
+mkdir -p .worktrees
+git worktree add -b <slug>-hms-<ship> .worktrees/<slug>-hms-<ship> "$PARENT_BRANCH"
+```
+
+!`git check-ignore -q .worktrees/ || echo 'WARNING: .worktrees/ is not gitignored — add it to .gitignore or global gitignore'`
+
+Symlink project dependencies into each worktree:
+```bash
+ln -sf "$(pwd)/node_modules" ".worktrees/<slug>-hms-<ship>/node_modules"
+# Adapt for other ecosystems: vendor/, .venv/, etc.
+```
+
+Each captain's crew briefing MUST include:
+- Absolute worktree path
+- Instruction: verify with `git rev-parse --show-toplevel` before starting
+- Commit rules: conventional commits, selective staging, never `git add -A`
+
+Recommended: configure `teammateMode: "tmux"` in Claude Code settings for live pane visibility into each captain's work.
+
 **Tool wiring by mode:**
 
 - **agent-team**: Create the team first, then spawn captains into it:
@@ -70,8 +100,9 @@ You MUST consult the Standing Orders table below before forming the squadron.
     subagent_type: "general-purpose",
     team_name: "<mission-slug>",
     name: "hms-<ship-name>",
+    mode: "bypassPermissions",
     run_in_background: true,
-    prompt: "<crew briefing from references/admiralty-templates/crew-briefing.md>"
+    prompt: "<crew briefing from references/admiralty-templates/crew-briefing.md — include absolute worktree path>"
   )
   ```
 
@@ -80,12 +111,13 @@ You MUST consult the Standing Orders table below before forming the squadron.
   Task(
     subagent_type: "general-purpose",
     name: "hms-<ship-name>",
+    mode: "bypassPermissions",
     run_in_background: true,
-    prompt: "<crew briefing>"
+    prompt: "<crew briefing — include absolute worktree path>"
   )
   ```
 
-- **single-session**: No spawning. Admiral executes directly.
+- **single-session**: No spawning. Admiral executes directly in the main working tree. No worktrees needed.
 
 - **Red-cell navigator** (read-only):
   ```
@@ -100,19 +132,20 @@ You MUST consult the Standing Orders table below before forming the squadron.
 
 - **Read-only crew roles** (Navigating Officer, Coxswain): use `subagent_type: "Explore"`.
 
-**Persistence:** Update `mission-state.json`: set `phase` to `"squadron_formed"`, `mode` to the selected mode, and `team_name` to the slug (if agent-team mode) or null.
+**Persistence:** Update `mission-state.json`: set `phase` to `"squadron_formed"`, `mode` to the selected mode, `team_name` to the slug (if agent-team mode) or null, `parent_branch` to the branch worktrees were created from, and `worktrees` to a map of ship names to branch/path (or null for single-session).
 
 ## 3. Draft Battle Plan
 
 - Split mission into independent tasks with clear deliverables.
 - Assign owner for each task and explicit dependencies.
-- Assign file ownership when implementation touches code.
+- Assign each task a worktree (multi-agent modes) — one worktree per captain.
 - Keep one task in progress per agent unless the mission explicitly requires multitasking.
 - For each captain's task, include a ship manifest. If crew are mustered, list crew roles with sub-tasks and sequence. If the captain implements directly (0 crew), note "Captain implements directly." If the captain anticipates needing marine support, note marine capacity in the ship manifest (max 2).
+- Plan merge order: tasks with no blockers merge first, then tasks that depended on them. Add a "Merge order" section to the battle plan.
 
 You MUST read `references/admiralty-templates/battle-plan.md` for the battle plan template.
 You MUST read `references/admiralty-templates/ship-manifest.md` for the ship manifest template.
-You MUST consult the Standing Orders table below when assigning files or if scope is unclear.
+You MUST consult the Standing Orders table below when planning merge order or if scope is unclear.
 
 **Before proceeding to Step 4:** Verify sailing orders exist, squadron is formed, and every task has an owner, deliverable, and action station tier.
 
@@ -124,7 +157,7 @@ Create each task via TaskCreate, wire dependencies, and assign owners:
 ```
 TaskCreate(
   subject: "<Task Name>",
-  description: "Owner: <captain>\nShip: <ship>\nDeliverable: <what>\nStation: <tier>\nFiles: <ownership>\nValidation: <required>",
+  description: "Owner: <captain>\nShip: <ship>\nWorktree: .worktrees/<slug>-hms-<ship>\nDeliverable: <what>\nStation: <tier>\nValidation: <required>",
   activeForm: "<present-continuous description>"
 )
 
@@ -178,6 +211,40 @@ You MUST consult the Standing Orders table below if tasks lack a tier or red-cel
 
 ## 6. Stand Down And Log Action
 
+### Consolidation (multi-agent modes only)
+
+Before logging, merge all worktree branches:
+
+1. Checkout the parent branch (from `mission-state.json` `parent_branch` field):
+   ```bash
+   git checkout <parent-branch>
+   ```
+
+2. Merge in dependency order (tasks with no blockers merge first):
+   ```bash
+   git merge <slug>-hms-<ship-1> --no-edit
+   git merge <slug>-hms-<ship-2> --no-edit
+   ```
+
+3. If merge conflicts occur:
+   - Identify conflicting files.
+   - Resolve — admiral understands both sides from quarterdeck reports.
+   - `git add <resolved> && git commit --no-edit`
+
+4. Run the full verification suite on the merged result.
+
+5. Clean up worktrees and branches:
+   ```bash
+   git worktree remove .worktrees/<slug>-hms-<ship-1>
+   git worktree remove .worktrees/<slug>-hms-<ship-2>
+   git branch -D <slug>-hms-<ship-1> <slug>-hms-<ship-2>
+   ```
+   Use `-D` (force delete) because branches are already merged into the parent. If `git worktree remove` fails on a dirty worktree, use `--force`.
+
+6. Update `mission-state.json`: set `worktrees` to `null`.
+
+### Stand down
+
 - Stop or archive all agent sessions, including crew.
 - Produce captain's log:
 - Decisions and rationale.
@@ -205,7 +272,7 @@ Consult the specific standing order that matches the situation.
 |---|---|
 | Choosing between single-session and multi-agent | `references/standing-orders/becalmed-fleet.md` |
 | Deciding whether to add another agent | `references/standing-orders/crew-without-canvas.md` |
-| Assigning files to agents in the battle plan | `references/standing-orders/split-keel.md` |
+| Planning merge order for worktree consolidation | `references/standing-orders/split-keel.md` |
 | Task scope drifting from sailing orders | `references/standing-orders/drifting-anchorage.md` |
 | Admiral doing implementation instead of coordinating | `references/standing-orders/admiral-at-the-helm.md` |
 | Assigning work to the red-cell navigator | `references/standing-orders/press-ganged-navigator.md` |

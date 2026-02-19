@@ -9,15 +9,16 @@ Target size: ~500 tokens. Enough for the teammate to work without asking clarify
 Mission: [mission name from sailing orders]
 Your Role: Captain [N] — [role description]
 Ship: [ship name from battle plan]
+Worktree: /absolute/path/.worktrees/<slug>-hms-<ship>/
+Verify: run `git rev-parse --show-toplevel` — must match your worktree path
 Your Task: [specific task from battle plan]
 Deliverable: [what you must produce]
 Action Station: [0-3] — [Patrol / Caution / Action / Trafalgar]
-File Ownership: [files you own — no other agent should edit these]
 Dependencies: [tasks that must complete before yours / tasks waiting on yours]
 Marine Capacity: [0-2, from ship manifest — omit line if 0]
 Standing Orders:
 - Do NOT implement work outside your assigned task scope
-- Do NOT edit files not assigned to you
+- Commit in your worktree: conventional commits, git add <files>, never git add -A
 - Report blockers to admiral immediately with options and one recommendation
 - When done, report: deliverable, validation evidence, failure modes, rollback note
 - You may deploy Royal Marines (short-lived sub-agents) for focused sorties.
@@ -46,6 +47,7 @@ Task(
   subagent_type: "general-purpose"
   team_name:     "<mission-slug>"           # Only in agent-team mode
   name:          "hms-<ship-name>"          # Required for SendMessage addressing
+  mode:          "bypassPermissions"        # Worktree isolation limits blast radius
   run_in_background: true
   prompt: """
   == CREW BRIEFING ==
@@ -66,7 +68,7 @@ For crew members spawned by captains (not admiral):
 
 - **Mission** — Copy verbatim from sailing orders so the teammate shares the same outcome/metric framing.
 - **Ship** — From the ship manifest in the battle plan. Gives the teammate identity and signals task weight (frigate, destroyer, etc.).
-- **File Ownership** — Critical for preventing merge conflicts when multiple agents work in parallel. If no files are assigned, note "No file ownership — research/analysis only."
+- **Worktree** — Absolute path to the captain's isolated working tree. The captain MUST verify this with `git rev-parse --show-toplevel` before starting work. All file operations happen within this directory.
 - **Dependencies** — List both blocking (what must finish first) and blocked-by (what waits on this task). If none, note "Independent — no dependencies."
 - **Marine Capacity** — From the ship manifest. Tells the captain how many marines they may deploy (max 2). Omit if 0.
 - **Standing Orders** — Keep these to 4-5 lines. Project-specific standing orders can be appended here. The marine standing order tells captains they CAN deploy marines and where to find the rules — without this, captains have no knowledge of marines.

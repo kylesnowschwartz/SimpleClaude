@@ -35,6 +35,12 @@ Choose the first condition that matches.
   - Crew roles: Executive Officer (XO), Principal Warfare Officer (PWO), Navigating Officer (NO), Marine Engineering Officer (MEO), Weapon Engineering Officer (WEO), Logistics Officer (LOGO), Coxswain (COX). See `references/crew-roles.md` for role definitions and crewing rules.
 - `red-cell navigator`: Challenges assumptions, validates outputs, checks rollback readiness.
 
+## Worktree Isolation
+
+`subagents` and `agent-team` modes use git worktrees for filesystem isolation. Each captain gets a dedicated worktree at `.worktrees/<slug>-hms-<ship>/` branched from the current branch. File conflicts become merge conflicts at consolidation time, not race conditions during execution.
+
+`single-session` mode works directly in the main working tree — no worktrees needed.
+
 ## Anti-Patterns
 
 See the Standing Orders table in SKILL.md for the full list of standing orders and known anti-patterns.
