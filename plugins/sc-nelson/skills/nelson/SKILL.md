@@ -6,8 +6,9 @@ argument-hint: "[mission description]"
 
 # Nelson
 
-!`command -v jq >/dev/null || echo 'WARNING: jq not found — Nelson hooks require jq for session resumption'`
-!`git rev-parse --is-inside-work-tree >/dev/null 2>&1 || echo 'WARNING: not inside a git repository — Nelson requires git'`
+Check for prerequisites before executing the workflow:
+`command -v jq >/dev/null || echo 'WARNING: jq not found — Nelson hooks require jq for session resumption'`
+`git rev-parse --is-inside-work-tree >/dev/null 2>&1 || echo 'WARNING: not inside a git repository — Nelson requires git'`
 
 Execute this workflow for the user's mission.
 
@@ -75,7 +76,7 @@ mkdir -p .worktrees
 git worktree add -b <slug>-hms-<ship> .worktrees/<slug>-hms-<ship> "$PARENT_BRANCH"
 ```
 
-!`git check-ignore -q .worktrees/ || echo 'WARNING: .worktrees/ is not gitignored — add it to .gitignore or global gitignore'`
+Check for the worktrees directory: `git check-ignore -q .worktrees/ || echo 'WARNING: .worktrees/ is not gitignored — add it to .gitignore or global gitignore'`
 
 Symlink project dependencies into each worktree:
 ```bash
