@@ -11,7 +11,6 @@ require 'shellwords'
 #
 # Provides skip-pattern matching, git-ignore awareness, command availability
 # caching, and path utilities shared across handlers.
-
 module FileHandlerSupport
   DEFAULT_SKIP_PATTERNS = %w[
     node_modules/
@@ -29,30 +28,19 @@ module FileHandlerSupport
   ].freeze
 
   # Check if a file should be skipped by pattern match or git-ignore.
-  # Accepts an absolute or relative path.
   def should_skip_file?(absolute_path)
     return false unless absolute_path
 
     rel = relative_file_path(absolute_path)
-
-    if skip_patterns.any? { |pattern| matches_skip_pattern?(rel, pattern) }
-      log "Skipping #{rel} - matches ignore pattern"
-      return true
-    end
-
-    if git_ignored?(absolute_path)
-      log "Skipping #{rel} - git-ignored"
-      return true
-    end
-
-    false
+    skip_reason = skip_reason_for(rel, absolute_path)
+    log("Skipping #{rel} - #{skip_reason}") if skip_reason
+    !skip_reason.nil?
   end
 
   # Uses git check-ignore to respect .gitignore + global gitignore.
   # Returns false in non-git directories or on any error.
   def git_ignored?(absolute_path)
-    return false unless cwd
-    return false unless File.directory?(File.join(cwd, '.git'))
+    return false unless git_repo?
 
     system('git', 'check-ignore', '-q', absolute_path.to_s, chdir: cwd,
                                                             out: File::NULL, err: File::NULL)
@@ -75,21 +63,67 @@ module FileHandlerSupport
     expanded.start_with?(prefix) ? expanded.delete_prefix(prefix) : expanded
   end
 
-  # Override point - subclasses can append project-specific patterns.
+  # Override point — subclasses can append project-specific patterns.
   def skip_patterns
     DEFAULT_SKIP_PATTERNS
+  end
+
+  # Returns absolute paths of files modified since HEAD (staged + unstaged + untracked),
+  # filtered through skip checks. Requires a git repo at cwd.
+  def git_modified_files
+    return [] unless git_repo?
+
+    collect_and_filter_modified_files
   end
 
   # Pattern matching: directory patterns use include? for nested matches,
   # glob patterns use File.fnmatch, and everything else is exact/basename.
   def matches_skip_pattern?(file_path, pattern)
     if pattern.end_with?('/')
-      # Directory pattern - match anywhere in the path (nested matches)
-      file_path.include?("#{pattern.chomp('/')}/") || file_path.start_with?(pattern.chomp('/'))
+      dir = pattern.chomp('/')
+      file_path.include?("#{dir}/") || file_path.start_with?(dir)
     elsif pattern.include?('*')
       File.fnmatch(pattern, file_path, File::FNM_PATHNAME)
     else
       file_path == pattern || File.basename(file_path) == pattern
     end
+  end
+
+  private
+
+  def git_repo?
+    cwd && File.directory?(File.join(cwd, '.git'))
+  end
+
+  def skip_reason_for(rel, absolute_path)
+    return 'matches ignore pattern' if matches_any_skip_pattern?(rel)
+    return 'git-ignored' if git_ignored?(absolute_path)
+
+    nil
+  end
+
+  def matches_any_skip_pattern?(rel)
+    skip_patterns.any? { |pattern| matches_skip_pattern?(rel, pattern) }
+  end
+
+  def collect_and_filter_modified_files
+    (git_diff_files + git_untracked_files)
+      .reject(&:empty?)
+      .uniq
+      .map { |f| File.join(cwd, f) }
+      .select { |f| File.exist?(f) }
+      .reject { |f| should_skip_file?(f) }
+  end
+
+  # Staged + unstaged changes to tracked files
+  def git_diff_files
+    output, status = Open3.capture2('git', 'diff', '--name-only', 'HEAD', chdir: cwd)
+    status.success? ? output.strip.split("\n") : []
+  end
+
+  # Untracked files (respects .gitignore)
+  def git_untracked_files
+    output, status = Open3.capture2('git', 'ls-files', '--others', '--exclude-standard', chdir: cwd)
+    status.success? ? output.strip.split("\n") : []
   end
 end
