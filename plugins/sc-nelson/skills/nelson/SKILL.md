@@ -52,8 +52,8 @@ You MUST read `references/admiralty-templates/sailing-orders.md` and use the sai
 - Brief captains on mission intent and constraints. Make the plan clear, invite questions early.
 - Select one mode:
 - `single-session`: Use for sequential tasks, low complexity, or heavy same-file editing.
-- `subagents`: Use for parallel scouting or isolated tasks that report only to admiral.
-- `agent-team`: Use when independent agents must coordinate with each other directly.
+- `agent-team`: **Default for any parallel work.** Creates teammates via TeamCreate — shared task list, peer-to-peer messaging, user-visible display.
+- `subagents`: Lightweight fallback for simple parallel discovery or throwaway research. Subagents report to admiral only and run as invisible background processes.
 - Set team size from mission complexity:
 - Default to `1 admiral + 3-6 captains`.
 - Add `1 red-cell navigator` for medium/high threat work.
@@ -89,11 +89,11 @@ Each captain's crew briefing MUST include:
 - Instruction: verify with `git rev-parse --show-toplevel` before starting
 - Commit rules: conventional commits, selective staging, never `git add -A`
 
-Recommended: configure `teammateMode: "tmux"` in Claude Code settings for live pane visibility into each captain's work.
+`agent-team` is the default over `subagents` because teammates are visible to the user, coordinate via shared tasks, and support direct messaging. Subagents are invisible background processes that only report results to the admiral.
 
 **Tool wiring by mode:**
 
-- **agent-team**: Create the team first, then spawn captains into it:
+- **agent-team** (default for parallel work): Create the team first, then spawn captains into it:
   ```
   TeamCreate(team_name="<mission-slug>")
 
@@ -107,7 +107,7 @@ Recommended: configure `teammateMode: "tmux"` in Claude Code settings for live p
   )
   ```
 
-- **subagents**: Spawn captains without a team (they report only to admiral):
+- **subagents** (lightweight fallback): Spawn captains without a team — invisible background processes, report to admiral only:
   ```
   Task(
     subagent_type: "general-purpose",
@@ -120,11 +120,11 @@ Recommended: configure `teammateMode: "tmux"` in Claude Code settings for live p
 
 - **single-session**: No spawning. Admiral executes directly in the main working tree. No worktrees needed.
 
-- **Red-cell navigator** (read-only):
+- **Red-cell navigator** (read-only, agent-team mode):
   ```
   Task(
     subagent_type: "Explore",
-    team_name: "<mission-slug>",    # if agent-team mode
+    team_name: "<mission-slug>",
     name: "red-cell",
     run_in_background: true,
     prompt: "<red-cell briefing>"

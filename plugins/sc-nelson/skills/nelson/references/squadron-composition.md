@@ -7,17 +7,19 @@ Use this file to choose execution mode and team size.
 Choose the first condition that matches.
 
 1. If work is sequential, tightly coupled, or mostly in the same files, use `single-session`.
-2. If work is parallel but each worker only needs to report to admiral, use `subagents`.
-3. If workers must coordinate directly across task boundaries, use `agent-team`.
+2. If work can be parallelized, use `agent-team`. This is the default for any multi-agent mission — creates teammates via TeamCreate with a shared task list, peer-to-peer messaging, and user-visible display.
+3. If work is simple parallel discovery or throwaway research where coordination is not needed, use `subagents` as a lightweight fallback. Subagents report results to the admiral only and run as invisible background processes.
+
+`agent-team` is the default multi-agent mode because teammates are visible to the user, coordinate independently via shared tasks, and support direct messaging. `subagents` should be the exception, not the rule.
 
 ## Decision Matrix
 
 | Condition | Preferred Mode | Why |
 | --- | --- | --- |
 | Single critical path, low ambiguity | `single-session` | Lowest coordination overhead |
-| Parallel discovery, synthesis by admiral | `subagents` | Fast throughput without peer chatter |
-| Parallel implementation with dependencies | `agent-team` | Supports teammate-to-teammate coordination |
+| Parallel work (default) | `agent-team` | Teammates with shared tasks, peer messaging, user visibility |
 | High threat or high blast radius | `agent-team` + red-cell navigator | Adds explicit control points |
+| Simple parallel discovery, no coordination needed | `subagents` | Lightweight fallback — background-only, report to admiral only |
 
 ## Team Sizing
 
