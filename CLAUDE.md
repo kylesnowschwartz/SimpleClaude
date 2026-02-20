@@ -142,50 +142,72 @@ tools: Bash, Read, Write, Edit, Grep, Glob, LS, TodoWrite
 
 ### Local Plugin Dev Verification
 
-Test hooks and plugins against a real project without interference from the installed (cached) version:
+#### End-to-end smoketest (full hook pipeline)
+
+Creates a temp git project, runs Claude with the dev plugin, then verifies hooks fired via log files and file output. Must run from OUTSIDE a Claude session (use a separate terminal), or unset `CLAUDECODE`.
 
 ```bash
-# cd into the TARGET project first (sets cwd correctly for hooks)
-cd /path/to/target-project
+# 1. Create a throwaway git project
+mkdir -p /tmp/hook-test && cd /tmp/hook-test
+git init -q && echo "x = 1" > test.rb && git add -A && git commit -q -m "init"
 
-# --setting-sources local   prevents cached marketplace plugins from loading
-# --plugin-dir              loads only the dev version of the plugin
-# --output-format stream-json  shows hook events in the output stream
-claude -p "your test prompt" \
+# 2. Run Claude with the dev plugin
+# env -u CLAUDECODE  prevents "nested session" error when run from a terminal
+#                    that has CLAUDECODE set
+env -u CLAUDECODE claude -p \
+  "Write a Ruby file at /tmp/hook-test/greet.rb with contents: def greet; puts 'hello'; end" \
   --plugin-dir /path/to/SimpleClaude/plugins/sc-hooks \
   --setting-sources local \
-  --output-format stream-json \
+  --verbose \
   --model haiku \
   --dangerously-skip-permissions \
   --max-turns 5
+
+# 3. Verify hooks ran via log file (most reliable method)
+# Session logs land in ~/.claude/logs/hooks/session-<id>.log
+# The most recent file is the one you want:
+cat "$(ls -t ~/.claude/logs/hooks/session-*.log | head -1)"
+# Look for: [AutoFormatHandler] Formatting ... with RuboCop
+#           [LintCheckHandler] All lint checks passed
+
+# 4. Verify the formatter actually changed the file
+cat /tmp/hook-test/greet.rb
+# Should show multi-line Ruby with frozen_string_literal (not the one-liner)
+
+# 5. Verify RuboCop agrees
+rubocop --format simple /tmp/hook-test/greet.rb
+
+# 6. Clean up
+rm -rf /tmp/hook-test
 ```
 
 Key flags:
+- **`env -u CLAUDECODE`**: Required when your terminal has `CLAUDECODE` set (e.g. running from inside a Claude session's terminal)
 - **`--setting-sources local`**: Disables all user/marketplace plugins, loads ONLY `--plugin-dir` ones
 - **`--plugin-dir`**: Loads the dev plugin from source (not the installed cache)
-- **`--output-format stream-json`**: Shows hook_started/hook_response events (SessionStart hooks visible; PostToolUse/Stop hooks appear as synthetic user messages)
+- **`--verbose`**: Required with `--output-format stream-json` in print mode
 - **`--dangerously-skip-permissions`**: Skips tool permission prompts for non-interactive testing
 - **`--max-turns N`**: Caps turns to prevent runaway sessions
 
-Ruby-level smoke tests (no Claude session needed):
+Hook event visibility in `--output-format stream-json`:
+- **SessionStart** hooks: visible as `hook_started`/`hook_response` events
+- **Stop/PostToolUse** hooks: NOT visible as explicit events in stream-json. Verify via log files instead (`~/.claude/logs/hooks/`)
+
+#### Ruby-level smoke tests (no Claude session needed)
+
 ```bash
 # Syntax check all hook files
 ruby -c plugins/sc-hooks/hooks/concerns/file_handler_support.rb
+ruby -c plugins/sc-hooks/hooks/concerns/lint_runner_support.rb
 ruby -c plugins/sc-hooks/hooks/handlers/auto_format_handler.rb
 ruby -c plugins/sc-hooks/hooks/handlers/lint_check_handler.rb
 
 # Load-test the require chain
+ruby -e "require_relative 'plugins/sc-hooks/hooks/handlers/auto_format_handler'; puts 'OK'"
 ruby -e "require_relative 'plugins/sc-hooks/hooks/handlers/lint_check_handler'; puts 'OK'"
 
-# Integration test with mock input data
-ruby -e '
-require_relative "plugins/sc-hooks/hooks/handlers/lint_check_handler"
-handler = LintCheckHandler.new({
-  "session_id" => "test", "cwd" => Dir.pwd,
-  "transcript_path" => "/tmp/x", "hook_event_name" => "Stop",
-  "permission_mode" => "default", "stop_hook_active" => false
-})
-handler.call
-puts "Decision: #{handler.output.decision || "none"}"
-'
+# Integration test: run the Stop entrypoint with mock input
+echo '{"session_id":"test","cwd":"/tmp","transcript_path":"/tmp/x","hook_event_name":"Stop","permission_mode":"default","stop_hook_active":false}' \
+  | ruby plugins/sc-hooks/hooks/entrypoints/stop.rb 2>/dev/null
+# Should output JSON with "suppressOutput":true, no "decision":"block"
 ```
