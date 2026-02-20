@@ -19,7 +19,8 @@ class AutoFormatHandler < ClaudeHooks::Stop
     return skip_and_stop('no modified files') if (modified = git_modified_files).empty?
 
     log "Formatting #{modified.length} modified files"
-    format_files(modified)
+    formatted = format_files(modified)
+    notify_formatted(formatted) if formatted.any?
     allow_clean_stop!
     output
   end
@@ -32,23 +33,27 @@ class AutoFormatHandler < ClaudeHooks::Stop
     output
   end
 
+  # Returns array of "file (formatter)" strings for successfully formatted files.
   def format_files(files)
-    files.each do |file_path|
-      formatter = detect_formatter(file_path)
-      next unless formatter
-
-      log "Formatting #{relative_file_path(file_path)} with #{formatter[:name]}"
-      result = run_formatter(formatter, file_path)
-      log_format_result(file_path, result)
-    end
+    files.filter_map { |file_path| format_single_file(file_path) }
   end
 
-  def log_format_result(file_path, result)
-    if result[:success]
-      log "Formatted #{relative_file_path(file_path)}"
-    else
-      log "Format failed for #{relative_file_path(file_path)}: #{result[:error]}", level: :error
-    end
+  def format_single_file(file_path)
+    formatter = detect_formatter(file_path)
+    return unless formatter
+
+    rel = relative_file_path(file_path)
+    log "Formatting #{rel} with #{formatter[:name]}"
+    result = run_formatter(formatter, file_path)
+    return log("Format failed for #{rel}: #{result[:error]}", level: :error) unless result[:success]
+
+    log "Formatted #{rel}"
+    "#{rel} (#{formatter[:name]})"
+  end
+
+  def notify_formatted(formatted)
+    summary = "Auto-formatted #{formatted.length} file#{'s' if formatted.length > 1}: #{formatted.join(', ')}"
+    system_message!(summary)
   end
 
   # Dispatcher — inherent complexity from supporting many file types.
