@@ -7,19 +7,19 @@ Use this file to choose execution mode and team size.
 Choose the first condition that matches.
 
 1. If work is sequential, tightly coupled, or mostly in the same files, use `single-session`.
-2. If work can be parallelized, use `agent-team`. This is the default for any multi-agent mission — creates teammates via TeamCreate with a shared task list, peer-to-peer messaging, and user-visible display.
-3. If work is simple parallel discovery or throwaway research where coordination is not needed, use `subagents` as a lightweight fallback. Subagents report results to the admiral only and run as invisible background processes.
+2. If any captain will create or modify files, use `agent-team`. This is the default for any multi-agent mission — creates teammates via TeamCreate with a shared task list, peer-to-peer messaging, and user-visible display.
+3. ONLY use `subagents` for pure read-only research — no file creation, no modification, no commits. Subagents report to the admiral only with no user visibility.
 
-`agent-team` is the default multi-agent mode because teammates are visible to the user, coordinate independently via shared tasks, and support direct messaging. `subagents` should be the exception, not the rule.
+If in doubt, use `agent-team`. The bar for `subagents` is intentionally high: if any captain needs to write code, create files, or make commits, the mission is `agent-team`.
 
 ## Decision Matrix
 
 | Condition | Preferred Mode | Why |
 | --- | --- | --- |
 | Single critical path, low ambiguity | `single-session` | Lowest coordination overhead |
-| Parallel work (default) | `agent-team` | Teammates with shared tasks, peer messaging, user visibility |
+| Any captain modifies files (default) | `agent-team` | Teammates with shared tasks, peer messaging, user visibility |
 | High threat or high blast radius | `agent-team` + red-cell navigator | Adds explicit control points |
-| Simple parallel discovery, no coordination needed | `subagents` | Lightweight fallback — background-only, report to admiral only |
+| Pure read-only research, no file changes | `subagents` | No user visibility, report to admiral only |
 
 ## Team Sizing
 

@@ -52,8 +52,8 @@ You MUST read `references/admiralty-templates/sailing-orders.md` and use the sai
 - Brief captains on mission intent and constraints. Make the plan clear, invite questions early.
 - Select one mode:
 - `single-session`: Use for sequential tasks, low complexity, or heavy same-file editing.
-- `agent-team`: **Default for any parallel work.** Creates teammates via TeamCreate — shared task list, peer-to-peer messaging, user-visible display.
-- `subagents`: Lightweight fallback for simple parallel discovery or throwaway research. Subagents report to admiral only and run as invisible background processes.
+- `agent-team`: **Default for any parallel work where captains will create or modify files.** Creates teammates via TeamCreate — shared task list, peer-to-peer messaging, user-visible display. If in doubt, use this mode.
+- `subagents`: ONLY for pure read-only research — no file creation, no file modification, no commits. Subagents report to admiral only with no user visibility. If any captain needs to write code, use `agent-team` instead.
 - Set team size from mission complexity:
 - Default to `1 admiral + 3-6 captains`.
 - Add `1 red-cell navigator` for medium/high threat work.
@@ -89,7 +89,7 @@ Each captain's crew briefing MUST include:
 - Instruction: verify with `git rev-parse --show-toplevel` before starting
 - Commit rules: conventional commits, selective staging, never `git add -A`
 
-`agent-team` is the default over `subagents` because teammates are visible to the user, coordinate via shared tasks, and support direct messaging. Subagents are invisible background processes that only report results to the admiral.
+`agent-team` is the default. Teammates are visible to the user, coordinate via shared tasks, and support direct messaging. `subagents` lack all of this — use them only for pure read-only research.
 
 **Tool wiring by mode:**
 
@@ -107,7 +107,7 @@ Each captain's crew briefing MUST include:
   )
   ```
 
-- **subagents** (lightweight fallback): Spawn captains without a team — invisible background processes, report to admiral only:
+- **subagents** (read-only research only): Spawn captains without a team — no user visibility, report to admiral only:
   ```
   Task(
     subagent_type: "general-purpose",
