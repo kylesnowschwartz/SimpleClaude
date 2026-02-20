@@ -44,18 +44,17 @@ bump type:
     # Update marketplace.json top-level version
     jq --arg v "$new" '.version = $v' .claude-plugin/marketplace.json | sponge .claude-plugin/marketplace.json
 
-    # Update all plugin versions (marketplace.json and individual plugin.json files)
-    for plugin in simpleclaude-core sc-hooks sc-extras sc-output-styles sc-skills sc-refactor; do
+    # Update all plugin versions (discovered from filesystem)
+    for f in plugins/*/.claude-plugin/plugin.json; do
+        plugin=$(echo "$f" | cut -d/ -f2)
+
         # Update marketplace.json entry
         jq --arg name "$plugin" --arg v "$new" \
             '(.plugins[] | select(.name == $name)).version = $v' \
             .claude-plugin/marketplace.json | sponge .claude-plugin/marketplace.json
 
         # Update plugin's own plugin.json
-        f="plugins/$plugin/.claude-plugin/plugin.json"
-        if [[ -f "$f" ]]; then
-            jq --arg v "$new" '.version = $v' "$f" | sponge "$f"
-        fi
+        jq --arg v "$new" '.version = $v' "$f" | sponge "$f"
     done
 
     # Stage all version files
