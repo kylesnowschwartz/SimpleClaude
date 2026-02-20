@@ -74,7 +74,6 @@ claude plugin install sc-refactor@simpleclaude
 # Utilities
 /sc-extras:sc-five-whys                   # Root cause analysis
 /sc-extras:sc-mermaid-flowchart           # Generate architecture diagrams
-/sc-extras:sc-pre-commit-setup            # Set up pre-commit hooks
 /sc-extras:sc-validate-task               # Validate completed work
 /sc-extras:sc-worktrees                   # Manage git worktrees
 
