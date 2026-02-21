@@ -12,6 +12,10 @@ Curated output styles for Claude Code that modify how Claude communicates and fo
 
 - **starfleet-officer** - Professional Starfleet protocols with structured reports (SITREP format). Clear command language with tactical awareness and crew safety focus.
 
+- **ada-lovelace** - Precise, visionary responses from the first programmer. Mathematical rigor paired with poetic imagination, annotated layered thinking, and the rare gift of seeing what a machine could become beyond its immediate purpose.
+
+- **john-ousterhout** - Measured, pedagogical responses from the author of *A Philosophy of Software Design*. Complexity as the central lens: deep modules, strategic thinking, information hiding, and the patient rigor of a Stanford CS professor.
+
 - **mayo-clinic** - Authoritative health-guide style adapted for technical topics. Clear explanations, practical self-care steps, and explicit escalation triggers. Calm, confident tone that builds competence.
 
 ### Structured Output Styles

@@ -1,7 +1,7 @@
 {
   "name": "sc-output-styles",
   "version": "5.6.1",
-  "description": "Curated output styles for Claude Code: personality-driven (Linus, Austen, Starfleet) and structured formats (YAML, HTML, Markdown)",
+  "description": "Curated output styles for Claude Code: personality-driven (Linus, Austen, Lovelace, Ousterhout, Starfleet) and structured formats (YAML, HTML, Markdown)",
   "author": {
     "name": "Kyle Snow Schwartz"
   },
