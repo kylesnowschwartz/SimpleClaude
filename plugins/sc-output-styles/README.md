@@ -20,15 +20,15 @@ Curated output styles for Claude Code that modify how Claude communicates and fo
 
 ### Structured Output Styles
 
-- **html-structured** - Responses formatted as semantic HTML with proper tags, indentation, and structure.
+- **structured-html** - Responses formatted as semantic HTML with proper tags, indentation, and structure.
 
-- **json-structured** - Responses formatted as valid JSON with hierarchical key-value pairs and RFC 7159 compliance.
+- **structured-json** - Responses formatted as valid JSON with hierarchical key-value pairs and RFC 7159 compliance.
+
+- **structured-yaml** - Responses formatted as valid YAML for easy parsing and integration with automation tools.
 
 - **markdown-style** - Rich markdown formatting with headers, lists, code blocks, and emphasis for maximum readability.
 
 - **semantic-markdown** - Enhanced markdown with semantic structure, clear hierarchies, and logical organization.
-
-- **yaml-structured** - Responses formatted as valid YAML for easy parsing and integration with automation tools.
 
 ## Usage
 
