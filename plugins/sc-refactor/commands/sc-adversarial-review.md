@@ -76,13 +76,13 @@ Note: `codex review` does not allow combining `--base`/`--uncommitted` with a `[
 
 Capture output: `2>&1 \| tee /tmp/adversarial-codex.txt`
 
-**Gemini** — always use headless mode with the adversarial prompt piped to `-p`:
+**Gemini** — always use headless mode. Pin the model explicitly with `-m` to avoid auto-routing surprises:
 
 | Scope | Command |
 |-------|---------|
-| Uncommitted/staged | `git diff HEAD \| gemini -p "ADVERSARIAL_PROMPT"` |
-| Branch vs main | `git diff main...HEAD \| gemini -p "ADVERSARIAL_PROMPT"` |
-| File or directory | `gemini -p "ADVERSARIAL_PROMPT for [path]"` |
+| Uncommitted/staged | `git diff HEAD \| gemini -m gemini-3.1-pro-preview -p "ADVERSARIAL_PROMPT"` |
+| Branch vs main | `git diff main...HEAD \| gemini -m gemini-3.1-pro-preview -p "ADVERSARIAL_PROMPT"` |
+| File or directory | `gemini -m gemini-3.1-pro-preview -p "ADVERSARIAL_PROMPT for [path]"` |
 
 Capture output: `2>&1 \| tee /tmp/adversarial-gemini.txt`
 

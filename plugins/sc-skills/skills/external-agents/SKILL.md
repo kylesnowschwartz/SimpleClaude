@@ -45,13 +45,23 @@ Set default in `~/.codex/config.toml`: `model = "gpt-5.3-codex"`
 
 | Model | Use Case |
 |-------|----------|
-| `gemini-3-pro-preview` | Most capable. Requires `previewFeatures: true` in settings. |
+| `gemini-3.1-pro-preview` | Best. Latest model (Feb 2026). Requires `previewFeatures: true`. |
+| `gemini-3-pro-preview` | Previous generation preview. |
 | `gemini-3-flash-preview` | Faster, good for quick checks. |
-| `gemini-2.5-pro` | Stable default. |
+| `gemini-2.5-pro` | Stable GA fallback if preview models have capacity issues. |
+| `gemini-2.5-flash` | Fast GA fallback. |
+
+**Always pin the model with `-m`** in non-interactive/headless calls. The user's
+`~/.gemini/settings.json` may use `auto-gemini-3` routing, which can select Flash for
+prompts it classifies as "simple" — not what you want for code reviews.
+
+If you hit `429 MODEL_CAPACITY_EXHAUSTED` on preview models, fall back to `-m gemini-2.5-pro`.
+This is a server capacity issue (not quota) and mostly affects `oauth-personal` auth.
+Enterprise API key (`gemini-api-key` auth with billing) has better capacity allocation.
 
 Set default in `~/.gemini/settings.json`:
 ```json
-{ "model": { "name": "gemini-3-pro-preview" } }
+{ "model": { "name": "gemini-3.1-pro-preview" } }
 ```
 
 ## Codex CLI
