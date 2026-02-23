@@ -12,7 +12,8 @@ require 'json'
 
 # Require all SessionStart handler classes
 # Add additional handler requires here as needed:
-require_relative '../handlers/session_start_handler'
+# Disabled: now a no-op (backup + date injection both disabled for cache/perf reasons)
+# require_relative '../handlers/session_start_handler'
 require_relative '../handlers/coding_best_practices_handler'
 
 begin
@@ -21,7 +22,7 @@ begin
 
   # Run all handlers, collect their outputs
   handlers = [
-    SessionStartHandler,
+    # SessionStartHandler,
     CodingBestPracticesHandler
   ]
 
