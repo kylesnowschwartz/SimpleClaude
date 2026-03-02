@@ -84,8 +84,8 @@ Use per-attempt timeouts of 60 seconds (not a single global timeout). Run Codex 
 
 | Scope | Command |
 |-------|---------|
-| Diff-based (staged/branch/PR) | `codex exec --skip-git-repo-check -s read-only "Read the diff in /tmp/adversarial-diff.txt. ADVERSARIAL_PROMPT" -o /tmp/adversarial-codex.txt 2>/tmp/adversarial-codex-err.txt` |
-| File or directory | `codex exec --skip-git-repo-check -s read-only "ADVERSARIAL_PROMPT for [path]" -o /tmp/adversarial-codex.txt 2>/tmp/adversarial-codex-err.txt` |
+| Diff-based (staged/branch/PR) | `codex exec -C "$PWD" -s read-only "Read the diff in /tmp/adversarial-diff.txt. ADVERSARIAL_PROMPT" -o /tmp/adversarial-codex.txt 2>/tmp/adversarial-codex-err.txt` |
+| File or directory | `codex exec -C "$PWD" -s read-only "ADVERSARIAL_PROMPT for [path]" -o /tmp/adversarial-codex.txt 2>/tmp/adversarial-codex-err.txt` |
 
 The `-o` flag captures only the final assistant message, filtering out tool-call traces. Stderr goes to a separate file for diagnostics if the run fails.
 

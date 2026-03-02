@@ -71,7 +71,7 @@ Set default in `~/.gemini/settings.json`:
 | Command | Purpose |
 |---------|---------|
 | `codex review` | Git-aware code review (non-interactive) |
-| `codex exec` | Non-interactive prompt execution (always pass `--skip-git-repo-check`) |
+| `codex exec` | Non-interactive prompt execution (always pass `-C "$PWD"` to set working directory) |
 | `codex resume` | Resume previous interactive session |
 | `codex apply` | Apply latest agent diff via `git apply` |
 
@@ -90,8 +90,8 @@ codex review --base main
 codex review --commit <SHA>
 
 # Review with custom instructions — pipe diff to exec
-git diff main...HEAD | codex exec --skip-git-repo-check -s read-only "Focus on error handling and security"
-git diff HEAD | codex exec --skip-git-repo-check -s read-only "Check for race conditions"
+git diff main...HEAD | codex exec -C "$PWD" -s read-only "Focus on error handling and security"
+git diff HEAD | codex exec -C "$PWD" -s read-only "Check for race conditions"
 
 # Review with title context
 codex review --uncommitted --title "Add user auth middleware"
@@ -101,19 +101,19 @@ codex review --uncommitted --title "Add user auth middleware"
 
 ```bash
 # Freeform analysis
-codex exec --skip-git-repo-check "Analyze the auth module for security issues"
+codex exec -C "$PWD" "Analyze the auth module for security issues"
 
 # Specify model
-codex exec --skip-git-repo-check -m o3 "Review this codebase architecture"
+codex exec -C "$PWD" -m o3 "Review this codebase architecture"
 
 # Full-auto mode (sandboxed, auto-approves)
-codex exec --skip-git-repo-check --full-auto "Refactor the test helpers"
+codex exec -C "$PWD" --full-auto "Refactor the test helpers"
 
 # JSONL event output
-codex exec --skip-git-repo-check --json "List all TODO comments" -o /tmp/result.txt
+codex exec -C "$PWD" --json "List all TODO comments" -o /tmp/result.txt
 
 # Read-only sandbox
-codex exec --skip-git-repo-check -s read-only "Audit dependencies for vulnerabilities"
+codex exec -C "$PWD" -s read-only "Audit dependencies for vulnerabilities"
 ```
 
 ### Key Flags
@@ -124,8 +124,7 @@ codex exec --skip-git-repo-check -s read-only "Audit dependencies for vulnerabil
 | `-c key=value` | Override config (TOML format) |
 | `-s, --sandbox <MODE>` | `read-only`, `workspace-write`, `danger-full-access` |
 | `--full-auto` | Sandboxed auto-execution |
-| `--skip-git-repo-check` | Skip git repo validation (required for exec) |
-| `-C, --cd <DIR>` | Set working directory |
+| `-C, --cd <DIR>` | Set working directory (use this instead of `--skip-git-repo-check`) |
 | `--search` | Enable web search tool |
 | `--json` | JSONL event output (exec only) |
 | `-o, --output-last-message <FILE>` | Write last message to file (exec only) |
@@ -186,7 +185,7 @@ gemini -p "Review the uncommitted changes in this repo for bugs and security iss
 ### Review a Design Decision
 
 ```bash
-codex exec --skip-git-repo-check "Evaluate the architecture in src/auth/. Is the token refresh approach sound?"
+codex exec -C "$PWD" "Evaluate the architecture in src/auth/. Is the token refresh approach sound?"
 
 gemini -p "Analyze src/auth/ and critique the token refresh strategy"
 ```
@@ -198,7 +197,7 @@ gemini -p "Analyze src/auth/ and critique the token refresh strategy"
 codex review --base main
 
 # Custom review instructions — pipe diff to exec
-git diff main...HEAD | codex exec --skip-git-repo-check -s read-only "Review for correctness, test coverage, and maintainability"
+git diff main...HEAD | codex exec -C "$PWD" -s read-only "Review for correctness, test coverage, and maintainability"
 ```
 
 ## Important
