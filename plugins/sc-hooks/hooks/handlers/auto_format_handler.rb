@@ -45,10 +45,15 @@ class AutoFormatHandler < ClaudeHooks::Stop
     rel = relative_file_path(file_path)
     log "Formatting #{rel} with #{formatter[:name]}"
     result = run_formatter(formatter, file_path)
-    return log("Format failed for #{rel}: #{result[:error]}", level: :error) unless result[:success]
+    return log_format_failure(rel, result[:error]) unless result[:success]
 
     log "Formatted #{rel}"
     "#{rel} (#{formatter[:name]})"
+  end
+
+  def log_format_failure(rel, error)
+    log("Format failed for #{rel}: #{error}", level: :error)
+    nil
   end
 
   def notify_formatted(formatted)

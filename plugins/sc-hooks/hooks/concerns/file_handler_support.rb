@@ -25,6 +25,7 @@ module FileHandlerSupport
     .cloned-sources/
     .worktrees/
     .agent-history/
+    .playwright-cli/
   ].freeze
 
   # Check if a file should be skipped by pattern match or git-ignore.
@@ -98,8 +99,22 @@ module FileHandlerSupport
   def skip_reason_for(rel, absolute_path)
     return 'matches ignore pattern' if matches_any_skip_pattern?(rel)
     return 'git-ignored' if git_ignored?(absolute_path)
+    return 'binary file' if binary_file?(absolute_path)
 
     nil
+  end
+
+  # Detect binary files by checking for null bytes in the first 8KB.
+  # Catches images, compiled files, etc. that git tracks but formatters choke on.
+  def binary_file?(absolute_path)
+    return false unless File.exist?(absolute_path)
+
+    chunk = File.binread(absolute_path, 8192)
+    return false if chunk.nil? || chunk.empty?
+
+    chunk.include?("\x00")
+  rescue StandardError
+    false
   end
 
   def matches_any_skip_pattern?(rel)
