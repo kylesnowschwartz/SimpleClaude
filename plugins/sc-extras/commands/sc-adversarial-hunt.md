@@ -9,6 +9,17 @@ argument-hint: "[target] [optional: focus hint e.g. 'security', 'architecture', 
 
 Three agents with competing economic incentives analyze any target. A maximizer finds all possible issues, a skeptic filters false positives through asymmetric penalties, and an arbiter produces the final ground-truth ruling. Domain-agnostic — works on code, plans, documentation, configs, reasoning, or any artifact.
 
+## EXECUTION MODEL: STRICTLY SEQUENTIAL
+
+**Phases 2, 3, and 4 MUST run in strict sequence. NEVER launch them in parallel.**
+
+Each phase depends on the previous phase's output:
+- Phase 2 (Maximizer) runs first, produces findings
+- Phase 3 (Skeptic) REQUIRES the Maximizer's findings as input — cannot start until Phase 2 completes
+- Phase 4 (Arbiter) REQUIRES both Maximizer AND Skeptic reports as input — cannot start until Phase 3 completes
+
+**After each Task() call, you MUST wait for the task to complete and read its output before proceeding to the next phase.** Use `TaskOutput` with `block: true` to wait. Display the phase summary to the user. Only then move to the next phase.
+
 ## Phase 0: Resolve Target and Classify
 
 Parse $ARGUMENTS. The first argument is the target, anything after is a focus hint.
@@ -86,7 +97,9 @@ Show all three artifacts to the user before proceeding. This lets them steer if 
 
 ## Phase 2: Maximizer (Superset)
 
-Launch the finder agent. It has full read access to the codebase — point it at the files, don't paste content into the prompt.
+**BLOCKING**: Launch the Maximizer agent. Wait for it to complete. Read its full output. Display the summary. Only then proceed to Phase 3.
+
+The Maximizer has full read access to the codebase — point it at the files, don't paste content into the prompt.
 
 For diff-based targets, tell the Maximizer where the diff file is AND which source files changed, so it can read both.
 
@@ -140,9 +153,13 @@ Task(
 
 Display summary: "Phase 2 complete: Maximizer reported N findings (X critical, Y medium, Z low). Claimed score: [score]."
 
+**Store the Maximizer's full output — you will paste it into the Skeptic's prompt next.**
+
 ## Phase 3: Skeptic (Disproof Filter)
 
-Launch the skeptic. It receives the Maximizer report AND has independent file access to verify claims against the actual artifact.
+**BLOCKING**: This phase REQUIRES the Maximizer's completed output. Do NOT start until Phase 2 is done and you have read the full Maximizer report.
+
+Launch the Skeptic agent. Paste the complete Maximizer report into the Skeptic's prompt (see `## Maximizer Report` section in the prompt template). The Skeptic also has independent file access to verify claims against the actual artifact.
 
 ```
 Task(
@@ -199,9 +216,13 @@ Task(
 
 Display summary: "Phase 3 complete: Skeptic disproved N of M findings. Accepted N."
 
+**Store the Skeptic's full output — you will paste both reports into the Arbiter's prompt next.**
+
 ## Phase 4: Arbiter (Ground Truth)
 
-Launch the arbiter with both reports. The arbiter also has independent file access.
+**BLOCKING**: This phase REQUIRES both the Maximizer's AND Skeptic's completed outputs. Do NOT start until Phase 3 is done and you have read the full Skeptic report.
+
+Launch the Arbiter agent. Paste both complete reports into the Arbiter's prompt (see `=== MAXIMIZER'S REPORT ===` and `=== SKEPTIC'S RESPONSE ===` sections in the prompt template). The Arbiter also has independent file access.
 
 ```
 Task(
