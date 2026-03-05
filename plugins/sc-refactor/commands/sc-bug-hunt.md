@@ -13,12 +13,12 @@ Three agents with competing incentives hunt bugs in the target code. The adversa
 
 Parse $ARGUMENTS to determine what code to analyze.
 
-| Argument | Scope |
-|----------|-------|
-| *(empty)* or `staged` | Uncommitted changes (`git diff HEAD`) |
-| `branch` | Current branch vs main (`git diff main...HEAD`) |
-| File path | That specific file |
-| Directory path | All files in that directory |
+| Argument              | Scope                                           |
+| ----------            | -------                                         |
+| *(empty)* or `staged` | Uncommitted changes (`git diff HEAD`)           |
+| `branch`              | Current branch vs main (`git diff main...HEAD`) |
+| File path             | That specific file                              |
+| Directory path        | All files in that directory                     |
 
 For diff-based scopes, save the diff to `/tmp/bug-hunt-diff.txt` for reference. For file/directory scopes, identify the files to analyze.
 

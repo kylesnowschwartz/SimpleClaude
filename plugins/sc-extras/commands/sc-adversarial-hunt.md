@@ -9,11 +9,32 @@ argument-hint: "[target] [optional: focus hint e.g. 'security', 'architecture', 
 
 Three agents with competing economic incentives analyze any target. A maximizer finds all possible issues, a skeptic filters false positives through asymmetric penalties, and an arbiter produces the final ground-truth ruling. Domain-agnostic — works on code, plans, documentation, configs, reasoning, or any artifact.
 
-## Phase 0: Classify and Prepare
+## Phase 0: Resolve Target and Classify
 
 Parse $ARGUMENTS. The first argument is the target, anything after is a focus hint.
 
-Read the target. Classify it into a domain:
+### Target resolution
+
+| Argument | Target |
+|----------|--------|
+| *(empty)* or `staged` | Uncommitted changes — run `git diff HEAD` |
+| `branch` | Current branch vs main — run `git diff main...HEAD` |
+| `pr <number>` | PR diff — run `gh pr diff <number>` |
+| File or directory path | That specific path |
+
+For diff-based targets, save the diff to `/tmp/adversarial-hunt-diff.txt` and verify non-empty. This file is referenced by agents.
+
+### Deep read
+
+Before classifying or generating lenses, YOU (the orchestrator) must actually read the target thoroughly:
+
+- For diffs: read the diff AND the changed source files. Understand what the code does, not just what changed.
+- For files/directories: read the files, check imports, trace key call paths with Grep.
+- For plans/docs: read the full document and any referenced files.
+
+This deep read is what makes the lenses specific rather than generic. Skip it and the whole process degrades.
+
+### Classification
 
 | Domain | Signals |
 |--------|---------|
@@ -24,26 +45,24 @@ Read the target. Classify it into a domain:
 | **Reasoning** | Analysis documents, investigations, decision records, trade-off evaluations |
 | **Communication** | Emails, PR descriptions, RFCs, proposals, announcements |
 
-If the user provided a focus hint, use it to steer analysis. Otherwise infer from content.
-
 Tell the user: "Target: [what]. Domain: [classified]. Focus: [hint or inferred]."
 
 ## Phase 1: Generate Lenses
 
-This is the critical step. Before launching any agents, YOU (the orchestrator) must generate three domain-specific artifacts by analyzing the target:
+Before launching any agents, generate three domain-specific artifacts from your Phase 0 deep read:
 
 ### 1. Analysis Lenses (for the Maximizer)
 
-Generate 5-8 concrete lenses appropriate to the domain and target. Each lens is a specific angle of attack.
+Generate 5-8 concrete lenses appropriate to the domain and target. Each lens is a specific angle of attack that references actual elements you found in the target.
 
-Examples of what good lenses look like (do NOT copy these literally — generate fresh lenses from the actual target):
+Examples of what good lenses look like (do NOT copy these — generate fresh lenses from the actual target):
 
 - Code: "Null propagation paths where X returns nil but Y assumes non-nil"
 - Plan: "Dependencies between steps 3 and 7 that aren't acknowledged"
 - Config: "Environment variables referenced but never defined"
 - Docs: "API examples that contradict the parameter descriptions"
 
-Lenses must reference specific elements of the target, not generic categories. "Check error handling" is too vague. "Error handling gap in the retry loop at auth.rb:45 where TimeoutError isn't caught" is a lens.
+"Check error handling" is too vague. "Error handling gap in the retry loop at auth.rb:45 where TimeoutError isn't caught" is a lens.
 
 ### 2. Severity Scale (for scoring)
 
@@ -67,7 +86,9 @@ Show all three artifacts to the user before proceeding. This lets them steer if 
 
 ## Phase 2: Maximizer (Superset)
 
-Launch the finder with your generated lenses baked into the prompt.
+Launch the finder agent. It has full read access to the codebase — point it at the files, don't paste content into the prompt.
+
+For diff-based targets, tell the Maximizer where the diff file is AND which source files changed, so it can read both.
 
 ```
 Task(
@@ -83,6 +104,11 @@ Task(
 
   Maximize your score. If something MIGHT be an issue, report it.
   Your adversary will try to disprove your findings. Let them try.
+
+  ## Target
+
+  [For diffs]: The diff is at /tmp/adversarial-hunt-diff.txt. The changed files are: [list paths]. Read both the diff and the source files for full context. Also read tests for the changed code if they exist.
+  [For files]: Analyze these files: [list paths]. Read them and any closely related files (tests, callers, config).
 
   ## Analysis Lenses
 
@@ -108,10 +134,6 @@ Task(
   - Medium (5 pts each): N = X pts
   - Low (1 pt each): N = X pts
   - **TOTAL SCORE: X points**
-
-  ## Target
-
-  [EMBED the actual target content here — read files and include them]
   """
 )
 ```
@@ -120,7 +142,7 @@ Display summary: "Phase 2 complete: Maximizer reported N findings (X critical, Y
 
 ## Phase 3: Skeptic (Disproof Filter)
 
-Launch the skeptic with the full maximizer report and your generated disproof categories.
+Launch the skeptic. It receives the Maximizer report AND has independent file access to verify claims against the actual artifact.
 
 ```
 Task(
@@ -137,6 +159,15 @@ Task(
 
   The 2x penalty means: be aggressive but not reckless. When in doubt, ACCEPT.
 
+  ## Independent Verification
+
+  Do NOT trust the Maximizer's description of the code. Read the actual files yourself.
+  The Maximizer may have misquoted, mischaracterized, or cited the wrong line numbers.
+  Every disproof must include YOUR OWN evidence from the actual artifact.
+
+  [For diffs]: The diff is at /tmp/adversarial-hunt-diff.txt. Changed files: [list paths].
+  [For files]: Target files: [list paths].
+
   Disproof categories:
   [GENERATED categories from Phase 1]
 
@@ -148,7 +179,7 @@ Task(
   **Original Impact**: [level] ([points] pts)
   **Verdict**: DISPROVED | ACCEPTED
   **Category**: [disproof category] (only for DISPROVED)
-  **Evidence**: [Concrete proof. Cite specifics from the actual artifact.]
+  **Evidence**: [YOUR OWN evidence from reading the actual files. Cite specifics.]
   **Points earned**: +N (if disproved) or 0 (if accepted)
 
   End with:
@@ -158,10 +189,6 @@ Task(
   - Findings accepted: N (earning 0 pts)
   - Risk exposure: potential loss of up to X pts if wrong
   - **TOTAL SCORE: X points**
-
-  ## Target
-
-  The artifact being analyzed: [target description]
 
   ## Maximizer Report
 
@@ -174,7 +201,7 @@ Display summary: "Phase 3 complete: Skeptic disproved N of M findings. Accepted 
 
 ## Phase 4: Arbiter (Ground Truth)
 
-Launch the arbiter with both reports.
+Launch the arbiter with both reports. The arbiter also has independent file access.
 
 ```
 Task(
@@ -191,6 +218,9 @@ Task(
 
   You are evaluated against actual ground truth. Examine the artifact yourself.
   Do NOT trust either side's characterization.
+
+  [For diffs]: The diff is at /tmp/adversarial-hunt-diff.txt. Changed files: [list paths].
+  [For files]: Target files: [list paths].
 
   Ruling categories:
   - CONFIRMED: Maximizer is correct, this is a genuine issue.
@@ -237,10 +267,6 @@ Task(
   | # | Finding | Severity | Location | Description |
   |---|---------|----------|----------|-------------|
   | 1 | FINDING-XXX | critical | location | One-line description |
-
-  ## Target
-
-  The artifact being analyzed: [target description]
 
   === MAXIMIZER'S REPORT ===
   [paste full maximizer output]

@@ -38,13 +38,11 @@ Read the target and classify it. The user may include a hint in $ARGUMENTS (e.g.
 
 Default to **General** when classification is uncertain rather than forcing a bad fit. The user can always override via a hint in $ARGUMENTS.
 
-Check CLI availability: `codex --version`, `gemini --version`, and `gh --version` (required for `pr` scope). Proceed with whatever Codex/Gemini is available. If neither is installed, stop and tell the user to install them.
+Check CLI availability: `codex --version 2>/dev/null`, `gemini --version 2>/dev/null`, and `gh --version` (required for `pr` scope). Record which CLIs are available. If neither Codex nor Gemini is installed, tell the user and proceed with Claude-only review.
 
 ## Phase 2: Launch External Reviews
 
 Reference the `/sc-skills:external-agents` skill for CLI invocation patterns, flag reference, and model configuration.
-
-Run both CLIs in parallel using Bash with `run_in_background: true`.
 
 ### Adversarial prompt
 
@@ -65,48 +63,110 @@ Select the core prompt based on content type, then adapt it to each CLI's interf
 **General:**
 > Critique this artifact adversarially. For each finding state: WHAT is wrong or missing, WHY it matters, and WHAT consequence follows. Focus on: internal inconsistencies, unstated assumptions, completeness gaps, fitness for its stated purpose, and ways it could silently fail or mislead.
 
-### Prepare diff (once)
+### Prepare diff for Gemini
 
-For diff-based scopes, save the diff to a temp file before launching either CLI. Both CLIs reference this same file — no regenerating the diff per-CLI.
+Codex has full tool access and can run `git diff` itself — no pre-saved diff needed. Gemini in headless mode cannot reliably access filesystem tools (known bug: folder trust check fails in `-p` mode). So save a diff file for Gemini only.
 
 | Scope | Command |
 |-------|---------|
 | Uncommitted/staged | `git diff HEAD > /tmp/adversarial-diff.txt` |
 | Branch vs main | `git diff main...HEAD > /tmp/adversarial-diff.txt` |
-| PR | Already saved in Phase 1 via `gh pr diff` |
-| File or directory | *(no diff — CLIs read the target directly)* |
+| PR | `gh pr diff <number> > /tmp/adversarial-diff.txt` |
+| File or directory | `cat [path] > /tmp/adversarial-diff.txt` (or for directories: `find [path] -type f -name '*.rb' -exec cat {} + > /tmp/adversarial-diff.txt`) |
+
+Verify non-empty: `wc -l /tmp/adversarial-diff.txt`. If 0 lines, tell the user and stop.
 
 ### CLI invocation
 
-Use per-attempt timeouts of 60 seconds (not a single global timeout). Run Codex and Gemini in parallel.
+Launch both CLIs using Bash with `run_in_background: true`. No hard timeouts — these are agentic tools that take variable time depending on diff size and model load.
 
-**Codex** — reference the diff file in the prompt. Do NOT pipe diffs to stdin — Codex's agent loop treats piped stdin as background context, not primary input. The agent will explore the filesystem instead of reviewing the piped diff.
+**Codex** — has `git`, filesystem tools, and a read-only sandbox. Tell it what to review and let it use its tools. Keep the prompt focused on the *task* (find bugs), not on *how* to get the data.
 
-| Scope | Command |
-|-------|---------|
-| Diff-based (staged/branch/PR) | `codex exec -C "$PWD" -s read-only "Read the diff in /tmp/adversarial-diff.txt. ADVERSARIAL_PROMPT" -o /tmp/adversarial-codex.txt 2>/tmp/adversarial-codex-err.txt` |
-| File or directory | `codex exec -C "$PWD" -s read-only "ADVERSARIAL_PROMPT for [path]" -o /tmp/adversarial-codex.txt 2>/tmp/adversarial-codex-err.txt` |
+Build the scope instruction based on target:
 
-The `-o` flag captures only the final assistant message, filtering out tool-call traces. Stderr goes to a separate file for diagnostics if the run fails.
+| Scope | Scope instruction for prompt |
+|-------|------------------------------|
+| Uncommitted/staged | `Run git diff HEAD to see the uncommitted changes, then review them.` |
+| Branch vs main | `Run git diff main...HEAD to see the branch changes, then review them. You can also read the changed files for full context.` |
+| PR | `The file /tmp/adversarial-diff.txt contains a PR diff. Read it and review the changes. You can also read the changed source files for full context.` |
+| File or directory | `Review [path] for issues.` |
 
-**Gemini** — always use headless mode. Pin the model with `-m` to avoid auto-routing.
+Full command pattern:
+```
+codex exec -C "$PWD" -s read-only "SCOPE_INSTRUCTION ADVERSARIAL_PROMPT" -o /tmp/adversarial-codex.txt 2>/tmp/adversarial-codex-err.txt; echo "CODEX_EXIT:$?" >> /tmp/adversarial-codex-err.txt
+```
 
-**Fallback chain**: Try each model with a 60-second timeout. Check `$?` after each attempt — exit code `0` means success. On non-zero exit, read `/tmp/adversarial-gemini-err.txt` for capacity indicators (429, 503, `RESOURCE_EXHAUSTED`, `UNAVAILABLE`, `capacity`). If capacity-related, try the next model. Stop on success or non-capacity errors.
+The `-o` flag captures only the final assistant message. Stderr captures the full agent trace (thinking, exec calls) for progress monitoring. **Known issue**: if Codex exhausts its turns without producing a final summary, `-o` creates no file. Always check file existence, not just content.
 
-1. `gemini-3.1-pro-preview` (best, may have capacity issues)
-2. `gemini-2.5-pro` (stable GA)
-3. `gemini-2.5-flash` (fast GA)
+**Gemini** — headless mode only (`-p`). Cannot reliably use filesystem tools when spawned non-interactively (known bug [#18776](https://github.com/google-gemini/gemini-cli/issues/18776)). Must receive content via stdin.
 
-| Scope | Command (substitute MODEL from fallback chain) |
-|-------|---------|
-| Diff-based (staged/branch/PR) | `cat /tmp/adversarial-diff.txt \| gemini -m MODEL -p "ADVERSARIAL_PROMPT" > /tmp/adversarial-gemini.txt 2>/tmp/adversarial-gemini-err.txt` |
-| File or directory | `gemini -m MODEL -p "ADVERSARIAL_PROMPT for [path]" > /tmp/adversarial-gemini.txt 2>/tmp/adversarial-gemini-err.txt` |
+**CRITICAL stdin bug**: `cat file | gemini -p "..."` fails with "Cannot use both a positional prompt and the --prompt flag together." Use `< file` redirection instead — this works correctly.
 
-If all three models fail, note the failure and continue with available models (Codex + Claude, or Claude only).
+Pin the model with `-m` to prevent auto-routing to Flash.
+
+Run the Gemini fallback chain as a single background command:
+
+```bash
+for MODEL in gemini-3.1-pro-preview gemini-2.5-pro gemini-2.5-flash; do
+  gemini -m "$MODEL" -p "ADVERSARIAL_PROMPT" < /tmp/adversarial-diff.txt > /tmp/adversarial-gemini.txt 2>/tmp/adversarial-gemini-err.txt
+  EXIT_CODE=$?
+  if [ $EXIT_CODE -eq 0 ] && [ -s /tmp/adversarial-gemini.txt ]; then
+    echo "GEMINI_MODEL:$MODEL" >> /tmp/adversarial-gemini-err.txt
+    echo "GEMINI_EXIT:0" >> /tmp/adversarial-gemini-err.txt
+    break
+  fi
+  echo "GEMINI_ATTEMPT:$MODEL failed (exit $EXIT_CODE)" >> /tmp/adversarial-gemini-err.txt
+done
+if [ ! -s /tmp/adversarial-gemini.txt ]; then
+  echo "GEMINI_EXIT:1" >> /tmp/adversarial-gemini-err.txt
+fi
+```
+
+### Progress monitoring and fail-fast
+
+After launching both CLIs in background, do your Phase 3 analysis. When Phase 3 is done, check on the background tasks:
+
+1. **Use TaskOutput with `block: false`** to check if each task has completed. Check them **one at a time** — never in a single parallel block, because a failure reading one task cancels all parallel calls.
+
+2. **If a task is still running**, check its progress by reading the stderr trace file:
+
+```bash
+# How much output so far? Is it still growing?
+wc -l /tmp/adversarial-codex-err.txt 2>/dev/null
+tail -5 /tmp/adversarial-codex-err.txt 2>/dev/null
+```
+
+3. **Classify the state:**
+
+| Stderr pattern | State | Action |
+|----------------|-------|--------|
+| Recent `thinking` or `exec` lines, line count growing | **Active** — model is working | Wait, check again after reading the other CLI's output |
+| No stderr file, or file unchanged after two checks | **Stuck** — process may have hung | Kill the background task, mark as failed |
+| `CODEX_EXIT:0` or `GEMINI_EXIT:0` at end of stderr | **Done** | Read output file |
+| Error messages, stack traces, `RESOURCE_EXHAUSTED` | **Failed** | Mark as error, report to user |
+
+4. **Tell the user immediately** when you know a CLI's status: "Codex: still running (85 lines of trace so far). Gemini: done, 1200 bytes of findings." This way they know whether the wait is productive.
+
+5. **If both tasks are done**, proceed to output validation. If one is still active and the other is done, start reading the finished output while waiting. Don't block on both.
+
+### Output validation
+
+Before synthesizing, classify each output:
+
+| Status | Criteria | Action |
+|--------|----------|--------|
+| **Valid** | File exists, non-empty, contains substantive findings | Include in synthesis |
+| **Empty** | File missing, empty, or whitespace only | Mark as "did not participate" |
+| **Error** | Non-zero exit code in stderr | Mark as "CLI error" with reason |
+| **Noise** | >2000 chars but no analytical content — filesystem exploration, git history, file listings without analysis | Mark as "unusable output" |
+
+**Noise detection**: If output contains repeated exploration patterns (`Reading file`, `exec`, `git log`, `git show`, `searching`) but lacks analytical language (no mentions of bugs, risks, issues, vulnerabilities, concerns, or recommendations), classify as noise.
+
+Report status to the user: "Codex: [valid/failed/empty]. Gemini: [valid/failed/empty]. Proceeding with N of 3 models."
 
 ## Phase 3: Claude's Adversarial Pass
 
-While external CLIs run, perform your own adversarial analysis of the target using Read, Grep, Glob.
+Perform your own adversarial analysis of the target using Read, Grep, Glob. This runs regardless of external CLI results — Claude always participates.
 
 Select analysis lenses based on content type:
 
@@ -140,28 +200,13 @@ Select analysis lenses based on content type:
 - **Fitness for purpose**: Does this actually achieve what it claims to? Where does it fall short of its own stated goals?
 - **Silent failure modes**: How could this be used correctly yet produce wrong results? What guardrails are missing?
 
-## Phase 3.5: Validate External Output
-
-Before synthesizing, read each output file and classify it:
-
-| Status | Criteria | Action |
-|--------|----------|--------|
-| **Valid** | Contains substantive findings — specific issues, locations, impact analysis | Include in synthesis |
-| **Empty** | File missing, empty, or whitespace only | Mark model as "did not participate" |
-| **Error** | Non-zero exit code. Check stderr file (`/tmp/adversarial-*-err.txt`) for details | Mark model as "CLI error" with reason from stderr |
-| **Noise** | Long output (>2000 chars) with no review findings — filesystem exploration, git history dumps, file listings without analysis | Mark model as "unusable output" |
-
-**Noise detection**: If output contains repeated exploration patterns (`Reading file`, `exec`, `git log`, `git show`, `searching`) but lacks analytical language (no mentions of bugs, risks, issues, vulnerabilities, concerns, or recommendations), classify as noise. Codex's `-o` flag filters tool-call traces, so noise from Codex typically means the agent explored instead of reviewing.
-
-Do not pass invalid output to Phase 4.
-
 ## Phase 4: Synthesize
 
-Read `/tmp/adversarial-codex.txt` and `/tmp/adversarial-gemini.txt`. Combine with your Phase 3 findings.
+Read `/tmp/adversarial-codex.txt` and `/tmp/adversarial-gemini.txt` (only the ones marked valid in Phase 2.5). Combine with your Phase 3 findings.
 
 ### Handling partial results
 
-If Phase 3.5 marked any model as failed, empty, or noise:
+If Phase 2.5 marked any model as failed, empty, or noise:
 
 - **2 of 3 models produced findings**: Proceed normally. Consensus requires both remaining models to agree. Note the missing model in the report header.
 - **1 of 3 models (Claude only)**: Skip consensus/unique/divergent categories — they require multiple models. Present Claude's findings as a flat list under "## Findings (single-model)". Add a note that model diversity was not available.

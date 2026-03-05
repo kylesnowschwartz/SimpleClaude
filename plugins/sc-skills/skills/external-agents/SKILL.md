@@ -203,6 +203,8 @@ git diff main...HEAD | codex exec -C "$PWD" -s read-only "Review for correctness
 ## Important
 
 - Both CLIs operate on the working directory. Do NOT pipe file contents via `$(cat file)` — let them read files directly.
+- **Gemini stdin bug**: `cat file | gemini -p "..."` fails with "Cannot use both a positional prompt and the --prompt flag together." Gemini's arg parser treats cat-piped stdin as a positional argument conflicting with `-p`. Use `< file` redirection instead: `gemini -m MODEL -p "prompt" < /path/to/file`. This works correctly.
+- **Gemini headless tool trust bug** ([#18776](https://github.com/google-gemini/gemini-cli/issues/18776)): Gemini in `-p` headless mode cannot reliably use filesystem tools — the folder trust check fails. Feed content via stdin rather than expecting Gemini to read files itself.
 - If a command fails with a syntax error, run `<tool> --help` to check current flags before retrying.
 - If an upgrade notice appears, inform the user. Do NOT auto-upgrade.
 - Codex config values use TOML format: `-c model_reasoning_effort="high"`
