@@ -1,6 +1,6 @@
 ---
 name: sc-refactor-review
-description: This skill SHOULD be used when the user asks to "review code", "find dead code", "check for duplication", "simplify the codebase", "find refactoring opportunities", "do code cleanup", "check naming consistency", "analyze test organization", "run codebase health check", "review my PR", "refactor this code", "extract method", "rename variable", "consolidate duplicates", "adversarial review", "red team review", "find ways to break this", "multi-model review", or "get multiple AI opinions on this code". Routes to specialized analysis agents, refactoring workflow, or multi-model adversarial review based on the type of request.
+description: This skill SHOULD be used when the user asks to "review code", "find dead code", "check for duplication", "simplify the codebase", "find refactoring opportunities", "do code cleanup", "check naming consistency", "analyze test organization", "run codebase health check", "review my PR", "refactor this code", "extract method", "rename variable", "consolidate duplicates", "adversarial review", "red team review", "find ways to break this", "multi-model review", "get multiple AI opinions on this code", "hunt bugs", "find bugs", "bug hunt", or "adversarial bug hunt". Routes to specialized analysis agents, refactoring workflow, multi-model adversarial review, or adversarial bug hunt based on the type of request.
 ---
 
 # SC Refactor Review Skill
@@ -21,6 +21,7 @@ Reference guide for routing review and refactoring requests to specialized agent
 | `/sc-refactor:sc-audit` | Verify structural completeness (wiring, configs) | sc-structural-reviewer |
 | `/sc-refactor:sc-codebase-health` | Full codebase analysis | All 6 agents in parallel |
 | `/sc-refactor:sc-adversarial-review` | Multi-model adversarial review | Codex CLI + Gemini CLI + Claude |
+| `/sc-refactor:sc-bug-hunt` | Adversarial bug hunt with competing agents | 3 Explore agents (finder, adversary, referee) |
 
 ### Agents
 
@@ -35,7 +36,6 @@ Reference guide for routing review and refactoring requests to specialized agent
 | `sc-dead-code-detector` | Unreferenced exports, orphan files, commented code | red |
 | `sc-test-organizer` | Test structure, missing tests, fixture sprawl | green |
 | `sc-pr-comment-resolver` | Implement PR review comment changes | blue |
-
 External dependency (from simpleclaude-core):
 - `sc-code-reviewer` - Bugs, security, CLAUDE.md compliance
 
@@ -54,6 +54,7 @@ Match the user's request to the appropriate command or agents:
 | "audit", "structural check", "verify wiring", "missing config" | `/sc-audit` |
 | "health check", "full analysis", "comprehensive" | `/sc-codebase-health` |
 | "adversarial review", "red team", "break this code", "multi-model" | `/sc-adversarial-review` |
+| "bug hunt", "find bugs", "hunt bugs", "adversarial bug hunt" | `/sc-bug-hunt` |
 | "dead code", "unused", "orphan" | sc-dead-code-detector |
 | "duplicate", "DRY", "repeated" | sc-duplication-hunter |
 | "simplify", "YAGNI", "over-engineer" | sc-abstraction-critic |
@@ -192,3 +193,18 @@ Example usage:
 - `/sc-adversarial-review` — Review uncommitted changes
 - `/sc-adversarial-review branch` — Review current branch vs main
 - `/sc-adversarial-review src/auth/` — Review specific directory
+
+### sc-bug-hunt
+
+Adversarial bug hunting with three competing agents. Uses economic incentives to produce high-fidelity results:
+
+1. **Bug Finder** (superset) — Scores +1/+5/+10 by impact. Incentivized to find everything, including borderline cases.
+2. **Adversary** (filter) — Earns bug's score for disproofs, loses 2x for wrong disproofs. Aggressive but cautious.
+3. **Referee** (ground truth) — Told correct answers exist. +1 correct ruling, -1 wrong. Produces final verified list.
+
+Agents run sequentially — each phase feeds into the next. The adversarial structure means false positives get filtered out through competing economic pressure rather than relying on a single agent's judgment.
+
+Example usage:
+- `/sc-bug-hunt src/auth/` — Hunt bugs in auth directory
+- `/sc-bug-hunt staged` — Hunt bugs in uncommitted changes
+- `/sc-bug-hunt branch` — Hunt bugs in current branch vs main
