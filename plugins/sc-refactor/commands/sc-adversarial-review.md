@@ -78,7 +78,7 @@ Verify non-empty: `wc -l /tmp/adversarial-diff.txt`. If 0 lines, tell the user a
 
 ### CLI invocation
 
-Launch both CLIs using Bash with `run_in_background: true`. No hard timeouts — these are agentic tools that take variable time depending on diff size and model load.
+You MUST launch both CLIs directly using **Bash** with `run_in_background: true`. Subagents cannot approve Bash permissions interactively, so the command will be denied. No hard timeouts — these are agentic tools that take variable time depending on diff size and model load.
 
 **Codex** — has `git`, filesystem tools, and a read-only sandbox. Tell it what to review and let it use its tools. Keep the prompt focused on the *task* (find bugs), not on *how* to get the data.
 

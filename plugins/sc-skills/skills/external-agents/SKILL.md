@@ -11,6 +11,12 @@ description: >
 
 Run OpenAI Codex CLI or Google Gemini CLI for second opinions and external reviews.
 
+## Critical: Run CLIs Directly via Bash
+
+You MUST run `codex` and `gemini` commands directly from **Bash** (with `run_in_background: true` for async).
+Subagents cannot approve Bash permissions interactively — the command gets denied and the
+subagent wastes its entire context asking for permission it can never get.
+
 ## Prerequisites
 
 | Tool | Install | Config |
