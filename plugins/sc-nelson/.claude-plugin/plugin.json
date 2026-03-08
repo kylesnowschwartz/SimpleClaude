@@ -1,6 +1,6 @@
 {
   "name": "sc-nelson",
-  "version": "5.9.1",
+  "version": "5.10.0",
   "description": "Royal Navy agent coordination framework — sailing orders, battle plans, action stations, and a captain's log. Based on harrymunro/nelson (MIT).",
   "author": {
     "name": "Kyle Snow Schwartz"
