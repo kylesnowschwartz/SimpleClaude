@@ -44,13 +44,14 @@ class LongRunningProcessGuard < ClaudeHooks::PreToolUse
   private
 
   # Returns a truthy value (the output) if a Tier 1 match blocks, nil otherwise.
+  # Each segment is [stripped, original] — match against stripped, display original.
   def check_infinite_processes(segments)
-    segments.each do |segment|
-      next if tmux_launcher?(segment)
-      next unless (match = tier_1_match(segment))
+    segments.each do |stripped, original|
+      next if tmux_launcher?(stripped)
+      next unless match_patterns?(stripped, TIER_1_PATTERNS)
 
-      log "Blocked long-running command: #{match}"
-      return block_tool!(block_message(match))
+      log "Blocked long-running command: #{original.strip}"
+      return block_tool!(block_message(original.strip))
     end
     nil
   end
@@ -60,11 +61,11 @@ class LongRunningProcessGuard < ClaudeHooks::PreToolUse
   def check_long_processes(segments)
     return if in_tmux?
 
-    segments.each do |segment|
-      next unless (match = tier_2_match(segment))
+    segments.each do |stripped, original|
+      next unless match_patterns?(stripped, TIER_2_PATTERNS)
 
-      log "Warning about long-running command: #{match}"
-      system_message!("[LongRunningProcessGuard] '#{match}' may take a while. " \
+      log "Warning about long-running command: #{original.strip}"
+      system_message!("[LongRunningProcessGuard] '#{original.strip}' may take a while. " \
                       'Consider using run_in_background: true or running inside tmux.')
       return approve_tool!
     end
@@ -72,37 +73,28 @@ class LongRunningProcessGuard < ClaudeHooks::PreToolUse
   end
 
   # Split compound shell commands on &&, ||, ;, and & while respecting quotes.
-  # Good enough for pattern matching — not a full shell parser.
+  # Returns pairs of [stripped_segment, original_segment] so callers can
+  # pattern-match against the stripped version (no quoted content) but display
+  # the original in messages.
   def split_shell_segments(command)
-    # Replace quoted strings with placeholders to avoid splitting inside them
     placeholders = []
     sanitized = command.gsub(/(?:"(?:[^"\\]|\\.)*"|'[^']*')/) do |match|
       placeholders << match
       "__PLACEHOLDER_#{placeholders.length - 1}__"
     end
 
-    sanitized.split(/\s*(?:&&|\|\||[;&])\s*/).map do |segment|
-      # Restore placeholders
-      segment.gsub(/__PLACEHOLDER_(\d+)__/) { placeholders[Regexp.last_match(1).to_i] }
+    sanitized.split(/\s*(?:&&|\|\||[;&])\s*/).map do |stripped|
+      original = stripped.gsub(/__PLACEHOLDER_(\d+)__/) { placeholders[Regexp.last_match(1).to_i] }
+      [stripped, original]
     end
   end
 
-  def tmux_launcher?(segment)
-    segment.strip.match?(/^\s*tmux\s+/)
+  def tmux_launcher?(stripped_segment)
+    stripped_segment.strip.match?(/^\s*tmux\s+/)
   end
 
-  def tier_1_match(segment)
-    TIER_1_PATTERNS.each do |pattern|
-      return segment.strip if segment.match?(pattern)
-    end
-    nil
-  end
-
-  def tier_2_match(segment)
-    TIER_2_PATTERNS.each do |pattern|
-      return segment.strip if segment.match?(pattern)
-    end
-    nil
+  def match_patterns?(stripped_segment, patterns)
+    patterns.any? { |pattern| stripped_segment.match?(pattern) }
   end
 
   def in_tmux?
