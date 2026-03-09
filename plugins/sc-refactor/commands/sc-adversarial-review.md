@@ -42,7 +42,7 @@ Check CLI availability: `codex --version 2>/dev/null`, `gemini --version 2>/dev/
 
 ## Phase 2: Launch External Reviews
 
-Reference the `/sc-skills:external-agents` skill for CLI invocation patterns, flag reference, and model configuration.
+Activate the `/sc-skills:external-agents` skill for CLI invocation patterns, flags, known bugs, and model configuration. The skill is the single source of truth for how to call Codex and Gemini.
 
 ### Adversarial prompt
 
@@ -63,9 +63,9 @@ Select the core prompt based on content type, then adapt it to each CLI's interf
 **General:**
 > Critique this artifact adversarially. For each finding state: WHAT is wrong or missing, WHY it matters, and WHAT consequence follows. Focus on: internal inconsistencies, unstated assumptions, completeness gaps, fitness for its stated purpose, and ways it could silently fail or mislead.
 
-### Prepare diff for Gemini
+### Prepare diff
 
-Codex has full tool access and can run `git diff` itself — no pre-saved diff needed. Gemini in headless mode cannot reliably access filesystem tools (known bug: folder trust check fails in `-p` mode). So save a diff file for Gemini only.
+Save a diff file for both CLIs to use. Codex can also read files directly, but having the diff at a known path keeps the command templates consistent.
 
 | Scope | Command |
 |-------|---------|
@@ -78,60 +78,65 @@ Verify non-empty: `wc -l /tmp/adversarial-diff.txt`. If 0 lines, tell the user a
 
 ### CLI invocation
 
-You MUST launch both CLIs directly using **Bash** with `run_in_background: true`. Subagents cannot approve Bash permissions interactively, so the command will be denied. No hard timeouts — these are agentic tools that take variable time depending on diff size and model load.
+You MUST launch both CLIs directly using **Bash** with `run_in_background: true` (see external-agents skill for why subagents don't work). No hard timeouts — these are agentic tools that take variable time depending on diff size and model load.
 
-**Codex** — has `git`, filesystem tools, and a read-only sandbox. Tell it what to review and let it use its tools. Keep the prompt focused on the *task* (find bugs), not on *how* to get the data.
+**Pre-flight checks** before launching:
 
-Build the scope instruction based on target:
+```bash
+codex --version 2>/dev/null && echo "CODEX: available" || echo "CODEX: not found"
+gemini --version 2>/dev/null && echo "GEMINI: available" || echo "GEMINI: not found"
+echo "GEMINI_API_KEY: ${GEMINI_API_KEY:+set (${#GEMINI_API_KEY} chars)}"
+```
 
-| Scope | Scope instruction for prompt |
-|-------|------------------------------|
+If `GEMINI_API_KEY` is unset, tell the user: "GEMINI_API_KEY not found in environment — Gemini will be skipped. The key may be in a direnv .envrc that isn't loaded for this project." Skip Gemini and proceed with Codex + Claude only.
+
+**Codex** — has `git`, filesystem tools, and a read-only sandbox. Keep the prompt focused on the *task* (find bugs), not on *how* to get the data — telling Codex "also read X" causes it to explore the whole repo instead of reviewing. Build a scope instruction, then combine with the adversarial prompt:
+
+| Scope | Scope instruction |
+|-------|-------------------|
 | Uncommitted/staged | `Run git diff HEAD to see the uncommitted changes, then review them.` |
 | Branch vs main | `Run git diff main...HEAD to see the branch changes, then review them. You can also read the changed files for full context.` |
 | PR | `The file /tmp/adversarial-diff.txt contains a PR diff. Read it and review the changes. You can also read the changed source files for full context.` |
 | File or directory | `Review [path] for issues.` |
 
-Full command pattern:
 ```
 codex exec -C "$PWD" -s read-only "SCOPE_INSTRUCTION ADVERSARIAL_PROMPT" -o /tmp/adversarial-codex.txt 2>/tmp/adversarial-codex-err.txt; echo "CODEX_EXIT:$?" >> /tmp/adversarial-codex-err.txt
 ```
 
-The `-o` flag captures only the final assistant message. Stderr captures the full agent trace (thinking, exec calls) for progress monitoring. **Known issue**: if Codex exhausts its turns without producing a final summary, `-o` creates no file. Always check file existence, not just content.
+The `-o` flag captures only the final assistant message, filtering out tool-call traces. Stderr captures the full agent trace (`thinking`, `exec` calls) for progress monitoring. **Known issue**: if Codex exhausts its turns without producing a final summary, `-o` creates no file — always check file existence, not just content.
 
-**Gemini** — headless mode only (`-p`). Cannot reliably use filesystem tools when spawned non-interactively (known bug [#18776](https://github.com/google-gemini/gemini-cli/issues/18776)). Must receive content via stdin.
-
-**CRITICAL stdin bug**: `cat file | gemini -p "..."` fails with "Cannot use both a positional prompt and the --prompt flag together." Use `< file` redirection instead — this works correctly.
-
-Pin the model with `-m` to prevent auto-routing to Flash.
-
-Run the Gemini fallback chain as a single background command:
+**Gemini** — feed content via stdin (see external-agents skill for stdin/headless bugs):
 
 ```bash
-for MODEL in gemini-3.1-pro-preview gemini-2.5-pro gemini-2.5-flash; do
-  gemini -m "$MODEL" -p "ADVERSARIAL_PROMPT" < /tmp/adversarial-diff.txt > /tmp/adversarial-gemini.txt 2>/tmp/adversarial-gemini-err.txt
-  EXIT_CODE=$?
-  if [ $EXIT_CODE -eq 0 ] && [ -s /tmp/adversarial-gemini.txt ]; then
-    echo "GEMINI_MODEL:$MODEL" >> /tmp/adversarial-gemini-err.txt
-    echo "GEMINI_EXIT:0" >> /tmp/adversarial-gemini-err.txt
-    break
-  fi
-  echo "GEMINI_ATTEMPT:$MODEL failed (exit $EXIT_CODE)" >> /tmp/adversarial-gemini-err.txt
-done
-if [ ! -s /tmp/adversarial-gemini.txt ]; then
+if [ -z "$GEMINI_API_KEY" ]; then
+  echo "GEMINI_SKIP: GEMINI_API_KEY not set in environment" > /tmp/adversarial-gemini-err.txt
   echo "GEMINI_EXIT:1" >> /tmp/adversarial-gemini-err.txt
+else
+  for MODEL in gemini-3.1-pro-preview gemini-2.5-pro gemini-2.5-flash; do
+    gemini -m "$MODEL" -p "ADVERSARIAL_PROMPT" < /tmp/adversarial-diff.txt > /tmp/adversarial-gemini.txt 2>/tmp/adversarial-gemini-err.txt
+    EXIT_CODE=$?
+    if [ $EXIT_CODE -eq 0 ] && [ -s /tmp/adversarial-gemini.txt ]; then
+      echo "GEMINI_MODEL:$MODEL" >> /tmp/adversarial-gemini-err.txt
+      echo "GEMINI_EXIT:0" >> /tmp/adversarial-gemini-err.txt
+      break
+    fi
+    echo "GEMINI_ATTEMPT:$MODEL failed (exit $EXIT_CODE)" >> /tmp/adversarial-gemini-err.txt
+  done
+  if [ ! -s /tmp/adversarial-gemini.txt ]; then
+    echo "GEMINI_EXIT:1" >> /tmp/adversarial-gemini-err.txt
+  fi
 fi
 ```
 
-### Progress monitoring and fail-fast
+### Progress monitoring
 
 After launching both CLIs in background, do your Phase 3 analysis. When Phase 3 is done, check on the background tasks:
 
-1. **Use TaskOutput with `block: false`** to check if each task has completed. Check them **one at a time** — never in a single parallel block, because a failure reading one task cancels all parallel calls.
+1. **Use TaskOutput with `block: false`** to check completion. Check them **one at a time** — never in a single parallel block (failure in one cancels all parallel calls).
 
-2. **If a task is still running**, check its progress by reading the stderr trace file:
+2. **If still running**, check stderr trace growth:
 
 ```bash
-# How much output so far? Is it still growing?
 wc -l /tmp/adversarial-codex-err.txt 2>/dev/null
 tail -5 /tmp/adversarial-codex-err.txt 2>/dev/null
 ```
@@ -140,27 +145,27 @@ tail -5 /tmp/adversarial-codex-err.txt 2>/dev/null
 
 | Stderr pattern | State | Action |
 |----------------|-------|--------|
-| Recent `thinking` or `exec` lines, line count growing | **Active** — model is working | Wait, check again after reading the other CLI's output |
-| No stderr file, or file unchanged after two checks | **Stuck** — process may have hung | Kill the background task, mark as failed |
-| `CODEX_EXIT:0` or `GEMINI_EXIT:0` at end of stderr | **Done** | Read output file |
-| Error messages, stack traces, `RESOURCE_EXHAUSTED` | **Failed** | Mark as error, report to user |
+| Recent `thinking` or `exec` lines, growing | **Active** | Wait, check again later |
+| No file, or unchanged after two checks | **Stuck** | Kill background task, mark failed |
+| `CODEX_EXIT:0` or `GEMINI_EXIT:0` | **Done** | Read output file |
+| Error messages, `RESOURCE_EXHAUSTED` | **Failed** | Mark as error, report to user |
 
-4. **Tell the user immediately** when you know a CLI's status: "Codex: still running (85 lines of trace so far). Gemini: done, 1200 bytes of findings." This way they know whether the wait is productive.
+4. **Tell the user immediately** when you know a CLI's status so they know whether the wait is productive.
 
-5. **If both tasks are done**, proceed to output validation. If one is still active and the other is done, start reading the finished output while waiting. Don't block on both.
+5. If one is done and the other is still active, start reading the finished output while waiting.
 
 ### Output validation
 
-Before synthesizing, classify each output:
+Classify each output before synthesizing:
 
 | Status | Criteria | Action |
 |--------|----------|--------|
-| **Valid** | File exists, non-empty, contains substantive findings | Include in synthesis |
+| **Valid** | Non-empty, contains substantive findings | Include in synthesis |
 | **Empty** | File missing, empty, or whitespace only | Mark as "did not participate" |
 | **Error** | Non-zero exit code in stderr | Mark as "CLI error" with reason |
-| **Noise** | >2000 chars but no analytical content — filesystem exploration, git history, file listings without analysis | Mark as "unusable output" |
+| **Noise** | >2000 chars but no analytical content — see noise detection below | Mark as "unusable output" |
 
-**Noise detection**: If output contains repeated exploration patterns (`Reading file`, `exec`, `git log`, `git show`, `searching`) but lacks analytical language (no mentions of bugs, risks, issues, vulnerabilities, concerns, or recommendations), classify as noise.
+**Noise detection**: If output contains repeated exploration patterns (`Reading file`, `exec`, `git log`, `git show`, `searching`) but lacks analytical language (no mentions of bugs, risks, issues, vulnerabilities, concerns, or recommendations), classify as noise. Codex's `-o` flag filters tool-call traces, so noise from Codex typically means the agent explored instead of reviewing.
 
 Report status to the user: "Codex: [valid/failed/empty]. Gemini: [valid/failed/empty]. Proceeding with N of 3 models."
 

@@ -41,11 +41,13 @@ No "latest" alias exists for either CLI — you must pin specific model names.
 
 | Model | Use Case |
 |-------|----------|
-| `gpt-5.3-codex` | Best. Latest agentic coding model, SOTA on SWE-Bench Pro. |
-| `gpt-5.2-codex` | Previous generation. Still capable. |
-| `gpt-5.1-codex-max` | Extended reasoning variant. |
+| `gpt-5.4` | Best. Latest agentic coding model. |
+| `gpt-5.3-codex` | Previous generation. Still capable. |
+| `gpt-5.2-codex` | Older generation. |
 
-Set default in `~/.codex/config.toml`: `model = "gpt-5.3-codex"`
+Set default in `~/.codex/config.toml`: `model = "gpt-5.4"`
+
+Codex uses stored OAuth tokens (`~/.codex/auth.json`) from `codex login` — no env var needed.
 
 ### Gemini
 
@@ -109,8 +111,8 @@ codex review --uncommitted --title "Add user auth middleware"
 # Freeform analysis
 codex exec -C "$PWD" "Analyze the auth module for security issues"
 
-# Specify model
-codex exec -C "$PWD" -m o3 "Review this codebase architecture"
+# Specify model (overrides config.toml default)
+codex exec -C "$PWD" -m gpt-5.4 "Review this codebase architecture"
 
 # Full-auto mode (sandboxed, auto-approves)
 codex exec -C "$PWD" --full-auto "Refactor the test helpers"
@@ -126,7 +128,7 @@ codex exec -C "$PWD" -s read-only "Audit dependencies for vulnerabilities"
 
 | Flag | Purpose |
 |------|---------|
-| `-m, --model <MODEL>` | Model selection (e.g., `o3`) |
+| `-m, --model <MODEL>` | Model selection (e.g., `gpt-5.4`) |
 | `-c key=value` | Override config (TOML format) |
 | `-s, --sandbox <MODE>` | `read-only`, `workspace-write`, `danger-full-access` |
 | `--full-auto` | Sandboxed auto-execution |
@@ -206,11 +208,34 @@ codex review --base main
 git diff main...HEAD | codex exec -C "$PWD" -s read-only "Review for correctness, test coverage, and maintainability"
 ```
 
-## Important
+## Troubleshooting
+
+### Gemini: `GEMINI_API_KEY` not found
+
+Gemini with `gemini-api-key` auth reads `GEMINI_API_KEY` from the environment. If the key is managed by direnv, it's only available when direnv loads the `.envrc` that exports it. A child directory with its own `.envrc` shadows the parent without inheriting — so the key can be missing depending on which directory the session runs from.
+
+**Pre-flight check** (run before any Gemini invocation):
+```bash
+echo "GEMINI_API_KEY: ${GEMINI_API_KEY:+set (${#GEMINI_API_KEY} chars)}"
+```
+
+If unset, tell the user and skip Gemini. Codex does not have this problem — it uses stored OAuth tokens from `codex login`.
+
+### Gemini: stdin bug
+
+`cat file | gemini -p "..."` fails with "Cannot use both a positional prompt and the --prompt flag together." Gemini's arg parser treats cat-piped stdin as a positional argument conflicting with `-p`. Use `< file` redirection instead: `gemini -m MODEL -p "prompt" < /path/to/file`. This works correctly.
+
+### Gemini: headless tool trust bug
+
+[#18776](https://github.com/google-gemini/gemini-cli/issues/18776): Gemini in `-p` headless mode cannot reliably use filesystem tools — the folder trust check fails. Feed content via stdin rather than expecting Gemini to read files itself.
+
+### Codex: `-o` creates no file
+
+If Codex exhausts its turns without producing a final summary, `-o` creates no output file. Always check file existence, not just content.
+
+### General
 
 - Both CLIs operate on the working directory. Do NOT pipe file contents via `$(cat file)` — let them read files directly.
-- **Gemini stdin bug**: `cat file | gemini -p "..."` fails with "Cannot use both a positional prompt and the --prompt flag together." Gemini's arg parser treats cat-piped stdin as a positional argument conflicting with `-p`. Use `< file` redirection instead: `gemini -m MODEL -p "prompt" < /path/to/file`. This works correctly.
-- **Gemini headless tool trust bug** ([#18776](https://github.com/google-gemini/gemini-cli/issues/18776)): Gemini in `-p` headless mode cannot reliably use filesystem tools — the folder trust check fails. Feed content via stdin rather than expecting Gemini to read files itself.
 - If a command fails with a syntax error, run `<tool> --help` to check current flags before retrying.
 - If an upgrade notice appears, inform the user. Do NOT auto-upgrade.
 - Codex config values use TOML format: `-c model_reasoning_effort="high"`
