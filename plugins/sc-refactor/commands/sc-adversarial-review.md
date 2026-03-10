@@ -1,7 +1,7 @@
 ---
 name: sc-adversarial-review
 description: Multi-model adversarial review using external AI CLIs (Codex, Gemini) and Claude for diverse-perspective critique of any target
-allowed-tools: Read, Bash, Grep, Glob, AskUserQuestion, TodoWrite
+allowed-tools: Read, Bash, Grep, Glob, AskUserQuestion, TodoWrite, Skill
 argument-hint: "[target: file/directory/staged/branch/pr] [context hint]"
 ---
 
@@ -42,7 +42,7 @@ Check CLI availability: `codex --version 2>/dev/null`, `gemini --version 2>/dev/
 
 ## Phase 2: Launch External Reviews
 
-Activate the `/sc-skills:external-agents` skill for CLI invocation patterns, flags, known bugs, and model configuration. The skill is the single source of truth for how to call Codex and Gemini.
+You MUST invoke the Skill tool with `skill: "sc-skills:external-agents"` to load CLI reference docs before constructing any Codex or Gemini commands. The skill contains required knowledge about stdin bugs, model pinning, and headless mode limitations that will cause silent failures if ignored.
 
 ### Adversarial prompt
 
