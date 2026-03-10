@@ -11,11 +11,11 @@ description: >
 
 Run OpenAI Codex CLI or Google Gemini CLI for second opinions and external reviews.
 
-## Critical: Run CLIs Directly via Bash
+## Critical Rules
 
-You MUST run `codex` and `gemini` commands directly from **Bash** (with `run_in_background: true` for async).
-Subagents cannot approve Bash permissions interactively — the command gets denied and the
-subagent wastes its entire context asking for permission it can never get.
+1. **Run CLIs directly via Bash** (with `run_in_background: true` for async). Subagents cannot approve Bash permissions interactively — the command gets denied.
+
+2. **Do NOT pipe stdin into `codex exec`** — codex ignores stdin entirely. Save content to a file (e.g., `/tmp/review-diff.txt`) and tell codex to read it in the prompt. Piping produces empty/plan-only output.
 
 ## Prerequisites
 
@@ -85,7 +85,7 @@ Set default in `~/.gemini/settings.json`:
 
 ### Code Review (most common use)
 
-**Important**: `codex review` treats `--base`, `--uncommitted`, `--commit`, and `[PROMPT]` as mutually exclusive modes. You cannot combine a custom prompt with `--base` or `--uncommitted`. To review with custom instructions, pipe the diff to `codex exec` instead.
+**Important**: `codex review` treats `--base`, `--uncommitted`, `--commit`, and `[PROMPT]` as mutually exclusive modes. You cannot combine a custom prompt with `--base` or `--uncommitted`. To review with custom instructions, save the diff to a file and tell `codex exec` to read it (codex ignores stdin).
 
 ```bash
 # Review uncommitted changes (default instructions)
@@ -97,9 +97,10 @@ codex review --base main
 # Review specific commit (default instructions)
 codex review --commit <SHA>
 
-# Review with custom instructions — pipe diff to exec (use --full-auto, not -s read-only which hangs headless)
-git diff main...HEAD | codex exec -C "$PWD" --full-auto "Focus on error handling and security"
-git diff HEAD | codex exec -C "$PWD" --full-auto "Check for race conditions"
+# Review with custom instructions — save diff to file, tell codex to read it
+# IMPORTANT: Do NOT pipe into codex exec — it ignores stdin. Save to a file instead.
+git diff main...HEAD > /tmp/review-diff.txt
+codex exec -C "$PWD" --full-auto "Read /tmp/review-diff.txt and review for error handling and security" -o /tmp/codex-review.txt
 
 # Review with title context
 codex review --uncommitted --title "Add user auth middleware"
@@ -204,8 +205,9 @@ gemini -p "Analyze src/auth/ and critique the token refresh strategy"
 # Default review (no custom prompt needed)
 codex review --base main
 
-# Custom review instructions — pipe diff to exec
-git diff main...HEAD | codex exec -C "$PWD" --full-auto "Review for correctness, test coverage, and maintainability"
+# Custom review instructions — save diff to file, tell codex to read it
+git diff main...HEAD > /tmp/review-diff.txt
+codex exec -C "$PWD" --full-auto "Read /tmp/review-diff.txt and review for correctness, test coverage, and maintainability" -o /tmp/codex-review.txt
 ```
 
 ## Troubleshooting
@@ -229,17 +231,23 @@ If unset, tell the user and skip Gemini. Codex does not have this problem — it
 
 [#18776](https://github.com/google-gemini/gemini-cli/issues/18776): Gemini in `-p` headless mode cannot reliably use filesystem tools — the folder trust check fails. Feed content via stdin rather than expecting Gemini to read files itself.
 
+### Codex: plan-confirmation instead of review
+
+If codex output contains "Plan:" followed by "If you're happy with that approach" — codex didn't execute, it proposed a plan and waited for approval. Two causes:
+1. **`-s read-only` in headless mode** — triggers plan confirmation. Use `--full-auto` instead.
+2. **Piped stdin** — `codex exec` ignores stdin entirely. The prompt says "review this" but codex has nothing to review, so it proposes a plan to go find the content. Save to a file and reference it in the prompt instead.
+
 ### Codex: `-o` creates no file
 
 If Codex exhausts its turns without producing a final summary, `-o` creates no output file. Always check file existence, not just content.
 
 ### General
 
-- Both CLIs operate on the working directory. Do NOT pipe file contents via `$(cat file)` — let them read files directly.
+- **Codex ignores stdin** — never use `| codex exec` or `echo ... | codex exec`. Save to a file and reference it in the prompt. Gemini reads stdin correctly via `< file` redirection (not `cat | gemini`).
 - If a command fails with a syntax error, run `<tool> --help` to check current flags before retrying.
 - If an upgrade notice appears, inform the user. Do NOT auto-upgrade.
 - Codex config values use TOML format: `-c model_reasoning_effort="high"`
 
 ## Core Principle
 
-Use `codex review` for git-aware code reviews. Use `codex exec` or `gemini -p` for freeform analysis. Let each CLI read files from the working directory rather than shell-expanding content into arguments.
+Use `codex review` for git-aware code reviews. Use `codex exec` for freeform analysis (save content to files, reference in prompt — codex ignores stdin). Use `gemini -p` with `< file` redirection for content analysis.

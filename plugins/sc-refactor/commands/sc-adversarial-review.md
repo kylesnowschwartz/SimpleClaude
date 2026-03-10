@@ -90,7 +90,7 @@ echo "GEMINI_API_KEY: ${GEMINI_API_KEY:+set (${#GEMINI_API_KEY} chars)}"
 
 If `GEMINI_API_KEY` is unset, tell the user: "GEMINI_API_KEY not found in environment — Gemini will be skipped. The key may be in a direnv .envrc that isn't loaded for this project." Skip Gemini and proceed with Codex + Claude only.
 
-**Codex** — has `git`, filesystem tools, and a sandboxed environment. Use `--full-auto` so Codex auto-approves its own tool calls (read-only sandbox triggers a plan-confirmation step that hangs in non-interactive mode). Keep the prompt focused on the *task* (find bugs), not on *how* to get the data — telling Codex "also read X" causes it to explore the whole repo instead of reviewing. Build a scope instruction, then combine with the adversarial prompt:
+**Codex** — has `git`, filesystem tools, and a sandboxed environment. Use `--full-auto` so Codex auto-approves its own tool calls. **Do NOT pipe stdin into codex** — it ignores stdin entirely and produces a plan-confirmation instead of a review. Always reference files by path in the prompt. Keep the prompt focused on the *task* (find bugs), not on *how* to get the data — telling Codex "also read X" causes it to explore the whole repo instead of reviewing. Build a scope instruction, then combine with the adversarial prompt:
 
 | Scope | Scope instruction |
 |-------|-------------------|
@@ -103,7 +103,7 @@ If `GEMINI_API_KEY` is unset, tell the user: "GEMINI_API_KEY not found in enviro
 codex exec -C "$PWD" --full-auto "SCOPE_INSTRUCTION ADVERSARIAL_PROMPT" -o /tmp/adversarial-codex.txt 2>/tmp/adversarial-codex-err.txt; echo "CODEX_EXIT:$?" >> /tmp/adversarial-codex-err.txt
 ```
 
-The `-o` flag captures only the final assistant message, filtering out tool-call traces. Stderr captures the full agent trace (`thinking`, `exec` calls) for progress monitoring. **Known issues**: (1) if Codex exhausts its turns without producing a final summary, `-o` creates no file — always check file existence, not just content; (2) `-s read-only` triggers a plan-confirmation step that hangs in headless mode — use `--full-auto` instead.
+The `-o` flag captures only the final assistant message, filtering out tool-call traces. Stderr captures the full agent trace (`thinking`, `exec` calls) for progress monitoring. **Known issues**: (1) if Codex exhausts its turns without producing a final summary, `-o` creates no file — always check file existence, not just content; (2) `-s read-only` triggers a plan-confirmation step that hangs in headless mode — use `--full-auto` instead; (3) codex ignores stdin — never use `git diff | codex exec`, always save to a file and reference it in the prompt.
 
 **Gemini** — feed content via stdin (see external-agents skill for stdin/headless bugs):
 

@@ -89,11 +89,16 @@ validate() {
     return 1
   fi
 
-  # The specific failure mode this test was written to catch:
-  # codex with -s read-only outputs a plan and asks for approval
+  # Catch plan-confirmation instead of actual review.
+  # Causes: -s read-only in headless mode, or piping stdin (codex ignores it).
   if grep -qi "if you're happy with that approach\|shall I proceed\|ready to start" "$file"; then
     fail "$name produced a plan-confirmation, not a review"
     echo "    First line: $(head -1 "$file")"
+    return 1
+  fi
+  # Also catch bare "Plan:" at start of output (codex proposing but not executing)
+  if head -1 "$file" | grep -q "^Plan:"; then
+    fail "$name output starts with 'Plan:' — codex proposed instead of executing"
     return 1
   fi
 
