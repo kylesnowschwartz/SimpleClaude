@@ -15,7 +15,7 @@ module ClaudeHooks
     # Usage:
     #   log "Simple message"
     #   log "Debug info", level: :debug
-    def log(message, level: :info)
+    def log(message, level: :info) # rubocop:disable Metrics/MethodLength
       timestamp = Time.now.strftime('%Y-%m-%d %H:%M:%S')
       class_prefix = "[#{timestamp}] [#{level.upcase}] [#{@source}]"
 
@@ -33,6 +33,7 @@ module ClaudeHooks
         warn log_entry
         warn "Warning: Failed to write to session log: #{e.message}"
       end
+      nil
     end
 
     private
@@ -44,7 +45,7 @@ module ClaudeHooks
     end
 
     # Write log entry to session-specific file
-    def write_to_session_log(log_entry)
+    def write_to_session_log(log_entry) # rubocop:disable Metrics/MethodLength
       log_file_path = File.join(
         Configuration.logs_directory,
         'hooks',

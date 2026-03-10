@@ -11,7 +11,7 @@ require 'shellwords'
 #
 # Provides skip-pattern matching, git-ignore awareness, command availability
 # caching, and path utilities shared across handlers.
-module FileHandlerSupport
+module FileHandlerSupport # rubocop:disable Metrics/ModuleLength
   DEFAULT_SKIP_PATTERNS = %w[
     node_modules/
     dist/
@@ -90,7 +90,62 @@ module FileHandlerSupport
     end
   end
 
+  # Formatter registry — maps file extensions to available formatters.
+  # Returns nil if no formatter is available for the extension.
+  # rubocop:disable Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/AbcSize, Metrics/PerceivedComplexity
+  def detect_formatter(file_path)
+    case File.extname(file_path).downcase
+    when '.rb'
+      command_available?('rubocop') ? { name: 'RuboCop', command: 'rubocop', args: ['-A'] } : nil
+    when '.md'
+      if command_available?('markdownlint')
+        { name: 'markdownlint', command: 'markdownlint', args: %w[--fix --disable MD013,MD041,MD026,MD012,MD024] }
+      end
+    when '.sh', '.bash'
+      command_available?('shfmt') ? { name: 'shfmt', command: 'shfmt', args: ['-w', '-i', '2'] } : nil
+    when '.lua'
+      command_available?('stylua') ? { name: 'stylua', command: 'stylua', args: [] } : nil
+    when '.rs'
+      command_available?('rustfmt') ? { name: 'rustfmt', command: 'rustfmt', args: [] } : nil
+    when '.py'
+      command_available?('ruff') ? { name: 'ruff', command: 'ruff', args: ['format'] } : nil
+    when '.yml', '.yaml'
+      detect_yaml_formatter
+    when '.js', '.jsx', '.ts', '.tsx', '.json'
+      detect_js_formatter
+    when '.css'
+      command_available?('prettier') ? { name: 'prettier', command: 'prettier', args: ['--write'] } : nil
+    when '.go'
+      detect_go_formatter
+    end
+  end
+  # rubocop:enable Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/AbcSize, Metrics/PerceivedComplexity
+
   private
+
+  def detect_yaml_formatter
+    if command_available?('yamlfmt')
+      { name: 'yamlfmt', command: 'yamlfmt', args: ['-w'] }
+    elsif command_available?('prettier')
+      { name: 'prettier', command: 'prettier', args: ['--write', '--parser', 'yaml'] }
+    end
+  end
+
+  def detect_js_formatter
+    if command_available?('eslint')
+      { name: 'eslint', command: 'eslint', args: ['--fix'] }
+    elsif command_available?('prettier')
+      { name: 'prettier', command: 'prettier', args: ['--write'] }
+    end
+  end
+
+  def detect_go_formatter
+    if command_available?('goimports')
+      { name: 'goimports', command: 'goimports', args: ['-w'] }
+    elsif command_available?('gofmt')
+      { name: 'gofmt', command: 'gofmt', args: ['-w'] }
+    end
+  end
 
   def git_repo?
     cwd && File.directory?(File.join(cwd, '.git'))

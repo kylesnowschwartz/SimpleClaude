@@ -45,74 +45,23 @@ class AutoFormatHandler < ClaudeHooks::Stop
     rel = relative_file_path(file_path)
     log "Formatting #{rel} with #{formatter[:name]}"
     result = run_formatter(formatter, file_path)
-    return log("Format failed for #{rel}: #{result[:error]}", level: :error) unless result[:success]
-    return log("#{rel} unchanged") unless result[:changed]
+    return log_format_result(rel, result) unless result[:success] && result[:changed]
 
     log "Formatted #{rel}"
     "#{rel} (#{formatter[:name]})"
   end
 
+  def log_format_result(rel, result)
+    if result[:success]
+      log("#{rel} unchanged")
+    else
+      log("Format failed for #{rel}: #{result[:error]}", level: :error)
+    end
+  end
+
   def notify_formatted(formatted)
     summary = "Auto-formatted #{formatted.length} file#{'s' if formatted.length > 1}: #{formatted.join(', ')}"
     system_message!(summary)
-  end
-
-  # Dispatcher — inherent complexity from supporting many file types.
-  # rubocop:disable Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/AbcSize, Metrics/PerceivedComplexity
-  def detect_formatter(file_path)
-    case File.extname(file_path).downcase
-    when '.rb'
-      command_available?('rubocop') ? { name: 'RuboCop', command: 'rubocop', args: ['-A'] } : nil
-    when '.md'
-      markdownlint_formatter
-    when '.sh', '.bash'
-      command_available?('shfmt') ? { name: 'shfmt', command: 'shfmt', args: ['-w', '-i', '2'] } : nil
-    when '.lua'
-      command_available?('stylua') ? { name: 'stylua', command: 'stylua', args: [] } : nil
-    when '.rs'
-      command_available?('rustfmt') ? { name: 'rustfmt', command: 'rustfmt', args: [] } : nil
-    when '.py'
-      command_available?('ruff') ? { name: 'ruff', command: 'ruff', args: ['format'] } : nil
-    when '.yml', '.yaml'
-      yaml_formatter
-    when '.js', '.jsx', '.ts', '.tsx', '.json'
-      js_formatter
-    when '.css'
-      command_available?('prettier') ? { name: 'prettier', command: 'prettier', args: ['--write'] } : nil
-    when '.go'
-      go_formatter
-    end
-  end
-  # rubocop:enable Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/AbcSize, Metrics/PerceivedComplexity
-
-  def markdownlint_formatter
-    return unless command_available?('markdownlint')
-
-    { name: 'markdownlint', command: 'markdownlint', args: %w[--fix --disable MD013,MD041,MD026,MD012,MD024] }
-  end
-
-  def yaml_formatter
-    if command_available?('yamlfmt')
-      { name: 'yamlfmt', command: 'yamlfmt', args: ['-w'] }
-    elsif command_available?('prettier')
-      { name: 'prettier', command: 'prettier', args: ['--write', '--parser', 'yaml'] }
-    end
-  end
-
-  def js_formatter
-    if command_available?('eslint')
-      { name: 'eslint', command: 'eslint', args: ['--fix'] }
-    elsif command_available?('prettier')
-      { name: 'prettier', command: 'prettier', args: ['--write'] }
-    end
-  end
-
-  def go_formatter
-    if command_available?('goimports')
-      { name: 'goimports', command: 'goimports', args: ['-w'] }
-    elsif command_available?('gofmt')
-      { name: 'gofmt', command: 'gofmt', args: ['-w'] }
-    end
   end
 
   def run_formatter(formatter, file_path)
