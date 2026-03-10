@@ -97,9 +97,9 @@ codex review --base main
 # Review specific commit (default instructions)
 codex review --commit <SHA>
 
-# Review with custom instructions — pipe diff to exec
-git diff main...HEAD | codex exec -C "$PWD" -s read-only "Focus on error handling and security"
-git diff HEAD | codex exec -C "$PWD" -s read-only "Check for race conditions"
+# Review with custom instructions — pipe diff to exec (use --full-auto, not -s read-only which hangs headless)
+git diff main...HEAD | codex exec -C "$PWD" --full-auto "Focus on error handling and security"
+git diff HEAD | codex exec -C "$PWD" --full-auto "Check for race conditions"
 
 # Review with title context
 codex review --uncommitted --title "Add user auth middleware"
@@ -120,8 +120,8 @@ codex exec -C "$PWD" --full-auto "Refactor the test helpers"
 # JSONL event output
 codex exec -C "$PWD" --json "List all TODO comments" -o /tmp/result.txt
 
-# Read-only sandbox
-codex exec -C "$PWD" -s read-only "Audit dependencies for vulnerabilities"
+# Read-only analysis (use --full-auto for headless; -s read-only hangs waiting for plan approval)
+codex exec -C "$PWD" --full-auto "Audit dependencies for vulnerabilities"
 ```
 
 ### Key Flags
@@ -130,8 +130,8 @@ codex exec -C "$PWD" -s read-only "Audit dependencies for vulnerabilities"
 |------|---------|
 | `-m, --model <MODEL>` | Model selection (e.g., `gpt-5.4`) |
 | `-c key=value` | Override config (TOML format) |
-| `-s, --sandbox <MODE>` | `read-only`, `workspace-write`, `danger-full-access` |
-| `--full-auto` | Sandboxed auto-execution |
+| `-s, --sandbox <MODE>` | `read-only`, `workspace-write`, `danger-full-access` (**avoid `read-only` in headless mode** — triggers plan-confirmation that hangs) |
+| `--full-auto` | Sandboxed auto-execution (preferred for headless/non-interactive use) |
 | `-C, --cd <DIR>` | Set working directory (use this instead of `--skip-git-repo-check`) |
 | `--search` | Enable web search tool |
 | `--json` | JSONL event output (exec only) |
@@ -205,7 +205,7 @@ gemini -p "Analyze src/auth/ and critique the token refresh strategy"
 codex review --base main
 
 # Custom review instructions — pipe diff to exec
-git diff main...HEAD | codex exec -C "$PWD" -s read-only "Review for correctness, test coverage, and maintainability"
+git diff main...HEAD | codex exec -C "$PWD" --full-auto "Review for correctness, test coverage, and maintainability"
 ```
 
 ## Troubleshooting

@@ -25,11 +25,17 @@ SimpleClaude has Ruby-based tests in the `test/` directory:
 # Run reflexive agreement analysis (requires backup directory)
 ./test/test_reflexive_agreement.rb /path/to/backups
 
-# Install test dependencies first if needed
-bundle install
+# Smoke test external CLI invocations (codex/gemini) — requires CLIs installed
+./test/test_adversarial_cli_smoke.sh          # both
+./test/test_adversarial_cli_smoke.sh codex    # codex only
+./test/test_adversarial_cli_smoke.sh gemini   # gemini only
+
+# Or via Justfile
+just test        # unit tests
+just test-cli    # CLI smoke tests
 ```
 
-The detector consistency test verifies reflexive agreement detection logic with predefined test cases and should pass cleanly.
+The detector consistency test verifies reflexive agreement detection logic with predefined test cases and should pass cleanly. The CLI smoke test verifies codex/gemini produce real reviews (not plan-confirmation prompts or empty output).
 
 ## Architecture
 
