@@ -45,15 +45,11 @@ class AutoFormatHandler < ClaudeHooks::Stop
     rel = relative_file_path(file_path)
     log "Formatting #{rel} with #{formatter[:name]}"
     result = run_formatter(formatter, file_path)
-    return log_format_failure(rel, result[:error]) unless result[:success]
+    return log("Format failed for #{rel}: #{result[:error]}", level: :error) unless result[:success]
+    return log("#{rel} unchanged") unless result[:changed]
 
     log "Formatted #{rel}"
     "#{rel} (#{formatter[:name]})"
-  end
-
-  def log_format_failure(rel, error)
-    log("Format failed for #{rel}: #{error}", level: :error)
-    nil
   end
 
   def notify_formatted(formatted)
@@ -92,8 +88,7 @@ class AutoFormatHandler < ClaudeHooks::Stop
   def markdownlint_formatter
     return unless command_available?('markdownlint')
 
-    # Deliberate overrides — these rules conflict with typical AI-generated markdown
-    { name: 'markdownlint', command: 'markdownlint', args: ['--fix', '--disable', 'MD013,MD041,MD026,MD012,MD024'] }
+    { name: 'markdownlint', command: 'markdownlint', args: %w[--fix --disable MD013,MD041,MD026,MD012,MD024] }
   end
 
   def yaml_formatter
@@ -124,9 +119,12 @@ class AutoFormatHandler < ClaudeHooks::Stop
     command_parts = [formatter[:command]] + formatter[:args] + [file_path]
     log "Running: #{command_parts.join(' ')}"
 
+    content_before = File.read(file_path)
     # Array form avoids shell interpolation. chdir: cwd finds project configs.
     stdout_err, status = Open3.capture2e(*command_parts, chdir: cwd)
-    status.success? ? { success: true, output: stdout_err } : { success: false, error: stdout_err.strip }
+    return { success: false, error: stdout_err.strip } unless status.success?
+
+    { success: true, changed: File.read(file_path) != content_before, output: stdout_err }
   rescue StandardError => e
     { success: false, error: e.message }
   end
