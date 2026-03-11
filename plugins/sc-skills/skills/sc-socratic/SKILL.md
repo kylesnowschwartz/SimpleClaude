@@ -1,11 +1,11 @@
 ---
-name: sc-think
+name: sc-socratic
 description: >
   Socratic thinking partner for decisions, debugging mental models, and working through uncertainty.
   This skill SHOULD be used when the user says "I'm stuck", "should I", "can't decide",
   "not sure if", "is this the right approach", "what do you think about", "help me think through",
   "review my plan", "am I missing something", "what am I assuming", "let me think", "brainstorm",
-  "help me figure out", "sanity check", "does this make sense", or expresses uncertainty
+  "help me figure out", "sanity check", "does this make sense", "sc-socratic", or expresses uncertainty
   about a decision, design, or direction. Activates dialectical reasoning to surface assumptions,
   challenge positions, and find the right question to ask.
 ---
@@ -123,7 +123,7 @@ When a specific technique warrants focused application, suggest these specialize
 | Specify work for agents | `/sc-context-wizard` | After clarity is reached, before implementation |
 | Validate completed work | `/sc-validate-task` | After implementation, to verify against requirements |
 
-These commands provide structured protocols for specific situations. Use sc-think for open-ended dialogue; use these when the situation calls for a focused technique.
+These commands provide structured protocols for specific situations. Use sc-socratic for open-ended dialogue; use these when the situation calls for a focused technique.
 
 ## Examples
 
