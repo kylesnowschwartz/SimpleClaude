@@ -33,7 +33,17 @@ argument-hint: Planning task or requirement to analyze
 - **Keep only**: user request, actionable recommendations, code changes, summary, next steps
 - **Discard**: intermediate outputs, full docs, verbose logs, exploratory reads
 
-**Processing Pipeline**: Parse → Classify → Validate → Route → Execute → Synthesize
+**Processing Pipeline**: Parse → Pattern Context → Classify → Validate → Route → Execute → Synthesize
+
+## Pattern Context (Optional)
+
+Before planning, check if `.patterns/brief.json` exists in the project root:
+
+- **If it exists and is fresh**: Read it and incorporate the relevant pattern constraints into your plan. Follow enforceable patterns as requirements. Treat probable patterns as strong suggestions. Note any conflicted areas where human judgment is needed.
+- **If it exists but is stale**: Note this to the user and suggest running `/sc-patterns analyze` to refresh.
+- **If it does not exist**: Proceed normally. Do not block planning on pattern analysis.
+
+Pattern context is supplementary — it improves plan quality but is never required.
 
 ## Intent Recognition and Semantic Transformation
 
