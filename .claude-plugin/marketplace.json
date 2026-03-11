@@ -136,49 +136,6 @@
         "agents",
         "claude-code"
       ]
-    },
-    {
-      "name": "sc-patterns",
-      "description": "Codebase pattern detection and convention guidance — scans code, extracts high-confidence conventions, and feeds them into planning",
-      "version": "5.10.4",
-      "author": {
-        "name": "Kyle Snow Schwartz"
-      },
-      "source": "./plugins/sc-patterns",
-      "homepage": "https://github.com/kylesnowschwartz/SimpleClaude",
-      "repository": "https://github.com/kylesnowschwartz/SimpleClaude",
-      "license": "MIT",
-      "category": "code-quality",
-      "keywords": [
-        "patterns",
-        "conventions",
-        "architecture",
-        "code-quality",
-        "planning",
-        "agents",
-        "claude-code"
-      ]
-    },
-    {
-      "name": "sc-nelson",
-      "description": "Royal Navy agent coordination framework — sailing orders, battle plans, action stations, and a captain's log. Based on harrymunro/nelson (MIT).",
-      "version": "5.10.4",
-      "author": {
-        "name": "Kyle Snow Schwartz"
-      },
-      "source": "./plugins/sc-nelson",
-      "homepage": "https://github.com/kylesnowschwartz/SimpleClaude",
-      "repository": "https://github.com/kylesnowschwartz/SimpleClaude",
-      "license": "MIT",
-      "category": "productivity",
-      "keywords": [
-        "agents",
-        "coordination",
-        "teams",
-        "multi-agent",
-        "workflow",
-        "claude-code"
-      ]
     }
   ]
 }

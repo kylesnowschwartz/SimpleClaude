@@ -20,24 +20,12 @@ claude plugin install sc-skills
 claude plugin install sc-refactor
 ```
 
-Or from within Claude Code:
-
-```bash
-/plugin marketplace add https://github.com/kylesnowschwartz/SimpleClaude
-/plugin install simpleclaude-core
-/plugin install sc-hooks
-/plugin install sc-output-styles
-/plugin install sc-extras
-/plugin install sc-skills
-/plugin install sc-refactor
-```
-
 **What's included:**
 - **simpleclaude-core**: 4+1 core commands and 7 specialized agents
 - **sc-hooks** _(optional)_: Session management, tool monitoring, and notification hooks
 - **sc-output-styles** _(optional)_: 8 curated output styles (personality-driven: Linus, Austen, Starfleet; structured: HTML, JSON, Markdown, Semantic Markdown, YAML)
-- **sc-extras** _(optional)_: 11 utility commands for mermaid diagrams, root cause analysis, claim verification, pre-commit setup, git worktrees, task validation, and more
-- **sc-skills** _(optional)_: Frontend design iteration, Gemini image generation, and command generation tools
+- **sc-extras** _(optional)_: Utility commands for root cause analysis, claim verification, adversarial analysis, and more
+- **sc-skills** _(optional)_: Mermaid diagrams, codebase pattern detection, frontend design, image generation, and command generation tools
 - **sc-refactor** _(optional)_: PR review with ticket integration, codebase health checks, and 9 specialized analysis agents for refactoring workflows
 
 ## Updating
@@ -73,7 +61,7 @@ claude plugin install sc-refactor@simpleclaude
 
 # Utilities
 /sc-extras:sc-five-whys                   # Root cause analysis
-/sc-extras:sc-mermaid-flowchart           # Generate architecture diagrams
+/sc-skills:sc-mermaid flowchart auth      # Generate architecture diagrams
 /sc-extras:sc-validate-task               # Validate completed work
 /sc-extras:sc-worktrees                   # Manage git worktrees
 
@@ -111,8 +99,8 @@ SimpleClaude/
 │   ├── simpleclaude-core/        # Core plugin: 4+1 commands & 7 agents
 │   ├── sc-hooks/                 # Hooks plugin: session management & notifications
 │   ├── sc-output-styles/         # Output styles plugin: 8 curated styles
-│   ├── sc-extras/                # Extras plugin: 11 utility commands
-│   ├── sc-skills/                # Skills plugin: design iteration, image gen, command gen
+│   ├── sc-extras/                # Extras plugin: utility commands
+│   ├── sc-skills/                # Skills plugin: mermaid, patterns, design, image gen
 │   └── sc-refactor/              # Refactor plugin: PR review & 9 analysis agents
 ├── scripts/
 │   └── install.rb                # Installation/update script

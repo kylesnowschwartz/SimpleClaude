@@ -94,7 +94,7 @@ diff -u TEMPLATE.md new_command.md | grep "^[+-]" | head -20
 
 ## Command Purpose Formulas
 
-### Analysis Commands (like eastereggs)
+### Analysis Commands
 
 **Purpose**: [Discover/Analyze/Understand] [target] through [method]
 
