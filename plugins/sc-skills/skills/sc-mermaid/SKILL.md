@@ -115,6 +115,44 @@ sequenceDiagram
     B-->>A: response
 ```
 
+### Example: API Request Flow
+
+```
+%% Flow: API authentication
+%% Render: cat api-auth.mmd | mermaid-ascii -f -
+
+sequenceDiagram
+    participant C as Client
+    participant G as Gateway
+    participant A as Auth
+    participant S as Service
+
+    C->>G: POST /api/data
+    G->>A: validate token
+    A-->>G: valid
+    G->>S: forward request
+    S-->>G: response
+    G-->>C: 200 OK
+
+    %% alt: invalid token
+    %% A-->>G: 401
+    %% G-->>C: 401 Unauthorized
+```
+
+### Validation
+
+Before saving, ALWAYS test with:
+```bash
+cat <<'EOF' | mermaid-ascii -f -
+[your diagram here]
+EOF
+```
+
+If it errors, fix the syntax. Common fixes:
+- Add missing colon after target: `A->>B` -> `A->>B:`
+- Fix arrow type: `A->B:` -> `A->>B:`
+- Remove unsupported syntax (Notes, loops, etc.)
+
 ---
 
 ## Output
