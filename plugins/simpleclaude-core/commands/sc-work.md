@@ -43,7 +43,17 @@ argument-hint: Description of what to build, fix, or modify
 - **Keep only**: user request, actionable recommendations, code changes, summary, next steps
 - **Discard**: intermediate outputs, full docs, verbose logs, exploratory reads
 
-**Processing Pipeline**: Parse → Classify → Validate → Route → Execute → Synthesize
+**Processing Pipeline**: Parse → Pattern Context → Classify → Validate → Route → Execute → Synthesize
+
+## Pattern Context (Optional)
+
+Before implementing, check if `.patterns/brief.json` exists in the project root:
+
+- **If it exists and is fresh**: Read it and follow the relevant pattern constraints for the implementation scope. Match enforceable patterns. Use golden files as concrete examples to follow. Respect negative guidance (what NOT to copy).
+- **If it exists but is stale**: Note this to the user and suggest running `/sc-patterns analyze` to refresh.
+- **If it does not exist**: Proceed normally. Do not block implementation on pattern analysis.
+
+Pattern context is supplementary — it improves implementation consistency but is never required.
 
 ## Intent Recognition and Semantic Transformation
 
