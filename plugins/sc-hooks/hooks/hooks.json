@@ -31,6 +31,15 @@
             "command": "${CLAUDE_PLUGIN_ROOT}/hooks/entrypoints/pre_tool_use.rb"
           }
         ]
+      },
+      {
+        "matcher": "ExitPlanMode",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/entrypoints/pre_tool_use.rb"
+          }
+        ]
       }
     ],
     "Stop": [
