@@ -9,13 +9,13 @@
   },
   "plugins": [
     {
-      "name": "simpleclaude-core",
+      "name": "sc-core",
       "description": "Core SimpleClaude framework with intent-based commands and specialized agents for token-efficient execution",
       "version": "5.10.4",
       "author": {
         "name": "Kyle Snow Schwartz"
       },
-      "source": "./plugins/simpleclaude-core",
+      "source": "./plugins/sc-core",
       "homepage": "https://github.com/kylesnowschwartz/SimpleClaude",
       "repository": "https://github.com/kylesnowschwartz/SimpleClaude",
       "license": "MIT",

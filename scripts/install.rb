@@ -24,9 +24,29 @@ trap('INT') do
 end
 
 module SimpleClaude
+  STATUS_LINE_INFO = <<~INFO
+
+    SimpleClaude includes a status line script showing model, branch,
+    tokens, and cost. To use it:
+
+    1. Copy the script:
+       cp %<root>s/status-lines/simple-status-line.sh ~/.claude/status-lines/
+
+    2. Add to ~/.claude/settings.json:
+       "statusLine": {
+         "command": "$HOME/.claude/status-lines/simple-status-line.sh"
+       }
+
+    See templates/settings.example.json for a complete example with
+    recommended permissions and environment variables.
+
+  INFO
+
+  # Registers the SimpleClaude marketplace and installs plugins
+  # via Claude Code's native plugin CLI.
   class Installer
     PLUGINS = [
-      { name: 'simpleclaude-core', desc: 'core framework (5 commands + 7 agents)', required: true },
+      { name: 'sc-core', desc: 'core framework (5 commands + 7 agents)', required: true },
       { name: 'sc-hooks', desc: 'session management and notifications' },
       { name: 'sc-extras', desc: '7 utility commands' },
       { name: 'sc-output-styles', desc: '8 output style personalities' },
@@ -43,7 +63,7 @@ module SimpleClaude
 
     def run
       show_header
-      return unless confirm('Proceed with installation?')
+      return unless confirm?('Proceed with installation?')
 
       register_marketplace
       install_plugins
@@ -52,13 +72,18 @@ module SimpleClaude
 
     private
 
-    def color(text, c) = $stdout.tty? ? "#{COLORS[c]}#{text}#{COLORS[:reset]}" : text
+    def color(text, name) = $stdout.tty? ? "#{COLORS[name]}#{text}#{COLORS[:reset]}" : text
 
-    def confirm(question)
+    def confirm?(question)
       return true if @force || @dry_run
 
       print "#{question} (y/n): "
-      $stdin.gets&.strip&.downcase&.start_with?('y')
+      read_yes_no?
+    end
+
+    def read_yes_no?
+      answer = $stdin.gets&.strip&.downcase
+      answer&.start_with?('y') || false
     end
 
     def show_header
@@ -85,18 +110,22 @@ module SimpleClaude
     end
 
     def install_plugins
-      PLUGINS.each do |plugin|
-        if plugin_installed?(plugin[:name])
-          puts "Updating #{plugin[:name]} (#{plugin[:desc]})..."
-          run_cmd("claude plugin uninstall #{plugin[:name]}")
-        else
-          next unless plugin[:required] || @force || confirm("Install #{plugin[:name]} (#{plugin[:desc]})?")
+      PLUGINS.each { |plugin| install_or_update_plugin(plugin) }
+    end
 
-          puts "Installing #{plugin[:name]} (#{plugin[:desc]})..."
-        end
-        run_cmd("claude plugin install #{plugin[:name]}")
-        puts
+    def install_or_update_plugin(plugin)
+      name, desc = plugin.values_at(:name, :desc)
+
+      if plugin_installed?(name)
+        puts "Updating #{name} (#{desc})..."
+        run_cmd("claude plugin uninstall #{name}")
+      else
+        return unless plugin[:required] || @force || confirm?("Install #{name} (#{desc})?")
+
+        puts "Installing #{name} (#{desc})..."
       end
+      run_cmd("claude plugin install #{name}")
+      puts
     end
 
     def show_post_install_info
@@ -105,32 +134,14 @@ module SimpleClaude
       puts '=' * 40
       puts color('Optional: Custom Status Line', :yellow)
       puts '=' * 40
-      puts <<~INFO
-
-        SimpleClaude includes a status line script showing model, branch,
-        tokens, and cost. To use it:
-
-        1. Copy the script:
-           cp #{@repo_root}/status-lines/simple-status-line.sh ~/.claude/status-lines/
-
-        2. Add to ~/.claude/settings.json:
-           "statusLine": {
-             "command": "$HOME/.claude/status-lines/simple-status-line.sh"
-           }
-
-        See templates/settings.example.json for a complete example with
-        recommended permissions and environment variables.
-
-      INFO
+      puts format(SimpleClaude::STATUS_LINE_INFO, root: @repo_root)
     end
 
     def run_cmd(cmd)
-      if @dry_run
-        puts color("[DRY RUN] #{cmd}", :yellow)
-        true
-      else
-        system(cmd)
-      end
+      return system(cmd) unless @dry_run
+
+      puts color("[DRY RUN] #{cmd}", :yellow)
+      true
     end
 
     def marketplace_registered?

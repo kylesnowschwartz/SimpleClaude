@@ -4,7 +4,7 @@ This file provides guidance to [Claude Code](https://github.com/anthropics/claud
 
 ## Critical Rules
 
-- **important** `plugins/` contains all SimpleClaude plugins (simpleclaude-core, sc-hooks, sc-output-styles, sc-extras, sc-skills, sc-refactor)
+- **important** `plugins/` contains all SimpleClaude plugins (sc-core, sc-hooks, sc-output-styles, sc-extras, sc-skills, sc-refactor)
 - Command changes: update commands consistently across all 4+1 core-commands (sc-plan, sc-work, sc-explore, sc-review, sc-workflow)
 - Plugin structure: Each plugin in `plugins/` has `.claude-plugin/plugin.json`, plus optional `commands/`, `agents/`, `hooks/`, `output-styles/` directories
 - Description metadata: Use RFC 2119 obligation language (uppercase SHOULD/MUST) in `description` fields of SKILL.md and agent frontmatter to signal activation intent to AI agents
@@ -40,7 +40,7 @@ The detector consistency test verifies reflexive agreement detection logic with 
 ## Architecture
 
 SimpleClaude consists of these plugins:
-- **simpleclaude-core**: Core framework with intent-based commands and specialized agents
+- **sc-core**: Core framework with intent-based commands and specialized agents
 - **sc-hooks**: Session management, tool monitoring, plan review gating, and notifications
 - **sc-output-styles**: Curated output styles — personality-driven (Linus, Austen, Lovelace, Ousterhout, Starfleet, Mayo Clinic) and structured formats (HTML, JSON, Markdown, Semantic Markdown, YAML)
 - **sc-extras**: Utility commands for root cause analysis, claim verification, adversarial analysis, and context wizards

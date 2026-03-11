@@ -12,7 +12,7 @@ Install SimpleClaude plugins directly from the commandline:
 
 ```bash
 claude plugin marketplace add https://github.com/kylesnowschwartz/SimpleClaude
-claude plugin install simpleclaude-core
+claude plugin install sc-core
 claude plugin install sc-hooks
 claude plugin install sc-output-styles
 claude plugin install sc-extras
@@ -21,7 +21,7 @@ claude plugin install sc-refactor
 ```
 
 **What's included:**
-- **simpleclaude-core**: Intent-based commands and specialized agents for planning, implementation, exploration, and review
+- **sc-core**: Intent-based commands and specialized agents for planning, implementation, exploration, and review
 - **sc-hooks** _(optional)_: Session management, tool monitoring, plan review gating, and notification hooks
 - **sc-output-styles** _(optional)_: Curated output styles — personality-driven (Linus, Austen, Lovelace, Ousterhout, Starfleet, Mayo Clinic) and structured formats (HTML, JSON, Markdown, Semantic Markdown, YAML)
 - **sc-extras** _(optional)_: Utility commands for root cause analysis, claim verification, adversarial analysis, and context wizards
@@ -34,7 +34,7 @@ claude plugin install sc-refactor
 
 ```bash
 claude plugin marketplace update simpleclaude
-claude plugin install simpleclaude-core@simpleclaude
+claude plugin install sc-core@simpleclaude
 claude plugin install sc-hooks@simpleclaude
 claude plugin install sc-output-styles@simpleclaude
 claude plugin install sc-extras@simpleclaude
@@ -46,11 +46,11 @@ claude plugin install sc-refactor@simpleclaude
 
 ```bash
 # Core development commands
-/simpleclaude-core:sc-plan "How should I add authentication to this app?"
-/simpleclaude-core:sc-work "Add JWT authentication with login/logout"
-/simpleclaude-core:sc-explore "How does the current database layer work?"
-/simpleclaude-core:sc-review "Check security vulnerabilities in auth module"
-/simpleclaude-core:sc-workflow "Start structured development for OAuth support"
+/sc-core:sc-plan "How should I add authentication to this app?"
+/sc-core:sc-work "Add JWT authentication with login/logout"
+/sc-core:sc-explore "How does the current database layer work?"
+/sc-core:sc-review "Check security vulnerabilities in auth module"
+/sc-core:sc-workflow "Start structured development for OAuth support"
 
 # PR review and refactoring
 /sc-refactor:sc-review-pr 42              # Full PR review with ticket context
@@ -93,7 +93,7 @@ Each command automatically spawns appropriate agents:
 ```
 SimpleClaude/
 ├── plugins/
-│   ├── simpleclaude-core/        # Core plugin: commands & agents
+│   ├── sc-core/        # Core plugin: commands & agents
 │   ├── sc-hooks/                 # Hooks plugin: session management & notifications
 │   ├── sc-output-styles/         # Output styles plugin: personality & structured formats
 │   ├── sc-extras/                # Extras plugin: utility commands

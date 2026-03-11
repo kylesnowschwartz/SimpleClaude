@@ -1,5 +1,5 @@
 {
-  "name": "simpleclaude-core",
+  "name": "sc-core",
   "version": "5.10.4",
   "description": "Core SimpleClaude framework with intent-based commands and specialized agents",
   "author": {

@@ -36,7 +36,7 @@ Reference guide for routing review and refactoring requests to specialized agent
 | `sc-dead-code-detector` | Unreferenced exports, orphan files, commented code | red |
 | `sc-test-organizer` | Test structure, missing tests, fixture sprawl | green |
 | `sc-pr-comment-resolver` | Implement PR review comment changes | blue |
-External dependency (from simpleclaude-core):
+External dependency (from sc-core):
 - `sc-code-reviewer` - Bugs, security, CLAUDE.md compliance
 
 ## Routing Table

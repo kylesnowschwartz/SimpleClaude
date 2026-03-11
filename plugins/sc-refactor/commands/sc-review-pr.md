@@ -115,7 +115,7 @@ Launch 4 specialized review agents with full context:
 
 ```
 # Agent 1: CLAUDE.md Compliance (sonnet)
-Task(subagent_type: "simpleclaude-core:sc-code-reviewer", model: "sonnet",
+Task(subagent_type: "sc-core:sc-code-reviewer", model: "sonnet",
      run_in_background: true,
      prompt: "Review for CLAUDE.md compliance only.  If no CLAUDE.md was found in phase 1, stop now.
 
