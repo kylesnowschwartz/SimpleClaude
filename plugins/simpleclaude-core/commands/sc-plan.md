@@ -21,7 +21,6 @@ argument-hint: Planning task or requirement to analyze
 **Direct Agent Rules (ALWAYS delegate these):**
 
 - **Documentation lookups** → Use `sc-repo-documentation-expert`
-- **Test execution** → Use `sc-test-runner`
 - **Web searches** → Use `sc-web-search-researcher`
 - **GitHub searches** → Use `sc-github-researcher`
 - **Deep codebase analysis** → Use `sc-code-explorer`

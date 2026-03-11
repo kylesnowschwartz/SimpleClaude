@@ -10,7 +10,7 @@
   "plugins": [
     {
       "name": "simpleclaude-core",
-      "description": "Core SimpleClaude framework with 4+1 intent-based commands and 7 specialized agents for token-efficient execution",
+      "description": "Core SimpleClaude framework with intent-based commands and specialized agents for token-efficient execution",
       "version": "5.10.4",
       "author": {
         "name": "Kyle Snow Schwartz"
@@ -35,7 +35,7 @@
     },
     {
       "name": "sc-hooks",
-      "description": "SimpleClaude hooks for session management, tool monitoring, and notifications",
+      "description": "SimpleClaude hooks for session management, tool monitoring, plan review gating, and notifications",
       "version": "5.10.4",
       "author": {
         "name": "Kyle Snow Schwartz"
@@ -55,7 +55,7 @@
     },
     {
       "name": "sc-extras",
-      "description": "Optional SimpleClaude utilities for debugging, git workflows, and task validation",
+      "description": "Optional SimpleClaude utilities for root cause analysis, claim verification, adversarial analysis, and context wizards",
       "version": "5.10.4",
       "author": {
         "name": "Kyle Snow Schwartz"
@@ -67,16 +67,16 @@
       "category": "productivity",
       "keywords": [
         "utilities",
-        "debugging",
-        "git",
+        "root-cause-analysis",
+        "adversarial",
+        "verification",
         "workflow",
-        "validation",
         "claude-code"
       ]
     },
     {
       "name": "sc-output-styles",
-      "description": "Curated output styles for Claude Code: personality-driven (Linus, Austen, Starfleet) and structured formats (YAML, HTML, Markdown)",
+      "description": "Curated output styles for Claude Code: personality-driven and structured formats",
       "version": "5.10.4",
       "author": {
         "name": "Kyle Snow Schwartz"
@@ -96,7 +96,7 @@
     },
     {
       "name": "sc-skills",
-      "description": "Skills and agents for frontend design, image generation, and command creation",
+      "description": "Skills and agents for diagrams, codebase patterns, hypothesis testing, Socratic thinking, file querying, frontend design, image generation, and command creation",
       "version": "5.10.4",
       "author": {
         "name": "Kyle Snow Schwartz"
@@ -108,10 +108,13 @@
       "category": "development",
       "keywords": [
         "skills",
+        "mermaid",
+        "patterns",
         "frontend",
         "design",
         "image-generation",
-        "plugin-development",
+        "hypothesis-testing",
+        "file-querying",
         "claude-code"
       ]
     },

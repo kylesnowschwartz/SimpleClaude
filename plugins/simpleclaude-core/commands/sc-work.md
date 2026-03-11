@@ -21,7 +21,6 @@ argument-hint: Description of what to build, fix, or modify
 **Direct Agent Rules (ALWAYS delegate these):**
 
 - **Documentation lookups** → Use `sc-repo-documentation-expert`
-- **Test execution** → Use `sc-test-runner`
 - **Web searches** → Use `sc-web-search-researcher`
 - **GitHub searches** → Use `sc-github-researcher`
 - **Deep codebase analysis** → Use `sc-code-explorer`
@@ -34,7 +33,6 @@ argument-hint: Description of what to build, fix, or modify
 - `sc-code-architect` - Designs feature architectures by analyzing existing patterns and providing implementation blueprints
 - `sc-code-reviewer` - Reviews code for bugs, security vulnerabilities, and adherence to project conventions
 - `sc-repo-documentation-expert` - Finds documentation from Context7, local repos, and GitHub repositories
-- `sc-test-runner` - Executes tests and analyzes failures
 - `sc-web-search-researcher` - Searches web for current information
 - `sc-github-researcher` - Searches GitHub for repos, code, issues, and PRs via gh CLI
 

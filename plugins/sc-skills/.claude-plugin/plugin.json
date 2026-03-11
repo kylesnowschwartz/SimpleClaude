@@ -1,7 +1,7 @@
 {
   "name": "sc-skills",
   "version": "5.10.4",
-  "description": "Skills and agents for frontend design, image generation, and command creation",
+  "description": "Skills and agents for diagrams, codebase patterns, hypothesis testing, Socratic thinking, file querying, frontend design, image generation, and command creation",
   "author": {
     "name": "Kyle Snow Schwartz"
   },

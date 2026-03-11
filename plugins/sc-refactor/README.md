@@ -13,7 +13,7 @@ This plugin provides post-implementation validation workflows. Use it to:
 ## What This Plugin Is NOT
 
 - **Not a linter replacement** - Style/formatting is handled by ESLint, Rubocop, etc.
-- **Not a test generator** - Use sc-test-runner for test execution
+- **Not a test generator** - Use the built-in test runner agent for test execution
 - **Not an architecture planner** - Use sc-code-architect for greenfield design
 - **Not pre-work planning** - This is strictly for post-implementation validation
 

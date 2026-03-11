@@ -26,7 +26,6 @@ Delegate context-specific tasks to these specialized sub-agents as needed in par
 - `sc-code-architect` - Designs feature architectures by analyzing existing patterns and providing implementation blueprints
 - `sc-code-reviewer` - Reviews code for bugs, security vulnerabilities, and adherence to project conventions
 - `sc-repo-documentation-expert` - Finds documentation from Context7, local repos, and GitHub repositories
-- `sc-test-runner` - Executes tests and analyzes failures
 - `sc-web-search-researcher` - Searches web for current information
 - `sc-github-researcher` - Searches GitHub for repos, code, issues, and PRs via gh CLI
 

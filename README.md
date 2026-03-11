@@ -21,12 +21,12 @@ claude plugin install sc-refactor
 ```
 
 **What's included:**
-- **simpleclaude-core**: 4+1 core commands and 7 specialized agents
-- **sc-hooks** _(optional)_: Session management, tool monitoring, and notification hooks
-- **sc-output-styles** _(optional)_: 8 curated output styles (personality-driven: Linus, Austen, Starfleet; structured: HTML, JSON, Markdown, Semantic Markdown, YAML)
-- **sc-extras** _(optional)_: Utility commands for root cause analysis, claim verification, adversarial analysis, and more
-- **sc-skills** _(optional)_: Mermaid diagrams, codebase pattern detection, frontend design, image generation, and command generation tools
-- **sc-refactor** _(optional)_: PR review with ticket integration, codebase health checks, and 9 specialized analysis agents for refactoring workflows
+- **simpleclaude-core**: Intent-based commands and specialized agents for planning, implementation, exploration, and review
+- **sc-hooks** _(optional)_: Session management, tool monitoring, plan review gating, and notification hooks
+- **sc-output-styles** _(optional)_: Curated output styles — personality-driven (Linus, Austen, Lovelace, Ousterhout, Starfleet, Mayo Clinic) and structured formats (HTML, JSON, Markdown, Semantic Markdown, YAML)
+- **sc-extras** _(optional)_: Utility commands for root cause analysis, claim verification, adversarial analysis, and context wizards
+- **sc-skills** _(optional)_: Mermaid diagrams, codebase pattern detection, hypothesis testing, Socratic thinking, file querying, frontend design, image generation, and command generation
+- **sc-refactor** _(optional)_: PR review with ticket integration, codebase health checks, and specialized analysis agents for refactoring workflows
 
 ## Updating
 
@@ -72,8 +72,8 @@ claude plugin install sc-refactor@simpleclaude
 
 SimpleClaude uses a **lightweight agent architecture** with intent-based commands:
 
-- **4+1 Command Structure**: Intent-based interfaces that understand user goals
-- **7 Core Agents**: Context-specific assistants spawned via `Task()` calls
+- **Command Structure**: Intent-based interfaces that understand user goals (plan, work, explore, review, workflow)
+- **Specialized Agents**: Context-specific assistants spawned via `Task()` calls
 - **Token-Efficient Design**: Agents work in isolation with focused context
 - **Clean Separation**: Commands understand intent, agents execute specialized tasks
 
@@ -81,27 +81,24 @@ SimpleClaude uses a **lightweight agent architecture** with intent-based command
 
 Each command automatically spawns appropriate agents:
 
-- `sc-code-explorer` - Deeply analyzes existing codebase features by tracing execution paths and mapping architecture
-- `sc-code-architect` - Designs feature architectures by analyzing existing patterns and providing implementation blueprints
-- `sc-code-reviewer` - Reviews code for bugs, security vulnerabilities, and adherence to project conventions
-- `sc-github-researcher` - Discovers and evaluates open source projects on GitHub using structured search
-- `sc-repo-documentation-expert` - Finds documentation from Context7, local repos, and GitHub repositories
-- `sc-test-runner` - Runs tests and analyzes failures without making fixes
-- `sc-web-search-researcher` - Searches web for current information and research
-
-This lightweight approach replaces previous heavyweight framework systems with focused, token-efficient specialized agents.
+- `sc-code-explorer` - Traces execution paths and maps architecture
+- `sc-code-architect` - Designs feature architectures from existing patterns
+- `sc-code-reviewer` - Reviews code for bugs, security, and convention adherence
+- `sc-github-researcher` - Discovers and evaluates open source projects on GitHub
+- `sc-repo-documentation-expert` - Finds documentation from Context7, local repos, and GitHub
+- `sc-web-search-researcher` - Searches web for current information
 
 ### Project Structure
 
 ```
 SimpleClaude/
 ├── plugins/
-│   ├── simpleclaude-core/        # Core plugin: 4+1 commands & 7 agents
+│   ├── simpleclaude-core/        # Core plugin: commands & agents
 │   ├── sc-hooks/                 # Hooks plugin: session management & notifications
-│   ├── sc-output-styles/         # Output styles plugin: 8 curated styles
+│   ├── sc-output-styles/         # Output styles plugin: personality & structured formats
 │   ├── sc-extras/                # Extras plugin: utility commands
-│   ├── sc-skills/                # Skills plugin: mermaid, patterns, design, image gen
-│   └── sc-refactor/              # Refactor plugin: PR review & 9 analysis agents
+│   ├── sc-skills/                # Skills plugin: diagrams, patterns, design, querying
+│   └── sc-refactor/              # Refactor plugin: PR review & analysis agents
 ├── scripts/
 │   └── install.rb                # Installation/update script
 ├── docs/                         # Documentation
