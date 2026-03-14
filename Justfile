@@ -38,9 +38,6 @@ bump type:
     # Update README badge
     sed -i '' "s/version-[0-9]*\.[0-9]*\.[0-9]*-blue/version-$new-blue/" README.md
 
-    # Update CLAUDE.md
-    sed -i '' "s/Current version: [0-9]*\.[0-9]*\.[0-9]*/Current version: $new/" CLAUDE.md
-
     # Update marketplace.json top-level version
     jq --arg v "$new" '.version = $v' .claude-plugin/marketplace.json | sponge .claude-plugin/marketplace.json
 
@@ -58,7 +55,7 @@ bump type:
     done
 
     # Stage all version files
-    git add VERSION README.md CLAUDE.md .claude-plugin/marketplace.json
+    git add VERSION README.md .claude-plugin/marketplace.json
     git add plugins/*/.claude-plugin/plugin.json 2>/dev/null || true
 
     echo "'Just bump' done. Changes staged and ready. Run 'just release' to commit, tag, and push."

@@ -9,9 +9,11 @@ require_relative '../../lib/sound_config'
 # PURPOSE: Handle Claude Code notifications (permission requests, idle warnings, MCP input)
 # TRIGGERS: permission_prompt, elicitation_dialog, idle_prompt (filtered via hooks.json matcher)
 # DISABLE: Set SIMPLE_CLAUDE_DISABLE_NOTIFICATIONS=1 to skip notifications entirely
-# SOUND:   Controlled by ~/.config/claude/sounds.conf (SOUND_MODE=off|glass|aoe)
+# SOUND:   Controlled by ~/.config/claude/sounds.conf (SOUND_MODE=off|glass)
 #          Or override with SIMPLE_CLAUDE_DISABLE_NOTIFICATION_SOUND=1
 
+# Sends macOS notifications for Claude Code events (permission requests, idle warnings, MCP input).
+# Sound and display controlled via ~/.config/claude/sounds.conf and env vars.
 class NotificationHandler < ClaudeHooks::Notification
   def call
     log "Claude Code Notification [#{notification_type}]: #{message}"
@@ -31,32 +33,33 @@ class NotificationHandler < ClaudeHooks::Notification
   private
 
   def send_macos_notification
-    title = 'Claude Code'
-    # notification_type may be missing (see: github.com/anthropics/claude-code/issues/11964)
-    # Fall back to message pattern matching when notification_type is nil
-    subtitle = case effective_notification_type
-               when 'permission_prompt'
-                 'Permission Required'
-               when 'elicitation_dialog'
-                 'Input Required'
-               when 'idle_prompt'
-                 'Waiting for Input'
-               else
-                 'Notification'
-               end
-
-    # Sound controlled by SoundConfig (glass mode) or env var override
-    sound_arg = if ENV['SIMPLE_CLAUDE_DISABLE_NOTIFICATION_SOUND'] || !SoundConfig.glass?
-                  ''
-                else
-                  ' sound name "glass"'
-                end
-    script = %(display notification "#{escape_quotes(truncate_message(message))}" with title "#{title}" subtitle "#{subtitle}"#{sound_arg})
+    subtitle = notification_subtitle
+    sound_arg = notification_sound_arg
+    body = escape_quotes(truncate_message(message))
+    script = %(display notification "#{body}" with title "Claude Code" subtitle "#{subtitle}"#{sound_arg})
 
     # Fire and forget - don't block on osascript
     spawn('osascript', '-e', script, %i[out err] => '/dev/null')
   rescue StandardError => e
     log "Failed to send macOS notification: #{e.message}", level: :error
+  end
+
+  # notification_type may be missing (see: github.com/anthropics/claude-code/issues/11964)
+  def notification_subtitle
+    case effective_notification_type
+    when 'permission_prompt' then 'Permission Required'
+    when 'elicitation_dialog' then 'Input Required'
+    when 'idle_prompt' then 'Waiting for Input'
+    else 'Notification'
+    end
+  end
+
+  def notification_sound_arg
+    if ENV['SIMPLE_CLAUDE_DISABLE_NOTIFICATION_SOUND'] || !SoundConfig.glass?
+      ''
+    else
+      ' sound name "glass"'
+    end
   end
 
   def escape_quotes(text)

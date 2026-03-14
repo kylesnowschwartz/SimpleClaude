@@ -18,7 +18,7 @@ Reference guide for routing review and refactoring requests to specialized agent
 | `/sc-refactor:sc-pr-comments` | View unresolved PR review comments | Scripts (GraphQL) |
 | `/sc-refactor:sc-resolve-pr-parallel` | Batch resolve all PR comments | sc-pr-comment-resolver (parallel) |
 | `/sc-refactor:sc-cleanup` | Post-AI session cleanup (debug statements, duplicates) | 4 agents (dead-code, duplication, naming, test) |
-| `/sc-refactor:sc-audit` | Verify structural completeness (wiring, configs) | sc-structural-reviewer |
+| `/sc-refactor:sc-structural-check` | Verify structural completeness (wiring, configs) | sc-structural-reviewer |
 | `/sc-refactor:sc-codebase-health` | Full codebase analysis | All 6 agents in parallel |
 | `/sc-refactor:sc-adversarial-review` | Multi-model adversarial review | Codex CLI + Gemini CLI + Claude |
 | `/sc-refactor:sc-bug-hunt` | Adversarial bug hunt with competing agents | 3 Explore agents (finder, adversary, referee) |
@@ -51,7 +51,7 @@ Match the user's request to the appropriate command or agents:
 | "PR comments", "view comments", "unresolved comments" | `/sc-pr-comments` |
 | "resolve comments", "fix PR feedback", "address review" | `/sc-resolve-pr-parallel` |
 | "clean up", "after AI session", "find debug", "console.log" | `/sc-cleanup` |
-| "audit", "structural check", "verify wiring", "missing config" | `/sc-audit` |
+| "audit", "structural check", "verify wiring", "missing config" | `/sc-structural-check` |
 | "health check", "full analysis", "comprehensive" | `/sc-codebase-health` |
 | "adversarial review", "red team", "break this code", "multi-model" | `/sc-adversarial-review` |
 | "bug hunt", "find bugs", "hunt bugs", "adversarial bug hunt" | `/sc-bug-hunt` |
@@ -133,7 +133,7 @@ Post-AI session cleanup. Spawns 4 agents to find:
 
 Offers auto-fix for immediate issues (debug removal, dead code deletion).
 
-### sc-audit
+### sc-structural-check
 
 Structural completeness verification. Uses sc-structural-reviewer to check:
 - Route registration

@@ -126,7 +126,7 @@ claude
 | Mid-session isolation | Ask Claude to use a worktree |
 | Isolated subagent work (no merge needed) | `isolation: worktree` in agent frontmatter |
 | Parallel terminal sessions | Manual worktrees in `tree/` |
-| Multi-agent merge workflow | `/parallel-worktree-team` |
+| Multi-agent merge workflow | `/sc-parallel-worktree-team` |
 
 **If no $ARGUMENTS are provided** Instruct the user on how to create and verify worktrees, starting with native support for simple cases and manual management for advanced use.
 

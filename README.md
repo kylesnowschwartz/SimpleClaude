@@ -63,7 +63,7 @@ claude plugin install sc-refactor@simpleclaude
 /sc-extras:sc-five-whys                   # Root cause analysis
 /sc-skills:sc-mermaid flowchart auth      # Generate architecture diagrams
 /sc-extras:sc-validate-task               # Validate completed work
-/sc-extras:sc-worktrees                   # Manage git worktrees
+/sc-skills:sc-worktrees                   # Manage git worktrees
 
 /sc-hooks:sc-sounds                       # Configure notification sounds
 ```

@@ -13,6 +13,7 @@
 #
 # Default: glass (maintains backward compatibility)
 
+# Reads sound mode from ~/.config/claude/sounds.conf for notification hooks.
 module SoundConfig
   CONFIG_PATH = File.expand_path('~/.config/claude/sounds.conf')
   VALID_MODES = %w[off glass].freeze
@@ -20,7 +21,7 @@ module SoundConfig
 
   class << self
     # Read current sound mode from config file
-    # @return [String] one of: off, glass, aoe
+    # @return [String] one of: off, glass
     def mode
       return DEFAULT_MODE unless File.exist?(CONFIG_PATH)
 

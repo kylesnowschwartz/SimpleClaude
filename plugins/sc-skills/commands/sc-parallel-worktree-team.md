@@ -1,5 +1,5 @@
 ---
-name: parallel-worktree-team
+name: sc-parallel-worktree-team
 description: Parallelize work across agent teams using git worktrees and tmux
 argument-hint: "[description of work to parallelize]"
 ---

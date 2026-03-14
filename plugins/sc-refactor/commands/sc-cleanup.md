@@ -100,5 +100,5 @@ Output the report. Done.
 
 - Functional correctness (use tests for that)
 - Security issues (use sc-review-pr)
-- Structural completeness (use sc-audit)
+- Structural completeness (use sc-structural-check)
 - Code style (use your linter)

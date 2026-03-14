@@ -25,7 +25,7 @@ This plugin provides post-implementation validation workflows. Use it to:
 | `/sc-refactor:sc-pr-comments [PR#]` | Fetch unresolved PR review comments |
 | `/sc-refactor:sc-resolve-pr-parallel [PR#]` | Batch resolve all PR comments in parallel |
 | `/sc-refactor:sc-cleanup [dir]` | Post-AI session cleanup (debug statements, duplicates) |
-| `/sc-refactor:sc-audit [dir]` | Verify structural completeness (wiring, configs) |
+| `/sc-refactor:sc-structural-check [dir]` | Verify structural completeness (wiring, configs) |
 | `/sc-refactor:sc-codebase-health [dir]` | Full codebase health analysis |
 
 ## Agents
@@ -63,7 +63,7 @@ Find debug statements, duplicate code, naming inconsistencies after AI coding se
 ### Structural Audit
 
 ```
-/sc-refactor:sc-audit src/
+/sc-refactor:sc-structural-check src/
 ```
 
 Verify routes registered, ENV vars documented, migrations complete, exports updated, docs current.
@@ -84,7 +84,7 @@ The skill routes requests automatically:
 - "Show PR comments" -> sc-pr-comments
 - "Fix PR feedback" -> sc-resolve-pr-parallel
 - "Clean up after AI session" -> sc-cleanup
-- "Check structural completeness" -> sc-audit
+- "Check structural completeness" -> sc-structural-check
 - "Run a health check" -> sc-codebase-health
 - "Find dead code" -> sc-dead-code-detector
 - "Check for duplication" -> sc-duplication-hunter
