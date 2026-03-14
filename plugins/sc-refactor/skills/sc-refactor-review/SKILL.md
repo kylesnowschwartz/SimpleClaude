@@ -21,7 +21,7 @@ Reference guide for routing review and refactoring requests to specialized agent
 | `/sc-refactor:sc-structural-check` | Verify structural completeness (wiring, configs) | sc-structural-reviewer |
 | `/sc-refactor:sc-codebase-health` | Full codebase analysis | All 6 agents in parallel |
 | `/sc-refactor:sc-adversarial-review` | Multi-model adversarial review | Codex CLI + Gemini CLI + Claude |
-| `/sc-refactor:sc-bug-hunt` | Adversarial bug hunt with competing agents | 3 Explore agents (finder, adversary, referee) |
+| `/sc-extras:sc-adversarial-hunt` | Adversarial analysis with competing agents | 3 Explore agents (maximizer, skeptic, arbiter) |
 
 ### Agents
 
@@ -54,7 +54,7 @@ Match the user's request to the appropriate command or agents:
 | "audit", "structural check", "verify wiring", "missing config" | `/sc-structural-check` |
 | "health check", "full analysis", "comprehensive" | `/sc-codebase-health` |
 | "adversarial review", "red team", "break this code", "multi-model" | `/sc-adversarial-review` |
-| "bug hunt", "find bugs", "hunt bugs", "adversarial bug hunt" | `/sc-bug-hunt` |
+| "bug hunt", "find bugs", "hunt bugs", "adversarial bug hunt" | `/sc-extras:sc-adversarial-hunt` |
 | "dead code", "unused", "orphan" | sc-dead-code-detector |
 | "duplicate", "DRY", "repeated" | sc-duplication-hunter |
 | "simplify", "YAGNI", "over-engineer" | sc-abstraction-critic |
@@ -196,17 +196,6 @@ Example usage:
 - `/sc-adversarial-review branch` — Review current branch vs main
 - `/sc-adversarial-review src/auth/` — Review specific directory
 
-### sc-bug-hunt
+### sc-adversarial-hunt (sc-extras)
 
-Adversarial bug hunting with three competing agents. Uses economic incentives to produce high-fidelity results:
-
-1. **Bug Finder** (superset) — Scores +1/+5/+10 by impact. Incentivized to find everything, including borderline cases.
-2. **Adversary** (filter) — Earns bug's score for disproofs, loses 2x for wrong disproofs. Aggressive but cautious.
-3. **Referee** (ground truth) — Told correct answers exist. +1 correct ruling, -1 wrong. Produces final verified list.
-
-Agents run sequentially — each phase feeds into the next. The adversarial structure means false positives get filtered out through competing economic pressure rather than relying on a single agent's judgment.
-
-Example usage:
-- `/sc-bug-hunt src/auth/` — Hunt bugs in auth directory
-- `/sc-bug-hunt staged` — Hunt bugs in uncommitted changes
-- `/sc-bug-hunt branch` — Hunt bugs in current branch vs main
+Domain-agnostic adversarial analysis with three competing agents (maximizer, skeptic, arbiter). Works on code, plans, docs, configs, or any artifact. Use `/sc-extras:sc-adversarial-hunt` with a file path, `staged`, `branch`, or `pr <number>` as target.

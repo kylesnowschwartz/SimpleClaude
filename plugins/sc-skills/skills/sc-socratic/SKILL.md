@@ -117,7 +117,7 @@ When a specific technique warrants focused application, suggest these specialize
 
 | Situation | Command | When to Suggest |
 |-----------|---------|-----------------|
-| Challenge a conclusion | `/sc-cybw` | After reaching a decision, for structured adversarial review |
+| Challenge a conclusion | `/sc-challenge-assumptions` | After reaching a decision, for structured adversarial review |
 | Debug a problem | `/sc-five-whys` | When tracing root causes in code/systems |
 | Verify factual claims | `/sc-extract-and-verify-claims` | When accuracy of assertions matters |
 | Specify work for agents | `/sc-context-wizard` | After clarity is reached, before implementation |

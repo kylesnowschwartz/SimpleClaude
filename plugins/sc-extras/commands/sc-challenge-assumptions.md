@@ -1,5 +1,5 @@
 ---
-name: sc-cybw
+name: sc-challenge-assumptions
 description: Surfaces adversarial information intelligently
 argument-hint: "Could you be wrong about [target statement or conclusion]?"
 ---
