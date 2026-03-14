@@ -38,7 +38,9 @@ Task(subagent_type: "sc-refactor:sc-test-organizer", run_in_background: true,
 
 ## Phase 3: Collect and Synthesize
 
-Wait for all agents to complete. Consolidate findings:
+Wait for all agents to complete via task-notification messages. You MUST use the results delivered in task-notifications directly — do NOT call TaskOutput on completed background agents, as the task registry purges completed entries and TaskOutput will fail with "No task found".
+
+Consolidate findings:
 
 ```
 # Codebase Health Report

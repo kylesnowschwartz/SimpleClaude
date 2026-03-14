@@ -81,7 +81,7 @@ Task(subagent_type: "general-purpose", model: "haiku", run_in_background: true,
               - 'No ticket references found' if none")
 ```
 
-Wait for all Phase 1 agents to complete before proceeding.
+Wait for all Phase 1 agents to complete via task-notification messages. You MUST use the results delivered in task-notifications directly — do NOT call TaskOutput on completed background agents, as the task registry purges completed entries and TaskOutput will fail with "No task found".
 
 ## Phase 2: Intent Summary (sonnet, sequential)
 
@@ -212,7 +212,7 @@ Task(subagent_type: "general-purpose", model: "opus",
               Do not flag theoretical risks or best-practice improvements.")
 ```
 
-Wait for all Phase 3 agents to complete.
+Wait for all Phase 3 agents to complete via task-notification messages. You MUST use the notification results directly — do NOT call TaskOutput on completed background agents.
 
 ## Phase 4: Validation (parallel per finding)
 

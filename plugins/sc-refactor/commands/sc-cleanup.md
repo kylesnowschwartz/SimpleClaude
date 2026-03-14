@@ -51,7 +51,9 @@ Task(subagent_type: "sc-refactor:sc-test-organizer", run_in_background: true,
 
 ## Phase 2: Collect and Prioritize
 
-Wait for all agents to complete. Categorize findings:
+Wait for all agents to complete via task-notification messages. You MUST use the results delivered in task-notifications directly — do NOT call TaskOutput on completed background agents, as the task registry purges completed entries and TaskOutput will fail with "No task found".
+
+Categorize findings:
 
 ```
 # Post-Session Cleanup Report

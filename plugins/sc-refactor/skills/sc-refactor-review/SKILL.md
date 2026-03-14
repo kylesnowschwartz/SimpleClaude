@@ -82,6 +82,8 @@ Task(subagent_type: "sc-refactor:sc-duplication-hunter", run_in_background: true
 Task(subagent_type: "sc-refactor:sc-abstraction-critic", run_in_background: true, prompt: "...")
 ```
 
+You MUST use the results delivered in task-notifications directly — do NOT call TaskOutput on completed background agents, as the task registry purges completed entries and TaskOutput will fail with "No task found".
+
 ### Full Health Check (6 Agents)
 
 ```

@@ -141,7 +141,7 @@ Task(
 
 ## Phase 2: Collect Results
 
-After launching all agents, periodically check their output files using Read or `tail -f`. Wait until all 5 complete.
+Wait for all agents to complete via task-notification messages. You MUST use the results delivered in task-notifications directly — do NOT call TaskOutput on completed background agents, as the task registry purges completed entries and TaskOutput will fail with "No task found".
 
 Format each category's findings as:
 

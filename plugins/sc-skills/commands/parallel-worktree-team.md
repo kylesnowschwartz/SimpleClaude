@@ -93,7 +93,7 @@ Each agent prompt MUST include:
 ## Phase 4: Monitor and Wait
 
 - Agents send messages when done — these arrive automatically
-- Track progress via TaskList; use TaskOutput to read agent output if needed
+- Track progress via TaskList; agents send results via task-notifications — you MUST use notification results directly and MUST NOT call TaskOutput on completed background agents (the task registry purges completed entries)
 - Do NOT duplicate work agents are doing
 - When an agent completes, shut it down:
   ```
