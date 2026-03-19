@@ -13,14 +13,12 @@ require_relative '../../vendor/claude_hooks/lib/claude_hooks'
 require 'json'
 
 # Require all PreToolUse handler classes
-require_relative '../handlers/long_running_process_guard'
 require_relative '../handlers/plan_review_handler'
 
 begin
   input_data = JSON.parse($stdin.read)
 
   handlers = [
-    LongRunningProcessGuard,
     PlanReviewHandler
   ]
 
