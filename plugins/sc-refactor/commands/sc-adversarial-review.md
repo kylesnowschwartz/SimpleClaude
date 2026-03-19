@@ -7,7 +7,7 @@ argument-hint: "[target: file/directory/staged/branch/pr] [context hint]"
 
 # Multi-Model Adversarial Review
 
-Three AI models (Codex, Gemini, Claude) independently review a target with an adversarial mindset. Model diversity surfaces blind spots that single-model review misses.
+Up to three AI models (Codex, Gemini, Claude) independently review a target. Model diversity surfaces blind spots that single-model review misses. Codex participates only for code reviews (via `codex review`); non-code content is reviewed by Gemini and Claude.
 
 ## Phase 1: Resolve Target, Classify Content
 
@@ -38,15 +38,27 @@ Read the target and classify it. The user may include a hint in $ARGUMENTS (e.g.
 
 Default to **General** when classification is uncertain rather than forcing a bad fit. The user can always override via a hint in $ARGUMENTS.
 
-Check CLI availability: `codex --version 2>/dev/null`, `gemini --version 2>/dev/null`, and `gh --version` (required for `pr` scope). Record which CLIs are available. If neither Codex nor Gemini is installed, tell the user and proceed with Claude-only review.
+Check CLI availability: `codex --version 2>/dev/null`, `gemini --version 2>/dev/null`, and `gh --version` (required for `pr` scope). Record which CLIs are available. Codex only participates for **Code** content type (via `codex review`). If neither external CLI is usable for the given content type, tell the user and proceed with Claude-only review.
 
 ## Phase 2: Launch External Reviews
 
-You MUST invoke the Skill tool with `skill: "sc-skills:external-agents"` to load CLI reference docs before constructing any Codex or Gemini commands. The skill contains required knowledge about stdin bugs, model pinning, and headless mode limitations that will cause silent failures if ignored.
+You MUST invoke the Skill tool with `skill: "sc-skills:external-agents"` to load CLI reference docs before constructing any Gemini commands. The skill contains required knowledge about stdin bugs, model pinning, and headless mode limitations that will cause silent failures if ignored.
 
-### Adversarial prompt
+### Model participation by content type
 
-Select the core prompt based on content type, then adapt it to each CLI's interface:
+Codex participates only for **Code** content type, using its built-in `codex review` mode. For non-code content (Plan/Design, Reasoning, Communication, General), skip Codex — its review mode is code-specific, and `codex exec` with custom prompts is too flaky.
+
+| Content type | Codex | Gemini | Claude |
+|--------------|-------|--------|--------|
+| Code | `codex review` | Custom adversarial prompt | Custom adversarial lenses |
+| Plan/Design | Skip | Custom adversarial prompt | Custom adversarial lenses |
+| Reasoning | Skip | Custom adversarial prompt | Custom adversarial lenses |
+| Communication | Skip | Custom adversarial prompt | Custom adversarial lenses |
+| General | Skip | Custom adversarial prompt | Custom adversarial lenses |
+
+### Adversarial prompt (Gemini only)
+
+Select the core prompt based on content type for Gemini's review:
 
 **Code:**
 > Find concrete failure modes in this code. For each finding state: WHAT breaks, the SPECIFIC scenario that triggers it, and the IMPACT. Focus on: race conditions, missing error handling, unstated assumptions, boundary violations, and edge cases that tests don't cover.
@@ -63,24 +75,20 @@ Select the core prompt based on content type, then adapt it to each CLI's interf
 **General:**
 > Critique this artifact adversarially. For each finding state: WHAT is wrong or missing, WHY it matters, and WHAT consequence follows. Focus on: internal inconsistencies, unstated assumptions, completeness gaps, fitness for its stated purpose, and ways it could silently fail or mislead.
 
-### Prepare diff
+### Prepare diff (Gemini only)
 
-Save a diff file for both CLIs to use. Codex can also read files directly, but having the diff at a known path keeps the command templates consistent.
+Save a diff file for Gemini to consume via stdin. Codex review reads git state directly.
 
 | Scope | Command |
 |-------|---------|
 | Uncommitted/staged | `git diff HEAD > /tmp/adversarial-diff.txt` |
 | Branch vs main | `git diff main...HEAD > /tmp/adversarial-diff.txt` |
 | PR | `gh pr diff <number> > /tmp/adversarial-diff.txt` |
-| File or directory | `cat [path] > /tmp/adversarial-diff.txt` (or for directories: `find [path] -type f -name '*.rb' -exec cat {} + > /tmp/adversarial-diff.txt`) |
+| File or directory | `cat [path] > /tmp/adversarial-diff.txt` (or for directories: `fd -t f -e rb -e py -e js -e ts -e go [path] -x cat {} > /tmp/adversarial-diff.txt`) |
 
 Verify non-empty: `wc -l /tmp/adversarial-diff.txt`. If 0 lines, tell the user and stop.
 
-### CLI invocation
-
-You MUST launch both CLIs directly using **Bash** with `run_in_background: true` (see external-agents skill for why subagents don't work). No hard timeouts — these are agentic tools that take variable time depending on diff size and model load.
-
-**Pre-flight checks** before launching:
+### Pre-flight checks
 
 ```bash
 codex --version 2>/dev/null && echo "CODEX: available" || echo "CODEX: not found"
@@ -88,24 +96,24 @@ gemini --version 2>/dev/null && echo "GEMINI: available" || echo "GEMINI: not fo
 echo "GEMINI_API_KEY: ${GEMINI_API_KEY:+set (${#GEMINI_API_KEY} chars)}"
 ```
 
-If `GEMINI_API_KEY` is unset, tell the user: "GEMINI_API_KEY not found in environment — Gemini will be skipped. The key may be in a direnv .envrc that isn't loaded for this project." Skip Gemini and proceed with Codex + Claude only.
+If `GEMINI_API_KEY` is unset, tell the user: "GEMINI_API_KEY not found in environment — Gemini will be skipped. The key may be in a direnv .envrc that isn't loaded for this project." Skip Gemini and proceed with available models only.
 
-**Codex** — has `git`, filesystem tools, and a sandboxed environment. Use `--full-auto` so Codex auto-approves its own tool calls. **Do NOT pipe stdin into codex** — it ignores stdin entirely and produces a plan-confirmation instead of a review. Always reference files by path in the prompt. Keep the prompt focused on the *task* (find bugs), not on *how* to get the data — telling Codex "also read X" causes it to explore the whole repo instead of reviewing. Build a scope instruction, then combine with the adversarial prompt:
+### CLI invocation
 
-| Scope | Scope instruction |
-|-------|-------------------|
-| Uncommitted/staged | `Run git diff HEAD to see the uncommitted changes, then review them.` |
-| Branch vs main | `Run git diff main...HEAD to see the branch changes, then review them. You can also read the changed files for full context.` |
-| PR | `The file /tmp/adversarial-diff.txt contains a PR diff. Read it and review the changes. You can also read the changed source files for full context.` |
-| File or directory | `Review [path] for issues.` |
+You MUST launch CLIs directly using **Bash** (see external-agents skill for why subagents don't work).
 
-```
-codex exec -C "$PWD" --full-auto "SCOPE_INSTRUCTION ADVERSARIAL_PROMPT" -o /tmp/adversarial-codex.txt 2>/tmp/adversarial-codex-err.txt; echo "CODEX_EXIT:$?" >> /tmp/adversarial-codex-err.txt
-```
+**Codex** (Code content type only) — uses `codex review`, which is git-aware and non-interactive. Run synchronously via `tee` so output streams in real time:
 
-The `-o` flag captures only the final assistant message, filtering out tool-call traces. Stderr captures the full agent trace (`thinking`, `exec` calls) for progress monitoring. **Known issues**: (1) if Codex exhausts its turns without producing a final summary, `-o` creates no file — always check file existence, not just content; (2) `-s read-only` triggers a plan-confirmation step that hangs in headless mode — use `--full-auto` instead; (3) codex ignores stdin — never use `git diff | codex exec`, always save to a file and reference it in the prompt.
+| Scope | Command |
+|-------|---------|
+| Uncommitted/staged | `codex review --uncommitted 2>&1 \| tee /tmp/adversarial-codex.txt` |
+| Branch vs main | `codex review --base main 2>&1 \| tee /tmp/adversarial-codex.txt` |
+| PR | `codex review --base origin/main 2>&1 \| tee /tmp/adversarial-codex.txt` |
+| File or directory | Skip Codex — `codex review` only works on git diffs |
 
-**Gemini** — feed content via stdin (see external-agents skill for stdin/headless bugs):
+For non-code content types or file/directory targets, skip Codex entirely.
+
+**Gemini** — launch in background with `run_in_background: true`. Feed content via stdin using `<` redirection (not `cat |`, see external-agents skill for stdin bug):
 
 ```bash
 if [ -z "$GEMINI_API_KEY" ]; then
@@ -130,29 +138,27 @@ fi
 
 ### Progress monitoring
 
-After launching both CLIs in background, do your Phase 3 analysis. When Phase 3 is done, check on the background tasks:
+Codex runs synchronously via `tee`, so no monitoring needed. For Gemini (background):
 
-1. **Use TaskOutput with `block: false`** to check completion. Check them **one at a time** — never in a single parallel block (failure in one cancels all parallel calls).
+1. **Use TaskOutput with `block: false`** to check completion.
 
 2. **If still running**, check stderr trace growth:
 
 ```bash
-wc -l /tmp/adversarial-codex-err.txt 2>/dev/null
-tail -5 /tmp/adversarial-codex-err.txt 2>/dev/null
+wc -l /tmp/adversarial-gemini-err.txt 2>/dev/null
+tail -5 /tmp/adversarial-gemini-err.txt 2>/dev/null
 ```
 
 3. **Classify the state:**
 
 | Stderr pattern | State | Action |
 |----------------|-------|--------|
-| Recent `thinking` or `exec` lines, growing | **Active** | Wait, check again later |
+| Recent activity lines, growing | **Active** | Wait, check again later |
 | No file, or unchanged after two checks | **Stuck** | Kill background task, mark failed |
-| `CODEX_EXIT:0` or `GEMINI_EXIT:0` | **Done** | Read output file |
+| `GEMINI_EXIT:0` | **Done** | Read output file |
 | Error messages, `RESOURCE_EXHAUSTED` | **Failed** | Mark as error, report to user |
 
-4. **Tell the user immediately** when you know a CLI's status so they know whether the wait is productive.
-
-5. If one is done and the other is still active, start reading the finished output while waiting.
+4. **Tell the user immediately** when you know a CLI's status.
 
 ### Output validation
 
@@ -162,12 +168,9 @@ Classify each output before synthesizing:
 |--------|----------|--------|
 | **Valid** | Non-empty, contains substantive findings | Include in synthesis |
 | **Empty** | File missing, empty, or whitespace only | Mark as "did not participate" |
-| **Error** | Non-zero exit code in stderr | Mark as "CLI error" with reason |
-| **Noise** | >2000 chars but no analytical content — see noise detection below | Mark as "unusable output" |
+| **Error** | Non-zero exit code or error messages | Mark as "CLI error" with reason |
 
-**Noise detection**: If output contains repeated exploration patterns (`Reading file`, `exec`, `git log`, `git show`, `searching`) but lacks analytical language (no mentions of bugs, risks, issues, vulnerabilities, concerns, or recommendations), classify as noise. Codex's `-o` flag filters tool-call traces, so noise from Codex typically means the agent explored instead of reviewing.
-
-Report status to the user: "Codex: [valid/failed/empty]. Gemini: [valid/failed/empty]. Proceeding with N of 3 models."
+Report status to the user: "Codex: [valid/skipped/failed]. Gemini: [valid/failed/empty]. Proceeding with N of 3 models."
 
 ## Phase 3: Claude's Adversarial Pass
 
@@ -207,17 +210,15 @@ Select analysis lenses based on content type:
 
 ## Phase 4: Synthesize
 
-Read `/tmp/adversarial-codex.txt` and `/tmp/adversarial-gemini.txt` (only the ones marked valid in Phase 2.5). Combine with your Phase 3 findings.
+Read `/tmp/adversarial-codex.txt` and `/tmp/adversarial-gemini.txt` (only the ones marked valid). Combine with your Phase 3 findings. For non-code content types, Codex won't have output — this is expected, not an error.
 
 ### Handling partial results
 
-If Phase 2.5 marked any model as failed, empty, or noise:
-
-- **2 of 3 models produced findings**: Proceed normally. Consensus requires both remaining models to agree. Note the missing model in the report header.
-- **1 of 3 models (Claude only)**: Skip consensus/unique/divergent categories — they require multiple models. Present Claude's findings as a flat list under "## Findings (single-model)". Add a note that model diversity was not available.
+- **2-3 models produced findings**: Proceed normally. Consensus requires at least two models to agree. Note any missing models in the report header.
+- **1 model only (typically Claude)**: Skip consensus/unique/divergent categories — they require multiple models. Present findings as a flat list under "## Findings (single-model)". Add a note that model diversity was not available.
 - **All external models failed**: Same as above, plus add a "Degraded Review" note at the top suggesting re-run when CLIs are available.
 
-Update the `**Models**` header line to show participation status, e.g.: `**Models**: Codex (valid), Gemini (failed: 503 capacity), Claude (valid)`
+Update the `**Models**` header line to show participation status, e.g.: `**Models**: Codex (valid), Gemini (failed: 503 capacity), Claude (valid)` or `**Models**: Codex (skipped: non-code), Gemini (valid), Claude (valid)`
 
 ### Categorization
 
