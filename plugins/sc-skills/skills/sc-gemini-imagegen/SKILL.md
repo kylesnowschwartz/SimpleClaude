@@ -1,144 +1,148 @@
 ---
 name: sc-gemini-imagegen
-description: Generate and edit images using the Gemini API (Nano Banana Pro). This skill SHOULD be used when creating images from text prompts, editing existing images, applying style transfers, generating logos with text, creating stickers, product mockups, or any image generation/manipulation task. Supports text-to-image, image editing, multi-turn refinement, and composition from multiple reference images.
+description: Generate and edit images using the Gemini API (Nano Banana). This skill SHOULD be used when creating images from text prompts, editing existing images, applying style transfers, generating logos with text, creating stickers, product mockups, or any image generation/manipulation task. Supports text-to-image, image editing, multi-turn refinement, and composition from multiple reference images.
 ---
 
-# Gemini Image Generation (Nano Banana Pro)
+# Gemini Image Generation
 
-Generate and edit images using Google's Gemini API. The environment variable `GEMINI_API_KEY` must be set.
+Generate and edit images using Google's Gemini API. The SDK reads `GOOGLE_API_KEY` by default (`GEMINI_API_KEY` as fallback). Or pass a key explicitly to `genai.Client(api_key=...)`.
 
-## Default Model
+## Models
 
-| Model | Resolution | Best For |
-|-------|------------|----------|
-| `gemini-3-pro-image-preview` | 1K-4K | All image generation (default) |
+| Model | Codename | Best For |
+|-------|----------|----------|
+| `gemini-2.5-flash-image` | Nano Banana | Most use cases, fast, good quality (default) |
+| `gemini-3-pro-image-preview` | Nano Banana Pro | High-res (2K/4K), Google Search grounding, precise text |
+| `gemini-3.1-flash-image-preview` | Nano Banana 2 | High volume, extended aspect ratios, 512 size |
 
-**Note:** Always use this Pro model. Only use a different model if explicitly requested.
+Start with `gemini-2.5-flash-image`. Upgrade to Pro for high-res output or search grounding.
 
 ## Quick Reference
 
 ### Default Settings
-- **Model:** `gemini-3-pro-image-preview`
-- **Resolution:** 1K (default, options: 1K, 2K, 4K)
+- **Model:** `gemini-2.5-flash-image`
+- **Resolution:** 1K (default)
 - **Aspect Ratio:** 1:1 (default)
 
 ### Available Aspect Ratios
-`1:1`, `2:3`, `3:2`, `3:4`, `4:3`, `4:5`, `5:4`, `9:16`, `16:9`, `21:9`
+
+All models: `1:1`, `2:3`, `3:2`, `3:4`, `4:3`, `4:5`, `5:4`, `9:16`, `16:9`, `21:9`
+
+3.1 Flash only: `1:4`, `4:1`, `1:8`, `8:1`
 
 ### Available Resolutions
-`1K` (default), `2K`, `4K`
+
+All models: `1K` (default), `2K`, `4K`
+
+3.1 Flash only: `512`
 
 ## Core API Pattern
 
 ```python
-import os
 from google import genai
 from google.genai import types
 
-client = genai.Client(api_key=os.environ["GEMINI_API_KEY"])
+client = genai.Client()  # Reads GOOGLE_API_KEY (or GEMINI_API_KEY fallback)
 
-# Basic generation (1K, 1:1 - defaults)
 response = client.models.generate_content(
-    model="gemini-3-pro-image-preview",
-    contents=["Your prompt here"],
-    config=types.GenerateContentConfig(
-        response_modalities=['TEXT', 'IMAGE'],
-    ),
+    model="gemini-2.5-flash-image",
+    contents="Your prompt here",
 )
 
 for part in response.parts:
-    if part.text:
+    if part.text is not None:
         print(part.text)
-    elif part.inline_data:
+    elif part.inline_data is not None:
         image = part.as_image()
-        image.save("output.png")
+        image.save("output.jpg")  # save() takes path only, writes raw bytes
 ```
+
+**Note:** `response_modalities` is optional. Omit it to let the model decide. Set `['IMAGE']` for image-only output, or `['TEXT', 'IMAGE']` for interleaved text and images.
 
 ## Custom Resolution & Aspect Ratio
 
 ```python
-from google.genai import types
-
 response = client.models.generate_content(
     model="gemini-3-pro-image-preview",
-    contents=[prompt],
+    contents=prompt,
     config=types.GenerateContentConfig(
-        response_modalities=['TEXT', 'IMAGE'],
         image_config=types.ImageConfig(
-            aspect_ratio="16:9",  # Wide format
-            image_size="2K"       # Higher resolution
+            aspect_ratio="16:9",
+            image_size="2K",
         ),
-    )
-)
-```
-
-### Resolution Examples
-
-```python
-# 1K (default) - Fast, good for previews
-image_config=types.ImageConfig(image_size="1K")
-
-# 2K - Balanced quality/speed
-image_config=types.ImageConfig(image_size="2K")
-
-# 4K - Maximum quality, slower
-image_config=types.ImageConfig(image_size="4K")
-```
-
-### Aspect Ratio Examples
-
-```python
-# Square (default)
-image_config=types.ImageConfig(aspect_ratio="1:1")
-
-# Landscape wide
-image_config=types.ImageConfig(aspect_ratio="16:9")
-
-# Ultra-wide panoramic
-image_config=types.ImageConfig(aspect_ratio="21:9")
-
-# Portrait
-image_config=types.ImageConfig(aspect_ratio="9:16")
-
-# Photo standard
-image_config=types.ImageConfig(aspect_ratio="4:3")
-```
-
-## Editing Images
-
-Pass existing images with text prompts:
-
-```python
-from PIL import Image
-
-img = Image.open("input.png")
-response = client.models.generate_content(
-    model="gemini-3-pro-image-preview",
-    contents=["Add a sunset to this scene", img],
-    config=types.GenerateContentConfig(
-        response_modalities=['TEXT', 'IMAGE'],
     ),
 )
 ```
 
-## Multi-Turn Refinement
+## Editing Images (Chat Mode)
 
-Use chat for iterative editing:
+Chat mode is recommended for editing. The SDK handles thought signatures automatically across turns.
 
 ```python
-from google.genai import types
+from PIL import Image
 
-chat = client.chats.create(
-    model="gemini-3-pro-image-preview",
-    config=types.GenerateContentConfig(response_modalities=['TEXT', 'IMAGE'])
-)
+client = genai.Client()
+image = Image.open("input.png")
 
-response = chat.send_message("Create a logo for 'Acme Corp'")
-# Save first image...
+chat = client.chats.create(model="gemini-2.5-flash-image")
 
-response = chat.send_message("Make the text bolder and add a blue gradient")
-# Save refined image...
+# First edit
+response = chat.send_message(["Add a sunset to this scene", image])
+
+for i, part in enumerate(response.candidates[0].content.parts):
+    if part.text is not None:
+        print(part.text)
+    elif part.inline_data is not None:
+        image = part.as_image()
+        image.save(f"edited_{i}.jpg")
+
+# Continue refining
+response = chat.send_message("Make the colors warmer")
 ```
+
+PIL Image objects, base64 bytes, and file URIs (via `client.files.upload()`) all work as image inputs.
+
+## Google Search Grounding
+
+Generate images informed by real-time data. Requires Pro model.
+
+```python
+response = client.models.generate_content(
+    model="gemini-3-pro-image-preview",
+    contents="Visualize today's weather in Tokyo as an infographic",
+    config=types.GenerateContentConfig(
+        image_config=types.ImageConfig(
+            aspect_ratio="16:9",
+            image_size="1K",
+        ),
+        tools=[types.Tool(google_search=types.GoogleSearch())],
+    ),
+)
+```
+
+Image search grounding (searching for reference images) is only available on `gemini-3.1-flash-image-preview`.
+
+## Multiple Reference Images
+
+Combine elements from multiple sources. Pass PIL Image objects directly in the contents list.
+
+```python
+from PIL import Image
+
+response = client.models.generate_content(
+    model="gemini-2.5-flash-image",
+    contents=[
+        "Create a group photo of these people in an office",
+        Image.open("person1.png"),
+        Image.open("person2.png"),
+        Image.open("person3.png"),
+    ],
+)
+```
+
+Limits differ by model:
+- **3.1 Flash:** up to 10 object images + 4 character images (14 total)
+- **3 Pro:** up to 6 object images + 5 character images (11 total)
 
 ## Prompting Best Practices
 
@@ -158,80 +162,34 @@ Be explicit about font style and placement:
 Describe lighting setup and surface:
 > "Studio-lit product photo on polished concrete, three-point softbox setup, 45-degree angle"
 
-## Advanced Features
+## File Format & Saving
 
-### Google Search Grounding
-Generate images based on real-time data:
-
-```python
-response = client.models.generate_content(
-    model="gemini-3-pro-image-preview",
-    contents=["Visualize today's weather in Tokyo as an infographic"],
-    config=types.GenerateContentConfig(
-        response_modalities=['TEXT', 'IMAGE'],
-        tools=[{"google_search": {}}]
-    )
-)
-```
-
-### Multiple Reference Images (Up to 14)
-Combine elements from multiple sources:
+The API returns JPEG in practice. `image.save(path)` writes raw bytes from the API response. It takes only a path string (no `format` kwarg).
 
 ```python
-response = client.models.generate_content(
-    model="gemini-3-pro-image-preview",
-    contents=[
-        "Create a group photo of these people in an office",
-        Image.open("person1.png"),
-        Image.open("person2.png"),
-        Image.open("person3.png"),
-    ],
-    config=types.GenerateContentConfig(
-        response_modalities=['TEXT', 'IMAGE'],
-    ),
-)
-```
-
-## Important: File Format & Media Type
-
-**CRITICAL:** The Gemini API returns images in JPEG format by default. When saving, always use `.jpg` extension to avoid media type mismatches.
-
-```python
-# CORRECT - Use .jpg extension (Gemini returns JPEG)
+# Save as-is (JPEG bytes from the API)
 image.save("output.jpg")
-
-# WRONG - Will cause "Image does not match media type" errors
-image.save("output.png")  # Creates JPEG with PNG extension!
 ```
 
-### Converting to PNG (if needed)
-
-If you specifically need PNG format:
+To convert formats, use PIL on the raw bytes:
 
 ```python
 from PIL import Image
+import io
 
-# Generate with Gemini
 for part in response.parts:
-    if part.inline_data:
-        img = part.as_image()
-        # Convert to PNG by saving with explicit format
-        img.save("output.png", format="PNG")
-```
-
-### Verifying Image Format
-
-Check actual format vs extension with the `file` command:
-
-```bash
-file image.png
-# If output shows "JPEG image data" - rename to .jpg!
+    if part.inline_data is not None:
+        pil_img = Image.open(io.BytesIO(part.inline_data.data))
+        pil_img.save("output.png")  # PIL handles the conversion
 ```
 
 ## Notes
 
-- All generated images include SynthID watermarks
-- Gemini returns **JPEG format by default** - always use `.jpg` extension
-- Image-only mode (`responseModalities: ["IMAGE"]`) won't work with Google Search grounding
-- For editing, describe changes conversationally—the model understands semantic masking
-- Default to 1K resolution for speed; use 2K/4K when quality is critical
+- All generated images include SynthID watermarks (not configurable for Gemini models)
+- `save(path)` writes raw bytes; no `format` kwarg exists. Use PIL for format conversion
+- `response_modalities` is optional; omit to let the model decide output format
+- Multi-turn chat handles thought signatures automatically via the SDK
+- Editing via chat mode doesn't support `image_config` (only modality config)
+- For editing, describe changes conversationally; the model understands semantic masking
+- Default to 1K for speed; use 2K/4K when quality matters
+- `person_generation` parameter exists on `ImageConfig` for controlling person depiction in outputs
