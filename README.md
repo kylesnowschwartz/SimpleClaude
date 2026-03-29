@@ -1,6 +1,6 @@
 # SimpleClaude
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) [![Version](https://img.shields.io/badge/version-6.1.3-blue.svg)](https://github.com/kylesnowschwartz/SimpleClaude) [![GitHub issues](https://img.shields.io/github/issues/kylesnowschwartz/SimpleClaude)](https://github.com/kylesnowschwartz/SimpleClaude/issues)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) [![Version](https://img.shields.io/badge/version-6.2.0-blue.svg)](https://github.com/kylesnowschwartz/SimpleClaude) [![GitHub issues](https://img.shields.io/github/issues/kylesnowschwartz/SimpleClaude)](https://github.com/kylesnowschwartz/SimpleClaude/issues)
 
 A practical minimalist AI assistant framework that transforms complex AI interactions into natural conversations. Comes with a set of user-commands, sub-agents, hooks, and utilities designed for real-world software development tasks. Completely dogfooded by its creator for building production software in the workplace and for personal projects. Expect frequent updates, enhancements, and breaking changes.
 
@@ -84,9 +84,9 @@ Each command automatically spawns appropriate agents:
 - `sc-code-explorer` - Traces execution paths and maps architecture
 - `sc-code-architect` - Designs feature architectures from existing patterns
 - `sc-code-reviewer` - Reviews code for bugs, security, and convention adherence
-- `sc-github-researcher` - Discovers and evaluates open source projects on GitHub
-- `sc-repo-documentation-expert` - Finds documentation from Context7, local repos, and GitHub
-- `sc-web-search-researcher` - Searches web for current information
+- `sc-research-github` - Searches across GitHub to compare libraries, evaluate projects, and find issues/PRs
+- `sc-research-repo` - Clones and searches a specific library's repo for docs, APIs, and source code
+- `sc-research-web` - Searches the web for news, blogs, tutorials, and community discussions
 
 ### Project Structure
 

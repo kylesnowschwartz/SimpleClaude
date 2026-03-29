@@ -20,9 +20,9 @@ argument-hint: Research query or topic to explore
 
 **Direct Agent Rules (ALWAYS delegate these):**
 
-- **Documentation lookups** → Use `sc-repo-documentation-expert`
-- **Web searches** → Use `sc-web-search-researcher`
-- **GitHub searches** → Use `sc-github-researcher`
+- **Documentation lookups** → Use `sc-research-repo`
+- **Web searches** → Use `sc-research-web`
+- **GitHub searches** → Use `sc-research-github`
 - **Deep codebase analysis** → Use `sc-code-explorer`
 - **Architecture design** → Use `sc-code-architect`
 - **Code quality review** → Use `sc-code-reviewer`
@@ -32,9 +32,9 @@ argument-hint: Research query or topic to explore
 - `sc-code-explorer` - Deeply analyzes existing codebase features by tracing execution paths and mapping architecture
 - `sc-code-architect` - Designs feature architectures by analyzing existing patterns and providing implementation blueprints
 - `sc-code-reviewer` - Reviews code for bugs, security vulnerabilities, and adherence to project conventions
-- `sc-repo-documentation-expert` - Finds documentation from Context7, local repos, and GitHub repositories
-- `sc-web-search-researcher` - Searches web for current information
-- `sc-github-researcher` - Searches GitHub for repos, code, issues, and PRs via gh CLI
+- `sc-research-repo` - Clones and searches a library's repo for docs, APIs, and source code
+- `sc-research-web` - Searches web for news, blogs, tutorials, and community discussions
+- `sc-research-github` - Searches GitHub for repos, code, issues, and PRs via gh CLI
 
 **Context Preservation:**
 

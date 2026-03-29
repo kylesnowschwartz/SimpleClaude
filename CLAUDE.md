@@ -48,7 +48,7 @@ SimpleClaude consists of these plugins:
 - **sc-refactor**: PR review with ticket integration, codebase health checks, and specialized analysis agents for refactoring workflows
 
 **Lightweight agent architecture**: Commands spawn focused agents via `Task()` calls for token-efficient execution
-- **Specialized agents**: sc-code-architect, sc-code-explorer, sc-code-reviewer, sc-github-researcher, sc-repo-documentation-expert, sc-web-search-researcher
+- **Specialized agents**: sc-code-architect, sc-code-explorer, sc-code-reviewer, sc-research-github, sc-research-repo, sc-research-web
 - Token-efficient through isolated agent contexts and focused task delegation
 
 ## Versioning
