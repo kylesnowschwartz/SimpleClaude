@@ -248,6 +248,76 @@ If Codex exhausts its turns without producing a final summary, `-o` creates no o
 - If an upgrade notice appears, inform the user. Do NOT auto-upgrade.
 - Codex config values use TOML format: `-c model_reasoning_effort="high"`
 
+## Codex Companion Script (codex-plugin-cc)
+
+The `codex-plugin-cc` plugin provides a companion script that wraps `codex review` with structured JSON output, an app-server protocol, and job lifecycle management. Prefer it over raw `codex review` when available.
+
+### Discovery
+
+The companion script resolves its own `ROOT_DIR` via `import.meta.url`, so it works from any cwd. Search known install locations:
+
+```bash
+CODEX_COMPANION=""
+setopt NULL_GLOB 2>/dev/null  # zsh: suppress "no matches found" when globs miss
+for d in ~/.claude/plugins/marketplaces/*/plugins/codex/scripts/codex-companion.mjs \
+         ~/.claude/repos/*/plugins/codex/scripts/codex-companion.mjs; do
+  [ -f "$d" ] && CODEX_COMPANION="$d" && break
+done
+unsetopt NULL_GLOB 2>/dev/null
+# Project-local .cloned-sources fallback
+if [ -z "$CODEX_COMPANION" ]; then
+  REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null)"
+  [ -n "$REPO_ROOT" ] && [ -f "$REPO_ROOT/.cloned-sources/codex-plugin-cc/plugins/codex/scripts/codex-companion.mjs" ] && \
+    CODEX_COMPANION="$REPO_ROOT/.cloned-sources/codex-plugin-cc/plugins/codex/scripts/codex-companion.mjs"
+fi
+```
+
+### Invocation
+
+```bash
+# Structured JSON review of branch vs main
+node "$CODEX_COMPANION" adversarial-review -C "$PWD" --json --base main
+
+# With user focus text
+node "$CODEX_COMPANION" adversarial-review -C "$PWD" --json --base main "Check auth handling"
+
+# Working tree (uncommitted changes)
+node "$CODEX_COMPANION" adversarial-review -C "$PWD" --json --scope working-tree
+```
+
+### Output envelope
+
+The `--json` flag produces a structured payload:
+
+```json
+{
+  "result": {
+    "verdict": "approve | needs-attention",
+    "summary": "1-2 sentence assessment",
+    "findings": [
+      {
+        "severity": "critical | high | medium | low",
+        "title": "Short name",
+        "body": "WHAT breaks, SCENARIO, IMPACT",
+        "file": "path/to/file",
+        "line_start": 10,
+        "line_end": 25,
+        "confidence": 0.85,
+        "recommendation": "Concrete fix"
+      }
+    ],
+    "next_steps": ["actionable step"]
+  }
+}
+```
+
+### Requirements
+
+- **Codex CLI must be authenticated**: the companion script delegates to `codex review` internally, so `codex login` is required.
+- **Node.js**: the companion is an `.mjs` file, requires `node` in PATH.
+
+If the companion isn't found, fall back to raw `codex review` (unstructured text output).
+
 ## Core Principle
 
-Use `codex review` for git-aware code reviews. Use `codex exec` for freeform analysis (save content to files, reference in prompt — codex ignores stdin). Use `gemini -p` with `< file` redirection for content analysis.
+Use the `codex-plugin-cc` companion script for structured JSON reviews when available. Fall back to `codex review` for git-aware code reviews. Use `codex exec` for freeform analysis (save content to files, reference in prompt — codex ignores stdin). Use `gemini -p` with `< file` redirection for content analysis.

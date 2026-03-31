@@ -7,7 +7,7 @@ argument-hint: "[target: file/directory/staged/branch/pr] [context hint]"
 
 # Multi-Model Adversarial Review
 
-Up to three AI models (Codex, Gemini, Claude) independently review a target. Model diversity surfaces blind spots that single-model review misses. Codex participates only for code reviews (via `codex review`); non-code content is reviewed by Gemini and Claude.
+Up to three AI models (Codex, Gemini, Claude) independently review a target. Model diversity surfaces blind spots that single-model review misses. Codex participates only for code reviews, preferring the `codex-plugin-cc` companion script for structured JSON output with fallback to raw `codex review`. Non-code content is reviewed by Gemini and Claude.
 
 ## Phase 1: Resolve Target, Classify Content
 
@@ -38,7 +38,7 @@ Read the target and classify it. The user may include a hint in $ARGUMENTS (e.g.
 
 Default to **General** when classification is uncertain rather than forcing a bad fit. The user can always override via a hint in $ARGUMENTS.
 
-Check CLI availability: `codex --version 2>/dev/null`, `gemini --version 2>/dev/null`, and `gh --version` (required for `pr` scope). Record which CLIs are available. Codex only participates for **Code** content type (via `codex review`). If neither external CLI is usable for the given content type, tell the user and proceed with Claude-only review.
+Check CLI availability: discover the `codex-plugin-cc` companion script (see Phase 2 pre-flight), `gemini --version 2>/dev/null`, and `gh --version` (required for `pr` scope). Record which CLIs are available. Codex only participates for **Code** content type. If neither external CLI is usable for the given content type, tell the user and proceed with Claude-only review.
 
 ## Phase 2: Launch External Reviews
 
@@ -91,7 +91,30 @@ Verify non-empty: `wc -l /tmp/adversarial-diff.txt`. If 0 lines, tell the user a
 ### Pre-flight checks
 
 ```bash
-codex --version 2>/dev/null && echo "CODEX: available" || echo "CODEX: not found"
+# Discover codex-plugin-cc companion script
+CODEX_COMPANION=""
+setopt NULL_GLOB 2>/dev/null  # zsh: suppress "no matches found" when globs miss
+for d in ~/.claude/plugins/marketplaces/*/plugins/codex/scripts/codex-companion.mjs \
+         ~/.claude/repos/*/plugins/codex/scripts/codex-companion.mjs; do
+  [ -f "$d" ] && CODEX_COMPANION="$d" && break
+done
+unsetopt NULL_GLOB 2>/dev/null
+# Project-local .cloned-sources fallback
+if [ -z "$CODEX_COMPANION" ]; then
+  REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null)"
+  [ -n "$REPO_ROOT" ] && [ -f "$REPO_ROOT/.cloned-sources/codex-plugin-cc/plugins/codex/scripts/codex-companion.mjs" ] && \
+    CODEX_COMPANION="$REPO_ROOT/.cloned-sources/codex-plugin-cc/plugins/codex/scripts/codex-companion.mjs"
+fi
+echo "CODEX_COMPANION: ${CODEX_COMPANION:-not found}"
+
+# Check Codex CLI auth (companion needs it)
+if [ -n "$CODEX_COMPANION" ]; then
+  codex --version 2>/dev/null && echo "CODEX_CLI: available" || echo "CODEX_CLI: not found"
+else
+  codex --version 2>/dev/null && echo "CODEX: available (fallback mode)" || echo "CODEX: not found"
+fi
+
+# Gemini checks
 gemini --version 2>/dev/null && echo "GEMINI: available" || echo "GEMINI: not found"
 echo "GEMINI_API_KEY: ${GEMINI_API_KEY:+set (${#GEMINI_API_KEY} chars)}"
 ```
@@ -102,7 +125,20 @@ If `GEMINI_API_KEY` is unset, tell the user: "GEMINI_API_KEY not found in enviro
 
 You MUST launch CLIs directly using **Bash** (see external-agents skill for why subagents don't work).
 
-**Codex** (Code content type only) — uses `codex review`, which is git-aware and non-interactive. Run synchronously via `tee` so output streams in real time:
+**Codex** (Code content type only) — prefers the `codex-plugin-cc` companion script for structured JSON output, falling back to raw `codex review` if the companion isn't installed. Run synchronously via `tee` so output streams in real time.
+
+**When companion script found** (structured mode):
+
+| Scope | Command |
+|-------|---------|
+| Uncommitted/staged | `node "$CODEX_COMPANION" adversarial-review -C "$PWD" --json --scope working-tree 2>/tmp/adversarial-codex-err.txt \| tee /tmp/adversarial-codex.json` |
+| Branch vs main | `node "$CODEX_COMPANION" adversarial-review -C "$PWD" --json --base main 2>/tmp/adversarial-codex-err.txt \| tee /tmp/adversarial-codex.json` |
+| PR | `node "$CODEX_COMPANION" adversarial-review -C "$PWD" --json --base origin/main 2>/tmp/adversarial-codex-err.txt \| tee /tmp/adversarial-codex.json` |
+| File or directory | Skip Codex — companion only works on git diffs |
+
+Pass user focus text as a trailing argument when present: `node "$CODEX_COMPANION" adversarial-review -C "$PWD" --json --base main "USER_FOCUS_TEXT"`.
+
+**When companion NOT found** (fallback to raw `codex review`):
 
 | Scope | Command |
 |-------|---------|
@@ -111,9 +147,26 @@ You MUST launch CLIs directly using **Bash** (see external-agents skill for why 
 | PR | `codex review --base origin/main 2>&1 \| tee /tmp/adversarial-codex.txt` |
 | File or directory | Skip Codex — `codex review` only works on git diffs |
 
+**Error handling**: If the companion script or `codex review` fails (non-zero exit, empty output, auth error), tell the user:
+
+> Codex review failed. This usually means the codex-plugin-cc plugin isn't set up. Install it from https://github.com/openai/codex-plugin-cc and run `codex login` to authenticate. Proceeding with Gemini + Claude only.
+
+Skip Codex and continue with available models. Don't block the review.
+
+The output file extension signals which parser to use in Phase 4 synthesis: `.json` = structured, `.txt` = freeform.
+
 For non-code content types or file/directory targets, skip Codex entirely.
 
-**Gemini** — launch in background with `run_in_background: true`. Feed content via stdin using `<` redirection (not `cat |`, see external-agents skill for stdin bug):
+**Gemini** — launch in background with `run_in_background: true`. Feed content via stdin using `<` redirection (not `cat |`, see external-agents skill for stdin bug).
+
+Append this JSON output wrapper to every content-type adversarial prompt:
+
+```
+Return your response as a single JSON object with this exact structure:
+{"verdict":"approve or needs-attention","summary":"1-2 sentence assessment","findings":[{"severity":"critical|high|medium|low","title":"Short name","body":"WHAT breaks, SCENARIO, IMPACT","file":"path/to/file or general","line_start":1,"line_end":1,"confidence":0.85,"recommendation":"Concrete fix"}],"next_steps":["actionable step"]}
+
+Return ONLY valid JSON. No markdown fences, no prose outside the JSON.
+```
 
 ```bash
 if [ -z "$GEMINI_API_KEY" ]; then
@@ -121,16 +174,16 @@ if [ -z "$GEMINI_API_KEY" ]; then
   echo "GEMINI_EXIT:1" >> /tmp/adversarial-gemini-err.txt
 else
   for MODEL in gemini-3.1-pro-preview gemini-2.5-pro gemini-2.5-flash; do
-    gemini -m "$MODEL" -p "ADVERSARIAL_PROMPT" < /tmp/adversarial-diff.txt > /tmp/adversarial-gemini.txt 2>/tmp/adversarial-gemini-err.txt
+    gemini -m "$MODEL" -p "ADVERSARIAL_PROMPT_WITH_JSON_WRAPPER" < /tmp/adversarial-diff.txt > /tmp/adversarial-gemini.json 2>/tmp/adversarial-gemini-err.txt
     EXIT_CODE=$?
-    if [ $EXIT_CODE -eq 0 ] && [ -s /tmp/adversarial-gemini.txt ]; then
+    if [ $EXIT_CODE -eq 0 ] && [ -s /tmp/adversarial-gemini.json ]; then
       echo "GEMINI_MODEL:$MODEL" >> /tmp/adversarial-gemini-err.txt
       echo "GEMINI_EXIT:0" >> /tmp/adversarial-gemini-err.txt
       break
     fi
     echo "GEMINI_ATTEMPT:$MODEL failed (exit $EXIT_CODE)" >> /tmp/adversarial-gemini-err.txt
   done
-  if [ ! -s /tmp/adversarial-gemini.txt ]; then
+  if [ ! -s /tmp/adversarial-gemini.json ]; then
     echo "GEMINI_EXIT:1" >> /tmp/adversarial-gemini-err.txt
   fi
 fi
@@ -208,9 +261,23 @@ Select analysis lenses based on content type:
 - **Fitness for purpose**: Does this actually achieve what it claims to? Where does it fall short of its own stated goals?
 - **Silent failure modes**: How could this be used correctly yet produce wrong results? What guardrails are missing?
 
+After analysis, organize findings internally as structured objects with: severity (critical/high/medium/low), title, body, file, line_start, line_end, confidence (0.0-1.0), recommendation. Hold for Phase 4 synthesis.
+
 ## Phase 4: Synthesize
 
-Read `/tmp/adversarial-codex.txt` and `/tmp/adversarial-gemini.txt` (only the ones marked valid). Combine with your Phase 3 findings. For non-code content types, Codex won't have output — this is expected, not an error.
+### Parse external outputs
+
+**Codex output** — check which file exists to determine parse mode:
+- `/tmp/adversarial-codex.json` exists: parse as JSON. Extract `.result.findings` from the companion's payload envelope. Tag each finding with `source: "codex"`.
+- `/tmp/adversarial-codex.txt` exists: extract findings heuristically from freeform text (fallback mode). Tag with `source: "codex"`.
+- Neither exists: Codex did not participate.
+
+**Gemini output** — read `/tmp/adversarial-gemini.json`:
+- Try JSON parse directly. If it fails, strip markdown fences (` ```json ... ``` `) and retry. If still fails, treat as freeform text. Tag with `source: "gemini"`.
+
+**Claude findings** — already structured from Phase 3. Tag with `source: "claude"`.
+
+Combine all tagged findings for synthesis. For non-code content types, Codex won't have output — this is expected, not an error.
 
 ### Handling partial results
 
@@ -218,18 +285,21 @@ Read `/tmp/adversarial-codex.txt` and `/tmp/adversarial-gemini.txt` (only the on
 - **1 model only (typically Claude)**: Skip consensus/unique/divergent categories — they require multiple models. Present findings as a flat list under "## Findings (single-model)". Add a note that model diversity was not available.
 - **All external models failed**: Same as above, plus add a "Degraded Review" note at the top suggesting re-run when CLIs are available.
 
-Update the `**Models**` header line to show participation status, e.g.: `**Models**: Codex (valid), Gemini (failed: 503 capacity), Claude (valid)` or `**Models**: Codex (skipped: non-code), Gemini (valid), Claude (valid)`
+Update the `**Models**` header line to show participation status, e.g.: `**Models**: Codex (valid, structured), Gemini (failed: 503 capacity), Claude (valid)` or `**Models**: Codex (skipped: non-code), Gemini (valid, structured), Claude (valid)`
 
-### Categorization
+### Consensus detection
 
-- **Consensus**: Multiple models flagged the same issue. Highest confidence.
-- **Unique**: One model only. Investigate — blind spot or false positive.
-- **Divergent**: Models disagree. Most interesting category.
+With structured findings from all models, consensus detection becomes mechanical:
+
+- **Same issue**: same file + overlapping line ranges + similar title/body = match. Use highest severity, average confidence across matching models.
+- **Consensus**: 2+ models flagged the same issue. Highest confidence category.
+- **Unique**: 1 model only. Investigate — blind spot or false positive.
+- **Divergent**: Same location, different conclusions. Most interesting category.
 
 ### Rules
 
 - Deduplicate: same issue, different wording = one consensus finding.
-- Attribute: always state which model(s) found each issue.
+- Attribute: always state which model(s) found each issue with their confidence scores.
 - Assess disputes: state which position is technically correct and why.
 - No padding: if a model found nothing, say so.
 
@@ -248,32 +318,32 @@ Severity ordering by content type:
 ```
 # Adversarial Review: [target]
 
-**Models**: [which participated]
+**Models**: [which participated, with mode: structured/freeform]
 **Scope**: [uncommitted | branch vs main | specific path]
 **Content type**: [Code | Plan/Design | Reasoning | Communication | General]
 
 ## Consensus Findings
 
-**FINDING**: [concrete issue]
-Source: [which models]
-Location: [file:line or section reference]
-Scenario: [trigger conditions or context]
-Impact: [what goes wrong or is missed]
+### [SEVERITY] [title]
+Sources: Codex (confidence: 0.9), Claude (confidence: 0.85)
+File: path/to/file:L10-L25
+[merged description]
+Recommendation: [best across models]
 
 ## Unique Findings
 
-**FINDING**: [concrete issue]
-Source: Codex | Gemini | Claude
-Location: [file:line or section reference]
-Scenario: [trigger or context]
-Impact: [consequence]
+### [SEVERITY] [title]
+Source: Codex | Gemini | Claude (confidence: 0.8)
+File: path/to/file:L5-L12
+[description]
+Recommendation: [fix]
 
 ## Divergent Analysis
 
 **DISPUTE**: [topic]
-- Codex: [position]
-- Gemini: [position]
-- Claude: [position]
+- Codex: [position] (confidence: 0.7)
+- Gemini: [position] (confidence: 0.6)
+- Claude: [position] (confidence: 0.9)
 - **Assessment**: [which is correct and why]
 
 ## Summary
