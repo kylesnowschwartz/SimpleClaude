@@ -14,7 +14,7 @@ require_relative '../../vendor/claude_hooks/lib/claude_hooks'
 require 'json'
 
 # Require all Stop handler classes
-require_relative '../handlers/stop_you_are_not_right'
+# require_relative '../handlers/stop_you_are_not_right'
 require_relative '../handlers/auto_format_handler'
 require_relative '../handlers/lint_check_handler'
 
@@ -25,7 +25,7 @@ begin
   # ORDER MATTERS: AutoFormatHandler must run before LintCheckHandler so
   # formatters fix style issues before linters report on them.
   handlers = [
-    StopYouAreNotRight,
+    # StopYouAreNotRight,
     AutoFormatHandler,
     LintCheckHandler
   ]
