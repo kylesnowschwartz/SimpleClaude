@@ -39,7 +39,7 @@ bump type:
     sed -i '' "s/version-[0-9]*\.[0-9]*\.[0-9]*-blue/version-$new-blue/" README.md
 
     # Update marketplace.json top-level version
-    jq --arg v "$new" '.version = $v' .claude-plugin/marketplace.json | sponge .claude-plugin/marketplace.json
+    jq --arg v "$new" '.metadata.version = $v' .claude-plugin/marketplace.json | sponge .claude-plugin/marketplace.json
 
     # Update all plugin versions (discovered from filesystem)
     for f in plugins/*/.claude-plugin/plugin.json; do

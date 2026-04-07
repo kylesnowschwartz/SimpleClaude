@@ -1,8 +1,9 @@
 {
-  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
   "name": "simpleclaude",
-  "version": "6.4.0",
-  "description": "Practical minimalist AI assistant framework with specialized agents",
+  "metadata": {
+    "version": "6.4.0",
+    "description": "Practical minimalist AI assistant framework with specialized agents"
+  },
   "owner": {
     "name": "Kyle Snow Schwartz",
     "url": "https://github.com/kylesnowschwartz"

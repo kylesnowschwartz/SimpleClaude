@@ -60,7 +60,7 @@ SimpleClaude consists of these plugins:
   1. Update README.md badge version
   2. Update CLAUDE.md version
   3. Update VERSION file
-  4. Update `.claude-plugin/marketplace.json` (top-level version + affected plugin versions in plugins array)
+  4. Update `.claude-plugin/marketplace.json` (`metadata.version` + affected plugin versions in plugins array)
   5. Update `plugins/<plugin-name>/.claude-plugin/plugin.json` for affected plugins
   6. Commit: `git commit -m "chore: Bump version to vX.X.X"`
   7. Tag: `git tag vX.X.X`
