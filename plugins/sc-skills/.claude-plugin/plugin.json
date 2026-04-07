@@ -1,6 +1,6 @@
 {
   "name": "sc-skills",
-  "version": "6.4.0",
+  "version": "6.4.1",
   "description": "Skills and agents for diagrams, codebase patterns, hypothesis testing, Socratic thinking, file querying, frontend design, image generation, and command creation",
   "author": {
     "name": "Kyle Snow Schwartz"
