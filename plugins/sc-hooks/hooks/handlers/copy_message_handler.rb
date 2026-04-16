@@ -19,12 +19,12 @@ require_relative '../lib/transcript_parser'
 
 class CopyMessageHandler < ClaudeHooks::UserPromptSubmit
   def call
-    return unless current_prompt.start_with?('/sc-copy-prompt', '/sc-copy-response')
+    return unless current_prompt.match?(%r{^/(?:sc-hooks:)?sc-copy-(?:prompt|response)})
 
     log "Processing copy command: #{current_prompt}"
 
     # Determine message type and parse command arguments
-    message_type = current_prompt.start_with?('/sc-copy-prompt') ? 'prompt' : 'response'
+    message_type = current_prompt.match?(%r{^/(?:sc-hooks:)?sc-copy-prompt}) ? 'prompt' : 'response'
     args = parse_copy_command(current_prompt, message_type)
 
     begin
@@ -55,7 +55,7 @@ class CopyMessageHandler < ClaudeHooks::UserPromptSubmit
 
     # Parse number from command (default to 1 if no number specified)
     case command
-    when %r{^/sc-copy-#{type}\s+(\d+)$}
+    when %r{^/(?:sc-hooks:)?sc-copy-#{type}\s+(\d+)$}
       args[:number] = ::Regexp.last_match(1).to_i
     end
 
