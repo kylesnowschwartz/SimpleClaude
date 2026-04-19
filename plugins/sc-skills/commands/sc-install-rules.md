@@ -16,6 +16,8 @@ Current bundle:
 - `effective-go.md` — Go idioms and conventions (paths: `**/*.go`)
 - `effective-neovim.md` — Neovim plugin style (paths: `**/*.lua`, `**/lua/**/*`)
 - `frontend-design.md` — Distinctive frontend aesthetics (paths: tsx/jsx/astro/vue/svelte/html/css/scss)
+- `philosophy-of-software-design.md` — Ousterhout's design principles (paths: common code files)
+- `art-of-readable-code.md` — Boswell/Foucher readability guidelines (paths: common code files)
 
 ## Install flow
 
