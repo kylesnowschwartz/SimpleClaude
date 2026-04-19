@@ -13,41 +13,139 @@ paths:
 
 # Frontend Design
 
-Create distinctive, production-grade frontend interfaces with real working code and exceptional attention to aesthetic details. Avoid generic "AI slop" aesthetics.
+Create distinctive, production-grade frontend interfaces with real working code. Avoid generic "AI slop" aesthetics. These rules apply whenever you touch frontend files — dashboards, landing pages, components, or styles.
 
-## Design Thinking
+## Scope
 
-Before coding, understand the context and commit to a BOLD aesthetic direction:
+- **Interface work** (dashboards, apps, internal tools): prioritize craft, consistency, restraint. Distinctive comes from precision and hierarchy, not maximalism.
+- **Marketing work** (landing pages, artifacts, posters): prioritize distinctive voice, memorability, deliberate risk.
 
-- **Purpose**: What problem does this interface solve? Who uses it?
-- **Tone**: Commit to a distinct direction — brutally minimal, maximalist chaos, luxury/refined, lo-fi/zine, dark/moody, soft/pastel, editorial/magazine, brutalist/raw, retro-futuristic, handcrafted/artisanal, organic/natural, art deco/geometric, playful/whimsical, industrial/utilitarian, etc. Use these as inspiration; the final design should feel singular, with every detail serving one cohesive direction.
-- **Constraints**: Technical requirements (framework, performance, accessibility).
-- **Differentiation**: What makes this UNFORGETTABLE? What's the one thing someone will remember?
+Same rules apply to both — the emphasis shifts.
 
-**CRITICAL**: Choose a clear conceptual direction and execute it vigorously. Bold maximalism and refined minimalism both work — the key is intentionality, not intensity.
+## Pre-Component Checkpoint (MANDATORY)
 
-Implementation must be:
+Before writing any UI code, state the following briefly in your response (or as a leading comment) — with a reason for each:
 
-- Production-grade, functional, and responsive
-- Visually striking and memorable
-- Cohesive with a clear aesthetic point-of-view
-- Meticulously refined in every detail
+- **Intent** — what this interface does and for whom
+- **Palette** — the 3-5 colors, named (not hex codes)
+- **Depth** — pick ONE: `borders-only` / `subtle shadows` / `layered shadows` / `surface-color shifts`. Don't mix systems.
+- **Surfaces** — base / elevated / sunken (or equivalent tiered structure)
+- **Typography** — display font + body font + reason for the pairing
+- **Spacing** — base unit (typically 4px or 8px) and how the scale will be used
 
-## Aesthetics Guidelines
+Skipping this checkpoint produces derivative work. Design lives in these decisions, not in code patterns.
 
-- **Typography**: Typography carries the design's singular voice. Choose fonts with interesting personality. Default fonts signal default thinking — skip Arial, Inter, Roboto, system stacks. Display type expressive, even risky. Body text legible, refined. Pair them like actors in a scene. Work the full range: size, weight, case, spacing.
-- **Color & Theme**: Commit to a cohesive aesthetic. Palettes should take a clear position — bold and saturated, moody and restrained, or high-contrast and minimal. Lead with a dominant color, punctuate with sharp accents. Avoid timid, non-committal distributions. Use CSS variables for consistency.
-- **Motion**: Use animations for effects and micro-interactions. Prefer CSS-only for HTML. Motion library for React when available. Focus on high-impact moments — one well-orchestrated page load with staggered reveals beats scattered micro-interactions. Use scroll-triggering and hover states that surprise.
-- **Spatial Composition**: Unexpected layouts. Asymmetry. Overlap and z-depth. Diagonal flow. Grid-breaking elements. Dramatic scale jumps. Full-bleed moments. Generous negative space OR controlled density.
-- **Backgrounds & Visual Details**: Create atmosphere and depth rather than solid colors. Add contextual effects and textures matching the aesthetic: gradient meshes, noise/grain overlays, geometric patterns, layered transparencies and glassmorphism, dramatic or soft shadows and glows, parallax depth, decorative borders and clip-path shapes, print-inspired textures (halftone, duotone, stipple), knockout typography, custom cursors.
+## Aesthetic Direction
 
-## Distinctive Choices
+Commit to ONE bold aesthetic direction and execute it vigorously:
 
-- Fonts with personality that couldn't be swapped without loss
-- Palettes that commit to a mood and could be named
-- Layouts with spatial logic unique to this content
-- Details that reward closer attention
+brutally minimal, maximalist chaos, luxury/refined, lo-fi/zine, dark/moody, soft/pastel, editorial/magazine, brutalist/raw, retro-futuristic, handcrafted/artisanal, organic/natural, art deco/geometric, playful/whimsical, industrial/utilitarian, and infinite others.
 
-**Quality Test**: Before finalizing any choice, ask: "Would a designer with strong opinions make this exact decision for THIS specific context?" If the answer is "this could work for anything," the choice isn't designed enough. Generic is interchangeable. Distinctive is irreplaceable.
+Use these as starting points, not endpoints. Every detail should serve one cohesive direction.
 
-**IMPORTANT**: Match implementation complexity to the aesthetic vision. Maximalist designs need elaborate code with extensive animations and effects. Minimalist designs need restraint, elegance, and precision. Every design needs careful attention to spacing, typography, and subtle details. Excellence comes from executing the vision well.
+**Bold maximalism and refined minimalism both work** — the key is intentionality, not intensity.
+
+## Numeric Guardrails
+
+Hard limits. Exceeding them requires a stated reason.
+
+- **Colors**: 3-5 total. 1 primary + 2-3 neutrals + 1-2 accents. More = dilution.
+- **Fonts**: max 2 families.
+- **Body text**: line-height 1.4-1.6, size ≥ 14px.
+- **Gradient stops**: max 2-3 if used at all; analogous temperatures only.
+- **Border scale**: 3+ levels (none → subtle → pronounced), not binary.
+- **Text hierarchy**: 4 levels (primary / secondary / tertiary / muted). Binary fails.
+
+## Anti-Patterns (Blocklist)
+
+Never ship the following unless the user explicitly asks for it:
+
+- Purple or violet as a prominent color
+- Gradients on primary elements (subtle accent gradients OK; hero gradients are AI-slop signal)
+- More than 2 font families
+- Space Grotesk as the default display font (too recognizable as AI-default)
+- Direct color classes: `text-white`, `bg-black`, `text-red-500`. Use semantic tokens instead.
+- Arbitrary Tailwind values: `p-[16px]`, `w-[473px]`. Use the scale: `p-4`, `w-[30rem]` only when a scale step doesn't exist.
+- `space-*` classes for layout gaps. Use `gap-*` with flex/grid.
+- Default fonts: Arial, Inter, Roboto, system stacks. Default fonts signal default thinking.
+- Card + shadow-lg + rounded-2xl + purple-gradient — the AI-slop cliche stack.
+- "Glassmorphism everywhere" — one deliberate glass surface beats five.
+
+## Token Architecture
+
+Names encode worldview. Read your tokens aloud:
+
+- `--ink` / `--parchment` evoke a world.
+- `--gray-700` / `--surface-2` evoke a template.
+
+Structure:
+
+- **Text**: 4 tiers (primary, secondary, tertiary, muted). Not binary.
+- **Borders**: scale from subtle → strong. Not binary.
+- **Surfaces**: base / elevated / sunken separated from **controls** (button-fill, button-border, input-bg).
+- **Semantic over literal**: `--color-danger` not `--red-600`. Allow reassignment without cascade rewrite.
+
+## Typography
+
+Typography carries the design's voice.
+
+- **Display type**: expressive, risky, opinionated. The font someone remembers.
+- **Body type**: legible, refined, quietly confident. The font no one notices.
+- **Pairing**: treat them like actors in a scene — contrasting, complementary, deliberate.
+- **Range**: work the full axis — size, weight, case, letter-spacing, line-height.
+
+## Color
+
+Palettes take a position. Name them.
+
+- Bold and saturated, moody and restrained, high-contrast and minimal — pick one stance.
+- Lead with a dominant color; punctuate with sharp accents.
+- Avoid timid, non-committal distributions (equal-weight rainbow → no identity).
+- Test the palette in grayscale — if hierarchy disappears, color is carrying too much.
+
+## Motion
+
+- CSS-first for HTML. Motion library for React when available.
+- One orchestrated moment (staggered page load, revealing hero) beats scattered micro-interactions.
+- Hover states and scroll-triggers that surprise, not decorate.
+- Easing curves matter: `cubic-bezier(0.2, 0.8, 0.2, 1)` beats `ease-in-out` for nearly every UI transition.
+
+## Spatial Composition & Depth
+
+- Commit to the ONE depth system chosen in the pre-component checkpoint.
+- Asymmetry, z-depth, diagonal flow, grid-breaking elements, scale jumps, full-bleed moments.
+- Generous negative space OR controlled density — both work; tepid density fails.
+
+## Backgrounds & Details
+
+Atmosphere over solid colors. Match effect to aesthetic:
+
+- Gradient meshes (subtle, not rainbow)
+- Noise and grain overlays
+- Geometric patterns with intent
+- Layered transparencies / glassmorphism (sparingly)
+- Dramatic or soft shadows and glows
+- Parallax depth
+- Decorative borders and clip-path shapes
+- Print-inspired textures: halftone, duotone, stipple
+- Knockout typography
+- Custom cursors for focused interactions
+
+## Four Tests Before Finalizing
+
+Run all four. If any fail, revise.
+
+1. **Swap test** — If you replaced the display typeface with Arial, would anyone notice? Places where swapping wouldn't matter are places you defaulted.
+2. **Squint test** — Blur your eyes. Can you still perceive hierarchy? Is anything jumping out harshly? Craft whispers.
+3. **Signature test** — Can you name three choices that couldn't be easily swapped without losing the design's identity? If not, it's generic.
+4. **Token test** — Read your CSS variable names aloud. Do they evoke a world or a template?
+
+## Implementation Matching
+
+Match complexity to vision:
+
+- Maximalist designs earn elaborate code — extensive animations, layered effects, dense visual detail.
+- Minimalist designs earn restraint — subtle motion, careful spacing, single-accent moments.
+- Every design earns attention to spacing, typography, and subtle details.
+
+Excellence comes from executing the vision well, not from ambition alone.
