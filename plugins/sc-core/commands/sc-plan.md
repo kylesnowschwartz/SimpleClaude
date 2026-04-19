@@ -32,17 +32,16 @@ argument-hint: Planning task or requirement to analyze
 - **Keep only**: user request, actionable recommendations, code changes, summary, next steps
 - **Discard**: intermediate outputs, full docs, verbose logs, exploratory reads
 
-**Processing Pipeline**: Parse → Pattern Context → Classify → Validate → Route → Execute → Synthesize
+**Processing Pipeline**: Parse → Prior Work Context → Classify → Validate → Route → Execute → Synthesize
 
-## Pattern Context (Optional)
+## Prior Work Context (Optional)
 
-Before planning, check if `.agent-history/` `.cloned-sources/` and `.patterns/` directories exist in the project root:
+Before planning, check if `.agent-history/` and `.cloned-sources/` directories exist in the project root:
 
-- **If present and relevant**: Read it and incorporate direct references with absolute paths into your plan. Follow enforceable patterns as requirements. Treat probable patterns as strong suggestions. Note any conflicted areas where human judgment is needed.
-- **If stale**: Note this to the user and suggest running `/sc-patterns analyze` to refresh.
-- **If it does not exist**: Proceed normally. Do not block planning on pattern analysis.
+- **If present and relevant**: Read it and incorporate direct references with absolute paths into your plan. Note any conflicted areas where human judgment is needed.
+- **If it does not exist**: Proceed normally. Do not block planning on prior-work context.
 
-Pattern context is supplementary — it improves plan quality but is never required.
+Prior work context is supplementary — it improves plan quality but is never required.
 
 ## Intent Recognition and Semantic Transformation
 

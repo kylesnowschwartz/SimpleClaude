@@ -15,7 +15,6 @@ require 'json'
 # Disabled: now a no-op (backup + date injection both disabled for cache/perf reasons)
 # require_relative '../handlers/session_start_handler'
 require_relative '../handlers/coding_best_practices_handler'
-require_relative '../handlers/pattern_reminder_handler'
 
 begin
   # Read input data from Claude Code
@@ -24,8 +23,7 @@ begin
   # Run all handlers, collect their outputs
   handlers = [
     # SessionStartHandler,
-    CodingBestPracticesHandler,
-    PatternReminderHandler
+    CodingBestPracticesHandler
   ]
 
   outputs = handlers.map do |handler_class|
