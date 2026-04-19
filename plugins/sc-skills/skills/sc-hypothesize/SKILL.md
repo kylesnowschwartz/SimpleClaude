@@ -1,12 +1,6 @@
 ---
 name: sc-hypothesize
-description: >
-  Structured reasoning through competing hypotheses using the ADI cycle (Abduction, Deduction, Induction).
-  This skill SHOULD be used when the user says "reason through", "compare approaches", "evaluate options",
-  "which approach", "what's the best way to", "I have multiple options", "help me decide between",
-  "structured analysis", "hypothesis", "trade-off analysis", "hypothesize", "sc-hypothesize",
-  or faces a decision with multiple viable approaches that need systematic evaluation.
-  NOT for quick decisions with obvious answers — use sc-socratic for open-ended dialogue instead.
+description: Use when multiple plausible approaches must be generated, tested, and compared against constraints before the user chooses.
 argument-hint: Problem or decision to reason through
 ---
 

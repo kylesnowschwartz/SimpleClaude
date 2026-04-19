@@ -1,13 +1,6 @@
 ---
 name: sc-socratic
-description: >
-  Socratic thinking partner for decisions, debugging mental models, and working through uncertainty.
-  This skill SHOULD be used when the user says "I'm stuck", "should I", "can't decide",
-  "not sure if", "is this the right approach", "what do you think about", "help me think through",
-  "review my plan", "am I missing something", "what am I assuming", "let me think", "brainstorm",
-  "help me figure out", "sanity check", "does this make sense", "sc-socratic", or expresses uncertainty
-  about a decision, design, or direction. Activates dialectical reasoning to surface assumptions,
-  challenge positions, and find the right question to ask.
+description: Use when the user is clarifying beliefs, assumptions, goals, or framing before committing to decision or plan.
 ---
 
 # Socratic Thinking Partner
@@ -38,18 +31,18 @@ Apply these operations as the situation demands:
 - **Meta-question**: "What question should you actually be asking?"
 - **Exclusion**: "What should we explicitly NOT do?"
 
-## Intent Detection
+## Situation Recognition
 
-Parse user input to determine the situation type:
+Classify the situation into one of these shapes. Do not pattern-match on user phrasing; read the semantic intent:
 
-| Signal | Situation | Approach |
-|--------|-----------|----------|
-| "should I", "which", "or" | Decision | Surface tradeoffs, challenge both options |
-| "stuck", "blocked", "not working" | Unblock | Find the real obstacle, smallest next step |
-| "review", "look at", "check" | Evaluate | Surface risks, hidden assumptions |
-| "how do I", "learn", "understand" | Teach | Draw out existing knowledge first |
-| "design", "architect", "build" | Design | Diverge exploration, then converge to MVP |
-| Uncertainty without clear type | Clarify | Ask what kind of thinking they need |
+| Situation | Approach |
+|-----------|----------|
+| **Deciding** — user comparing options or facing a choice | Surface tradeoffs, challenge both sides |
+| **Blocked** — stalled progress, unclear obstacle | Find the real obstacle, propose smallest next step |
+| **Evaluating** — user wants a plan or proposal examined | Surface risks and hidden assumptions |
+| **Learning** — user building understanding of how X works | Draw out existing knowledge first |
+| **Designing** — user shaping a structure or system | Diverge exploration, then converge to MVP |
+| **Undifferentiated uncertainty** | Ask what kind of thinking they need |
 
 ## Execution Pattern
 
