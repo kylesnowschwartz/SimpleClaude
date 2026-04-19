@@ -45,6 +45,7 @@ class GitHubUrlHandler < ClaudeHooks::UserPromptSubmit
     repo = repos.first
 
     context = build_context(repo, issue_matches)
+    log "Injecting gh CLI guidance for #{repos.length} repo(s): #{repos.join(', ')}"
     add_additional_context!(context)
     output
   end

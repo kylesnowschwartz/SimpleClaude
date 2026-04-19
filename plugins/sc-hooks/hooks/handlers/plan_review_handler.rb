@@ -20,6 +20,7 @@ class PlanReviewHandler < ClaudeHooks::PreToolUse
   DEFAULT_TIMEOUT = 120
 
   def call
+    log "PreToolUse fired: tool=#{tool_name}, review_enabled=#{ENV['SIMPLE_CLAUDE_PLAN_REVIEW'] == '1'}"
     return approve_tool! unless should_review?
 
     plan_path, plan_content = find_plan

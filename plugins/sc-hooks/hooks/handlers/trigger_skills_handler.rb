@@ -21,6 +21,7 @@ class TriggerSkillsHandler < ClaudeHooks::UserPromptSubmit
       </skill_check>
     CONTEXT
 
+    log 'Injecting skill_check reminder'
     add_additional_context!(reminder)
     output
   end
