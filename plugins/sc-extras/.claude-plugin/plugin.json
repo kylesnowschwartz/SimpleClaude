@@ -1,6 +1,6 @@
 {
   "name": "sc-extras",
-  "version": "6.9.1",
+  "version": "6.10.0",
   "description": "Optional SimpleClaude utilities for root cause analysis, claim verification, adversarial analysis, context wizards, and clean-room design",
   "author": {
     "name": "Kyle Snow Schwartz"
