@@ -1,6 +1,6 @@
 ---
 name: sc-claude-md-improver
-description: Audit and improve project memory files (CLAUDE.md and AGENTS.md). This skill SHOULD be used when the user asks to write, edit, or audit CLAUDE.md or AGENTS.md files.
+description: Audit and improve project memory files (CLAUDE.md, AGENTS.md, .claude.local.md) — assess against a quality rubric, then apply additions and removals. This skill SHOULD be used when the user asks to audit, improve, edit, fix, tighten, rewrite, or update a memory file, or to check whether one is too long, stale, or bloated.
 ---
 
 # Project Memory File Improver
@@ -38,9 +38,9 @@ find . \( -name "CLAUDE.md" -o -name "AGENTS.md" \) -exec ls -la {} \; 2>/dev/nu
 | Local overrides | `./.claude.local.md` | Personal/local settings (gitignored, not shared) |
 | Global defaults | `~/.claude/CLAUDE.md` | User-wide defaults across all projects |
 
-**Notes:**
-- Claude auto-discovers CLAUDE.md files in parent directories — useful for monorepo and subdirectory patterns.
-- **Claude Code does not currently read AGENTS.md natively.** If a project depends on Claude reading AGENTS.md, symlink it: `ln -s CLAUDE.md AGENTS.md` (or vice versa, depending on which is canonical).
+Claude auto-discovers CLAUDE.md files in parent directories. Claude Code does not currently read AGENTS.md natively — projects depending on it should symlink (`ln -s CLAUDE.md AGENTS.md`).
+
+**If no memory files are found**, surface that to the user and offer to scaffold one — point at `references/templates.md` (the pointer-style root template is the recommended starting point for monorepos and large codebases). Do not silently proceed with no audit target.
 
 ### Phase 2: Quality Assessment
 
@@ -58,7 +58,7 @@ For each memory file, evaluate against quality criteria. See [references/quality
 | Universality | Medium | Are rules universally applicable, or task-specific edge-cases that distract during other work? |
 | Currency | High | Do documented commands and paths still work? |
 
-**Two strong anti-criteria to watch for** (these *lower* the score):
+**Two strong anti-criteria** (these *lower* the score):
 - High-level project description the model could derive from the codebase ("React project," "monorepo with packages/")
 - Auto-generated content that has not been curated (HumanLayer cites measured negative effect on benchmarks)
 
@@ -109,6 +109,8 @@ Format:
 
 After outputting the audit report, ask the user for confirmation before applying changes. Both **removals** and **additions** are first-class — removals are often higher-yield.
 
+**If the user rejects all proposed diffs**, acknowledge in one line and stop. Do not re-propose, soften, or iterate on the same audit; the user's call stands.
+
 **Propose targeted removals.** The four highest-yield removal categories:
 
 1. **Rules a linter, type-checker, or test already enforces.** "Never send an LLM to do a linter's job." (HumanLayer.)
@@ -124,19 +126,9 @@ After outputting the audit report, ask the user for confirmation before applying
 - Configuration quirks (env vars, build-time vs runtime, IPv6 suffixes, etc.)
 - Pointers to deeper documentation (`for X, see path/to/X.md`)
 
-**Keep additions minimal.** Avoid:
+**Keep additions minimal.** Avoid restating what is obvious from the code, generic best practices already covered by tooling, one-off fixes unlikely to recur, verbose explanations when one line will do, and embedding long files via `@`-references when a path pointer suffices.
 
-- Restating what is obvious from the code
-- Generic best practices already covered by tooling
-- One-off fixes unlikely to recur
-- Verbose explanations when one line will do
-- Embedding long files via `@`-references when a path pointer suffices
-
-**Show diffs.** For each change, show:
-
-- Which file to update (and whether it is symlinked, so the change reaches both)
-- The specific edit (as a diff or quoted block)
-- Brief explanation of why the line earns its place — or, for a removal, why the line was costing more than it earned
+**Show diffs.** For each change, show the file (and whether it's symlinked), the specific edit, and a brief reason — for additions, why the line earns its place; for removals, why it was costing more than it earned.
 
 **Diff Format:**
 
@@ -157,52 +149,24 @@ After outputting the audit report, ask the user for confirmation before applying
 
 ### Phase 5: Apply Updates
 
-After user approval, apply changes using the Edit tool. Preserve existing content structure. **If files are symlinked, edit only the source** — the link will reflect the change automatically.
+After user approval, apply each accepted diff using the Edit tool, in the order they appeared in the report.
 
-## Templates
+- **Symlinked files**: edit the symlink *source* — the link reflects the change automatically. Never edit through the link.
+- **Partial acceptance**: if the user accepts only some diffs, skip the rest silently; do not re-propose.
+- **Removals**: apply with Edit using the line(s) to cut as `old_string` and an empty (or replacement) `new_string`. Removals count as edits — track them the same way.
+- **Multi-file**: when several files have accepted diffs, apply each file's edits as a contiguous batch before moving to the next file.
 
-See [references/templates.md](references/templates.md) for memory file templates by project type, including the **pointer-style template** (~30 lines) the research most strongly endorses for monorepo roots.
+After applying, run a short verification: re-read each modified file, confirm the diffs landed, and report a one-line summary per file (`./CLAUDE.md: 3 cuts, 1 addition`).
 
-## Common Issues to Flag
+## After the Audit
 
-1. **Stale commands** — build/test commands that no longer work
-2. **Outdated paths** — references to files or folders that have moved or been deleted
-3. **Lint-duplicating style rules** — rules a linter or formatter already enforces
-4. **Auto-generated sections** — content added via the `#` shortcut without curation (HumanLayer cites measured negative effect)
-5. **Verbose prose** — paragraphs where one line would suffice
-6. **Rules without a stated *why*** — instructions whose reasoning is opaque, making it impossible to judge edge cases
-7. **High-level overview prose** the model can derive from the codebase
-8. **`@file` embedding of long documents** — prefer a path pointer
+Three reminders that apply across the workflow:
 
-## User Tips to Share
+- **Displacement test applies to existing lines, not just additions.** If a pre-existing line cannot defend its place, propose cutting it.
+- **`#`-added lines are draft content.** The shortcut adds material on the fly without curation; HumanLayer cites measured *negative* effect on benchmarks. Treat any `#`-added line as draft and prune within the same session.
+- **Subdirectory CLAUDE.md is preferred over root bloat.** Claude auto-loads them contextually — for monorepos and large codebases, push package- or domain-specific guidance down into the relevant directory rather than enlarging the root file.
 
-When presenting recommendations, tell users:
-
-- **Beware auto-incorporation.** The `#` shortcut adds content during a session but does not curate it. Treat any `#`-added line as draft and prune within the same session — HumanLayer cites cases where AI-authored memory content produced *negative* effect on benchmarks.
-- **Keep it terse.** Memory files are not constitutions. Default direction: shorter, denser, more specific. (See [references/quality-criteria.md](references/quality-criteria.md) for the displacement test.)
-- **Actionable commands.** Documented commands should be copy-paste ready with exact flags.
-- **Use `.claude.local.md`** for personal preferences not shared with the team (add to `.gitignore`).
-- **Global defaults** belong in `~/.claude/CLAUDE.md`; project-specific facts in the project file.
-- **Subdirectory CLAUDE.md** files load contextually — strongly recommended for large codebases and monorepos.
-- **AGENTS.md and CLAUDE.md are often symlinked.** Decide which is canonical and link the other; Claude Code does not yet read AGENTS.md natively.
-
-## What Makes a Great Memory File
-
-**Lead with the right altitude** (Anthropic, *Effective context engineering*): specific enough to guide a session, general enough to survive the next refactor. Brittle if-else logic and exhaustive edge-case enumeration fail this test; "diverse, canonical examples" pass it.
-
-**Minimum viable sections** — start here, add more only with stated reason:
-
-- Commands (build, test, dev — copy-paste ready, exact flags)
-- Gotchas (non-obvious quirks, ordering dependencies, common mistakes)
-
-**Opt-in sections** (include only if load-bearing):
-
-- Architecture (only if relationships are not obvious from imports / file layout)
-- Key Files (only if entry points are not conventionally named)
-- Code Style (only for project-specific conventions a linter does not catch)
-- Environment (only for non-obvious required vars or setup)
-- Testing (only for project-specific patterns)
-- Workflow (only for project-specific decision rules)
+Templates by project type — including the **pointer-style root** (~30 lines) the research most strongly endorses for monorepo roots — are in [references/templates.md](references/templates.md).
 
 ## Length Discipline
 
