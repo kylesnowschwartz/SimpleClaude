@@ -1,12 +1,7 @@
 ---
 name: sc-think-functional
 description: >
-  Reframe code design through functional programming principles for agent-assisted development.
-  This skill SHOULD be used when the user says "think functional", "think FP", "make this pure",
-  "separate effects", "where should this side effect go", "this function does too much",
-  "how should I structure this for agents", "make this easier to review", "reduce context needed",
-  or when planning module structure, store design, or code that agents will write and humans will review.
-  Applies FP discipline within any language to maximize agent effectiveness and human reviewability.
+  Reframe code design through functional programming principles for agent-assisted development. This skill SHOULD be used when the user says "think functional", "think FP", "make this pure", "separate effects", "where should this side effect go", "this function does too much", "how should I structure this for agents", "make this easier to review", "reduce context needed", or when planning module structure, store design, or code that agents will write and humans will review. Applies FP discipline within any language to maximize agent effectiveness and human reviewability.
 ---
 
 # Think Functional

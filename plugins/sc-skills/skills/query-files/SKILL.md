@@ -1,6 +1,6 @@
 ---
 name: query-files
-description: This skill SHOULD be used when the user asks to "get the version from package.json", "extract field from JSON", "get a field from docker-compose", "extract value from yaml", "get code blocks from README", "extract links from markdown", "find all headers in this doc", "search for pattern in codebase", "find all uses of function", "grep for string across files", "find TODO comments", "search in specific file types", "count occurrences", or when needing specific fields from JSON, YAML, or Markdown files without loading the entire file, or when needing efficient text search with context, line numbers, or special flags beyond the built-in Grep tool.
+description: This skill SHOULD be used for structured extraction or batch queries against JSON (use jq), YAML (use yq), or Markdown (use mq), and for advanced text search with ripgrep flags or pipe composition (use rg).
 ---
 
 # Context-Efficient Extraction

@@ -106,6 +106,43 @@ Good:
 Auth: JWT with HS256, tokens in `Authorization: Bearer <token>` header.
 ```
 
+### 5. Lint-Enforceable Rules
+
+Bad:
+```markdown
+Use 2 spaces for indentation. Always use single quotes. Lines max 100 chars.
+```
+
+The linter or formatter already enforces these. Documenting them in the memory file just duplicates what the toolchain does, costing attention budget for zero behavioural gain. *(Source: HumanLayer, "Writing a good CLAUDE.md" — "Never send an LLM to do a linter's job.")*
+
+### 6. Task-Specific Edge-Cases
+
+Bad:
+```markdown
+When adding a new endpoint to /api/v2/payments, remember to update the
+StripeWebhookHandler tests, the OpenAPI spec, the rate-limit config, and
+the legal team's audit log mapping.
+```
+
+This level of task-specific detail "won't matter and will distract the model when you're working on something else." If the workflow is durable, encode it in a script or test fixture, not in the memory file. *(Source: HumanLayer.)*
+
+### 7. Brittle If-Else Logic
+
+Bad:
+```markdown
+If the file is in src/legacy/, use the old patterns. If in src/v2/, use
+hooks. If in src/v3/, use signals. Unless it's a test file, in which case
+use whatever the surrounding tests use, except for snapshot tests, where...
+```
+
+Anthropic's *Effective context engineering* (Sept 2025) warns against "brittle if-else logic embedded in prompts" and recommends "diverse, canonical examples rather than exhaustive edge cases." If the rules are this branchy, the abstraction is wrong — fix the code, not the prompt.
+
+### 8. Auto-Incorporated Content (Uncurated)
+
+Bad: Treating the `#` shortcut as a write-and-forget mechanism, leaving every captured line in the file unreviewed.
+
+The `#` shortcut adds material on the fly; it does not curate. HumanLayer cites cases where AI-authored CLAUDE.md content produced *negative* effect on benchmarks. Treat any `#`-added line as a draft and prune within the same session.
+
 ## Diff Format for Updates
 
 For each suggested change:
@@ -148,3 +185,9 @@ Before finalizing an update, verify:
 - [ ] File paths are accurate
 - [ ] Would a new Claude session find this helpful?
 - [ ] Is this the most concise way to express the info?
+
+**Displacement test (apply to every line, added or pre-existing):**
+
+- [ ] Could this line be deleted with no loss of useful guidance?
+- [ ] Is this duplicated by a linter, type-checker, or test? (If yes, cut.)
+- [ ] Is this content where it should be a pointer, or a pointer where it should be content?

@@ -2,13 +2,8 @@
 name: sc-clean-room
 description: >
   Clean-room reimplementation of a repository, library, API, protocol, or other software artifact.
-  This skill SHOULD be used when the user says "clean room", "clean-room design", "reimplement from scratch",
-  "build a clean version of", "reverse engineer", "reimagine this library", "write my own version of",
-  "clone this functionality", "functional equivalent", "rewrite without looking at the source",
-  "Chinese wall", "independent implementation", "sc-clean-room",
-  or wants to create a functionally equivalent implementation of an existing artifact
-  without copying its internal design or expression.
-  NOT for refactoring existing code. Use /sc-work for that. NOT for adversarial analysis. Use /sc-adversarial-hunt.
+  This skill SHOULD be used when the user wants to create a functionally equivalent implementation of an existing artifact
+  without copying its internal design or expression. NOT for refactoring existing code.
 argument-hint: "[target: repo URL, local path, or artifact name] [optional: scope or focus]"
 allowed-tools: Task, Read, Bash, Grep, Glob, AskUserQuestion, TodoWrite, WebSearch, WebFetch, Write, Edit
 ---
