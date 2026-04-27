@@ -18,7 +18,7 @@ argument-hint: "[target: repo URL, local path, or artifact name] [optional: targ
 
 This is a bastardization of the technique used by Compaq 1982 to clone the IBM PC BIOS.
 
-A structured approach to porting a software artifact to a different language or platform while consulting its internals. A **reading agent** examines the original and produces a behavioral specification, behavioral fixtures, AND a translation brief — notes on which algorithms, data structures, and idioms are worth carrying across the language boundary. The implementation agent receives all three artifacts and explicit permission to read the original source directly.
+A structured approach to porting a software artifact to a different language or platform while consulting its internals. A **reading agent** examines the original and produces discovery, fixtures, and a translation brief — notes on which algorithms, data structures, and idioms are worth carrying across the language boundary. The implementation agent receives all three artifacts and explicit permission to read the original source directly.
 
 The clean-room skill builds a wall between specification and implementation to preserve copyright independence; the dirty-room takes notes through the open window because the constraints here are technical, not legal. Use this when the goal is a faithful port rather than an independent reimplementation.
 
@@ -86,6 +86,69 @@ If the directory already exists, ask: start fresh, resume, or abort.
 | **Data Format** | Syntax, semantics, edge cases, error recovery, parser strategy |
 | **Algorithm** | Inputs, outputs, invariants, complexity, optimisations worth preserving |
 
+### Run State
+
+Before leaving Phase 0, fix the following named variables.
+
+**Substitution contract.** Two grammars appear in this skill and must not be confused:
+
+- Tokens of the form `<UPPER_SNAKE>` are Run State variables. The orchestrator MUST replace them with the resolved value before sending any prompt to a `Task()` agent. Every Phase 1 and Phase 3 prompt body performs this literal substitution before invocation.
+- Tokens of the form `[brief description]` inside example artifact templates (the `discovery.md`, `fixtures.md`, `specification.md`, and `verification.md` blocks) are human-readable scaffolds the spawned agent fills with its findings — do NOT replace these.
+
+| Variable | Definition | Derivation rule |
+|----------|------------|-----------------|
+| `ARTIFACT_NAME` | Short canonical name of the original artifact | Lowercase, hyphens; strip versions, namespaces, and registry decorations. For repo URLs, use the repo's basename; for packages, the registry name without scope (`@org/foo` → `foo`); for protocols, the common abbreviation (e.g. `http2`, `grpc`). |
+| `SOURCE_LANG` / `TARGET_LANG` | Canonical language tokens | Lowercase, hyphens. Use the canonical short names: `go`, `rust`, `python`, `typescript`, `javascript`, `ruby`, `java`, `kotlin`, `swift`, `c`, `cpp`, `csharp`, `elixir`, `erlang`, `scala`, `clojure`, `haskell`, `ocaml`. Pick the closest match for variants (`ts` → `typescript`, `py` → `python`). |
+| `SLUG` | Run identifier | `<ARTIFACT_NAME>-<SOURCE_LANG>-to-<TARGET_LANG>` |
+| `RUN_DIR` | Run directory (absolute path) | `<repo-root>/.agent-history/dirty-room/<SLUG>/` |
+| `SOURCE_PATH` | Absolute path to the materialised original | Set by Phase 0 Materialisation, below. |
+| `TARGET_PATH` | Absolute path where the port will be written | Confirm with the user; default to `<repo-root>/<ARTIFACT_NAME>-<TARGET_LANG>/` if unspecified. |
+| `SOURCE_VERSION` | Immutable version pin of the materialised source | Read after Materialisation; this is the `version_pin` field recorded by the Materialisation recipe in `<RUN_DIR>provenance.json`. |
+| `SCOPE` | Negotiated scope of the port | Captured during Phase 0 scope negotiation. A short prose summary of which parts are in scope and out of scope. |
+| `IMPL_PREFS` | Porter's preferred architecture, test strategy, libraries | Captured at the start of Phase 3, immediately before the porting Task() is launched, via `AskUserQuestion`. |
+| `APPROVAL_SIGNAL` | What counts as user approval at each blocking gate | An explicit affirmative from the user — "yes", "approved", "proceed", "lgtm", "go ahead", or equivalent. Silence, partial approval ("looks mostly good but…"), or any qualified response does NOT count; re-ask explicitly until you receive an unambiguous affirmative or an explicit halt. |
+
+Echo the Run State back to the user as a compact block before Phase 1 so they can confirm:
+
+```
+SLUG=<resolved>
+RUN_DIR=<resolved>
+ARTIFACT_NAME=<resolved>
+SOURCE_LANG=<resolved>
+TARGET_LANG=<resolved>
+SOURCE_PATH=<resolved>
+TARGET_PATH=<resolved>
+SOURCE_VERSION=<resolved>
+SCOPE=<resolved>
+```
+
+(`IMPL_PREFS` is filled in at Phase 3.)
+
+### Phase 0 Materialisation
+
+After resolving Run State, the orchestrator MUST materialise the source on disk and record its version pin to `<RUN_DIR>provenance.json` before proceeding to Phase 1. Run exactly one row from the table below — the row whose target type matches what the user supplied.
+
+`provenance.json` shape (uniform across all rows):
+
+```json
+{
+  "target_type": "repo_url | local_path | package | protocol",
+  "identifier": "<the original argument as supplied>",
+  "version_pin": "<commit SHA, package version, or doc revision/access date>",
+  "captured_at": "<ISO-8601 UTC timestamp>",
+  "source_path": "<absolute path>"
+}
+```
+
+| Target type | Materialisation recipe |
+|-------------|------------------------|
+| **Repository URL** | `git clone <url> <RUN_DIR>source/<ARTIFACT_NAME>` then capture `git -C <RUN_DIR>source/<ARTIFACT_NAME> rev-parse HEAD` as `version_pin`. `source_path` = `<RUN_DIR>source/<ARTIFACT_NAME>`. |
+| **Local path** | No copy. `source_path` = absolute path of `<SOURCE_INPUT>`. If `git -C <SOURCE_INPUT> rev-parse HEAD` succeeds, use its output as `version_pin`. Otherwise compute `find <SOURCE_INPUT> -type f -exec sha256sum {} \; \| sha256sum` and use that digest as `version_pin`. |
+| **Package name** | Resolve and unpack into `<RUN_DIR>source/<ARTIFACT_NAME>/` per ecosystem, then record the resolved version as `version_pin`: <br>• npm: `npm pack <pkg>@<ver>` then `tar -xzf <pkg>-<ver>.tgz -C <RUN_DIR>source/<ARTIFACT_NAME> --strip-components=1` <br>• PyPI: `pip download --no-deps --no-binary=:all: -d <RUN_DIR>source/ <pkg>==<ver>` then unpack the sdist into `<RUN_DIR>source/<ARTIFACT_NAME>/` <br>• RubyGems: `gem fetch <pkg> -v <ver>` then `gem unpack <pkg>-<ver>.gem --target=<RUN_DIR>source/` <br>• crates.io: `cargo download <pkg>==<ver> -x -o <RUN_DIR>source/<ARTIFACT_NAME>/` (or fetch the `.crate` and `tar -xzf` it) |
+| **Protocol / API** | `curl -fsSL <spec-url> -o <RUN_DIR>source/<ARTIFACT_NAME>/<filename>` (repeat per document). `version_pin` = the document's published revision if stated in the spec, otherwise the ISO-8601 fetch date. `source_path` = `<RUN_DIR>source/<ARTIFACT_NAME>`. |
+
+Update `SOURCE_PATH` and `SOURCE_VERSION` in Run State from `<RUN_DIR>provenance.json` (the `source_path` and `version_pin` fields, respectively). From Phase 1 onward, all agent prompts derive `<SOURCE_PATH>` and `<SOURCE_VERSION>` from `<RUN_DIR>provenance.json`.
+
 ## Phase 1: Read the Source
 
 Examine the original to document **what it does**, **how it does the parts worth preserving**, and capture **behavioural fixtures** for verification.
@@ -93,6 +156,8 @@ Examine the original to document **what it does**, **how it does the parts worth
 **BLOCKING**: Complete the reading before moving to Phase 2.
 
 Launch as a `Task()` agent. This agent reads the original freely. Its output goes to disk; the orchestrator reads those files afterward. Unlike clean-room, there is no contamination concern — the implementation agent will see the same source material itself.
+
+Per the substitution contract above, replace every `<UPPER_SNAKE>` token in the prompt body with its Run State value before invoking. Leave the `[bracket]` scaffolds inside the example artifact templates untouched — those are for the spawned agent to fill.
 
 ```
 Task(
@@ -105,11 +170,14 @@ Task(
   2. A behavioural fixtures file
   3. A translation brief (how to carry this across the language boundary)
 
-  Target: [resolved target from Phase 0]
-  Scope: [scope from Phase 0]
-  Source version: [pinned version]
-  Source language: [from Phase 0]
-  Target language: [from Phase 0]
+  Target: <ARTIFACT_NAME>
+  Scope: <SCOPE>
+  Provenance: <RUN_DIR>provenance.json is authoritative for SOURCE_PATH and SOURCE_VERSION; read it before starting.
+  Source version: <SOURCE_VERSION>
+  Source language: <SOURCE_LANG>
+  Target language: <TARGET_LANG>
+  Source path: <SOURCE_PATH>
+  Run directory: <RUN_DIR>
 
   ## What to capture in discovery.md
   - Public interface: function signatures, types, config options, error types
@@ -145,8 +213,8 @@ Task(
 
   ## Translation brief (translation-brief.md)
   This is the dirty-room-specific deliverable. For each notable internal:
-  - **Source pattern**: the technique as expressed in [source language]
-  - **Target pattern**: the equivalent in [target language] — idiomatic, not literal
+  - **Source pattern**: the technique as expressed in <SOURCE_LANG>
+  - **Target pattern**: the equivalent in <TARGET_LANG> — idiomatic, not literal
   - **Mapping notes**: gotchas, semantic differences, performance implications
 
   Cover at minimum:
@@ -155,13 +223,13 @@ Task(
   - Type system translation (e.g. structural → nominal, generics differences)
   - Memory and lifetime model (e.g. GC → ownership, refcount → arena)
   - Standard-library substitutions for any std lib calls in the source
-  - Idiom mismatches: places where the source is idiomatic in [source] but
-    would be unidiomatic in [target], with proposed local equivalents
+  - Idiom mismatches: places where the source is idiomatic in <SOURCE_LANG> but
+    would be unidiomatic in <TARGET_LANG>, with proposed local equivalents
 
   Write to:
-  - .agent-history/dirty-room/<slug>/discovery.md
-  - .agent-history/dirty-room/<slug>/fixtures.md
-  - .agent-history/dirty-room/<slug>/translation-brief.md
+  - <RUN_DIR>discovery.md
+  - <RUN_DIR>fixtures.md
+  - <RUN_DIR>translation-brief.md
 
   All three files MUST include the source version in their header.
   """
@@ -170,7 +238,7 @@ Task(
 
 ### Reading output
 
-Write to `.agent-history/dirty-room/<slug>/discovery.md`:
+Write to `<RUN_DIR>discovery.md`:
 
 ```markdown
 # Discovery: [Artifact Name]
@@ -202,7 +270,7 @@ Write to `.agent-history/dirty-room/<slug>/discovery.md`:
 [Behaviours that were ambiguous or couldn't be determined]
 ```
 
-Write to `.agent-history/dirty-room/<slug>/fixtures.md`:
+Write to `<RUN_DIR>fixtures.md`:
 
 ```markdown
 # Behavioural Fixtures: [Artifact Name]
@@ -219,7 +287,7 @@ Write to `.agent-history/dirty-room/<slug>/fixtures.md`:
 **Category**: happy-path | edge-case | error
 ```
 
-Write to `.agent-history/dirty-room/<slug>/translation-brief.md`:
+Write to `<RUN_DIR>translation-brief.md`:
 
 ```markdown
 # Translation Brief: [Artifact Name]
@@ -264,7 +332,7 @@ Present all three files to the user. Ask: "Does this capture the behaviour you w
 
 Distil the discovery into a **functional specification** (the WHAT) and finalise the **translation brief** (the HOW guidance). Both go to the implementation agent.
 
-**BLOCKING**: Do NOT start until the user approves Phase 1 output.
+**BLOCKING**: Do NOT start until the user approves Phase 1 output (per `APPROVAL_SIGNAL`).
 
 ### Specification rules
 
@@ -276,7 +344,7 @@ The spec describes behaviour, not mechanism — exactly as in clean-room. Keepin
 4. **Specify error behaviour.** What errors occur, what information they carry.
 5. **Leave implementation choices to the porter and the brief.** The spec says WHAT; the brief and the source say HOW.
 
-Write to `.agent-history/dirty-room/<slug>/specification.md`:
+Write to `<RUN_DIR>specification.md`:
 
 ```markdown
 # Functional Specification: [Artifact Name]
@@ -325,13 +393,13 @@ Present the spec and brief together. Ask:
 - "Does the translation brief reflect how you want techniques carried across?"
 - "Anything in the brief that should be reclassified as out-of-scope or as discard?"
 
-The user's approval is the formal handoff.
+The user's approval (per `APPROVAL_SIGNAL`) is the formal handoff.
 
 ## Phase 3: Port
 
-**BLOCKING**: Do NOT start until the user approves Phase 2 output.
+**BLOCKING**: Do NOT start until the user approves Phase 2 output (per `APPROVAL_SIGNAL`).
 
-Gather implementation preferences via `AskUserQuestion`:
+Gather implementation preferences via `AskUserQuestion`. The user's answers populate `<IMPL_PREFS>` in Run State for use in the porting Task() prompt below:
 - Full interface or vertical slice?
 - Preferred architecture or patterns in the target language
 - Test strategy (TDD from spec, tests after, both)
@@ -340,19 +408,22 @@ Gather implementation preferences via `AskUserQuestion`:
 
 Launch a `Task()` agent for implementation. This agent receives the spec, the brief, the path to the original source, and implementation preferences.
 
+Per the substitution contract, replace every `<UPPER_SNAKE>` token in the prompt body with its resolved Run State value before invoking.
+
 ```
 Task(
   description: "Dirty-room port: implement from spec, brief, and source",
   prompt: """
   ## Role: Porting Agent
 
-  Build a port of [artifact] from [source language] to [target language].
+  Build a port of <ARTIFACT_NAME> from <SOURCE_LANG> to <TARGET_LANG>.
 
-  Specification: .agent-history/dirty-room/<slug>/specification.md
-  Translation brief: .agent-history/dirty-room/<slug>/translation-brief.md
-  Original source: [absolute path to source]
-  Output directory: [target path]
-  Implementation preferences: [from user]
+  Specification: <RUN_DIR>specification.md
+  Translation brief: <RUN_DIR>translation-brief.md
+  Original source: <SOURCE_PATH>
+  Source version: <SOURCE_VERSION>
+  Output directory: <TARGET_PATH>
+  Implementation preferences: <IMPL_PREFS>
 
   ## Authority hierarchy
   1. The specification is authoritative for behaviour. The port must satisfy it.
@@ -362,7 +433,7 @@ Task(
      and observing techniques marked "preserve" or "adapt" in the brief.
 
   ## Rules
-  - Prefer idiomatic [target language] over a literal transcription.
+  - Prefer idiomatic <TARGET_LANG> over a literal transcription.
   - Items marked "discard" in discovery MUST NOT cross over.
   - Items marked "preserve" should retain their behaviour and, where the brief
     says so, their structural shape.
@@ -375,8 +446,8 @@ Task(
   ## Build sequence
   1. Read the specification and translation brief in full
   2. Skim the original source for architectural orientation
-  3. Scaffold project structure, dependencies, build tooling in target language
-  4. Define types from the spec's interface section, in target-language idiom
+  3. Scaffold project structure, dependencies, build tooling in <TARGET_LANG>
+  4. Define types from the spec's interface section, in <TARGET_LANG> idiom
   5. Implement behaviour, edge cases, error handling — consulting source where
      marked "preserve" or "adapt"
   6. Write tests derived from spec contracts
@@ -422,7 +493,7 @@ The workflow MUST NOT proceed to Phase 5 with any FAIL fixtures unresolved.
 
 If fixture replay reveals failures, the fix path is: revise the spec or brief to capture the missing behaviour, then re-run Phase 3. The porter may also re-read the source to diagnose. Unlike clean-room, this is fully permitted.
 
-Write to `.agent-history/dirty-room/<slug>/verification.md`:
+Write to `<RUN_DIR>verification.md`:
 
 ```markdown
 # Verification: [Artifact Name]
@@ -460,18 +531,18 @@ Write to `.agent-history/dirty-room/<slug>/verification.md`:
 **Scope**: [what was ported]
 
 ## Process
-- **Reading** documented N interface elements, M behavioural contracts, K fixtures, P translation entries
+- **Reading** documented N interface elements, M behavioural contracts, K fixtures, P translation brief sections
 - **Specification** covered N requirements
 - **Port** produced [file count] files, [test count] tests
 - **Verification** passed N/M spec requirements, K/K fixtures replayed
 
 ## Artifacts
-- Discovery: `.agent-history/dirty-room/<slug>/discovery.md`
-- Fixtures: `.agent-history/dirty-room/<slug>/fixtures.md`
-- Specification: `.agent-history/dirty-room/<slug>/specification.md`
-- Translation brief: `.agent-history/dirty-room/<slug>/translation-brief.md`
-- Verification: `.agent-history/dirty-room/<slug>/verification.md`
-- Port: [path to ported code]
+- Discovery: `<RUN_DIR>discovery.md`
+- Fixtures: `<RUN_DIR>fixtures.md`
+- Specification: `<RUN_DIR>specification.md`
+- Translation brief: `<RUN_DIR>translation-brief.md`
+- Verification: `<RUN_DIR>verification.md`
+- Port: `<TARGET_PATH>`
 
 ## Known Gaps
 [Unimplemented or unverified requirements]
@@ -486,7 +557,7 @@ Use `AskUserQuestion`:
 
 | Option | Description |
 |--------|-------------|
-| Extend | Port more of the original; capture more fixtures and translation entries |
+| Extend | Port more of the original; capture more fixtures and translation brief sections |
 | Idiomatise | Revisit places where the port still reads as transcription, not translation |
 | Harden | Focus on edge cases, error handling, and test coverage |
 | Ship | Done. Package and finalise |
