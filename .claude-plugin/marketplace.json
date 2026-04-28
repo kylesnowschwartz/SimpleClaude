@@ -1,7 +1,7 @@
 {
   "name": "simpleclaude",
   "metadata": {
-    "version": "6.11.0",
+    "version": "6.11.1",
     "description": "Practical minimalist AI assistant framework with specialized agents"
   },
   "owner": {
@@ -12,7 +12,7 @@
     {
       "name": "sc-core",
       "description": "Core SimpleClaude framework with intent-based commands and specialized agents for token-efficient execution",
-      "version": "6.11.0",
+      "version": "6.11.1",
       "author": {
         "name": "Kyle Snow Schwartz"
       },
@@ -37,7 +37,7 @@
     {
       "name": "sc-hooks",
       "description": "SimpleClaude hooks for session management, tool monitoring, plan review gating, and notifications",
-      "version": "6.11.0",
+      "version": "6.11.1",
       "author": {
         "name": "Kyle Snow Schwartz"
       },
@@ -57,7 +57,7 @@
     {
       "name": "sc-extras",
       "description": "Optional SimpleClaude utilities for root cause analysis, claim verification, adversarial analysis, and context wizards",
-      "version": "6.11.0",
+      "version": "6.11.1",
       "author": {
         "name": "Kyle Snow Schwartz"
       },
@@ -78,7 +78,7 @@
     {
       "name": "sc-output-styles",
       "description": "Curated output styles for Claude Code: personality-driven and structured formats",
-      "version": "6.11.0",
+      "version": "6.11.1",
       "author": {
         "name": "Kyle Snow Schwartz"
       },
@@ -98,7 +98,7 @@
     {
       "name": "sc-skills",
       "description": "Skills and agents for diagrams, codebase patterns, hypothesis testing, Socratic thinking, file querying, frontend design, image generation, and command creation",
-      "version": "6.11.0",
+      "version": "6.11.1",
       "author": {
         "name": "Kyle Snow Schwartz"
       },
@@ -122,7 +122,7 @@
     {
       "name": "sc-refactor",
       "description": "Unified review, refactoring, PR comment resolution, and cleanup workflows with specialized analysis agents",
-      "version": "6.11.0",
+      "version": "6.11.1",
       "author": {
         "name": "Kyle Snow Schwartz"
       },
