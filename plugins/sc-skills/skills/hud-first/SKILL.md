@@ -4,7 +4,7 @@ description: Use when designing AI features and the real opportunity may be perc
 ---
 
 <objective>
-Shift from the copilot anti-pattern (delegation, conversation, context-switching) to the HUD pattern (perception, ambient awareness, flow preservation). Based on Mark Weiser's 1992 critique of AI agents, Douglas Engelbart's Intelligence Augmentation, Steve Jobs' "bicycle for the mind," and Amber Case's Calm Technology principles.
+Shift from the copilot anti-pattern (delegation, conversation, context-switching) to the HUD pattern (perception, ambient awareness, flow preservation). Based on Mark Weiser's 1992 critique of AI agents, Douglas Engelbart's Intelligence Augmentation, Steve Jobs' "bicycle for the mind," Amber Case's Calm Technology principles, and Edward Tufte's grammar of visual information design.
 </objective>
 
 <quick_start>
@@ -41,10 +41,9 @@ To reframe any problem using HUD-first thinking:
    - What visual/auditory/haptic signal would make this obvious?
    - How could this information be ambient rather than on-demand?
 
-4. **Validate with the spellcheck test**
-   - Spellcheck doesn't ask "would you like help spelling?"
-   - It just shows red squiggles. You notice. You decide.
-   - Does your solution pass this test?
+4. **Validate with the spellcheck and sparkline tests**
+   - *Spellcheck test*: it doesn't ask "would you like help spelling?" — it just shows red squiggles. You notice. You decide. Does your solution pass this test?
+   - *Sparkline test* (Tufte): could the information live word-sized, inlaid in the work the user is already reading? If yes, it is a HUD candidate. If it demands its own panel, dialog, or trip, it is a copilot in disguise.
 </reframing_process>
 
 <examples>
@@ -110,13 +109,21 @@ To reframe any problem using HUD-first thinking:
 </examples>
 
 <design_principles>
-From Calm Technology (Weiser, Case):
+From Calm Technology (Weiser, Case) — *why* the instrument should exist:
 
 1. **Require minimal attention** — Lives in peripheral awareness
 2. **Extend senses, don't replace judgment** — New information channels, same human decision-maker
 3. **Communicate without speaking** — Color, position, sound, vibration—not dialog boxes
 4. **Stay invisible until needed** — Information surfaces when relevant, recedes when not
 5. **Amplify Human+Machine** — Optimize the interface between them, not either alone
+
+From Visual Grammar (Tufte) — *how* to construct the instrument:
+
+1. **Maximize data-ink** — Every mark must encode information; ornament is debt
+2. **Eliminate chartjunk** — Decoration that consumes attention without conveying signal
+3. **Prefer small multiples** — Repeat a frame across a varying parameter so the eye performs the comparison
+4. **Embed sparklines** — Word-sized graphics inlaid in prose, not separate panels
+5. **Check the lie factor** — The visual effect should match the size of the effect in the data (≈1)
 </design_principles>
 
 <when_copilot_is_fine>
