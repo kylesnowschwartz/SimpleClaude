@@ -3,154 +3,74 @@ name: hud-first
 description: Use when designing AI features and the real opportunity may be perception support, not delegated conversational work.
 ---
 
-<objective>
-Shift from the copilot anti-pattern (delegation, conversation, context-switching) to the HUD pattern (perception, ambient awareness, flow preservation). Based on Mark Weiser's 1992 critique of AI agents, Douglas Engelbart's Intelligence Augmentation, Steve Jobs' "bicycle for the mind," Amber Case's Calm Technology principles, and Edward Tufte's grammar of visual information design.
-</objective>
+```
+● main ↑3 │ build ✓ 2.1s ▁▂▂▃▄▅▆ │ tests 412/413 ✗ │ lint ✓ │ types ⚠2
+```
 
-<quick_start>
-When facing a problem, ask:
+That row is the skill. One line, six fields, no prompt, no dialog. You see system state *through* it, not at it. Lineage: Weiser (calm tech), Engelbart (IA), Tufte (data-ink, sparklines, small multiples).
 
-**Instead of:** "What agent/assistant can do this for me?"
-**Ask:** "What new sense would let me perceive this problem differently?"
+## Copilot vs. HUD
 
-The goal is not automation. The goal is augmentation.
-</quick_start>
+| Copilot (anti-pattern) | HUD (target)              |
+|------------------------|---------------------------|
+| You talk to it         | You see through it        |
+| Demands attention      | Lives in periphery        |
+| Delegates judgment     | Extends perception        |
+| Context-switch tax     | Flow-state preserving     |
+| "Do this for me"       | "Now I notice more"       |
 
-<essential_distinction>
-| Copilot (Anti-pattern) | HUD (Target) |
-|------------------------|--------------|
-| You talk to it | You see through it |
-| Demands attention | Operates in periphery |
-| Delegates your judgment | Extends your perception |
-| Context-switching tax | Flow-state preserving |
-| "Do this for me" | "Now I notice more" |
-</essential_distinction>
+## Reframing protocol
 
-<reframing_process>
-To reframe any problem using HUD-first thinking:
+1. **Name the copilot reflex.** What chat would you open? What prompt would you type?
+2. **Extract the information need.** What does the assistant need to *know* to answer? That is what you need to *perceive*.
+3. **Compose from the primitive palette** (pick 1–3, not more — beyond 3 the row stops being a HUD and starts being a dashboard):
+   - **sparkline row** — `▁▂▃▄▅▆▇█` in ≤8 cells, encoding a series *(refresh ≤4 Hz)*
+   - **gutter cell** — column-1 marker per line: `! * ● ◐ ·` *(on save / on event)*
+   - **status-line field** — `key value` pair, separated by `│` on a single row *(refresh ≤1 Hz)*
+   - **dim/bold/inverse run** — weight = salience; inverse = current/selected *(on focus)*
+   - **badge glyph** — single-cell state: `✓ ✗ · ⚠ ● ○ ◐ ↑ ↓` *(event-triggered)*
+   - **color-band column** — fixed-width column, hue encodes category *(on classify)*
+   - **box-drawing frame** — `─ │ ┌ ┐ └ ┘ ├ ┤`, only when a frame earns its cells *(static)*
+   - **prompt-line indicator** — one trailing field appended to the shell prompt *(per-keystroke)*
+   - **small-multiples / row-repeat** — *no glyph; a layout pattern.* Same instrument repeats across N rows with shared column alignment and shared scales, so cross-row scan is structurally licensed.
 
-1. **Identify the copilot instinct**
-   - What task are you tempted to delegate?
-   - What conversation would you have with an assistant?
+   **When you catch yourself wanting a GUI affordance, reach for the terminal substitute:**
+   - **hover** → inverse cursor row (`j`/`k` moves the highlight)
+   - **popover / tooltip** → expand-on-key, or one appended status-line field
+   - **gradient** → dim/normal/bold triplet, or a 3-step 256-color ramp via **color-band**
+   - **modal dialog** → full-line takeover, single-key dismiss
+   - **animation** → ≤4 Hz refresh on a single sparkline cell
+   - **drag** → `j`/`k` to move, `enter` to commit
 
-2. **Extract the information need**
-   - What does the assistant need to *know* to help?
-   - What would you need to *perceive* to not need the assistant?
+4. **Pass both terminal tests:**
+   - **Spellcheck test** — the marker appears *in the line of work itself*, not in a popup, dialog, side pane, or separate command. Pass: `!43 │ if user.role == "admin":`. Fail: a `cx-review` subcommand that prints a report.
+   - **Sparkline test** (Tufte) — the signal renders with `▁▂▃▄▅▆▇█` (or a similar fixed-glyph row) in ≤8 cells *inside* an existing line; when sparklines stack, they share a labeled baseline. Pass: `tests 412/413 ✗ ▁▂▃▇`. Fail: a separate ASCII bar-chart screen, or four stacked sparklines each rescaling to their own min/max.
 
-3. **Design the sense extension**
-   - What visual/auditory/haptic signal would make this obvious?
-   - How could this information be ambient rather than on-demand?
+## Worked example: test-runner HUD
 
-4. **Validate with the spellcheck and sparkline tests**
-   - *Spellcheck test*: it doesn't ask "would you like help spelling?" — it just shows red squiggles. You notice. You decide. Does your solution pass this test?
-   - *Sparkline test* (Tufte): could the information live word-sized, inlaid in the work the user is already reading? If yes, it is a HUD candidate. If it demands its own panel, dialog, or trip, it is a copilot in disguise.
-</reframing_process>
+```
+PKG             STRIP                 N/N    LATENCY (▁=0 █=600ms)  TREND
+auth/login      ✓✓✓✓✓✓✓✓✓✓✓✓✓✓✓✓✓✓✓·  19/20  ▁▁▁▁▁▂▂▂   142ms
+auth/oauth      ✓✓✓✓✓✓✗✓✓✓✓✓✓✓✓✓✓✓✓✓  19/20  ▁▂▂▂▂▃▃▃   211ms
+billing/charge  ✓✓✓✓✓✓✓✓✓✓✓✓✓✓✓✓✓✓✓✓  20/20  ▁▁▁▁▂▂▂▂    88ms
+billing/refund  ✓✓✓✓✓✓✓✓✓✓✓✓✓✓✓✓✓✓✓✓  20/20  ▃▄▅▅▆▆▇▇   503ms   ⚠
+```
 
-<examples>
-<example name="code_review">
-<copilot_approach>
-"Review this code for bugs and suggest improvements"
-→ Conversation, delegation, waiting, context-switch to read response
-</copilot_approach>
+↑ **small-multiples in action:** each row applies the same gutter-strip + shared-baseline sparkline + badge instrument to one `PKG`, so the eye scans vertically. The strip is strict 3-state (`✓ ✗ ·` = pass / fail / skip); trend warnings ride in their own badge column, so 20/20 still means 20/20. The flaky test (✗ in the strip) and the slow-creep (sparkline standing visibly taller than its neighbors, ⚠ in TREND) are legible without prose annotations — the data already speaks.
 
-<hud_approach>
-- Inline complexity warnings (like spell-check for cognitive load)
-- Test coverage heatmap in the gutter
-- Type inference annotations that appear on hover
-- Mutation testing results as background highlights
-→ You *see* code quality. No conversation needed.
-</hud_approach>
-</example>
+Copilot reflex: *"summarize the test run."* HUD instruments: gutter-strip + sparkline + badge, row-repeated across packages.
 
-<example name="email_triage">
-<copilot_approach>
-"Summarize my inbox and tell me what's urgent"
-→ You're now reading the AI's interpretation, not the emails
-</copilot_approach>
+## Small multiples: same protocol, four domains
 
-<hud_approach>
-- Urgency highlighting (color gradient based on signals)
-- Relationship context badges (how often you interact)
-- Sentiment indicators (tone of message)
-- Thread age/velocity visualization
-→ You *perceive* inbox state at a glance. You decide what matters.
-</hud_approach>
-</example>
+| domain      | copilot reflex            | HUD instrument (terminal-native)                       |
+|-------------|---------------------------|--------------------------------------------------------|
+| code review | "review this PR for bugs" | `!42 ●  if x == True:                          ▆cx`    |
+| inbox       | "summarize my email"      | `▌ ●●● 02:14 CEO    Re: Q3 review            ▇▆▃▁`     |
+| debugging   | "find the bug"            | `i=37  arr[0..n)  hits ▁▁▂▃▇▂▁  ✗ at i=23`             |
+| writing     | "rewrite this paragraph"  | `~/essay $ █  passive ▃ │ readab ▇▆ │ "just"×4 │ 318w` |
 
-<example name="debugging">
-<copilot_approach>
-"Find the bug in this function"
-→ Delegation of understanding. You learn nothing.
-</copilot_approach>
+Inbox row leads with a `▌` **color-band column** (hue = folder); the writing row appends indicators to the shell **prompt line**. Each instrument picks ≤3 primitives and stays inside the existing line.
 
-<hud_approach>
-- Live variable values overlaid during execution
-- Control flow visualization (which branches taken)
-- State diff between invocations
-- Anomaly highlighting (this value is unusual)
-→ You *see* program behavior. The bug becomes obvious.
-</hud_approach>
-</example>
+## When copilot is fine
 
-<example name="writing">
-<copilot_approach>
-"Rewrite this paragraph to be clearer"
-→ You lose your voice. You're editing AI output, not your thoughts.
-</copilot_approach>
-
-<hud_approach>
-- Readability score in margin (updates as you type)
-- Sentence complexity highlighting
-- Passive voice indicators
-- Repetition detection
-→ You *sense* where prose is weak. You fix it your way.
-</hud_approach>
-</example>
-</examples>
-
-<design_principles>
-From Calm Technology (Weiser, Case) — *why* the instrument should exist:
-
-1. **Require minimal attention** — Lives in peripheral awareness
-2. **Extend senses, don't replace judgment** — New information channels, same human decision-maker
-3. **Communicate without speaking** — Color, position, sound, vibration—not dialog boxes
-4. **Stay invisible until needed** — Information surfaces when relevant, recedes when not
-5. **Amplify Human+Machine** — Optimize the interface between them, not either alone
-
-From Visual Grammar (Tufte) — *how* to construct the instrument:
-
-1. **Maximize data-ink** — Every mark must encode information; ornament is debt
-2. **Eliminate chartjunk** — Decoration that consumes attention without conveying signal
-3. **Prefer small multiples** — Repeat a frame across a varying parameter so the eye performs the comparison
-4. **Embed sparklines** — Word-sized graphics inlaid in prose, not separate panels
-5. **Check the lie factor** — The visual effect should match the size of the effect in the data (≈1)
-</design_principles>
-
-<when_copilot_is_fine>
-Delegation works for:
-- Routine, predictable tasks (autopilot for straight-level flight)
-- Tasks you genuinely don't want to understand
-- One-time operations with clear success criteria
-
-But for expert work, creative work, complex judgment—you want instruments, not a chatbot to argue with.
-</when_copilot_is_fine>
-
-<challenge>
-For your current problem:
-
-1. What would a "red squiggly" look like for this domain?
-2. What sense would you need to perceive the solution space directly?
-3. How could the information be *ambient and continuous* rather than *requested and discrete*?
-
-The best AI interface is often invisible. You just become aware of more.
-</challenge>
-
-<success_criteria>
-HUD-first reframing is successful when:
-
-- The proposed solution doesn't require conversation or explicit requests
-- Information flows continuously rather than on-demand
-- The human remains in control of judgment and decision
-- Flow state is preserved (no context-switching to interact with AI)
-- The user would describe it as "now I just *notice* things I didn't before"
-</success_criteria>
+Routine, one-shot, you genuinely don't want to learn it (autopilot for straight-and-level). For expert work — judgment, debugging, prose — instrument, don't delegate.
