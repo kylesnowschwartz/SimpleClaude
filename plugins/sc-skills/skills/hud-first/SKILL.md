@@ -23,16 +23,18 @@ That row is the skill. One line, six fields, no prompt, no dialog. You see syste
 
 1. **Name the copilot reflex.** What chat would you open? What prompt would you type?
 2. **Extract the information need.** What does the assistant need to *know* to answer? That is what you need to *perceive*.
-3. **Compose from the primitive palette** (pick 1–3, not more — beyond 3 the row stops being a HUD and starts being a dashboard):
-   - **sparkline row** — `▁▂▃▄▅▆▇█` in ≤8 cells, encoding a series *(refresh ≤4 Hz)*
-   - **gutter cell** — column-1 marker per line: `! * ● ◐ ·` *(on save / on event)*
-   - **status-line field** — `key value` pair, separated by `│` on a single row *(refresh ≤1 Hz)*
-   - **dim/bold/inverse run** — weight = salience; inverse = current/selected *(on focus)*
-   - **badge glyph** — single-cell state: `✓ ✗ · ⚠ ● ○ ◐ ↑ ↓` *(event-triggered)*
-   - **color-band column** — fixed-width column, hue encodes category *(on classify)*
+3. **Compose from the primitive palette:**
+   - **sparkline row** — `▁▂▃▄▅▆▇█` in ≤8 cells, encoding a series *(≤4 Hz)*
+   - **gutter cell** — column-1 marker per line: `! * ● ◐ ·` *(event:save)*
+   - **status-line field** — `key value` pair, separated by `│` on a single row *(≤1 Hz)*
+   - **dim/bold/inverse run** — weight = salience; inverse = current/selected *(event:focus)*
+   - **badge glyph** — single-cell state: `✓ ✗ · ⚠ ● ○ ◐ ↑ ↓` *(event:state)*
+   - **color-band column** — fixed-width column, hue encodes category *(event:classify)*
    - **box-drawing frame** — `─ │ ┌ ┐ └ ┘ ├ ┤`, only when a frame earns its cells *(static)*
-   - **prompt-line indicator** — one trailing field appended to the shell prompt *(per-keystroke)*
-   - **small-multiples / row-repeat** — *no glyph; a layout pattern.* Same instrument repeats across N rows with shared column alignment and shared scales, so cross-row scan is structurally licensed.
+   - **prompt-line indicator** — one trailing field appended to the shell prompt *(≤30 Hz)*
+   - **small-multiples / row-repeat** — *meta-primitive: layout, not glyph; does not consume the ≤3 budget.* Same instrument repeats across N rows with shared column alignment and shared scales, so cross-row scan is structurally licensed.
+
+   **Budget:** ≤3 primitives per row, ≤8 sparkline cells per primitive, one line per instrument. Beyond 3, the row is a dashboard, not a HUD.
 
    **When you catch yourself wanting a GUI affordance, reach for the terminal substitute:**
    - **hover** → inverse cursor row (`j`/`k` moves the highlight)
@@ -60,7 +62,7 @@ billing/refund  ✓✓✓✓✓✓✓✓✓✓✓✓✓✓✓✓✓✓✓✓  20
 
 Copilot reflex: *"summarize the test run."* HUD instruments: gutter-strip + sparkline + badge, row-repeated across packages.
 
-## Small multiples: same protocol, four domains
+## Same protocol, four domains
 
 | domain      | copilot reflex            | HUD instrument (terminal-native)                       |
 |-------------|---------------------------|--------------------------------------------------------|
@@ -69,7 +71,7 @@ Copilot reflex: *"summarize the test run."* HUD instruments: gutter-strip + spar
 | debugging   | "find the bug"            | `i=37  arr[0..n)  hits ▁▁▂▃▇▂▁  ✗ at i=23`             |
 | writing     | "rewrite this paragraph"  | `~/essay $ █  passive ▃ │ readab ▇▆ │ "just"×4 │ 318w` |
 
-Inbox row leads with a `▌` **color-band column** (hue = folder); the writing row appends indicators to the shell **prompt line**. Each instrument picks ≤3 primitives and stays inside the existing line.
+Inbox row leads with a `▌` **color-band column** (hue = folder); the writing row appends indicators to the shell **prompt line**. Each row picks ≤3 primitives and stays inside the existing line — the test-runner block above is the small-multiples form (one instrument, many parameters); this table is the protocol's transfer (one protocol, four instruments).
 
 ## When copilot is fine
 
