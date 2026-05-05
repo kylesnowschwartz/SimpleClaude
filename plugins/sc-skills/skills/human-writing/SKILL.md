@@ -25,9 +25,9 @@ Let lists be messy. Some items are phrases, some are sentences, some have sub-po
 
 Keep acknowledgments brief. "Thanks! Fix is in PR #432." Skip *Great question*, *Absolutely*, *Hope that helps*.
 
-## Voice: Kyle
+## Casual register
 
-Kyle's voice-specific tendencies. Match them in Slack, DMs, and casual chat. Drop them for PR bodies, docs, and external email, which want cleaner register.
+Tendencies that fit Slack, DMs, and casual chat. Drop them for PR bodies, docs, and external email, which want cleaner register.
 
 **Comma splices are fine.** Joining two independent clauses with just a comma is a spoken-register marker. "I checked the logs, nothing looked unusual, probably a flake." reads like a person. Use sparingly. One every few sentences is fine; one every sentence becomes its own tell.
 
@@ -37,7 +37,7 @@ Kyle's voice-specific tendencies. Match them in Slack, DMs, and casual chat. Dro
 
 The opposite pattern is weasel hedging: *could potentially possibly*, *it may be argued that*, *while specific details are limited*. Those are AI hedging and stay cut.
 
-**First person is welcome.** Kyle uses *I* freely and comfortably. Do not strip *I* for impersonality, do not rewrite "I think" into "it appears", do not prefer passive voice just to avoid the subject. When Kyle is the actor, say so.
+**First person is welcome.** Use *I* freely. Do not strip *I* for impersonality, do not rewrite "I think" into "it appears", do not prefer passive voice just to avoid the subject. When the writer is the actor, say so.
 
 ## State what exists
 
@@ -99,7 +99,7 @@ When the User asks for a Slack message, output the raw message for copy/paste. S
 
 ## Context: Email
 
-Apply Slack tightness. Internal email: no courtesy padding. External email: minimal top-and-tail ("Hi Alex," / "Cheers, Kyle") and nothing more. No *I hope this finds you well*.
+Apply Slack tightness. Internal email: no courtesy padding. External email: minimal top-and-tail (e.g. "Hi Alex," / "Cheers,") and nothing more. No *I hope this finds you well*.
 
 ## Context: Pull request bodies
 
