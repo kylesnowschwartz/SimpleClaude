@@ -174,7 +174,8 @@ env -u CLAUDECODE claude -p \
 # 3. Verify hooks ran via log file (most reliable method)
 # Session logs land in ~/.claude/logs/hooks/session-<id>.log
 # The most recent file is the one you want:
-cat "$(ls -t ~/.claude/logs/hooks/session-*.log | head -1)"
+# (`command ls` bypasses any shell alias like eza that doesn't accept `-t`)
+cat "$(command ls -t ~/.claude/logs/hooks/session-*.log | head -1)"
 # Look for: [AutoFormatHandler] Formatting ... with RuboCop
 #           [LintCheckHandler] All lint checks passed
 
