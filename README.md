@@ -77,6 +77,8 @@ SimpleClaude uses a **lightweight agent architecture** with intent-based command
 - **Token-Efficient Design**: Agents work in isolation with focused context
 - **Clean Separation**: Commands understand intent, agents execute specialized tasks
 
+> Runtime configuration (environment variables) for sc-hooks is documented at [`plugins/sc-hooks/README.md`](plugins/sc-hooks/README.md).
+
 ### Agent System
 
 Each command automatically spawns appropriate agents:

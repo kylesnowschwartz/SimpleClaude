@@ -6,8 +6,14 @@ require_relative '../../vendor/claude_hooks/lib/claude_hooks'
 # TriggerSkillsHandler
 #
 # PURPOSE: Remind Claude to check <available_skills> for relevant skills
+# DISABLE: Set SIMPLE_CLAUDE_DISABLE_SKILL_CHECK to any value to skip the skill_check reminder injection
 class TriggerSkillsHandler < ClaudeHooks::UserPromptSubmit
   def call
+    if ENV['SIMPLE_CLAUDE_DISABLE_SKILL_CHECK']
+      log 'Skill check disabled via SIMPLE_CLAUDE_DISABLE_SKILL_CHECK', level: :debug
+      return output
+    end
+
     prompt_text = current_prompt.to_s.strip
 
     # Skip if empty or already invoking a skill/command
