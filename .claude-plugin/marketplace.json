@@ -36,7 +36,7 @@
     },
     {
       "name": "sc-hooks",
-      "description": "SimpleClaude hooks for session management, tool monitoring, plan review gating, and notifications",
+      "description": "SimpleClaude hooks for auto-formatting, lint checks, and tool monitoring",
       "version": "6.14.0",
       "author": {
         "name": "Kyle Snow Schwartz"
@@ -49,8 +49,8 @@
       "keywords": [
         "hooks",
         "automation",
-        "notifications",
-        "session-management",
+        "formatting",
+        "linting",
         "claude-code"
       ]
     },

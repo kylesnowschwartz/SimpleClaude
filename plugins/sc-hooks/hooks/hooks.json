@@ -1,17 +1,6 @@
 {
-  "description": "SimpleClaude hook configuration for session management, tool monitoring, and notifications",
+  "description": "SimpleClaude hook configuration for auto-formatting, lint checks, and tool monitoring",
   "hooks": {
-    "Notification": [
-      {
-        "matcher": "permission_prompt|elicitation_dialog|idle_prompt",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/entrypoints/notification.rb"
-          }
-        ]
-      }
-    ],
     "Stop": [
       {
         "hooks": [
@@ -22,12 +11,13 @@
         ]
       }
     ],
-    "UserPromptSubmit": [
+    "PreToolUse": [
       {
+        "matcher": "WebFetch",
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/entrypoints/user_prompt_submit.rb"
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/entrypoints/pre_tool_use.rb"
           }
         ]
       }

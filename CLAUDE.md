@@ -16,14 +16,11 @@ This file provides guidance to [Claude Code](https://github.com/anthropics/claud
 
 ## Testing
 
-SimpleClaude has Ruby-based tests in the `test/` directory:
+SimpleClaude's test surface lives in the `test/` directory plus syntax checks:
 
 ```bash
-# Run detector consistency tests (unit tests)
-./test/test_detector_consistency.rb
-
-# Run reflexive agreement analysis (requires backup directory)
-./test/test_reflexive_agreement.rb /path/to/backups
+# Syntax-check all hook Ruby files
+just test
 
 # Smoke test external CLI invocations (codex/gemini) — requires CLIs installed
 ./test/test_adversarial_cli_smoke.sh          # both
@@ -31,17 +28,16 @@ SimpleClaude has Ruby-based tests in the `test/` directory:
 ./test/test_adversarial_cli_smoke.sh gemini   # gemini only
 
 # Or via Justfile
-just test        # unit tests
 just test-cli    # CLI smoke tests
 ```
 
-The detector consistency test verifies reflexive agreement detection logic with predefined test cases and should pass cleanly. The CLI smoke test verifies codex/gemini produce real reviews (not plan-confirmation prompts or empty output).
+`just test` runs `ruby -c` over every hook file to catch syntax errors. The CLI smoke test verifies codex/gemini produce real reviews (not plan-confirmation prompts or empty output).
 
 ## Architecture
 
 SimpleClaude consists of these plugins:
 - **sc-core**: Core framework with intent-based commands and specialized agents
-- **sc-hooks**: Session management, tool monitoring, plan review gating, and notifications
+- **sc-hooks**: Auto-formatting and lint checks (Stop), plus tool monitoring (PreToolUse: steers GitHub WebFetch to the `gh` CLI)
 - **sc-output-styles**: Curated output styles — personality-driven (Linus, Austen, Lovelace, Ousterhout, Starfleet, Mayo Clinic) and structured formats (HTML, JSON, Markdown, Semantic Markdown, YAML)
 - **sc-extras**: Utility commands for root cause analysis, claim verification, adversarial analysis, and context wizards
 - **sc-skills**: Skills for mermaid diagrams, codebase pattern detection, hypothesis testing, Socratic thinking, file querying, frontend design, image generation, and command generation

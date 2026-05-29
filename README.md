@@ -22,7 +22,7 @@ claude plugin install sc-refactor
 
 **What's included:**
 - **sc-core**: Intent-based commands and specialized agents for planning, implementation, exploration, and review
-- **sc-hooks** _(optional)_: Session management, tool monitoring, plan review gating, and notification hooks
+- **sc-hooks** _(optional)_: Auto-formatting and lint checks on stop, plus tool monitoring (steers GitHub WebFetch to the `gh` CLI)
 - **sc-output-styles** _(optional)_: Curated output styles — personality-driven (Linus, Austen, Lovelace, Ousterhout, Starfleet, Mayo Clinic) and structured formats (HTML, JSON, Markdown, Semantic Markdown, YAML)
 - **sc-extras** _(optional)_: Utility commands for root cause analysis, claim verification, adversarial analysis, and context wizards
 - **sc-skills** _(optional)_: Mermaid diagrams, codebase pattern detection, hypothesis testing, Socratic thinking, file querying, frontend design, image generation, and command generation
@@ -64,8 +64,6 @@ claude plugin install sc-refactor@simpleclaude
 /sc-skills:sc-mermaid flowchart auth      # Generate architecture diagrams
 /sc-extras:sc-validate-task               # Validate completed work
 /sc-skills:sc-worktrees                   # Manage git worktrees
-
-/sc-hooks:sc-sounds                       # Configure notification sounds
 ```
 
 ## Architecture
@@ -96,7 +94,7 @@ Each command automatically spawns appropriate agents:
 SimpleClaude/
 ├── plugins/
 │   ├── sc-core/        # Core plugin: commands & agents
-│   ├── sc-hooks/                 # Hooks plugin: session management & notifications
+│   ├── sc-hooks/                 # Hooks plugin: auto-format, lint, tool monitoring
 │   ├── sc-output-styles/         # Output styles plugin: personality & structured formats
 │   ├── sc-extras/                # Extras plugin: utility commands
 │   ├── sc-skills/                # Skills plugin: diagrams, patterns, design, querying

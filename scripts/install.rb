@@ -47,7 +47,7 @@ module SimpleClaude
   class Installer
     PLUGINS = [
       { name: 'sc-core', desc: 'core framework (5 commands + 7 agents)', required: true },
-      { name: 'sc-hooks', desc: 'session management and notifications' },
+      { name: 'sc-hooks', desc: 'auto-format, lint, and tool monitoring' },
       { name: 'sc-extras', desc: '7 utility commands' },
       { name: 'sc-output-styles', desc: '8 output style personalities' },
       { name: 'sc-skills', desc: 'frontend design, image gen' }
