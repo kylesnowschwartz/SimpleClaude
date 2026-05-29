@@ -5,175 +5,100 @@ require_relative '../../vendor/claude_hooks/lib/claude_hooks'
 
 # GitHubUrlHandler
 #
-# PURPOSE: When a GitHub URL is detected in the user prompt, inject context
-# instructing Claude to use `gh` CLI rather than WebFetch for fetching content.
+# PURPOSE: When Claude WebFetches a github.com repo page, inject a hint that the
+# `gh` CLI usually returns cleaner, structured data than the JavaScript-heavy
+# HTML github.com serves. This is a SOFT nudge, not a block.
 #
-# GitHub's web pages are heavily JavaScript-rendered and WebFetch often fails
-# to extract useful content. The `gh` CLI provides direct API access with
-# better structured data.
-class GitHubUrlHandler < ClaudeHooks::UserPromptSubmit
-  # Match GitHub repository URLs
-  GITHUB_REPO_PATTERN = %r{
-    https?://github\.com/
-    (?<owner>[^/]+)/
+# WHY SOFT (not deny): a hard deny needs a perfect list of github.com's reserved
+# routes to avoid locking Claude out of legitimate non-repo pages (features,
+# marketplace, orgs, ...) — and that list can never be complete (GitHub adds
+# routes constantly). A soft nudge can't ever strand Claude, which makes the
+# reserved-route list harmless when incomplete: a missed entry just yields a
+# slightly off-target hint on a page that still fetched fine. We trade
+# guaranteed-pivot-to-gh for guaranteed forward progress.
+#
+# WHY PreToolUse: it fires exactly when Claude attempts the WebFetch, so the
+# hint lands next to the action instead of being sprayed on every prompt.
+class GitHubUrlHandler < ClaudeHooks::PreToolUse
+  # Extract owner/repo (and optional issue/PR number) from a github.com URL.
+  GITHUB_URL_PATTERN = %r{
+    https?://(?:www\.)?github\.com/
+    (?<owner>[^/\s]+)/
     (?<repo>[^/\s?#]+)
-    (?:/(?<path>[^\s?#]*))?
+    (?:/(?<type>issues|pull)/(?<number>\d+))?
   }x
 
-  # Match specific issue/PR URLs
-  GITHUB_ISSUE_PATTERN = %r{
-    https?://github\.com/
-    (?<owner>[^/]+)/
-    (?<repo>[^/]+)/
-    (?<type>issues|pull)/
-    (?<number>\d+)
-  }x
+  # Hosts that serve plain text — gh adds nothing, so don't nudge.
+  RAW_HOST_PATTERN = %r{https?://(raw\.githubusercontent\.com|gist\.githubusercontent\.com)/}
+
+  # github.com first-path segments that are reserved site routes, not user/org
+  # names (GitHub blocks registering these as usernames). Skipping them keeps the
+  # hint relevant — `gh repo view features/copilot` is nonsense. This list is
+  # best-effort, NOT load-bearing: because the nudge is soft, a missed entry only
+  # means a harmless off-target hint, never a blocked fetch. Common routes only.
+  RESERVED_OWNERS = %w[
+    features orgs sponsors settings marketplace topics about pricing security
+    enterprise explore new login logout join notifications codespaces apps
+    search dashboard pulls issues account organizations site contact collections
+    trending events sessions readme copilot
+  ].freeze
 
   def call
-    prompt_text = current_prompt.to_s.strip
-    return if prompt_text.empty?
+    url = tool_input.is_a?(Hash) ? tool_input['url'].to_s : ''
+    return output if url.empty?
+    return output if url.match?(RAW_HOST_PATTERN) # raw text — gh adds nothing
+    return output if url.include?('/raw/')        # .../blob/.../raw style
 
-    # Check for issue/PR URLs first (more specific)
-    issue_matches = prompt_text.scan(GITHUB_ISSUE_PATTERN)
+    match = url.match(GITHUB_URL_PATTERN)
+    return output unless match # not a github.com repo-shaped URL
+    return output if RESERVED_OWNERS.include?(match[:owner].downcase) # site page, not a repo
 
-    # Then check for general repo URLs
-    repo_matches = prompt_text.scan(GITHUB_REPO_PATTERN)
-    return if repo_matches.empty?
-
-    # Build context
-    repos = repo_matches.map { |owner, repo, _path| "#{owner}/#{repo}" }.uniq
-    repo = repos.first
-
-    context = build_context(repo, issue_matches)
-    log "Injecting gh CLI guidance for #{repos.length} repo(s): #{repos.join(', ')}"
-    add_additional_context!(context)
+    log "Suggesting gh CLI alongside WebFetch for github.com URL: #{url}"
+    advise_gh!(guidance(match))
     output
   end
 
   private
 
-  def build_context(repo, issue_matches)
-    sections = []
-    sections << header_section
-    sections << issue_pr_section(issue_matches) if issue_matches.any?
-    sections << understand_repo_section(repo)
-    sections << explore_code_section(repo)
-    sections << check_activity_section(repo)
-    sections << exceptions_section
-    sections << footer_section
-
-    "<github-cli-guidance>\n#{sections.join("\n")}</github-cli-guidance>\n"
+  # Inject context without touching the permission decision: the WebFetch
+  # proceeds through the normal flow, Claude just also sees the gh hint.
+  def advise_gh!(text)
+    @output_data['hookSpecificOutput'] = {
+      'hookEventName' => hook_event_name,
+      'additionalContext' => text
+    }
   end
 
-  def header_section
-    <<~SECTION
-      GitHub URL detected. Use `gh` CLI instead of WebFetch for GitHub content.
-      WebFetch on github.com returns JavaScript-heavy pages with little useful data.
-    SECTION
-  end
+  def guidance(match)
+    repo = "#{match[:owner]}/#{match[:repo]}"
+    lines = ['WebFetch on github.com returns JavaScript-heavy HTML that is unreliable for reading ' \
+             'repo content — do NOT answer from it. Re-perform this request now with the `gh` CLI ' \
+             'and base your response on that output instead. Use the command that fits the request:']
 
-  def issue_pr_section(matches)
-    return '' if matches.empty?
+    if match[:number]
+      cmd = match[:type] == 'issues' ? 'issue' : 'pr'
+      lines << "- This URL:   gh #{cmd} view #{match[:number]} -R #{repo} --json title,body,comments,state"
+    end
 
-    examples = matches.map do |owner, repo, type, number|
-      cmd = type == 'issues' ? 'issue' : 'pr'
-      "  gh #{cmd} view #{number} -R #{owner}/#{repo} --json title,body,comments,state"
-    end.uniq.join("\n")
+    lines << "- Repo info:  gh repo view #{repo} --json name,description,defaultBranchRef,languages"
+    lines << "- README:     gh api repos/#{repo}/readme --jq .content | base64 -d"
+    lines << "- File tree:  gh api 'repos/#{repo}/git/trees/HEAD?recursive=1' --jq '.tree[].path'"
+    lines << "- One file:   gh api repos/#{repo}/contents/PATH --jq .content | base64 -d"
+    lines << '- Clone it:   mkdir -p .cloned-sources && gh repo clone ' \
+             "#{repo} .cloned-sources/#{match[:repo]} -- --depth 1"
+    lines << ''
+    lines << "Run the matching command for #{repo} before you respond; treat its output as the " \
+             'source of truth and discard the fetched HTML.'
 
-    <<~SECTION
-
-      **View specific issue/PR:**
-      ```bash
-      #{examples}
-      ```
-    SECTION
-  end
-
-  def understand_repo_section(repo)
-    <<~SECTION
-
-      ## Understand the repo
-
-      **Quick overview (description, languages, topics):**
-      ```bash
-      gh repo view #{repo} --json name,description,defaultBranchRef,languages,repositoryTopics
-      ```
-
-      **Read the README:**
-      ```bash
-      gh api repos/#{repo}/readme --jq '.content' | base64 -d
-      ```
-
-      **Check releases:**
-      ```bash
-      gh release list -R #{repo} --limit 5
-      ```
-    SECTION
-  end
-
-  def explore_code_section(repo)
-    <<~SECTION
-
-      ## Explore the code
-
-      **For serious code exploration, clone it locally:**
-      ```bash
-      mkdir -p .cloned-sources && gh repo clone #{repo} .cloned-sources/#{repo.split('/').last} -- --depth 1
-      ```
-      Then use local file tools (Read, Grep, Glob) on `.cloned-sources/` for fast exploration.
-
-      **Quick file tree (without cloning):**
-      ```bash
-      gh api 'repos/#{repo}/git/trees/HEAD?recursive=1' --jq '.tree[].path' | head -50
-      ```
-
-      **Fetch a specific file:**
-      ```bash
-      gh api repos/#{repo}/contents/path/to/file --jq '.content' | base64 -d
-      ```
-    SECTION
-  end
-
-  def check_activity_section(repo)
-    <<~SECTION
-
-      ## Check activity
-
-      **Recent commits:**
-      ```bash
-      gh api repos/#{repo}/commits --jq '.[0:5] | .[].commit.message'
-      ```
-
-      **Open issues:**
-      ```bash
-      gh issue list -R #{repo} --json number,title,state --limit 10
-      ```
-
-      **Open PRs:**
-      ```bash
-      gh pr list -R #{repo} --json number,title,state --limit 10
-      ```
-    SECTION
-  end
-
-  def exceptions_section
-    <<~SECTION
-
-      ## When WebFetch IS fine
-      - `raw.githubusercontent.com` URLs (plain text, no JS)
-      - GitHub Gist raw URLs
-    SECTION
-  end
-
-  def footer_section
-    ''
+    lines.join("\n")
   end
 end
 
 # Testing support
 if __FILE__ == $PROGRAM_NAME
   ClaudeHooks::CLI.test_runner(GitHubUrlHandler) do |input_data|
-    input_data['prompt'] ||= ARGV[0] || 'Check out https://github.com/esmuellert/codediff.nvim'
+    input_data['tool_name'] ||= 'WebFetch'
+    input_data['tool_input'] ||= { 'url' => ARGV[0] || 'https://github.com/esmuellert/codediff.nvim' }
     input_data['session_id'] ||= 'test-session-01'
   end
 end
