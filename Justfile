@@ -95,9 +95,9 @@ release:
 
     echo "Released v$v"
 
-# Run unit tests
+# Syntax-check all hook Ruby files
 test:
-    ./test/test_detector_consistency.rb
+    @find plugins/sc-hooks/hooks -name '*.rb' -print0 | xargs -0 -n1 ruby -c
 
 # Smoke test external CLI invocations (codex/gemini)
 test-cli target="all":
