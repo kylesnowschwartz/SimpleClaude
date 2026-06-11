@@ -18,7 +18,7 @@ Curated output styles for Claude Code that modify how Claude communicates and fo
 
 - **mayo-clinic** - Authoritative health-guide style adapted for technical topics. Clear explanations, practical self-care steps, and explicit escalation triggers. Calm, confident tone that builds competence.
 
-- **i-have-adhd** - Action-first responses for readers who skim. First line is the next concrete step; multi-step work numbered; no preamble or closing pleasantries; tangents deferred. Adapted from the i-have-adhd plugin by ayghri.
+- **bottom-line** - Tail-first responses for readers who skim, get interrupted, and decide sequentially. Replies close with a standalone "Net:" block (outcome, next step, pending decisions); plans chunked into phases with a done/now/left state line; every decision offered with a recommended default.
 
 ### Structured Output Styles
 
