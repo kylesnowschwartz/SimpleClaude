@@ -24,12 +24,12 @@ begin
 
   merged_output.output_and_exit
 rescue JSON::ParserError => e
+  # Exit 1 = non-blocking error: Claude Code shows stderr and continues.
+  # It never parses stderr, so a plain message is all that's useful here.
   warn "[PreToolUse] JSON parsing error: #{e.message}"
-  warn JSON.generate({ continue: true, suppressOutput: false })
   exit 1
 rescue StandardError => e
   warn "[PreToolUse] Hook execution error: #{e.message}"
   warn e.backtrace.join("\n") if ENV['RUBY_CLAUDE_HOOKS_DEBUG']
-  warn JSON.generate({ continue: true, suppressOutput: false })
   exit 1
 end

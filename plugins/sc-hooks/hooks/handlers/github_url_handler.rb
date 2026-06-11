@@ -21,10 +21,13 @@ require_relative '../../vendor/claude_hooks/lib/claude_hooks'
 # hint lands next to the action instead of being sprayed on every prompt.
 class GitHubUrlHandler < ClaudeHooks::PreToolUse
   # Extract owner/repo (and optional issue/PR number) from a github.com URL.
+  # Character classes mirror GitHub's actual naming rules — anything outside
+  # them (e.g. shell metacharacters in a crafted URL) simply doesn't match,
+  # keeping the interpolated command hints below shell-safe.
   GITHUB_URL_PATTERN = %r{
     https?://(?:www\.)?github\.com/
-    (?<owner>[^/\s]+)/
-    (?<repo>[^/\s?#]+)
+    (?<owner>[A-Za-z0-9-]+)/
+    (?<repo>[A-Za-z0-9_.-]+)
     (?:/(?<type>issues|pull)/(?<number>\d+))?
   }x
 

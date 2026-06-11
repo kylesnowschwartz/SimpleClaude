@@ -1,24 +1,26 @@
 # frozen_string_literal: true
 
 require 'open3'
+# Enumerable#to_set is not built-in before Ruby 3.2, and end users' `env ruby`
+# may resolve to macOS system ruby (2.6).
+require 'set' # rubocop:disable Lint/RedundantRequireStatement
 
 # Lint runner methods shared across handlers that need to invoke linters.
 #
 # Expects the includer to provide:
-#   - cwd                (from ClaudeHooks::Base)
-#   - log                (from ClaudeHooks::Base)
-#   - command_available? (from FileHandlerSupport)
-#   - relative_file_path (from FileHandlerSupport)
+#   - cwd                     (from ClaudeHooks::Base)
+#   - log                     (from ClaudeHooks::Base)
+#   - command_available?      (from FileHandlerSupport)
+#   - relative_file_path      (from FileHandlerSupport)
+#   - capture2e_with_timeout  (from FileHandlerSupport)
 module LintRunnerSupport
   # --- Per-file linters (report-only) ---
 
   def run_eslint(files)
     return [] unless command_available?('eslint')
 
-    stdout_err, status = Open3.capture2e(
-      'eslint', '--no-fix', '--format', 'compact', *files,
-      chdir: cwd
-    )
+    stdout_err, status = capture2e_with_timeout('eslint', '--no-fix', '--format', 'compact', *files,
+                                                chdir: cwd)
     return [] if status.success?
 
     ["eslint errors:\n#{stdout_err.strip}"]
@@ -30,10 +32,8 @@ module LintRunnerSupport
   def run_rubocop(files)
     return [] unless command_available?('rubocop')
 
-    stdout_err, status = Open3.capture2e(
-      'rubocop', '--format', 'simple', *files,
-      chdir: cwd
-    )
+    stdout_err, status = capture2e_with_timeout('rubocop', '--format', 'simple', *files,
+                                                chdir: cwd)
     return [] if status.success?
 
     ["rubocop errors:\n#{stdout_err.strip}"]
@@ -45,10 +45,8 @@ module LintRunnerSupport
   def run_ruff(files)
     return [] unless command_available?('ruff')
 
-    stdout_err, status = Open3.capture2e(
-      'ruff', 'check', *files,
-      chdir: cwd
-    )
+    stdout_err, status = capture2e_with_timeout('ruff', 'check', *files,
+                                                chdir: cwd)
     return [] if status.success?
 
     ["ruff errors:\n#{stdout_err.strip}"]
@@ -66,7 +64,7 @@ module LintRunnerSupport
     return [] unless tsc
     return [] unless File.exist?(File.join(cwd, 'tsconfig.json'))
 
-    stdout_err, status = Open3.capture2e(tsc, '--noEmit', chdir: cwd)
+    stdout_err, status = capture2e_with_timeout(tsc, '--noEmit', chdir: cwd)
     return [] if status.success?
 
     filter_tsc_errors(stdout_err, modified_files)
@@ -78,7 +76,7 @@ module LintRunnerSupport
   def run_cargo_check
     return [] unless command_available?('cargo') && File.exist?(File.join(cwd, 'Cargo.toml'))
 
-    stdout_err, status = Open3.capture2e('cargo', 'check', '--message-format', 'short', chdir: cwd)
+    stdout_err, status = capture2e_with_timeout('cargo', 'check', '--message-format', 'short', chdir: cwd)
     status.success? ? [] : ["cargo check errors:\n#{stdout_err.strip}"]
   rescue StandardError => e
     log "cargo check failed to run: #{e.message}", level: :error
@@ -89,7 +87,7 @@ module LintRunnerSupport
     return [] unless command_available?('go')
     return [] unless File.exist?(File.join(cwd, 'go.mod'))
 
-    stdout_err, status = Open3.capture2e('go', 'vet', './...', chdir: cwd)
+    stdout_err, status = capture2e_with_timeout('go', 'vet', './...', chdir: cwd)
     return [] if status.success?
 
     ["go vet errors:\n#{stdout_err.strip}"]

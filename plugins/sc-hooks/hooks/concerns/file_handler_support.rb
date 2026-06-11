@@ -28,6 +28,10 @@ module FileHandlerSupport # rubocop:disable Metrics/ModuleLength
     .playwright-cli/
   ].freeze
 
+  # Per-subprocess deadline. A single hung tool would otherwise blow Claude
+  # Code's whole-hook timeout and lose every other handler's output with it.
+  COMMAND_TIMEOUT_SECONDS = 30
+
   # Check if a file should be skipped by pattern match or git-ignore.
   def should_skip_file?(absolute_path)
     return false unless absolute_path
@@ -77,12 +81,12 @@ module FileHandlerSupport # rubocop:disable Metrics/ModuleLength
     collect_and_filter_modified_files
   end
 
-  # Pattern matching: directory patterns use include? for nested matches,
+  # Pattern matching: directory patterns match whole path segments at any
+  # depth (build/ skips build/foo.rs and src/build/foo.rs, but not build.rs),
   # glob patterns use File.fnmatch, and everything else is exact/basename.
   def matches_skip_pattern?(file_path, pattern)
     if pattern.end_with?('/')
-      dir = pattern.chomp('/')
-      file_path.include?("#{dir}/") || file_path.start_with?(dir)
+      file_path.split('/').include?(pattern.chomp('/'))
     elsif pattern.include?('*')
       File.fnmatch(pattern, file_path, File::FNM_PATHNAME)
     else
@@ -92,14 +96,17 @@ module FileHandlerSupport # rubocop:disable Metrics/ModuleLength
 
   # Formatter registry — maps file extensions to available formatters.
   # Returns nil if no formatter is available for the extension.
-  # rubocop:disable Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/AbcSize, Metrics/PerceivedComplexity
   def detect_formatter(file_path)
     case File.extname(file_path).downcase
     when '.rb'
-      command_available?('rubocop') ? { name: 'RuboCop', command: 'rubocop', args: ['-A'] } : nil
+      # -a applies safe corrections only; -A includes unsafe ones that can
+      # change runtime semantics, which an unattended hook must not do.
+      command_available?('rubocop') ? { name: 'RuboCop', command: 'rubocop', args: ['-a'] } : nil
     when '.md'
       if command_available?('markdownlint')
-        { name: 'markdownlint', command: 'markdownlint', args: %w[--fix --disable MD013,MD041,MD026,MD012,MD024] }
+        # --disable is variadic; the trailing -- stops it from swallowing the file path
+        { name: 'markdownlint', command: 'markdownlint',
+          args: %w[--fix --disable MD013 MD041 MD026 MD012 MD024 --] }
       end
     when '.sh', '.bash'
       command_available?('shfmt') ? { name: 'shfmt', command: 'shfmt', args: ['-w', '-i', '2'] } : nil
@@ -111,17 +118,51 @@ module FileHandlerSupport # rubocop:disable Metrics/ModuleLength
       command_available?('ruff') ? { name: 'ruff', command: 'ruff', args: ['format'] } : nil
     when '.yml', '.yaml'
       detect_yaml_formatter
-    when '.js', '.jsx', '.ts', '.tsx', '.json'
+    when '.js', '.jsx', '.ts', '.tsx'
       detect_js_formatter
-    when '.css'
+    when '.css', '.json'
+      # Not eslint for .json: it can't parse plain JSON without extra plugins.
       command_available?('prettier') ? { name: 'prettier', command: 'prettier', args: ['--write'] } : nil
     when '.go'
       detect_go_formatter
     end
   end
-  # rubocop:enable Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/AbcSize, Metrics/PerceivedComplexity
+
+  # Open3.capture2e with a hard deadline. Returns [output, Process::Status];
+  # on timeout the whole process group is killed and the output is annotated.
+  # pgroup: true makes the command a group leader so wrapper-spawned children
+  # (npm -> node, cargo -> rustc) die with it instead of holding the pipe open.
+  def capture2e_with_timeout(*cmd, chdir:, timeout: COMMAND_TIMEOUT_SECONDS)
+    Open3.popen2e(*cmd, chdir: chdir, pgroup: true) do |stdin, stdout_err, wait_thr|
+      stdin.close
+      reader = Thread.new { stdout_err.read }
+      timed_out = wait_thr.join(timeout).nil?
+      terminate_process_group(wait_thr) if timed_out
+
+      status = wait_thr.value
+      output = drain_output(reader)
+      output = "#{output}\n(killed: exceeded #{timeout}s timeout)" if timed_out
+      [output, status]
+    end
+  end
 
   private
+
+  def terminate_process_group(wait_thr)
+    Process.kill('TERM', -wait_thr.pid)
+    Process.kill('KILL', -wait_thr.pid) unless wait_thr.join(2)
+  rescue Errno::ESRCH
+    nil # group exited between the join timeout and the kill
+  end
+
+  # Bounded read: even after the command exits, an escaped/daemonized child
+  # can inherit the pipe and keep it open — never park the hook on it.
+  def drain_output(reader)
+    return reader.value if reader.join(2)
+
+    reader.kill
+    ''
+  end
 
   def detect_yaml_formatter
     if command_available?('yamlfmt')
@@ -147,8 +188,15 @@ module FileHandlerSupport # rubocop:disable Metrics/ModuleLength
     end
   end
 
+  # Ask git itself rather than testing for a .git directory: .git is a FILE
+  # in worktrees, and cwd may be a subdirectory of the repo root.
   def git_repo?
-    cwd && File.directory?(File.join(cwd, '.git'))
+    return false unless cwd
+    return @git_repo unless @git_repo.nil?
+
+    out, status = Open3.capture2('git', 'rev-parse', '--is-inside-work-tree',
+                                 chdir: cwd, err: File::NULL)
+    @git_repo = status.success? && out.strip == 'true'
   end
 
   def skip_reason_for(rel, absolute_path)
@@ -185,9 +233,12 @@ module FileHandlerSupport # rubocop:disable Metrics/ModuleLength
       .reject { |f| should_skip_file?(f) }
   end
 
-  # Staged + unstaged changes to tracked files
+  # Staged + unstaged changes to tracked files. --relative scopes the diff to
+  # cwd's subtree and prints cwd-relative paths, so File.join(cwd, f) stays
+  # correct when cwd is a repo subdirectory (git otherwise prints
+  # repo-root-relative paths). Matches ls-files, which is cwd-relative already.
   def git_diff_files
-    output, status = Open3.capture2('git', 'diff', '--name-only', 'HEAD', chdir: cwd)
+    output, status = Open3.capture2('git', 'diff', '--name-only', '--relative', 'HEAD', chdir: cwd)
     status.success? ? output.strip.split("\n") : []
   end
 

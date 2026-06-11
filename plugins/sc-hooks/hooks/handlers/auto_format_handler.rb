@@ -3,7 +3,6 @@
 
 require_relative '../../vendor/claude_hooks/lib/claude_hooks'
 require_relative '../concerns/file_handler_support'
-require 'open3'
 
 # Batch-formats all files Claude modified before lint checks run.
 #
@@ -45,15 +44,19 @@ class AutoFormatHandler < ClaudeHooks::Stop
     rel = relative_file_path(file_path)
     log "Formatting #{rel} with #{formatter[:name]}"
     result = run_formatter(formatter, file_path)
-    return log_format_result(rel, result) unless result[:success] && result[:changed]
+    log_format_result(rel, result)
+    return nil unless result[:changed]
 
-    log "Formatted #{rel}"
     "#{rel} (#{formatter[:name]})"
   end
 
+  # A formatter can modify the file AND exit nonzero (e.g. markdownlint with
+  # unfixable issues left), so changed and success are reported independently.
   def log_format_result(rel, result)
     if result[:success]
-      log("#{rel} unchanged")
+      log(result[:changed] ? "Formatted #{rel}" : "#{rel} unchanged")
+    elsif result[:changed]
+      log("Partially formatted #{rel}: #{result[:error]}", level: :warn)
     else
       log("Format failed for #{rel}: #{result[:error]}", level: :error)
     end
@@ -70,12 +73,10 @@ class AutoFormatHandler < ClaudeHooks::Stop
 
     content_before = File.read(file_path)
     # Array form avoids shell interpolation. chdir: cwd finds project configs.
-    stdout_err, status = Open3.capture2e(*command_parts, chdir: cwd)
-    return { success: false, error: stdout_err.strip } unless status.success?
-
-    { success: true, changed: File.read(file_path) != content_before, output: stdout_err }
+    stdout_err, status = capture2e_with_timeout(*command_parts, chdir: cwd)
+    { success: status.success?, changed: File.read(file_path) != content_before, error: stdout_err.strip }
   rescue StandardError => e
-    { success: false, error: e.message }
+    { success: false, changed: false, error: e.message }
   end
 
   def allow_clean_stop!

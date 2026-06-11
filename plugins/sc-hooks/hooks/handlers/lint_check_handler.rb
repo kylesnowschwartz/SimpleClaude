@@ -48,7 +48,6 @@ class LintCheckHandler < ClaudeHooks::Stop
   end
 
   # Dispatcher — inherent complexity from supporting many linter types.
-  # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
   def collect_lint_errors(files)
     groups = group_by_extension(files)
     errors = []
@@ -65,7 +64,6 @@ class LintCheckHandler < ClaudeHooks::Stop
 
     errors
   end
-  # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
 
   # Extension grouping — inherent complexity from many file types.
   def group_by_extension(files)
