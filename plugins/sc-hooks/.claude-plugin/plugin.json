@@ -1,6 +1,6 @@
 {
   "name": "sc-hooks",
-  "version": "7.0.1",
+  "version": "7.1.0",
   "description": "SimpleClaude hooks for auto-formatting, lint checks, and tool monitoring",
   "author": {
     "name": "Kyle Snow Schwartz"
