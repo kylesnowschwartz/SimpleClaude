@@ -12,6 +12,12 @@ require_relative '../concerns/file_handler_support'
 class AutoFormatHandler < ClaudeHooks::Stop
   include FileHandlerSupport
 
+  # Total deadline across every formatter batch. COMMAND_TIMEOUT_SECONDS bounds
+  # any single batch; this bounds their sum so a large dirty tree can't stack
+  # enough batches to blow Claude Code's whole-hook timeout — which this handler
+  # shares with the lint check that runs after it in the same Stop process.
+  TOTAL_FORMAT_BUDGET_SECONDS = 30
+
   def call
     log 'Auto-format handler triggered'
     return skip_and_stop('retry - skipping formatting') if stop_hook_active
@@ -32,51 +38,91 @@ class AutoFormatHandler < ClaudeHooks::Stop
     output
   end
 
-  # Returns array of "file (formatter)" strings for successfully formatted files.
+  # Runs each formatter ONCE over all of its files instead of spawning a fresh
+  # subprocess per file — collapsing N cold tool startups (markdownlint is a
+  # Node CLI; each start cost dominated the old per-file loop) into one.
+  # Returns "file (formatter)" strings for files that actually changed.
   def format_files(files)
-    files.filter_map { |file_path| format_single_file(file_path) }
-  end
+    deadline = monotonic_now + TOTAL_FORMAT_BUDGET_SECONDS
+    group_by_formatter(files).flat_map do |formatter, paths|
+      next skip_over_budget(formatter, paths) if monotonic_now >= deadline
 
-  def format_single_file(file_path)
-    formatter = detect_formatter(file_path)
-    return unless formatter
-
-    rel = relative_file_path(file_path)
-    log "Formatting #{rel} with #{formatter[:name]}"
-    result = run_formatter(formatter, file_path)
-    log_format_result(rel, result)
-    return nil unless result[:changed]
-
-    "#{rel} (#{formatter[:name]})"
-  end
-
-  # A formatter can modify the file AND exit nonzero (e.g. markdownlint with
-  # unfixable issues left), so changed and success are reported independently.
-  def log_format_result(rel, result)
-    if result[:success]
-      log(result[:changed] ? "Formatted #{rel}" : "#{rel} unchanged")
-    elsif result[:changed]
-      log("Partially formatted #{rel}: #{result[:error]}", level: :warn)
-    else
-      log("Format failed for #{rel}: #{result[:error]}", level: :error)
+      format_batch(formatter, paths, deadline)
     end
+  end
+
+  # detect_formatter is deterministic per extension, so files sharing a
+  # formatter produce an identical {command, args} hash and collapse into one
+  # group. Files with no available formatter (nil) are dropped.
+  def group_by_formatter(files)
+    files.group_by { |f| detect_formatter(f) }.reject { |formatter, _| formatter.nil? }
+  end
+
+  def skip_over_budget(formatter, paths)
+    log("Format budget (#{TOTAL_FORMAT_BUDGET_SECONDS}s) exhausted; skipped " \
+        "#{paths.length} #{formatter[:name]} file(s)", level: :warn)
+    []
+  end
+
+  # One subprocess for the whole group. Per-file "changed" is recovered by
+  # diffing each file's content across the single invocation, so batching keeps
+  # the precise change reporting the old per-file loop produced.
+  def format_batch(formatter, paths, deadline)
+    before = paths.to_h { |path| [path, read_file(path)] }
+    timeout = remaining_timeout(deadline)
+    command_parts = [formatter[:command]] + formatter[:args] + paths
+    log "Running #{formatter[:name]} on #{paths.length} file#{'s' if paths.length > 1} (timeout #{timeout}s)"
+
+    # Array form avoids shell interpolation. chdir: cwd finds project configs.
+    output, status = capture2e_with_timeout(*command_parts, chdir: cwd, timeout: timeout)
+    log_batch_status(formatter[:name], status, output)
+    paths.filter_map { |path| changed_label(formatter[:name], path, before[path]) }
+  rescue StandardError => e
+    log("#{formatter[:name]} batch failed: #{e.message}", level: :error)
+    []
+  end
+
+  # Nonzero exit is normal for formatters that fixed what they could but left
+  # unfixable findings (e.g. markdownlint). Per-file attribution is gone once
+  # batched, so log the batch detail at warn rather than as a hook failure.
+  def log_batch_status(name, status, output)
+    return if status.success?
+
+    detail = output.strip.empty? ? '' : ": #{output.strip.lines.first(3).join.strip}"
+    log("#{name} exited #{status.exitstatus}#{detail}", level: :warn)
+  end
+
+  def changed_label(name, path, content_before)
+    rel = relative_file_path(path)
+    if read_file(path) == content_before
+      log("#{rel} unchanged")
+      nil
+    else
+      log("Formatted #{rel}")
+      "#{rel} (#{name})"
+    end
+  end
+
+  # Clamp the per-batch deadline to whatever budget remains, so a late batch
+  # can't run a full COMMAND_TIMEOUT_SECONDS past the total budget. Callers
+  # only invoke this while monotonic_now < deadline, so remaining is positive.
+  def remaining_timeout(deadline)
+    [(deadline - monotonic_now).ceil, COMMAND_TIMEOUT_SECONDS].min.clamp(1, COMMAND_TIMEOUT_SECONDS)
+  end
+
+  def monotonic_now
+    Process.clock_gettime(Process::CLOCK_MONOTONIC)
+  end
+
+  def read_file(path)
+    File.read(path)
+  rescue StandardError
+    nil
   end
 
   def notify_formatted(formatted)
     summary = "Auto-formatted #{formatted.length} file#{'s' if formatted.length > 1}: #{formatted.join(', ')}"
     system_message!(summary)
-  end
-
-  def run_formatter(formatter, file_path)
-    command_parts = [formatter[:command]] + formatter[:args] + [file_path]
-    log "Running: #{command_parts.join(' ')}"
-
-    content_before = File.read(file_path)
-    # Array form avoids shell interpolation. chdir: cwd finds project configs.
-    stdout_err, status = capture2e_with_timeout(*command_parts, chdir: cwd)
-    { success: status.success?, changed: File.read(file_path) != content_before, error: stdout_err.strip }
-  rescue StandardError => e
-    { success: false, changed: false, error: e.message }
   end
 
   def allow_clean_stop!

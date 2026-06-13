@@ -95,9 +95,10 @@ release:
 
     echo "Released v$v"
 
-# Syntax-check all hook Ruby files
+# Syntax-check all hook Ruby files, then run hook unit/integration tests
 test:
     @find plugins/sc-hooks/hooks -name '*.rb' -print0 | xargs -0 -n1 ruby -c
+    @ruby test/test_auto_format_batch.rb
 
 # Smoke test external CLI invocations (codex/gemini)
 test-cli target="all":
