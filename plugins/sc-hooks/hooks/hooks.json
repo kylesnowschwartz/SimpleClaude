@@ -6,6 +6,7 @@
         "hooks": [
           {
             "type": "command",
+            "statusMessage": "Running SimpleClaude format and lint checks...",
             "command": "${CLAUDE_PLUGIN_ROOT}/hooks/entrypoints/stop.rb"
           }
         ]
@@ -17,6 +18,7 @@
         "hooks": [
           {
             "type": "command",
+            "statusMessage": "Checking GitHub fetch guidance...",
             "command": "${CLAUDE_PLUGIN_ROOT}/hooks/entrypoints/pre_tool_use.rb"
           }
         ]
