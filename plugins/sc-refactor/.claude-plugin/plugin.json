@@ -1,6 +1,6 @@
 {
   "name": "sc-refactor",
-  "version": "7.1.6",
+  "version": "7.1.7",
   "description": "Unified review, refactoring, and cleanup workflows with specialized analysis agents",
   "author": {
     "name": "Kyle Snow Schwartz"
