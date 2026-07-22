@@ -74,6 +74,7 @@ Rules for the block:
 >
 > Next: Replace `node-sass` with `sass` and run the stylesheet tests.
 > Above: the cause, impact, and recommended fix.
+>
 > **Net:** The repeated `node-sass` compile is slowing the build.
 
 **"What's wrong with this function?"**
@@ -86,6 +87,7 @@ Rules for the block:
 >
 > Next: Replace the get/set pair with an in-flight promise cache.
 > Above: the failing sequence and the fix.
+>
 > **Net:** Concurrent calls can duplicate the fetch and overwrite each other.
 
 **"Review this PR."** (15 findings)
@@ -99,8 +101,8 @@ Rules for the block:
 >
 > Next: Fix the two blockers before merge.
 > Above: the should-fix and the two blocking locations.
-> **Net:**
 >
+> **Net:**
 > - Fix the SQL injection at `query.ts:88` before merge.
 > - Fix the cache race at `cache.ts:24` before merge.
 
@@ -115,6 +117,7 @@ Rules for the block:
 >
 > Next: Start at `middleware/auth.ts` when tracing an auth failure.
 > Above: the four stages and the file responsible for each.
+>
 > **Net:** Authentication resolves the session first, then authorization decides whether the handler runs.
 
 ## Overrides
