@@ -17,6 +17,7 @@ module LintRunnerSupport
   # --- Per-file linters (report-only) ---
 
   def run_eslint(files)
+    return [] unless eslint_configured?
     return [] unless command_available?('eslint')
 
     stdout_err, status = capture2e_with_timeout('eslint', '--no-fix', '--format', 'compact', *files,
@@ -30,6 +31,7 @@ module LintRunnerSupport
   end
 
   def run_rubocop(files)
+    return [] unless rubocop_configured?
     return [] unless command_available?('rubocop')
 
     stdout_err, status = capture2e_with_timeout('rubocop', '--format', 'simple', *files,
@@ -43,6 +45,7 @@ module LintRunnerSupport
   end
 
   def run_ruff(files)
+    return [] unless ruff_configured?
     return [] unless command_available?('ruff')
 
     stdout_err, status = capture2e_with_timeout('ruff', 'check', *files,
@@ -52,6 +55,20 @@ module LintRunnerSupport
     ["ruff errors:\n#{stdout_err.strip}"]
   rescue StandardError => e
     log "ruff failed to run: #{e.message}", level: :error
+    []
+  end
+
+  def run_biome(files)
+    return [] unless biome_configured?
+    return [] unless command_available?('biome')
+
+    stdout_err, status = capture2e_with_timeout('biome', 'lint', *files,
+                                                chdir: cwd)
+    return [] if status.success?
+
+    ["biome errors:\n#{stdout_err.strip}"]
+  rescue StandardError => e
+    log "biome failed to run: #{e.message}", level: :error
     []
   end
 
@@ -97,6 +114,46 @@ module LintRunnerSupport
   end
 
   private
+
+  ESLINT_CONFIG_FILES = %w[
+    eslint.config.js eslint.config.mjs eslint.config.cjs eslint.config.ts
+    .eslintrc.js .eslintrc.cjs .eslintrc.json .eslintrc.yml .eslintrc.yaml .eslintrc
+  ].freeze
+
+  def rubocop_configured?
+    File.exist?(File.join(cwd, '.rubocop.yml'))
+  end
+
+  def eslint_configured?
+    return true if ESLINT_CONFIG_FILES.any? { |f| File.exist?(File.join(cwd, f)) }
+
+    package_json_has_key?('eslintConfig')
+  end
+
+  def ruff_configured?
+    return true if File.exist?(File.join(cwd, 'ruff.toml')) || File.exist?(File.join(cwd, '.ruff.toml'))
+
+    pyproject = File.join(cwd, 'pyproject.toml')
+    return false unless File.exist?(pyproject)
+
+    File.read(pyproject) =~ /^\[tool\.ruff[\].]/
+  rescue StandardError
+    false
+  end
+
+  def biome_configured?
+    File.exist?(File.join(cwd, 'biome.json')) || File.exist?(File.join(cwd, 'biome.jsonc'))
+  end
+
+  def package_json_has_key?(key)
+    package_json = File.join(cwd, 'package.json')
+    return false unless File.exist?(package_json)
+
+    require 'json'
+    JSON.parse(File.read(package_json)).key?(key)
+  rescue StandardError
+    false
+  end
 
   # Prefer project-local tsc over global to match the project's TS version.
   def find_tsc

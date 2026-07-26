@@ -54,6 +54,7 @@ class LintCheckHandler < ClaudeHooks::Stop
 
     # Per-file linters (report-only, no auto-fix)
     errors += run_eslint(groups[:js]) if groups[:js]&.any?
+    errors += run_biome(groups[:js]) if groups[:js]&.any?
     errors += run_rubocop(groups[:rb]) if groups[:rb]&.any?
     errors += run_ruff(groups[:py]) if groups[:py]&.any?
 
