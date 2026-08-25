@@ -3,47 +3,20 @@
 
 # Stop Entrypoint
 #
-# This entrypoint orchestrates all Stop handlers when Claude Code finishes responding.
-# It reads JSON input from STDIN, executes all configured handlers, merges their outputs,
-# and returns the final result to Claude Code via STDOUT.
+# Runs all Stop handlers when Claude Code finishes responding.
 #
 # Multi-handler merge pattern: if ANY handler blocks (forces continuation),
 # the merged output blocks. Reasons from multiple handlers are concatenated.
 
 require_relative '../../vendor/claude_hooks/lib/claude_hooks'
-require 'json'
+require_relative '../concerns/entrypoint_runner'
 
-# Require all Stop handler classes
 require_relative '../handlers/auto_format_handler'
 require_relative '../handlers/lint_check_handler'
 
-begin
-  input_data = JSON.parse($stdin.read)
-
-  # Run all handlers, collect their outputs.
-  # ORDER MATTERS: AutoFormatHandler must run before LintCheckHandler so
-  # formatters fix style issues before linters report on them.
-  handlers = [
-    AutoFormatHandler,
-    LintCheckHandler
-  ]
-
-  outputs = handlers.map do |handler_class|
-    handler = handler_class.new(input_data)
-    handler.call
-    handler.output
-  end
-
-  # Merge outputs: if any handler blocks, merged blocks; reasons concatenated
-  merged = ClaudeHooks::Output::Stop.merge(*outputs)
-  merged.output_and_exit
-rescue JSON::ParserError => e
-  # Exit 1 = non-blocking error: Claude Code shows stderr and continues.
-  # It never parses stderr, so a plain message is all that's useful here.
-  warn "[Stop] JSON parsing error: #{e.message}"
-  exit 1
-rescue StandardError => e
-  warn "[Stop] Hook execution error: #{e.message}"
-  warn e.backtrace.join("\n") if ENV['RUBY_CLAUDE_HOOKS_DEBUG']
-  exit 1
-end
+# ORDER MATTERS: AutoFormatHandler must run before LintCheckHandler so
+# formatters fix style issues before linters report on them.
+EntrypointRunner.run('Stop', ClaudeHooks::Output::Stop, [
+                       AutoFormatHandler,
+                       LintCheckHandler
+                     ])

@@ -14,65 +14,46 @@ require 'set' # rubocop:disable Lint/RedundantRequireStatement
 #   - relative_file_path      (from FileHandlerSupport)
 #   - capture2e_with_timeout  (from FileHandlerSupport)
 module LintRunnerSupport
-  # --- Per-file linters (report-only) ---
+  ESLINT_CONFIG_FILES = %w[
+    eslint.config.js eslint.config.mjs eslint.config.cjs eslint.config.ts
+    .eslintrc.js .eslintrc.cjs .eslintrc.json .eslintrc.yml .eslintrc.yaml .eslintrc
+  ].freeze
 
-  def run_eslint(files)
-    return [] unless eslint_configured?
-    return [] unless command_available?('eslint')
+  # A linter invocation: the CLI to run, its fixed arguments, and the predicate
+  # that decides whether this project is configured to use it at all.
+  Linter = Struct.new(:command, :args, :configured, keyword_init: true)
 
-    stdout_err, status = capture2e_with_timeout('eslint', '--no-fix', '--format', 'compact', *files,
-                                                chdir: cwd)
-    return [] if status.success?
+  # Per-file linters (report-only, never auto-fix). Keyed by the name used in
+  # reported errors; files are appended to args at call time.
+  PER_FILE_LINTERS = {
+    'eslint' => Linter.new(command: 'eslint', args: %w[--no-fix --format compact],
+                           configured: :eslint_configured?),
+    'rubocop' => Linter.new(command: 'rubocop', args: %w[--format simple],
+                            configured: :rubocop_configured?),
+    'ruff' => Linter.new(command: 'ruff', args: %w[check], configured: :ruff_configured?),
+    'biome' => Linter.new(command: 'biome', args: %w[lint], configured: :biome_configured?)
+  }.freeze
 
-    ["eslint errors:\n#{stdout_err.strip}"]
-  rescue StandardError => e
-    log "eslint failed to run: #{e.message}", level: :error
-    []
+  # Project-wide checks. They take no file arguments and are gated on the
+  # project's build manifest rather than on a linter config file.
+  PROJECT_CHECKS = {
+    'cargo check' => Linter.new(command: 'cargo', args: %w[check --message-format short],
+                                configured: :cargo_project?),
+    'go vet' => Linter.new(command: 'go', args: ['vet', './...'], configured: :go_project?)
+  }.freeze
+
+  # Runs one of PER_FILE_LINTERS over the given files. Returns [] when the
+  # linter isn't configured, isn't installed, or reports no errors.
+  def run_per_file_linter(name, files)
+    return [] if files.nil? || files.empty?
+
+    run_linter(name, PER_FILE_LINTERS.fetch(name), files)
   end
 
-  def run_rubocop(files)
-    return [] unless rubocop_configured?
-    return [] unless command_available?('rubocop')
-
-    stdout_err, status = capture2e_with_timeout('rubocop', '--format', 'simple', *files,
-                                                chdir: cwd)
-    return [] if status.success?
-
-    ["rubocop errors:\n#{stdout_err.strip}"]
-  rescue StandardError => e
-    log "rubocop failed to run: #{e.message}", level: :error
-    []
+  # Runs one of PROJECT_CHECKS over the whole project.
+  def run_project_check(name)
+    run_linter(name, PROJECT_CHECKS.fetch(name))
   end
-
-  def run_ruff(files)
-    return [] unless ruff_configured?
-    return [] unless command_available?('ruff')
-
-    stdout_err, status = capture2e_with_timeout('ruff', 'check', *files,
-                                                chdir: cwd)
-    return [] if status.success?
-
-    ["ruff errors:\n#{stdout_err.strip}"]
-  rescue StandardError => e
-    log "ruff failed to run: #{e.message}", level: :error
-    []
-  end
-
-  def run_biome(files)
-    return [] unless biome_configured?
-    return [] unless command_available?('biome')
-
-    stdout_err, status = capture2e_with_timeout('biome', 'lint', *files,
-                                                chdir: cwd)
-    return [] if status.success?
-
-    ["biome errors:\n#{stdout_err.strip}"]
-  rescue StandardError => e
-    log "biome failed to run: #{e.message}", level: :error
-    []
-  end
-
-  # --- Project-wide checks ---
 
   # Run tsc --noEmit but filter to only errors in modified files.
   # Prevents pre-existing type errors from blocking indefinitely.
@@ -81,44 +62,34 @@ module LintRunnerSupport
     return [] unless tsc
     return [] unless File.exist?(File.join(cwd, 'tsconfig.json'))
 
-    stdout_err, status = capture2e_with_timeout(tsc, '--noEmit', chdir: cwd)
-    return [] if status.success?
-
-    filter_tsc_errors(stdout_err, modified_files)
-  rescue StandardError => e
-    log "tsc failed to run: #{e.message}", level: :error
-    []
-  end
-
-  def run_cargo_check
-    return [] unless command_available?('cargo') && File.exist?(File.join(cwd, 'Cargo.toml'))
-
-    stdout_err, status = capture2e_with_timeout('cargo', 'check', '--message-format', 'short', chdir: cwd)
-    status.success? ? [] : ["cargo check errors:\n#{stdout_err.strip}"]
-  rescue StandardError => e
-    log "cargo check failed to run: #{e.message}", level: :error
-    []
-  end
-
-  def run_go_vet
-    return [] unless command_available?('go')
-    return [] unless File.exist?(File.join(cwd, 'go.mod'))
-
-    stdout_err, status = capture2e_with_timeout('go', 'vet', './...', chdir: cwd)
-    return [] if status.success?
-
-    ["go vet errors:\n#{stdout_err.strip}"]
-  rescue StandardError => e
-    log "go vet failed to run: #{e.message}", level: :error
-    []
+    capture_lint_output('tsc', [tsc, '--noEmit']) do |stdout_err|
+      filter_tsc_errors(stdout_err, modified_files)
+    end
   end
 
   private
 
-  ESLINT_CONFIG_FILES = %w[
-    eslint.config.js eslint.config.mjs eslint.config.cjs eslint.config.ts
-    .eslintrc.js .eslintrc.cjs .eslintrc.json .eslintrc.yml .eslintrc.yaml .eslintrc
-  ].freeze
+  def run_linter(name, linter, files = [])
+    return [] unless send(linter.configured)
+    return [] unless command_available?(linter.command)
+
+    capture_lint_output(name, [linter.command, *linter.args, *files])
+  end
+
+  # Invoke a lint command, returning [] on success. On failure the block (when
+  # given) maps the combined output to error strings; otherwise the whole output
+  # is reported under `name`. A crashed linter is logged and treated as no-op:
+  # a broken tool must not wedge the hook.
+  def capture_lint_output(name, command_parts)
+    stdout_err, status = capture2e_with_timeout(*command_parts, chdir: cwd)
+    return [] if status.success?
+    return yield(stdout_err) if block_given?
+
+    ["#{name} errors:\n#{stdout_err.strip}"]
+  rescue StandardError => e
+    log "#{name} failed to run: #{e.message}", level: :error
+    []
+  end
 
   def rubocop_configured?
     File.exist?(File.join(cwd, '.rubocop.yml'))
@@ -143,6 +114,14 @@ module LintRunnerSupport
 
   def biome_configured?
     File.exist?(File.join(cwd, 'biome.json')) || File.exist?(File.join(cwd, 'biome.jsonc'))
+  end
+
+  def cargo_project?
+    File.exist?(File.join(cwd, 'Cargo.toml'))
+  end
+
+  def go_project?
+    File.exist?(File.join(cwd, 'go.mod'))
   end
 
   def package_json_has_key?(key)

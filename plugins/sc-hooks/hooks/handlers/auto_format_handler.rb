@@ -3,6 +3,7 @@
 
 require_relative '../../vendor/claude_hooks/lib/claude_hooks'
 require_relative '../concerns/file_handler_support'
+require_relative '../concerns/stop_handler_support'
 
 # Batch-formats all files Claude modified before lint checks run.
 #
@@ -11,6 +12,7 @@ require_relative '../concerns/file_handler_support'
 # the lint handler is the gatekeeper for actual errors.
 class AutoFormatHandler < ClaudeHooks::Stop
   include FileHandlerSupport
+  include StopHandlerSupport
 
   # Total deadline across every formatter batch. COMMAND_TIMEOUT_SECONDS bounds
   # any single batch; this bounds their sum so a large dirty tree can't stack
@@ -31,12 +33,6 @@ class AutoFormatHandler < ClaudeHooks::Stop
   end
 
   private
-
-  def skip_and_stop(reason)
-    log "Stop hook: #{reason}"
-    allow_clean_stop!
-    output
-  end
 
   # Runs each formatter ONCE over all of its files instead of spawning a fresh
   # subprocess per file — collapsing N cold tool startups (markdownlint is a
@@ -123,11 +119,6 @@ class AutoFormatHandler < ClaudeHooks::Stop
   def notify_formatted(formatted)
     summary = "Auto-formatted #{formatted.length} file#{'s' if formatted.length > 1}: #{formatted.join(', ')}"
     system_message!(summary)
-  end
-
-  def allow_clean_stop!
-    ensure_stopping!
-    suppress_output!
   end
 end
 

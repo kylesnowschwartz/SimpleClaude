@@ -3,33 +3,12 @@
 
 # PreToolUse Entrypoint
 #
-# Orchestrates PreToolUse handlers before a tool runs. Reads JSON from STDIN,
-# runs each handler, merges their outputs (most restrictive permission wins),
-# and returns the result to Claude Code via STDOUT.
+# Runs PreToolUse handlers before a tool runs and merges their outputs
+# (most restrictive permission wins).
 
 require_relative '../../vendor/claude_hooks/lib/claude_hooks'
-require 'json'
+require_relative '../concerns/entrypoint_runner'
 
 require_relative '../handlers/github_url_handler'
 
-begin
-  input_data = JSON.parse($stdin.read)
-
-  github_url_handler = GitHubUrlHandler.new(input_data)
-  github_url_handler.call
-
-  merged_output = ClaudeHooks::Output::PreToolUse.merge(
-    github_url_handler.output
-  )
-
-  merged_output.output_and_exit
-rescue JSON::ParserError => e
-  # Exit 1 = non-blocking error: Claude Code shows stderr and continues.
-  # It never parses stderr, so a plain message is all that's useful here.
-  warn "[PreToolUse] JSON parsing error: #{e.message}"
-  exit 1
-rescue StandardError => e
-  warn "[PreToolUse] Hook execution error: #{e.message}"
-  warn e.backtrace.join("\n") if ENV['RUBY_CLAUDE_HOOKS_DEBUG']
-  exit 1
-end
+EntrypointRunner.run('PreToolUse', ClaudeHooks::Output::PreToolUse, [GitHubUrlHandler])

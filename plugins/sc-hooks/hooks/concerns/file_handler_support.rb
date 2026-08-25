@@ -32,6 +32,45 @@ module FileHandlerSupport # rubocop:disable Metrics/ModuleLength
   # Code's whole-hook timeout and lose every other handler's output with it.
   COMMAND_TIMEOUT_SECONDS = 30
 
+  # -a applies safe corrections only; -A includes unsafe ones that can change
+  # runtime semantics, which an unattended hook must not do.
+  RUBOCOP_FORMATTER = { name: 'RuboCop', command: 'rubocop', args: ['-a'] }.freeze
+  # --disable is variadic; the trailing -- stops it from swallowing the file path
+  MARKDOWNLINT_FORMATTER = { name: 'markdownlint', command: 'markdownlint',
+                             args: %w[--fix --disable MD013 MD041 MD026 MD012 MD024 --] }.freeze
+  SHFMT_FORMATTER = { name: 'shfmt', command: 'shfmt', args: ['-w', '-i', '2'] }.freeze
+  STYLUA_FORMATTER = { name: 'stylua', command: 'stylua', args: [] }.freeze
+  RUSTFMT_FORMATTER = { name: 'rustfmt', command: 'rustfmt', args: [] }.freeze
+  RUFF_FORMATTER = { name: 'ruff', command: 'ruff', args: ['format'] }.freeze
+  YAMLFMT_FORMATTER = { name: 'yamlfmt', command: 'yamlfmt', args: ['-w'] }.freeze
+  ESLINT_FORMATTER = { name: 'eslint', command: 'eslint', args: ['--fix'] }.freeze
+  GOIMPORTS_FORMATTER = { name: 'goimports', command: 'goimports', args: ['-w'] }.freeze
+  GOFMT_FORMATTER = { name: 'gofmt', command: 'gofmt', args: ['-w'] }.freeze
+  PRETTIER_FORMATTER = { name: 'prettier', command: 'prettier', args: ['--write'] }.freeze
+  PRETTIER_YAML_FORMATTER = { name: 'prettier', command: 'prettier',
+                              args: ['--write', '--parser', 'yaml'] }.freeze
+
+  # Formatter candidates per extension, most preferred first. Not eslint for
+  # .json: it can't parse plain JSON without extra plugins.
+  FORMATTERS_BY_EXTENSION = {
+    '.rb' => [RUBOCOP_FORMATTER],
+    '.md' => [MARKDOWNLINT_FORMATTER],
+    '.sh' => [SHFMT_FORMATTER],
+    '.bash' => [SHFMT_FORMATTER],
+    '.lua' => [STYLUA_FORMATTER],
+    '.rs' => [RUSTFMT_FORMATTER],
+    '.py' => [RUFF_FORMATTER],
+    '.yml' => [YAMLFMT_FORMATTER, PRETTIER_YAML_FORMATTER],
+    '.yaml' => [YAMLFMT_FORMATTER, PRETTIER_YAML_FORMATTER],
+    '.js' => [ESLINT_FORMATTER, PRETTIER_FORMATTER],
+    '.jsx' => [ESLINT_FORMATTER, PRETTIER_FORMATTER],
+    '.ts' => [ESLINT_FORMATTER, PRETTIER_FORMATTER],
+    '.tsx' => [ESLINT_FORMATTER, PRETTIER_FORMATTER],
+    '.css' => [PRETTIER_FORMATTER],
+    '.json' => [PRETTIER_FORMATTER],
+    '.go' => [GOIMPORTS_FORMATTER, GOFMT_FORMATTER]
+  }.freeze
+
   # Check if a file should be skipped by pattern match or git-ignore.
   def should_skip_file?(absolute_path)
     return false unless absolute_path
@@ -94,38 +133,13 @@ module FileHandlerSupport # rubocop:disable Metrics/ModuleLength
     end
   end
 
-  # Formatter registry — maps file extensions to available formatters.
-  # Returns nil if no formatter is available for the extension.
+  # Formatter registry — returns the first installed formatter for the file's
+  # extension, or nil when none is available.
   def detect_formatter(file_path)
-    case File.extname(file_path).downcase
-    when '.rb'
-      # -a applies safe corrections only; -A includes unsafe ones that can
-      # change runtime semantics, which an unattended hook must not do.
-      command_available?('rubocop') ? { name: 'RuboCop', command: 'rubocop', args: ['-a'] } : nil
-    when '.md'
-      if command_available?('markdownlint')
-        # --disable is variadic; the trailing -- stops it from swallowing the file path
-        { name: 'markdownlint', command: 'markdownlint',
-          args: %w[--fix --disable MD013 MD041 MD026 MD012 MD024 --] }
-      end
-    when '.sh', '.bash'
-      command_available?('shfmt') ? { name: 'shfmt', command: 'shfmt', args: ['-w', '-i', '2'] } : nil
-    when '.lua'
-      command_available?('stylua') ? { name: 'stylua', command: 'stylua', args: [] } : nil
-    when '.rs'
-      command_available?('rustfmt') ? { name: 'rustfmt', command: 'rustfmt', args: [] } : nil
-    when '.py'
-      command_available?('ruff') ? { name: 'ruff', command: 'ruff', args: ['format'] } : nil
-    when '.yml', '.yaml'
-      detect_yaml_formatter
-    when '.js', '.jsx', '.ts', '.tsx'
-      detect_js_formatter
-    when '.css', '.json'
-      # Not eslint for .json: it can't parse plain JSON without extra plugins.
-      command_available?('prettier') ? { name: 'prettier', command: 'prettier', args: ['--write'] } : nil
-    when '.go'
-      detect_go_formatter
-    end
+    candidates = FORMATTERS_BY_EXTENSION[File.extname(file_path).downcase]
+    return nil unless candidates
+
+    candidates.find { |formatter| command_available?(formatter[:command]) }
   end
 
   # Open3.capture2e with a hard deadline. Returns [output, Process::Status];
@@ -162,30 +176,6 @@ module FileHandlerSupport # rubocop:disable Metrics/ModuleLength
 
     reader.kill
     ''
-  end
-
-  def detect_yaml_formatter
-    if command_available?('yamlfmt')
-      { name: 'yamlfmt', command: 'yamlfmt', args: ['-w'] }
-    elsif command_available?('prettier')
-      { name: 'prettier', command: 'prettier', args: ['--write', '--parser', 'yaml'] }
-    end
-  end
-
-  def detect_js_formatter
-    if command_available?('eslint')
-      { name: 'eslint', command: 'eslint', args: ['--fix'] }
-    elsif command_available?('prettier')
-      { name: 'prettier', command: 'prettier', args: ['--write'] }
-    end
-  end
-
-  def detect_go_formatter
-    if command_available?('goimports')
-      { name: 'goimports', command: 'goimports', args: ['-w'] }
-    elsif command_available?('gofmt')
-      { name: 'gofmt', command: 'gofmt', args: ['-w'] }
-    end
   end
 
   # Ask git itself rather than testing for a .git directory: .git is a FILE

@@ -4,6 +4,7 @@
 require_relative '../../vendor/claude_hooks/lib/claude_hooks'
 require_relative '../concerns/file_handler_support'
 require_relative '../concerns/lint_runner_support'
+require_relative '../concerns/stop_handler_support'
 require 'open3'
 
 # Runs linters and type-checkers on files Claude modified, reporting errors
@@ -14,8 +15,22 @@ require 'open3'
 class LintCheckHandler < ClaudeHooks::Stop
   include FileHandlerSupport
   include LintRunnerSupport
+  include StopHandlerSupport
 
   MAX_ERROR_OUTPUT_LENGTH = 3000
+
+  # Per-file linters to run for each extension group, in report order.
+  LINTERS_BY_GROUP = {
+    js: %w[eslint biome],
+    rb: %w[rubocop],
+    py: %w[ruff]
+  }.freeze
+
+  # Project-wide checks, keyed by the extension group that triggers them.
+  PROJECT_CHECKS_BY_GROUP = {
+    rs: 'cargo check',
+    go: 'go vet'
+  }.freeze
 
   def call
     log 'Lint check handler triggered'
@@ -41,28 +56,16 @@ class LintCheckHandler < ClaudeHooks::Stop
     end
   end
 
-  def skip_and_stop(reason)
-    log "Stop hook: #{reason}"
-    allow_clean_stop!
-    output
-  end
-
-  # Dispatcher — inherent complexity from supporting many linter types.
   def collect_lint_errors(files)
     groups = group_by_extension(files)
-    errors = []
+    errors = LINTERS_BY_GROUP.flat_map do |group, linters|
+      linters.flat_map { |linter| run_per_file_linter(linter, groups[group]) }
+    end
 
-    # Per-file linters (report-only, no auto-fix)
-    errors += run_eslint(groups[:js]) if groups[:js]&.any?
-    errors += run_biome(groups[:js]) if groups[:js]&.any?
-    errors += run_rubocop(groups[:rb]) if groups[:rb]&.any?
-    errors += run_ruff(groups[:py]) if groups[:py]&.any?
-
-    # Project-wide type/build checks
     errors += run_tsc(files) if groups[:js]&.any?
-    errors += run_cargo_check if groups[:rs]&.any?
-    errors += run_go_vet if groups[:go]&.any?
-
+    errors += PROJECT_CHECKS_BY_GROUP.filter_map do |group, check|
+      run_project_check(check) if groups[group]&.any?
+    end.flatten
     errors
   end
 
@@ -99,11 +102,6 @@ class LintCheckHandler < ClaudeHooks::Stop
 
   def truncate_output(text)
     "#{text[0...MAX_ERROR_OUTPUT_LENGTH]}\n... (truncated, #{text.length} total chars)"
-  end
-
-  def allow_clean_stop!
-    ensure_stopping!
-    suppress_output!
   end
 end
 
