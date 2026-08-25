@@ -17,6 +17,7 @@
 
 require 'optparse'
 require 'json'
+require 'open3'
 
 trap('INT') do
   puts "\nCancelled."
@@ -101,10 +102,10 @@ module SimpleClaude
     def register_marketplace
       if marketplace_registered?
         puts 'Marketplace already registered, updating...'
-        run_cmd('claude plugin marketplace update simpleclaude')
+        run_cmd('claude', 'plugin', 'marketplace', 'update', 'simpleclaude')
       else
         puts 'Registering SimpleClaude marketplace...'
-        run_cmd("claude plugin marketplace add #{@repo_root}")
+        run_cmd('claude', 'plugin', 'marketplace', 'add', @repo_root)
       end
       puts
     end
@@ -118,13 +119,13 @@ module SimpleClaude
 
       if plugin_installed?(name)
         puts "Updating #{name} (#{desc})..."
-        run_cmd("claude plugin uninstall #{name}")
+        run_cmd('claude', 'plugin', 'uninstall', name)
       else
         return unless plugin[:required] || @force || confirm?("Install #{name} (#{desc})?")
 
         puts "Installing #{name} (#{desc})..."
       end
-      run_cmd("claude plugin install #{name}")
+      run_cmd('claude', 'plugin', 'install', name)
       puts
     end
 
@@ -137,16 +138,18 @@ module SimpleClaude
       puts format(SimpleClaude::STATUS_LINE_INFO, root: @repo_root)
     end
 
-    def run_cmd(cmd)
-      return system(cmd) unless @dry_run
+    def run_cmd(*cmd)
+      return system(*cmd) unless @dry_run
 
-      puts color("[DRY RUN] #{cmd}", :yellow)
+      puts color("[DRY RUN] #{cmd.join(' ')}", :yellow)
       true
     end
 
     def marketplace_registered?
-      output = `claude plugin marketplace list 2>&1`
+      output, = Open3.capture2e('claude', 'plugin', 'marketplace', 'list')
       output.include?('simpleclaude')
+    rescue Errno::ENOENT
+      false
     end
 
     def plugin_installed?(name)
