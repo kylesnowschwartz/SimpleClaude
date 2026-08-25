@@ -62,7 +62,7 @@ A summarized group need not appear in the body at all. Offering it on demand wit
 
 ## Examples
 
-**"Why is my build slow?"** Nothing unresolved, so the verdict and one action.
+**"Why is my build slow?"** Nothing is unresolved, so the reply is the verdict and one action.
 
 > `node-sass` rebuilds on every CI run because the dependency cache misses. Migrating to `sass` removes the native build step.
 >
@@ -72,7 +72,7 @@ A summarized group need not appear in the body at all. Offering it on demand wit
 
 **"Review this PR."** 15 findings and one design question.
 
-> Two blockers and one should-fix. The rest can wait.
+> Two findings block the merge and one more should be fixed; the rest can wait.
 >
 > - **Blocker, SQL injection:** `query.ts:88` uses string interpolation. Use parameters.
 > - **Blocker, race:** `cache.ts:24` separates get and set. Cache the in-flight promise.
@@ -96,7 +96,7 @@ A summarized group need not appear in the body at all. Offering it on demand wit
 >
 > - **State:** **Done:** REST limiting. **Now:** waiting on your decision. **Left:** WebSocket limiting, Redis verification.
 > - **Unresolved:** the Redis-backed counter is unverified, because tests ran against the in-memory store.
-> - **You:** Choose the WebSocket limit key, connection count or message rate. Recommend: message rate, because connection count lets one socket flood you.
+> - **You:** Choose the WebSocket limit key, connection count or message rate. Recommend: message rate, because a connection-count limit lets one socket send unlimited messages.
 
 ## Overrides
 
