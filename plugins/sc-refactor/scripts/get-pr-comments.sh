@@ -21,7 +21,10 @@ fi
 # Parse arguments
 if [[ $# -eq 0 ]]; then
   # No args - detect from current branch
-  PR_NUMBER=$(gh pr view --json number --jq '.number' 2>/dev/null || echo "")
+  if ! PR_NUMBER=$(gh pr view --json number --jq '.number'); then
+    echo "Error: Failed to determine the PR for the current branch" >&2
+    exit 1
+  fi
   if [[ -z "$PR_NUMBER" ]]; then
     echo "Error: No PR found for current branch" >&2
     exit 1
@@ -124,7 +127,10 @@ query($owner: String!, $name: String!, $pr: Int!) {
     }
   }
 }' -f owner="$OWNER" -f name="$REPO" -F pr="$PR_NUMBER" | jq --arg filter "$THREAD_FILTER" '
-  .data.repository.pullRequest | {
+  if .data.repository.pullRequest == null then
+    error("Pull request not found or unavailable")
+  else
+    .data.repository.pullRequest | {
     url,
     title,
     reviews: [
@@ -168,5 +174,6 @@ query($owner: String!, $name: String!, $pr: Int!) {
           ]
         }
     ]
-  }
+    }
+  end
 '

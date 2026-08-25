@@ -17,13 +17,13 @@
 
 require 'optparse'
 require 'json'
-
-trap('INT') do
-  puts "\nCancelled."
-  exit 0
-end
+require 'English'
+require 'open3'
+require 'shellwords'
 
 module SimpleClaude
+  class InstallError < StandardError; end
+
   STATUS_LINE_INFO = <<~INFO
 
     SimpleClaude includes a status line script showing model, branch,
@@ -101,10 +101,10 @@ module SimpleClaude
     def register_marketplace
       if marketplace_registered?
         puts 'Marketplace already registered, updating...'
-        run_cmd('claude plugin marketplace update simpleclaude')
+        run_cmd('claude', 'plugin', 'marketplace', 'update', 'simpleclaude')
       else
         puts 'Registering SimpleClaude marketplace...'
-        run_cmd("claude plugin marketplace add #{@repo_root}")
+        run_cmd('claude', 'plugin', 'marketplace', 'add', @repo_root)
       end
       puts
     end
@@ -118,13 +118,13 @@ module SimpleClaude
 
       if plugin_installed?(name)
         puts "Updating #{name} (#{desc})..."
-        run_cmd("claude plugin uninstall #{name}")
+        run_cmd('claude', 'plugin', 'uninstall', name)
       else
         return unless plugin[:required] || @force || confirm?("Install #{name} (#{desc})?")
 
         puts "Installing #{name} (#{desc})..."
       end
-      run_cmd("claude plugin install #{name}")
+      run_cmd('claude', 'plugin', 'install', name)
       puts
     end
 
@@ -137,16 +137,37 @@ module SimpleClaude
       puts format(SimpleClaude::STATUS_LINE_INFO, root: @repo_root)
     end
 
-    def run_cmd(cmd)
-      return system(cmd) unless @dry_run
+    def run_cmd(*cmd)
+      display = Shellwords.join(cmd)
+      if @dry_run
+        puts color("[DRY RUN] #{display}", :yellow)
+        return true
+      end
 
-      puts color("[DRY RUN] #{cmd}", :yellow)
-      true
+      return true if system(*cmd)
+
+      detail = if $CHILD_STATUS&.signaled?
+                 "signal #{$CHILD_STATUS.termsig}"
+               elsif $CHILD_STATUS
+                 "exit #{$CHILD_STATUS.exitstatus}"
+               else
+                 'failed to start'
+               end
+      raise InstallError, "Command #{detail}: #{display}"
     end
 
     def marketplace_registered?
-      output = `claude plugin marketplace list 2>&1`
+      output, status = Open3.capture2e('claude', 'plugin', 'marketplace', 'list')
+      unless status.success?
+        detail = output.strip
+        message = "Unable to list plugin marketplaces (exit #{status.exitstatus})"
+        message = "#{message}: #{detail}" unless detail.empty?
+        raise InstallError, message
+      end
+
       output.include?('simpleclaude')
+    rescue Errno::ENOENT => e
+      raise InstallError, "Unable to run Claude CLI: #{e.message}"
     end
 
     def plugin_installed?(name)
@@ -154,22 +175,37 @@ module SimpleClaude
       return false unless File.exist?(config_path)
 
       config = JSON.parse(File.read(config_path))
-      config['plugins']&.keys&.any? { |key| key.start_with?("#{name}@") }
-    rescue StandardError
-      false
+      plugins = config['plugins']
+      raise InstallError, "Plugin registry has no valid plugins map: #{config_path}" unless plugins.is_a?(Hash)
+
+      plugins.keys.any? { |key| key.start_with?("#{name}@") }
+    rescue JSON::ParserError, SystemCallError => e
+      raise InstallError, "Unable to read plugin registry #{config_path}: #{e.message}"
     end
   end
 end
 
-options = {}
-OptionParser.new do |opts|
-  opts.banner = 'Usage: install.rb [options]'
-  opts.on('-f', '--force', 'Skip confirmation prompts') { options[:force] = true }
-  opts.on('--dry-run', 'Show what would happen') { options[:dry_run] = true }
-  opts.on('-h', '--help', 'Show help') do
-    puts opts
-    exit
+if __FILE__ == $PROGRAM_NAME
+  trap('INT') do
+    puts "\nCancelled."
+    exit 130
   end
-end.parse!
 
-SimpleClaude::Installer.new(**options).run
+  begin
+    options = {}
+    OptionParser.new do |opts|
+      opts.banner = 'Usage: install.rb [options]'
+      opts.on('-f', '--force', 'Skip confirmation prompts') { options[:force] = true }
+      opts.on('--dry-run', 'Show what would happen') { options[:dry_run] = true }
+      opts.on('-h', '--help', 'Show help') do
+        puts opts
+        exit
+      end
+    end.parse!
+
+    SimpleClaude::Installer.new(**options).run
+  rescue SimpleClaude::InstallError => e
+    warn "Installation failed: #{e.message}"
+    exit 1
+  end
+end

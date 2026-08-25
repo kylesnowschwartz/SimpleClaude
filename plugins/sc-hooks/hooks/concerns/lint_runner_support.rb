@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'open3'
+require 'json'
 # Enumerable#to_set is not built-in before Ruby 3.2, and end users' `env ruby`
 # may resolve to macOS system ruby (2.6).
 require 'set' # rubocop:disable Lint/RedundantRequireStatement
@@ -13,7 +14,7 @@ require 'set' # rubocop:disable Lint/RedundantRequireStatement
 #   - command_available?      (from FileHandlerSupport)
 #   - relative_file_path      (from FileHandlerSupport)
 #   - capture2e_with_timeout  (from FileHandlerSupport)
-module LintRunnerSupport
+module LintRunnerSupport # rubocop:disable Metrics/ModuleLength
   # --- Per-file linters (report-only) ---
 
   def run_eslint(files)
@@ -26,8 +27,7 @@ module LintRunnerSupport
 
     ["eslint errors:\n#{stdout_err.strip}"]
   rescue StandardError => e
-    log "eslint failed to run: #{e.message}", level: :error
-    []
+    runner_failure('eslint', e)
   end
 
   def run_rubocop(files)
@@ -40,8 +40,7 @@ module LintRunnerSupport
 
     ["rubocop errors:\n#{stdout_err.strip}"]
   rescue StandardError => e
-    log "rubocop failed to run: #{e.message}", level: :error
-    []
+    runner_failure('rubocop', e)
   end
 
   def run_ruff(files)
@@ -54,8 +53,7 @@ module LintRunnerSupport
 
     ["ruff errors:\n#{stdout_err.strip}"]
   rescue StandardError => e
-    log "ruff failed to run: #{e.message}", level: :error
-    []
+    runner_failure('ruff', e)
   end
 
   def run_biome(files)
@@ -68,8 +66,7 @@ module LintRunnerSupport
 
     ["biome errors:\n#{stdout_err.strip}"]
   rescue StandardError => e
-    log "biome failed to run: #{e.message}", level: :error
-    []
+    runner_failure('biome', e)
   end
 
   # --- Project-wide checks ---
@@ -86,8 +83,7 @@ module LintRunnerSupport
 
     filter_tsc_errors(stdout_err, modified_files)
   rescue StandardError => e
-    log "tsc failed to run: #{e.message}", level: :error
-    []
+    runner_failure('tsc', e)
   end
 
   def run_cargo_check
@@ -96,8 +92,7 @@ module LintRunnerSupport
     stdout_err, status = capture2e_with_timeout('cargo', 'check', '--message-format', 'short', chdir: cwd)
     status.success? ? [] : ["cargo check errors:\n#{stdout_err.strip}"]
   rescue StandardError => e
-    log "cargo check failed to run: #{e.message}", level: :error
-    []
+    runner_failure('cargo check', e)
   end
 
   def run_go_vet
@@ -109,16 +104,15 @@ module LintRunnerSupport
 
     ["go vet errors:\n#{stdout_err.strip}"]
   rescue StandardError => e
-    log "go vet failed to run: #{e.message}", level: :error
-    []
+    runner_failure('go vet', e)
   end
-
-  private
 
   ESLINT_CONFIG_FILES = %w[
     eslint.config.js eslint.config.mjs eslint.config.cjs eslint.config.ts
     .eslintrc.js .eslintrc.cjs .eslintrc.json .eslintrc.yml .eslintrc.yaml .eslintrc
   ].freeze
+
+  private
 
   def rubocop_configured?
     File.exist?(File.join(cwd, '.rubocop.yml'))
@@ -137,8 +131,6 @@ module LintRunnerSupport
     return false unless File.exist?(pyproject)
 
     File.read(pyproject) =~ /^\[tool\.ruff[\].]/
-  rescue StandardError
-    false
   end
 
   def biome_configured?
@@ -149,10 +141,7 @@ module LintRunnerSupport
     package_json = File.join(cwd, 'package.json')
     return false unless File.exist?(package_json)
 
-    require 'json'
     JSON.parse(File.read(package_json)).key?(key)
-  rescue StandardError
-    false
   end
 
   # Prefer project-local tsc over global to match the project's TS version.
@@ -161,6 +150,12 @@ module LintRunnerSupport
     return local_tsc if File.executable?(local_tsc)
 
     command_available?('tsc') ? 'tsc' : nil
+  end
+
+  def runner_failure(name, error)
+    message = "#{name} failed to run: #{error.class}: #{error.message}"
+    log message, level: :error
+    [message]
   end
 
   # Filter tsc output to only errors in files Claude modified.

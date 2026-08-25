@@ -116,8 +116,6 @@ class AutoFormatHandler < ClaudeHooks::Stop
 
   def read_file(path)
     File.read(path)
-  rescue StandardError
-    nil
   end
 
   def notify_formatted(formatted)
