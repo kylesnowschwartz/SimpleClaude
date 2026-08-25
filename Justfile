@@ -98,7 +98,7 @@ release:
 # Syntax-check all hook Ruby files, then run hook unit/integration tests
 test:
     @find plugins/sc-hooks/hooks -name '*.rb' -print0 | xargs -0 -n1 ruby -c
-    @ruby test/test_auto_format_batch.rb
+    @for t in test/test_*.rb; do ruby "$t" || exit 1; done
 
 # Smoke test external CLI invocations (codex/gemini)
 test-cli target="all":
