@@ -43,12 +43,14 @@ module FileHandlerSupport # rubocop:disable Metrics/ModuleLength
   end
 
   # Uses git check-ignore to respect .gitignore + global gitignore.
-  # Returns false in non-git directories or on any error.
   def git_ignored?(absolute_path)
     return false unless git_repo?
 
-    system('git', 'check-ignore', '-q', absolute_path.to_s, chdir: cwd,
-                                                            out: File::NULL, err: File::NULL)
+    _output, error, status = Open3.capture3('git', 'check-ignore', '-q', absolute_path.to_s, chdir: cwd)
+    return true if status.success?
+    return false if status.exitstatus == 1
+
+    raise "git check-ignore failed (exit #{status.exitstatus}): #{error.strip}"
   end
 
   # Cached which-check. Uses Open3 array form to avoid shell interpolation.
@@ -216,8 +218,9 @@ module FileHandlerSupport # rubocop:disable Metrics/ModuleLength
     return false if chunk.nil? || chunk.empty?
 
     chunk.include?("\x00")
-  rescue StandardError
-    false
+  rescue StandardError => e
+    log("Skipping #{relative_file_path(absolute_path)} - unable to inspect file: #{e.message}", level: :warn)
+    true
   end
 
   def matches_any_skip_pattern?(rel)
@@ -238,13 +241,26 @@ module FileHandlerSupport # rubocop:disable Metrics/ModuleLength
   # correct when cwd is a repo subdirectory (git otherwise prints
   # repo-root-relative paths). Matches ls-files, which is cwd-relative already.
   def git_diff_files
-    output, status = Open3.capture2('git', 'diff', '--name-only', '--relative', 'HEAD', chdir: cwd)
-    status.success? ? output.strip.split("\n") : []
+    return git_file_list('diff', '--name-only', '--relative', 'HEAD') if git_head?
+
+    git_file_list('diff', '--name-only', '--relative') +
+      git_file_list('diff', '--name-only', '--relative', '--cached')
   end
 
   # Untracked files (respects .gitignore)
   def git_untracked_files
-    output, status = Open3.capture2('git', 'ls-files', '--others', '--exclude-standard', chdir: cwd)
-    status.success? ? output.strip.split("\n") : []
+    git_file_list('ls-files', '--others', '--exclude-standard')
+  end
+
+  def git_head?
+    _output, _error, status = Open3.capture3('git', 'rev-parse', '--verify', 'HEAD', chdir: cwd)
+    status.success?
+  end
+
+  def git_file_list(*args)
+    output, error, status = Open3.capture3('git', *args, chdir: cwd)
+    return output.strip.split("\n") if status.success?
+
+    raise "git #{args.join(' ')} failed (exit #{status.exitstatus}): #{error.strip}"
   end
 end

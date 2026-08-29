@@ -24,20 +24,30 @@ fi
 first_plugin_vendor="$REPO_ROOT/plugins/${HOOK_PLUGINS[0]}/vendor/claude_hooks"
 current_version="none"
 if [[ -f "$first_plugin_vendor/lib/claude_hooks/version.rb" ]]; then
-  current_version=$(grep -oE "VERSION = '[^']+'" "$first_plugin_vendor/lib/claude_hooks/version.rb" | grep -oE "[0-9]+\.[0-9]+\.[0-9]+")
+  current_version=$(grep -oE "VERSION = '[^']+'" "$first_plugin_vendor/lib/claude_hooks/version.rb" |
+    grep -oE "[0-9]+\.[0-9]+\.[0-9]+" || true)
 fi
 
 # Get latest version and commit SHA from GitHub
-github_api_response=$(curl -sL "https://api.github.com/repos/kylesnowschwartz/claude_hooks/branches/main")
-expected_sha=$(echo "$github_api_response" | grep -o '"sha": "[^"]*"' | head -1 | cut -d'"' -f4)
+if ! github_api_response=$(curl -fsSL "https://api.github.com/repos/kylesnowschwartz/claude_hooks/branches/main"); then
+  echo "ERROR: Failed to fetch branch metadata from GitHub API" >&2
+  exit 1
+fi
+expected_sha=$(echo "$github_api_response" | grep -o '"sha": "[^"]*"' | head -1 | cut -d'"' -f4 || true)
 if [[ -z "$expected_sha" ]]; then
-  echo "ERROR: Failed to fetch expected commit SHA from GitHub API"
+  echo "ERROR: Failed to fetch expected commit SHA from GitHub API" >&2
   exit 1
 fi
 
-latest_version=$(curl -sL "https://raw.githubusercontent.com/kylesnowschwartz/claude_hooks/main/lib/claude_hooks/version.rb" | grep -oE "VERSION = '[^']+'" | grep -oE "[0-9]+\.[0-9]+\.[0-9]+")
+if ! version_source=$(curl -fsSL \
+  "https://raw.githubusercontent.com/kylesnowschwartz/claude_hooks/main/lib/claude_hooks/version.rb"); then
+  echo "ERROR: Failed to fetch latest version source from GitHub" >&2
+  exit 1
+fi
+latest_version=$(echo "$version_source" | grep -oE "VERSION = '[^']+'" |
+  grep -oE "[0-9]+\.[0-9]+\.[0-9]+" || true)
 if [[ -z "$latest_version" ]]; then
-  echo "ERROR: Failed to fetch latest version from GitHub"
+  echo "ERROR: Failed to fetch latest version from GitHub" >&2
   exit 1
 fi
 
