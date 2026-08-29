@@ -82,6 +82,26 @@ rescue SimpleClaude::InstallError => e
   e.message.include?('Unable to read plugin registry')
 end
 
+check('plugin registries require an object root') do
+  ['null', '[]'].all? do |contents|
+    begin
+      Dir.mktmpdir do |home|
+        registry = File.join(home, '.claude', 'plugins', 'installed_plugins.json')
+        FileUtils.mkdir_p(File.dirname(registry))
+        File.write(registry, contents)
+
+        with_home(home) do
+          SimpleClaude::Installer.new(force: true).send(:plugin_installed?, 'sc-hooks')
+        end
+      end
+    rescue SimpleClaude::InstallError => e
+      next e.message.include?('Plugin registry has no valid root object')
+    end
+
+    false
+  end
+end
+
 check('linter startup failures are returned as actionable lint errors') do
   harness = LintRunnerHarness.new
   errors = harness.run_rubocop(['example.rb'])

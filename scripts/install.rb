@@ -175,6 +175,8 @@ module SimpleClaude
       return false unless File.exist?(config_path)
 
       config = JSON.parse(File.read(config_path))
+      raise InstallError, "Plugin registry has no valid root object: #{config_path}" unless config.is_a?(Hash)
+
       plugins = config['plugins']
       raise InstallError, "Plugin registry has no valid plugins map: #{config_path}" unless plugins.is_a?(Hash)
 
