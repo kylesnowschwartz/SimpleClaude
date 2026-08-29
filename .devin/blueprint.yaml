@@ -1,0 +1,19 @@
+# SimpleClaude development environment for Devin snapshots.
+initialize: |
+  curl -fsSL https://mise.run | sh
+  ~/.local/bin/mise use -g -y ruby@3.3.9
+  ~/.local/bin/mise use -g -y just@1.58.0
+  echo "PATH=$HOME/.local/bin:$HOME/.local/share/mise/shims:$PATH" >> "$ENVRC"
+  sudo apt-get update
+  sudo apt-get install -y zsh
+  sudo npm install -g markdownlint-cli@0.48.0
+maintenance: |
+  ~/.local/bin/mise exec ruby@3.3.9 -- gem install bundler -v 2.7.1
+  ~/.local/bin/mise exec ruby@3.3.9 -- bundle _2.7.1_ install
+knowledge:
+  - name: lint
+    contents: |
+      bundle _2.7.1_ exec rubocop
+  - name: test
+    contents: |
+      just test
