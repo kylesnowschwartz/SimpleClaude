@@ -65,15 +65,23 @@ module LintRunnerSupport
     capture_lint_output('tsc', [tsc, '--noEmit']) do |stdout_err|
       filter_tsc_errors(stdout_err, modified_files)
     end
+  rescue StandardError => e
+    log "tsc failed to run: #{e.message}", level: :error
+    []
   end
 
   private
 
+  # Detection is inside the rescue too: a linter that can't even be probed must
+  # not take the whole hook — and every other handler's output — down with it.
   def run_linter(name, linter, files = [])
     return [] unless send(linter.configured)
     return [] unless command_available?(linter.command)
 
     capture_lint_output(name, [linter.command, *linter.args, *files])
+  rescue StandardError => e
+    log "#{name} failed to run: #{e.message}", level: :error
+    []
   end
 
   # Invoke a lint command, returning [] on success. On failure the block (when
