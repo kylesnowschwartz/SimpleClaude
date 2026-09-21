@@ -11,7 +11,7 @@ require 'set' # rubocop:disable Lint/RedundantRequireStatement
 # Expects the includer to provide:
 #   - cwd                     (from ClaudeHooks::Base)
 #   - log                     (from ClaudeHooks::Base)
-#   - command_available?      (from FileHandlerSupport)
+#   - tool_command            (from FileHandlerSupport)
 #   - relative_file_path      (from FileHandlerSupport)
 #   - capture2e_with_timeout  (from FileHandlerSupport)
 module LintRunnerSupport # rubocop:disable Metrics/ModuleLength
@@ -19,9 +19,11 @@ module LintRunnerSupport # rubocop:disable Metrics/ModuleLength
 
   def run_eslint(files)
     return [] unless eslint_configured?
-    return [] unless command_available?('eslint')
 
-    stdout_err, status = capture2e_with_timeout('eslint', '--no-fix', '--format', 'compact', *files,
+    eslint = tool_command('eslint')
+    return [] unless eslint
+
+    stdout_err, status = capture2e_with_timeout(eslint, '--no-fix', '--format', 'compact', *files,
                                                 chdir: cwd)
     return [] if status.success?
 
@@ -32,9 +34,11 @@ module LintRunnerSupport # rubocop:disable Metrics/ModuleLength
 
   def run_rubocop(files)
     return [] unless rubocop_configured?
-    return [] unless command_available?('rubocop')
 
-    stdout_err, status = capture2e_with_timeout('rubocop', '--format', 'simple', *files,
+    rubocop = tool_command('rubocop')
+    return [] unless rubocop
+
+    stdout_err, status = capture2e_with_timeout(rubocop, '--format', 'simple', *files,
                                                 chdir: cwd)
     return [] if status.success?
 
@@ -45,9 +49,11 @@ module LintRunnerSupport # rubocop:disable Metrics/ModuleLength
 
   def run_ruff(files)
     return [] unless ruff_configured?
-    return [] unless command_available?('ruff')
 
-    stdout_err, status = capture2e_with_timeout('ruff', 'check', *files,
+    ruff = tool_command('ruff')
+    return [] unless ruff
+
+    stdout_err, status = capture2e_with_timeout(ruff, 'check', *files,
                                                 chdir: cwd)
     return [] if status.success?
 
@@ -58,9 +64,11 @@ module LintRunnerSupport # rubocop:disable Metrics/ModuleLength
 
   def run_biome(files)
     return [] unless biome_configured?
-    return [] unless command_available?('biome')
 
-    stdout_err, status = capture2e_with_timeout('biome', 'lint', *files,
+    biome = tool_command('biome')
+    return [] unless biome
+
+    stdout_err, status = capture2e_with_timeout(biome, 'lint', *files,
                                                 chdir: cwd)
     return [] if status.success?
 
@@ -74,9 +82,10 @@ module LintRunnerSupport # rubocop:disable Metrics/ModuleLength
   # Run tsc --noEmit but filter to only errors in modified files.
   # Prevents pre-existing type errors from blocking indefinitely.
   def run_tsc(modified_files)
-    tsc = find_tsc
-    return [] unless tsc
     return [] unless File.exist?(File.join(cwd, 'tsconfig.json'))
+
+    tsc = tool_command('tsc')
+    return [] unless tsc
 
     stdout_err, status = capture2e_with_timeout(tsc, '--noEmit', chdir: cwd)
     return [] if status.success?
@@ -87,19 +96,24 @@ module LintRunnerSupport # rubocop:disable Metrics/ModuleLength
   end
 
   def run_cargo_check
-    return [] unless command_available?('cargo') && File.exist?(File.join(cwd, 'Cargo.toml'))
+    return [] unless File.exist?(File.join(cwd, 'Cargo.toml'))
 
-    stdout_err, status = capture2e_with_timeout('cargo', 'check', '--message-format', 'short', chdir: cwd)
+    cargo = tool_command('cargo')
+    return [] unless cargo
+
+    stdout_err, status = capture2e_with_timeout(cargo, 'check', '--message-format', 'short', chdir: cwd)
     status.success? ? [] : ["cargo check errors:\n#{stdout_err.strip}"]
   rescue StandardError => e
     runner_failure('cargo check', e)
   end
 
   def run_go_vet
-    return [] unless command_available?('go')
     return [] unless File.exist?(File.join(cwd, 'go.mod'))
 
-    stdout_err, status = capture2e_with_timeout('go', 'vet', './...', chdir: cwd)
+    go = tool_command('go')
+    return [] unless go
+
+    stdout_err, status = capture2e_with_timeout(go, 'vet', './...', chdir: cwd)
     return [] if status.success?
 
     ["go vet errors:\n#{stdout_err.strip}"]
@@ -142,14 +156,6 @@ module LintRunnerSupport # rubocop:disable Metrics/ModuleLength
     return false unless File.exist?(package_json)
 
     JSON.parse(File.read(package_json)).key?(key)
-  end
-
-  # Prefer project-local tsc over global to match the project's TS version.
-  def find_tsc
-    local_tsc = File.join(cwd, 'node_modules', '.bin', 'tsc')
-    return local_tsc if File.executable?(local_tsc)
-
-    command_available?('tsc') ? 'tsc' : nil
   end
 
   def runner_failure(name, error)

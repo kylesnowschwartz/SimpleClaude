@@ -100,6 +100,7 @@ test:
     @find plugins/sc-hooks/hooks -name '*.rb' -print0 | xargs -0 -n1 ruby -c
     @ruby test/test_auto_format_batch.rb
     @ruby test/test_error_handling.rb
+    @ruby test/test_tool_command.rb
 
 # Smoke test external CLI invocations (codex/gemini)
 test-cli target="all":
