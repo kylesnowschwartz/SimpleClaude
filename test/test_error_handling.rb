@@ -38,8 +38,8 @@ class LintRunnerHarness
     Dir.pwd
   end
 
-  def command_available?(_command)
-    true
+  def tool_command(tool)
+    tool
   end
 
   def capture2e_with_timeout(*)

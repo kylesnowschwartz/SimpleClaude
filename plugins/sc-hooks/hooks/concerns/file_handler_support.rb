@@ -32,6 +32,11 @@ module FileHandlerSupport # rubocop:disable Metrics/ModuleLength
   # Code's whole-hook timeout and lose every other handler's output with it.
   COMMAND_TIMEOUT_SECONDS = 30
 
+  # Directories, relative to the project root, where a project keeps its own
+  # copies of tools: Bundler binstubs and Rails scripts in bin/, npm/yarn/pnpm
+  # in node_modules/.bin/, Python virtualenvs in .venv/bin/ or venv/bin/.
+  PROJECT_BIN_DIRS = ['bin', 'node_modules/.bin', '.venv/bin', 'venv/bin'].freeze
+
   # Check if a file should be skipped by pattern match or git-ignore.
   def should_skip_file?(absolute_path)
     return false unless absolute_path
@@ -60,6 +65,26 @@ module FileHandlerSupport # rubocop:disable Metrics/ModuleLength
 
     path, status = Open3.capture2('which', command)
     @command_cache[command] = status.success? && !path.strip.empty?
+  end
+
+  # Executable to run for a tool: the project's own copy when it has one, else
+  # the bare name if it is on PATH, else nil. A project copy is the version the
+  # project pins, so it wins over a global install regardless of which is newer.
+  def tool_command(tool)
+    @tool_commands ||= {}
+    return @tool_commands[tool] if @tool_commands.key?(tool)
+
+    @tool_commands[tool] = project_tool_path(tool) || (command_available?(tool) ? tool : nil)
+  end
+
+  # Absolute path to the project's own copy of a tool, or nil. Missing and
+  # unreadable paths are absent as far as File.file? and File.executable? are
+  # concerned, so a project without the tool simply yields nil.
+  def project_tool_path(tool)
+    @project_tool_paths ||= {}
+    return @project_tool_paths[tool] if @project_tool_paths.key?(tool)
+
+    @project_tool_paths[tool] = search_project_bin_dirs(tool)
   end
 
   # Returns the path relative to cwd. Falls back to the absolute path
@@ -103,28 +128,25 @@ module FileHandlerSupport # rubocop:disable Metrics/ModuleLength
     when '.rb'
       # -a applies safe corrections only; -A includes unsafe ones that can
       # change runtime semantics, which an unattended hook must not do.
-      command_available?('rubocop') ? { name: 'RuboCop', command: 'rubocop', args: ['-a'] } : nil
+      formatter_entry('RuboCop', 'rubocop', ['-a'])
     when '.md'
-      if command_available?('markdownlint')
-        # --disable is variadic; the trailing -- stops it from swallowing the file path
-        { name: 'markdownlint', command: 'markdownlint',
-          args: %w[--fix --disable MD013 MD041 MD026 MD012 MD024 --] }
-      end
+      # --disable is variadic; the trailing -- stops it from swallowing the file path
+      formatter_entry('markdownlint', 'markdownlint', %w[--fix --disable MD013 MD041 MD026 MD012 MD024 --])
     when '.sh', '.bash'
-      command_available?('shfmt') ? { name: 'shfmt', command: 'shfmt', args: ['-w', '-i', '2'] } : nil
+      formatter_entry('shfmt', 'shfmt', ['-w', '-i', '2'])
     when '.lua'
-      command_available?('stylua') ? { name: 'stylua', command: 'stylua', args: [] } : nil
+      formatter_entry('stylua', 'stylua', [])
     when '.rs'
-      command_available?('rustfmt') ? { name: 'rustfmt', command: 'rustfmt', args: [] } : nil
+      formatter_entry('rustfmt', 'rustfmt', [])
     when '.py'
-      command_available?('ruff') ? { name: 'ruff', command: 'ruff', args: ['format'] } : nil
+      formatter_entry('ruff', 'ruff', ['format'])
     when '.yml', '.yaml'
       detect_yaml_formatter
     when '.js', '.jsx', '.ts', '.tsx'
       detect_js_formatter
     when '.css', '.json'
       # Not eslint for .json: it can't parse plain JSON without extra plugins.
-      command_available?('prettier') ? { name: 'prettier', command: 'prettier', args: ['--write'] } : nil
+      formatter_entry('prettier', 'prettier', ['--write'])
     when '.go'
       detect_go_formatter
     end
@@ -150,6 +172,16 @@ module FileHandlerSupport # rubocop:disable Metrics/ModuleLength
 
   private
 
+  def search_project_bin_dirs(tool)
+    return nil unless cwd
+
+    PROJECT_BIN_DIRS.each do |dir|
+      candidate = File.join(cwd, dir, tool)
+      return candidate if File.file?(candidate) && File.executable?(candidate)
+    end
+    nil
+  end
+
   def terminate_process_group(wait_thr)
     Process.kill('TERM', -wait_thr.pid)
     Process.kill('KILL', -wait_thr.pid) unless wait_thr.join(2)
@@ -166,28 +198,37 @@ module FileHandlerSupport # rubocop:disable Metrics/ModuleLength
     ''
   end
 
+  # Formatter registry entry for a tool, or nil when the tool cannot be run.
+  def formatter_entry(name, tool, args)
+    command = tool_command(tool)
+    command ? { name: name, command: command, args: args } : nil
+  end
+
+  # Picks from ordered [name, tool, args] candidates. A candidate the project
+  # ships its own copy of beats one that is merely on PATH, whatever the
+  # preference order, because the project pins the version it wants; among
+  # equally-sourced candidates the listed order decides.
+  def first_formatter(candidates)
+    local = candidates.find { |_name, tool, _args| project_tool_path(tool) }
+    chosen = local || candidates.find { |_name, tool, _args| tool_command(tool) }
+    return nil unless chosen
+
+    formatter_entry(*chosen)
+  end
+
   def detect_yaml_formatter
-    if command_available?('yamlfmt')
-      { name: 'yamlfmt', command: 'yamlfmt', args: ['-w'] }
-    elsif command_available?('prettier')
-      { name: 'prettier', command: 'prettier', args: ['--write', '--parser', 'yaml'] }
-    end
+    first_formatter([['yamlfmt', 'yamlfmt', ['-w']],
+                     ['prettier', 'prettier', ['--write', '--parser', 'yaml']]])
   end
 
   def detect_js_formatter
-    if command_available?('eslint')
-      { name: 'eslint', command: 'eslint', args: ['--fix'] }
-    elsif command_available?('prettier')
-      { name: 'prettier', command: 'prettier', args: ['--write'] }
-    end
+    first_formatter([['eslint', 'eslint', ['--fix']],
+                     ['prettier', 'prettier', ['--write']]])
   end
 
   def detect_go_formatter
-    if command_available?('goimports')
-      { name: 'goimports', command: 'goimports', args: ['-w'] }
-    elsif command_available?('gofmt')
-      { name: 'gofmt', command: 'gofmt', args: ['-w'] }
-    end
+    first_formatter([['goimports', 'goimports', ['-w']],
+                     ['gofmt', 'gofmt', ['-w']]])
   end
 
   # Ask git itself rather than testing for a .git directory: .git is a FILE
