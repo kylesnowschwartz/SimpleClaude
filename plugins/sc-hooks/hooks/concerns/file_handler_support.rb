@@ -37,6 +37,25 @@ module FileHandlerSupport # rubocop:disable Metrics/ModuleLength
   # in node_modules/.bin/, Python virtualenvs in .venv/bin/ or venv/bin/.
   PROJECT_BIN_DIRS = ['bin', 'node_modules/.bin', '.venv/bin', 'venv/bin'].freeze
 
+  # Tools a project can pin through its Gemfile rather than a bin directory,
+  # and so are worth asking Bundler about before falling back to PATH.
+  BUNDLER_MANAGED_TOOLS = %w[rubocop].freeze
+
+  # The two names Bundler accepts for a project's gem manifest.
+  GEMFILE_NAMES = %w[Gemfile gems.rb].freeze
+
+  # Resolving a tool can cost a Bundler launch, and every handler in one Stop
+  # asks the same question of the same directory, so answers live on the module
+  # instead of the instance. A Stop is a single Ruby process, which makes that
+  # process the cache's lifetime.
+  def self.tool_command_cache
+    @tool_command_cache ||= {}
+  end
+
+  def self.reset_tool_command_cache!
+    @tool_command_cache = {}
+  end
+
   # Check if a file should be skipped by pattern match or git-ignore.
   def should_skip_file?(absolute_path)
     return false unless absolute_path
@@ -67,14 +86,19 @@ module FileHandlerSupport # rubocop:disable Metrics/ModuleLength
     @command_cache[command] = status.success? && !path.strip.empty?
   end
 
-  # Executable to run for a tool: the project's own copy when it has one, else
-  # the bare name if it is on PATH, else nil. A project copy is the version the
-  # project pins, so it wins over a global install regardless of which is newer.
+  # Argv to run a tool with, or nil when no copy is reachable. In order: the
+  # project's own copy, then `bundle exec` for a tool the project's bundle
+  # supplies, then the bare name on PATH. A version the project pins wins over
+  # a global install regardless of which is newer.
+  #
+  # The first element may be an environment Hash, which Open3 accepts ahead of
+  # the argv, so callers splat the whole thing into capture2e_with_timeout.
   def tool_command(tool)
-    @tool_commands ||= {}
-    return @tool_commands[tool] if @tool_commands.key?(tool)
+    cache = FileHandlerSupport.tool_command_cache
+    key = [cwd, tool]
+    return cache[key] if cache.key?(key)
 
-    @tool_commands[tool] = project_tool_path(tool) || (command_available?(tool) ? tool : nil)
+    cache[key] = resolve_tool_command(tool)
   end
 
   # Absolute path to the project's own copy of a tool, or nil. Missing and
@@ -172,6 +196,55 @@ module FileHandlerSupport # rubocop:disable Metrics/ModuleLength
 
   private
 
+  def resolve_tool_command(tool)
+    local = project_tool_path(tool)
+    return [local] if local
+
+    bundled_tool_command(tool) || (command_available?(tool) ? [tool] : nil)
+  end
+
+  # `bundle exec <tool>` when the project's bundle can actually run the tool,
+  # else nil. Finding a gemfile is a cheap gate on the launch below.
+  def bundled_tool_command(tool)
+    return nil unless BUNDLER_MANAGED_TOOLS.include?(tool)
+
+    gemfile = project_gemfile
+    return nil unless gemfile
+    return nil unless command_available?('bundle')
+
+    bundle_runs?(tool, gemfile) ? [bundle_exec_env(gemfile), 'bundle', 'exec', tool] : nil
+  end
+
+  def project_gemfile
+    return nil unless cwd
+
+    GEMFILE_NAMES.map { |name| File.join(cwd, name) }.find { |path| File.file?(path) }
+  end
+
+  # Launching the tool is the only reliable test. Gemfile.lock cannot say
+  # whether the bundle is installed, whether the group holding the tool is
+  # excluded, or whether all the bundle really has is a name-similar gem such
+  # as rubocop-ast. Frozen mode keeps the launch from rewriting Gemfile.lock
+  # when the Gemfile has drifted, and a drifted bundle exits nonzero, which is
+  # the right answer anyway.
+  def bundle_runs?(tool, gemfile)
+    env = bundle_exec_env(gemfile).merge('BUNDLE_FROZEN' => 'true')
+    output, status = capture2e_with_timeout(env, 'bundle', 'exec', tool, '--version', chdir: cwd)
+    return true if status.success?
+
+    log("bundle cannot run #{tool}, using PATH instead: #{output.strip.lines.last.to_s.strip}", level: :info)
+    false
+  rescue StandardError => e
+    log("bundle exec #{tool} --version failed: #{e.class}: #{e.message}", level: :warn)
+    false
+  end
+
+  # Pinning the gemfile makes the probe and the real run resolve one bundle
+  # even when this process inherited a BUNDLE_GEMFILE from somewhere else.
+  def bundle_exec_env(gemfile)
+    { 'BUNDLE_GEMFILE' => gemfile }
+  end
+
   def search_project_bin_dirs(tool)
     return nil unless cwd
 
@@ -200,8 +273,10 @@ module FileHandlerSupport # rubocop:disable Metrics/ModuleLength
 
   # Formatter registry entry for a tool, or nil when the tool cannot be run.
   def formatter_entry(name, tool, args)
-    command = tool_command(tool)
-    command ? { name: name, command: command, args: args } : nil
+    launcher = tool_command(tool)
+    return nil unless launcher
+
+    { name: name, argv: launcher + args }
   end
 
   # Picks from ordered [name, tool, args] candidates. A candidate the project

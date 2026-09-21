@@ -52,7 +52,7 @@ class AutoFormatHandler < ClaudeHooks::Stop
   end
 
   # detect_formatter is deterministic per extension, so files sharing a
-  # formatter produce an identical {command, args} hash and collapse into one
+  # formatter produce an identical {name, argv} hash and collapse into one
   # group. Files with no available formatter (nil) are dropped.
   def group_by_formatter(files)
     files.group_by { |f| detect_formatter(f) }.reject { |formatter, _| formatter.nil? }
@@ -70,7 +70,7 @@ class AutoFormatHandler < ClaudeHooks::Stop
   def format_batch(formatter, paths, deadline)
     before = paths.to_h { |path| [path, read_file(path)] }
     timeout = remaining_timeout(deadline)
-    command_parts = [formatter[:command]] + formatter[:args] + paths
+    command_parts = formatter[:argv] + paths
     log "Running #{formatter[:name]} on #{paths.length} file#{'s' if paths.length > 1} (timeout #{timeout}s)"
 
     # Array form avoids shell interpolation. chdir: cwd finds project configs.

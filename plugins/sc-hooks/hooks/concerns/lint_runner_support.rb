@@ -11,7 +11,7 @@ require 'set' # rubocop:disable Lint/RedundantRequireStatement
 # Expects the includer to provide:
 #   - cwd                     (from ClaudeHooks::Base)
 #   - log                     (from ClaudeHooks::Base)
-#   - tool_command            (from FileHandlerSupport)
+#   - tool_command            (from FileHandlerSupport - returns an argv array)
 #   - relative_file_path      (from FileHandlerSupport)
 #   - capture2e_with_timeout  (from FileHandlerSupport)
 module LintRunnerSupport # rubocop:disable Metrics/ModuleLength
@@ -23,7 +23,7 @@ module LintRunnerSupport # rubocop:disable Metrics/ModuleLength
     eslint = tool_command('eslint')
     return [] unless eslint
 
-    stdout_err, status = capture2e_with_timeout(eslint, '--no-fix', '--format', 'compact', *files,
+    stdout_err, status = capture2e_with_timeout(*eslint, '--no-fix', '--format', 'compact', *files,
                                                 chdir: cwd)
     return [] if status.success?
 
@@ -38,7 +38,7 @@ module LintRunnerSupport # rubocop:disable Metrics/ModuleLength
     rubocop = tool_command('rubocop')
     return [] unless rubocop
 
-    stdout_err, status = capture2e_with_timeout(rubocop, '--format', 'simple', *files,
+    stdout_err, status = capture2e_with_timeout(*rubocop, '--format', 'simple', *files,
                                                 chdir: cwd)
     return [] if status.success?
 
@@ -53,7 +53,7 @@ module LintRunnerSupport # rubocop:disable Metrics/ModuleLength
     ruff = tool_command('ruff')
     return [] unless ruff
 
-    stdout_err, status = capture2e_with_timeout(ruff, 'check', *files,
+    stdout_err, status = capture2e_with_timeout(*ruff, 'check', *files,
                                                 chdir: cwd)
     return [] if status.success?
 
@@ -68,7 +68,7 @@ module LintRunnerSupport # rubocop:disable Metrics/ModuleLength
     biome = tool_command('biome')
     return [] unless biome
 
-    stdout_err, status = capture2e_with_timeout(biome, 'lint', *files,
+    stdout_err, status = capture2e_with_timeout(*biome, 'lint', *files,
                                                 chdir: cwd)
     return [] if status.success?
 
@@ -87,7 +87,7 @@ module LintRunnerSupport # rubocop:disable Metrics/ModuleLength
     tsc = tool_command('tsc')
     return [] unless tsc
 
-    stdout_err, status = capture2e_with_timeout(tsc, '--noEmit', chdir: cwd)
+    stdout_err, status = capture2e_with_timeout(*tsc, '--noEmit', chdir: cwd)
     return [] if status.success?
 
     filter_tsc_errors(stdout_err, modified_files)
@@ -101,7 +101,7 @@ module LintRunnerSupport # rubocop:disable Metrics/ModuleLength
     cargo = tool_command('cargo')
     return [] unless cargo
 
-    stdout_err, status = capture2e_with_timeout(cargo, 'check', '--message-format', 'short', chdir: cwd)
+    stdout_err, status = capture2e_with_timeout(*cargo, 'check', '--message-format', 'short', chdir: cwd)
     status.success? ? [] : ["cargo check errors:\n#{stdout_err.strip}"]
   rescue StandardError => e
     runner_failure('cargo check', e)
@@ -113,7 +113,7 @@ module LintRunnerSupport # rubocop:disable Metrics/ModuleLength
     go = tool_command('go')
     return [] unless go
 
-    stdout_err, status = capture2e_with_timeout(go, 'vet', './...', chdir: cwd)
+    stdout_err, status = capture2e_with_timeout(*go, 'vet', './...', chdir: cwd)
     return [] if status.success?
 
     ["go vet errors:\n#{stdout_err.strip}"]

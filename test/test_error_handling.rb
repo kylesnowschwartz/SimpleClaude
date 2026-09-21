@@ -39,7 +39,7 @@ class LintRunnerHarness
   end
 
   def tool_command(tool)
-    tool
+    [tool]
   end
 
   def capture2e_with_timeout(*)
