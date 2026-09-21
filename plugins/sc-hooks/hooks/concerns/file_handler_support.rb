@@ -101,9 +101,10 @@ module FileHandlerSupport # rubocop:disable Metrics/ModuleLength
   def detect_formatter(file_path)
     case File.extname(file_path).downcase
     when '.rb'
+      command, *args = rubocop_command
       # -a applies safe corrections only; -A includes unsafe ones that can
       # change runtime semantics, which an unattended hook must not do.
-      command_available?('rubocop') ? { name: 'RuboCop', command: 'rubocop', args: ['-a'] } : nil
+      command ? { name: 'RuboCop', command: command, args: args + ['-a'] } : nil
     when '.md'
       if command_available?('markdownlint')
         # --disable is variadic; the trailing -- stops it from swallowing the file path
@@ -149,6 +150,35 @@ module FileHandlerSupport # rubocop:disable Metrics/ModuleLength
   end
 
   private
+
+  # Run bare, rubocop is whichever version is newest in the global gem set, not
+  # the one the project's Gemfile.lock pins, and its plugins (from .rubocop.yml
+  # or a config it inherits) are activated against that already-loaded core. A
+  # plugin whose constraint the global core fails aborts RubyGems activation:
+  #   Unable to activate rubocop-rspec-3.10.2, because rubocop-1.86.0 conflicts
+  #   with rubocop (~> 1.86, >= 1.86.2)
+  # Prefer the bundle only when it has rubocop AND is installed: `bundle exec`
+  # against a missing bundle exits non-zero with "Run `bundle install`", which
+  # the lint handler would report as a lint error. Memoized: the formatter
+  # registry consults this once per modified file.
+  def rubocop_command
+    return @rubocop_command if defined?(@rubocop_command)
+
+    @rubocop_command = if bundled_rubocop?
+                         %w[bundle exec rubocop]
+                       elsif command_available?('rubocop')
+                         ['rubocop']
+                       end
+  end
+
+  def bundled_rubocop?
+    lockfile = File.join(cwd, 'Gemfile.lock')
+    return false unless File.exist?(lockfile) && command_available?('bundle')
+    return false unless File.foreach(lockfile).any? { |line| line.match?(/^ {4}rubocop \(/) }
+
+    _out, status = capture2e_with_timeout('bundle', 'check', chdir: cwd)
+    status.success?
+  end
 
   def terminate_process_group(wait_thr)
     Process.kill('TERM', -wait_thr.pid)

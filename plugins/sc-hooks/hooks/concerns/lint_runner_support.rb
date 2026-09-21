@@ -12,6 +12,7 @@ require 'set' # rubocop:disable Lint/RedundantRequireStatement
 #   - cwd                     (from ClaudeHooks::Base)
 #   - log                     (from ClaudeHooks::Base)
 #   - command_available?      (from FileHandlerSupport)
+#   - rubocop_command         (from FileHandlerSupport)
 #   - relative_file_path      (from FileHandlerSupport)
 #   - capture2e_with_timeout  (from FileHandlerSupport)
 module LintRunnerSupport # rubocop:disable Metrics/ModuleLength
@@ -32,9 +33,11 @@ module LintRunnerSupport # rubocop:disable Metrics/ModuleLength
 
   def run_rubocop(files)
     return [] unless rubocop_configured?
-    return [] unless command_available?('rubocop')
 
-    stdout_err, status = capture2e_with_timeout('rubocop', '--format', 'simple', *files,
+    rubocop = rubocop_command
+    return [] unless rubocop
+
+    stdout_err, status = capture2e_with_timeout(*rubocop, '--format', 'simple', *files,
                                                 chdir: cwd)
     return [] if status.success?
 

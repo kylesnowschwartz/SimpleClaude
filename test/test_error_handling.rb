@@ -42,6 +42,10 @@ class LintRunnerHarness
     true
   end
 
+  def rubocop_command
+    ['rubocop']
+  end
+
   def capture2e_with_timeout(*)
     raise Errno::ENOENT, 'missing executable'
   end
