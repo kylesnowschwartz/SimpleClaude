@@ -30,6 +30,7 @@ Rules for the block:
 - **Never emit an empty label.** No `Unresolved: none`, no placeholder. A bullet with nothing useful to say is omitted, and a reply with nothing outstanding may be the verdict alone however long its body.
 - **`Next:` and `You:` do different jobs.** `Next:` is the next action, whoever takes it, including work you are about to do yourself. `You:` is what only the reader can supply. Drop `Next:` when it would only repeat `You:`.
 - **`Above:` points at detail in the body.** Name only detail the body actually contains. Never restate a finding in it, and never promise evidence the body does not hold.
+- **Link every resource the block points to.** When `Next:`, `You:`, or `Above:` asks the reader to open, view, or visit something, name it in the block in a clickable form: an absolute file path (`/private/tmp/.../chart.png`, not `chart.png` or "the PNG"), a full URL, or a PR or issue URL rather than a bare number. This holds when the resource appeared earlier in the conversation or sits in a temporary directory. The reader sees only the block, so a reference they must scroll back for is a missing reference.
 - Nothing follows the block: no question, no closer, no further section.
 
 ## Every Reply
