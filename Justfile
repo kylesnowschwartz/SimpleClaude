@@ -60,7 +60,7 @@ bump type:
 
     echo "'Just bump' done. Changes staged and ready. Run 'just release' to commit, tag, and push."
 
-# Commit, tag, and push the release
+# Commit, tag, and push the release, then republish sc-mods-dist
 release:
     #!/usr/bin/env zsh
     set -e
@@ -94,6 +94,27 @@ release:
     git push && git push --tags
 
     echo "Released v$v"
+
+    # sc-mods installs come from the sc-mods-dist branch, which only a
+    # publish moves to the new version. The tag stays either way.
+    if ! ./scripts/fetch-merman.sh; then
+        echo "Error: v$v is released, but the merman binaries could not be fetched, so sc-mods-dist was not republished."
+        echo "Retry with: just fetch-merman && just publish-mods"
+        exit 1
+    fi
+    if ! "{{just_executable()}}" publish-mods; then
+        echo "Error: v$v is released, but sc-mods-dist was not republished."
+        echo "Retry with: just publish-mods"
+        exit 1
+    fi
+
+# Download the pinned merman-cli binaries sc-mods runs (does nothing when present)
+fetch-merman:
+    ./scripts/fetch-merman.sh
+
+# Compare the pinned merman version with merman's latest release (changes nothing)
+check-merman:
+    ./scripts/fetch-merman.sh --check
 
 # Publish sc-mods with its merman binaries to the sc-mods-dist branch
 publish-mods:

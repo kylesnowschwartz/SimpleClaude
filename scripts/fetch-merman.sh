@@ -6,6 +6,10 @@
 # Each archive is checked against the checksum published with the release
 # before anything is extracted, and nothing from an archive is run. A second
 # run with the same pinned version does nothing.
+#
+# With --check it changes nothing: it compares the pinned version with
+# merman's latest release, exits 0 when they match and 1 when a newer
+# release exists.
 set -euo pipefail
 
 MERMAN_VERSION=0.8.0
@@ -28,6 +32,46 @@ fail() {
     echo "fetch-merman: $1" >&2
     exit 1
 }
+
+latest_release_tag() {
+    if command -v gh >/dev/null; then
+        gh release view --repo Latias94/merman --json tagName --jq .tagName
+    else
+        curl -fsSL https://api.github.com/repos/Latias94/merman/releases/latest |
+            sed -n 's/^ *"tag_name": *"\([^"]*\)".*/\1/p'
+    fi
+}
+
+check_for_update() {
+    local latest
+    latest=$(latest_release_tag) || fail "could not read merman's latest release"
+    latest=${latest#v}
+    [[ -n $latest ]] || fail "could not read merman's latest release"
+    echo "pinned: $MERMAN_VERSION"
+    echo "latest: $latest"
+    if [[ $latest == "$MERMAN_VERSION" ]]; then
+        echo "merman-cli is current"
+        exit 0
+    fi
+    cat <<STEPS
+merman $latest is out. To upgrade:
+  1. Set MERMAN_VERSION=$latest in scripts/fetch-merman.sh
+  2. just fetch-merman
+  3. just test-mods
+  4. claude --plugin-dir plugins/sc-mods, and check a few diagrams live
+  5. Commit, then release; the release republishes sc-mods-dist
+STEPS
+    exit 1
+}
+
+case ${1:-} in
+    "") ;;
+    --check) check_for_update ;;
+    *)
+        echo "usage: fetch-merman.sh [--check]" >&2
+        exit 2
+        ;;
+esac
 
 is_current() {
     [[ -f $version_stamp && $(cat "$version_stamp") == "$MERMAN_VERSION" ]] || return 1

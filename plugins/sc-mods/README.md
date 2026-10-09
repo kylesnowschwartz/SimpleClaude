@@ -52,10 +52,10 @@ If merman-cli cannot run, every diagram stays as source and Claude Code shows on
 The binaries are not in the main branch. Fetch them into `bin/` first:
 
 ```bash
-scripts/fetch-merman.sh
+just fetch-merman
 ```
 
-The script downloads the pinned merman release, checks each archive against its published checksum, and puts one binary per platform beside the `bin/merman-cli` launcher, with merman's licenses in `bin/merman-licenses/`. Running it again does nothing.
+This runs `scripts/fetch-merman.sh`, which downloads the pinned merman release, checks each archive against its published checksum, and puts one binary per platform beside the `bin/merman-cli` launcher, with merman's licenses in `bin/merman-licenses/`. Running it again does nothing. `just check-merman` reports whether a newer merman release is out.
 
 Then load the plugin from the checkout, either for one session:
 
@@ -78,7 +78,7 @@ Check and test the mod:
 just test-mods
 ```
 
-Publish a release to the `sc-mods-dist` branch with `just publish-mods`, which stops unless all four binaries are present.
+Every `just release` republishes the `sc-mods-dist` branch. To publish it on its own, run `just publish-mods`, which stops unless all four binaries are present.
 
 ## Limitations
 
