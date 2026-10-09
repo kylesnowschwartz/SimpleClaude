@@ -1,0 +1,31 @@
+#!/bin/sh
+# Runs the merman-cli binary built for this machine. The plugin ships one
+# binary per platform beside this script, and the mod runs this path, so the
+# choice happens here rather than at install time.
+set -eu
+
+case $(uname -s) in
+    Darwin) operating_system=darwin ;;
+    Linux) operating_system=linux ;;
+    *)
+        echo "merman-cli: no binary for $(uname -s) $(uname -m)" >&2
+        exit 127
+        ;;
+esac
+
+case $(uname -m) in
+    arm64 | aarch64) architecture=arm64 ;;
+    x86_64 | amd64) architecture=amd64 ;;
+    *)
+        echo "merman-cli: no binary for $(uname -s) $(uname -m)" >&2
+        exit 127
+        ;;
+esac
+
+binary="$(dirname "$0")/merman-cli_${operating_system}_${architecture}"
+if [ ! -x "$binary" ]; then
+    echo "merman-cli: no binary at $binary; run scripts/fetch-merman.sh in a SimpleClaude checkout, or reinstall the sc-mods plugin" >&2
+    exit 127
+fi
+
+exec "$binary" "$@"

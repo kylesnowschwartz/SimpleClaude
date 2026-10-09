@@ -1,0 +1,18 @@
+{
+  "name": "sc-mods",
+  "version": "7.7.0",
+  "description": "Claude Code mods: draws mermaid diagrams in replies as Unicode text in the terminal",
+  "author": {
+    "name": "Kyle Snow Schwartz"
+  },
+  "homepage": "https://github.com/kylesnowschwartz/SimpleClaude",
+  "repository": "https://github.com/kylesnowschwartz/SimpleClaude",
+  "license": "MIT",
+  "userConfig": {
+    "MERMAN_PATH": {
+      "type": "string",
+      "title": "merman-cli path",
+      "description": "Absolute path to a merman-cli to run instead of the one bundled with the plugin. Leave it unset to use the bundled one."
+    }
+  }
+}

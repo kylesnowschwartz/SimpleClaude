@@ -140,6 +140,50 @@
         "agents",
         "claude-code"
       ]
+    },
+    {
+      "name": "sc-mods",
+      "description": "Claude Code mods: draws mermaid diagrams in replies as Unicode text in the terminal",
+      "version": "7.7.0",
+      "author": {
+        "name": "Kyle Snow Schwartz"
+      },
+      "source": {
+        "source": "github",
+        "repo": "kylesnowschwartz/SimpleClaude",
+        "ref": "sc-mods-dist"
+      },
+      "homepage": "https://github.com/kylesnowschwartz/SimpleClaude",
+      "repository": "https://github.com/kylesnowschwartz/SimpleClaude",
+      "license": "MIT",
+      "category": "productivity",
+      "keywords": [
+        "mods",
+        "mermaid",
+        "diagrams",
+        "terminal",
+        "claude-code"
+      ]
+    },
+    {
+      "name": "sc-mods-dev",
+      "description": "sc-mods read from a local SimpleClaude checkout, for development. Run scripts/fetch-merman.sh first.",
+      "version": "7.7.0",
+      "author": {
+        "name": "Kyle Snow Schwartz"
+      },
+      "source": "./plugins/sc-mods",
+      "homepage": "https://github.com/kylesnowschwartz/SimpleClaude",
+      "repository": "https://github.com/kylesnowschwartz/SimpleClaude",
+      "license": "MIT",
+      "category": "productivity",
+      "keywords": [
+        "mods",
+        "mermaid",
+        "diagrams",
+        "terminal",
+        "claude-code"
+      ]
     }
   ]
 }

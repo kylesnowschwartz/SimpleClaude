@@ -4,7 +4,7 @@ This file provides guidance to [Claude Code](https://github.com/anthropics/claud
 
 ## Critical Rules
 
-- **important** `plugins/` contains all SimpleClaude plugins (sc-core, sc-hooks, sc-output-styles, sc-extras, sc-skills, sc-refactor)
+- **important** `plugins/` contains all SimpleClaude plugins (sc-core, sc-hooks, sc-output-styles, sc-extras, sc-skills, sc-refactor, sc-mods)
 - Command changes: update commands consistently across all 4+1 core-commands (sc-plan, sc-work, sc-explore, sc-review, sc-workflow)
 - Plugin structure: Each plugin in `plugins/` has `.claude-plugin/plugin.json`, plus optional `commands/`, `agents/`, `hooks/`, `output-styles/` directories
 - Description metadata: Use RFC 2119 obligation language (uppercase SHOULD/MUST) in `description` fields of SKILL.md and agent frontmatter to signal activation intent to AI agents
@@ -42,6 +42,9 @@ SimpleClaude consists of these plugins:
 - **sc-extras**: Utility commands for root cause analysis, claim verification, adversarial analysis, and context wizards
 - **sc-skills**: Skills for mermaid diagrams, codebase pattern detection, hypothesis testing, Socratic thinking, file querying, frontend design, image generation, and command generation
 - **sc-refactor**: PR review with ticket integration, codebase health checks, and specialized analysis agents for refactoring workflows
+- **sc-mods**: Claude Code mods, written as a TypeScript hooks module (`hooks/hooks.json` lists `{"modules": [...]}`). Draws mermaid fences in replies as Unicode text by running the bundled merman-cli
+
+**sc-mods binaries**: `plugins/sc-mods/bin/merman-cli` is a committed launcher that picks `merman-cli_<os>_<arch>` beside it. Those binaries are gitignored on `main`: `scripts/fetch-merman.sh` downloads the pinned merman release into `bin/`, and `just publish-mods` (`scripts/publish-mods-dist.sh`) writes the plugin tree with all four binaries to the root of the `sc-mods-dist` branch as one rewritten commit. The marketplace's `sc-mods` entry installs from that branch; `sc-mods-dev` reads `./plugins/sc-mods` from the checkout. `just bump` updates both entries. Test with `just test-mods`.
 
 **Lightweight agent architecture**: Commands spawn focused agents via `Task()` calls for token-efficient execution
 - **Specialized agents**: sc-code-architect, sc-code-explorer, sc-code-reviewer, sc-research-github, sc-research-repo, sc-research-web
