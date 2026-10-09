@@ -70,6 +70,14 @@ test('a flowchart fence becomes a text block of the drawing', async ($, on) => {
   expect(renders[0]?.argv[renders[0].argv.indexOf('--ascii-max-width') + 1]).toBe('100')
 })
 
+test('the first flowchart layout is the auto profile', async ($, on) => {
+  const renders = stubMerman(on, () => ok(DRAWING))
+  captureText(on)
+  await $.ui.render(render(fenced('flowchart TD\n  X-->Y'), 110))
+  const argv = renders[0]?.argv ?? []
+  expect(argv[argv.indexOf('--ascii-layout-profile') + 1]).toBe('auto')
+})
+
 test('a parse error keeps the fence as source', async ($, on) => {
   const renders = stubMerman(on, () => failed('Diagram parse error (flowchart-v2): unexpected end of input'))
   const seen = captureText(on)

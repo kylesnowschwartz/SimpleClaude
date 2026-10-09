@@ -5,6 +5,7 @@ export type Runner = (args: string[], stdin: string) => Promise<RunResult>
 
 const RENDER = ['render', '-q', '-f', 'unicode', '--ascii-trim-trailing-spaces']
 const COMPACT = ['--ascii-layout-profile', 'compact']
+const AUTO = ['--ascii-layout-profile', 'auto']
 const MIRROR_ACTORS = ['--sequence-mirror-actors']
 const OVERFLOW = /exceeds requested width/
 const HORIZONTAL_HEADER = /^(\s*(?:flowchart|graph)\s+)(LR|RL)\b/m
@@ -16,7 +17,11 @@ const diagramType = (source: string) => source.trim().split(/\s/)[0] ?? ''
 const wrapLabels = (columns: number) => [...COMPACT, '--ascii-flowchart-node-label-wrap-width', String(columns)]
 
 function flowchartAttempts(source: string): Attempt[] {
-  const layouts = [COMPACT, wrapLabels(12), wrapLabels(6)]
+  // The auto profile draws the canonical layout and switches to compact only
+  // when canonical is too wide, because compact merges the borders of
+  // side-by-side subgraphs. The label-wrap steps run only once a diagram is
+  // already too wide, so they stay compact.
+  const layouts = [AUTO, wrapLabels(12), wrapLabels(6)]
   const sources = [source]
   if (HORIZONTAL_HEADER.test(source)) sources.push(source.replace(HORIZONTAL_HEADER, '$1TD'))
   return sources.flatMap(s => layouts.map(flags => ({ source: s, flags })))
