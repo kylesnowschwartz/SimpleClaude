@@ -49,11 +49,18 @@ commit_email=$(git -C "$repository_dir" config user.email || true)
 work_dir=$(mktemp -d)
 trap 'rm -rf -- "$work_dir"' EXIT
 
-# The plugin tree as it stands on disk, binaries included, less the files the
-# repository ignores for its own reasons: the engine's laid types and the
-# .gitignore that keeps the binaries out of the main branch.
-(cd "$plugin_dir" && tar --exclude=./.claude-plugin/types --exclude=.gitignore -cf - .) |
-    (cd "$work_dir" && tar -xf -)
+# The plugin tree as committed at HEAD, so a stray edit or an untracked file
+# never ships, plus the binaries and licenses fetch-merman.sh put in bin/.
+# The .gitignore files only keep those binaries out of the main branch.
+[[ -z $(git -C "$repository_dir" status --porcelain -- plugins/sc-mods) ]] ||
+    fail "plugins/sc-mods has uncommitted changes; commit or stash them first"
+git -C "$repository_dir" archive --format=tar HEAD plugins/sc-mods |
+    tar -xf - -C "$work_dir" --strip-components=2
+find "$work_dir" -name .gitignore -delete
+for platform in "${platforms[@]}"; do
+    install -m 0755 "$plugin_dir/bin/merman-cli_$platform" "$work_dir/bin/merman-cli_$platform"
+done
+cp -R "$plugin_dir/bin/merman-licenses" "$work_dir/bin/"
 
 # Claude Code keeps one cache directory per version, so the manifest carries
 # the release version for an update to reach installed copies.
