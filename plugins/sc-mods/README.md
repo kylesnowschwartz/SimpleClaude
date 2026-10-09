@@ -83,6 +83,6 @@ Publish a release to the `sc-mods-dist` branch with `just publish-mods`, which s
 ## Limitations
 
 - A diagram is drawn only once the reply has finished. While the reply streams in, you see the mermaid source.
-- Some merman drawings have layout quirks: a flowchart edge that loops back runs against the boxes ([#183](https://github.com/Latias94/merman/issues/183)), a state diagram can print two transition labels run together ([#184](https://github.com/Latias94/merman/issues/184)), and a long sequence message label can run past the next lifeline ([#185](https://github.com/Latias94/merman/issues/185)).
+- Some merman drawings have layout quirks: a flowchart edge that loops back runs against the boxes ([#183](https://github.com/Latias94/merman/issues/183)), a state diagram can print two transition labels run together ([#184](https://github.com/Latias94/merman/issues/184)), a long sequence message label can run past the next lifeline ([#185](https://github.com/Latias94/merman/issues/185)), and in a narrow terminal two side-by-side subgraphs can share a border ([#186](https://github.com/Latias94/merman/issues/186)).
 - The mod is built for the terminal. The desktop app and the VS Code extension are untested.
 - merman-cli ships for macOS and Linux. On other systems the diagrams stay as source unless `MERMAN_PATH` points at a merman-cli.
