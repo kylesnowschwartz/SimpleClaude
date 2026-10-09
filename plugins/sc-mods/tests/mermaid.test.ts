@@ -105,3 +105,25 @@ test('a diagram too wide for every layout keeps the fence as source', async ($, 
   expect(seen.text).toBe(text)
   expect(renders.length).toBe(6)
 })
+
+test('a flowchart after a frontmatter block still falls back to TD', async ($, on) => {
+  const preamble = '---\ntitle: flowchart LR pipeline\n---\n'
+  const renders = stubMerman(on, (_argv, stdin) => (stdin.includes('\nflowchart TD') ? ok(DRAWING) : failed(OVERFLOW)))
+  const seen = captureText(on)
+  await $.ui.render(render(fenced(preamble + WIDE_LR), 44))
+  expect(seen.text).toBe('```text\n' + DRAWING + '\n```')
+  expect(renders.length).toBe(4)
+  expect(renders[0]?.stdin).toBe(preamble + WIDE_LR)
+  expect(renders[3]?.stdin).toBe(preamble + WIDE_LR.replace('flowchart LR', 'flowchart TD'))
+})
+
+test('a flowchart after an init directive and comments still falls back to TD', async ($, on) => {
+  const preamble = '%%{init: {"theme": "dark"}}%%\n%% the release pipeline\n\n'
+  const renders = stubMerman(on, (_argv, stdin) => (stdin.includes('flowchart TD') ? ok(DRAWING) : failed(OVERFLOW)))
+  const seen = captureText(on)
+  await $.ui.render(render(fenced(preamble + WIDE_LR), 46))
+  expect(seen.text).toBe('```text\n' + DRAWING + '\n```')
+  expect(renders.length).toBe(4)
+  expect(renders[0]?.stdin).toBe(preamble + WIDE_LR)
+  expect(renders[3]?.stdin).toBe(preamble + WIDE_LR.replace('flowchart LR', 'flowchart TD'))
+})

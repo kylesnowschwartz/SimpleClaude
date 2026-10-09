@@ -8,11 +8,27 @@ const COMPACT = ['--ascii-layout-profile', 'compact']
 const AUTO = ['--ascii-layout-profile', 'auto']
 const MIRROR_ACTORS = ['--sequence-mirror-actors']
 const OVERFLOW = /exceeds requested width/
-const HORIZONTAL_HEADER = /^(\s*(?:flowchart|graph)\s+)(LR|RL)\b/m
+// Anchored at the start of a diagram's body, where its keyword line stands.
+const HORIZONTAL_HEADER = /^([ \t]*(?:flowchart|graph)\s+)(LR|RL)\b/
+// What mermaid allows before the keyword line: one `---` frontmatter block,
+// then blank lines, `%%` comment lines and `%%{...}%%` directives.
+const PREAMBLE = /^(?:\s*---[ \t]*\n[\s\S]*?\n[ \t]*---[ \t]*(?:\n|$))?(?:[ \t]*(?:%%\{[\s\S]*?\}%%[ \t]*|%%.*)?(?:\n|$))*/
 
 type Attempt = { source: string; flags: string[] }
 
-const diagramType = (source: string) => source.trim().split(/\s/)[0] ?? ''
+/** Splits a diagram into what precedes its keyword line and the rest. */
+function splitPreamble(source: string): { preamble: string; body: string } {
+  const preamble = PREAMBLE.exec(source)?.[0] ?? ''
+  return { preamble, body: source.slice(preamble.length) }
+}
+
+const diagramType = (source: string) => splitPreamble(source).body.trimStart().split(/\s/)[0] ?? ''
+
+/** The same diagram drawn top to bottom, when its header is LR or RL. */
+function verticalVariant(source: string): string | undefined {
+  const { preamble, body } = splitPreamble(source)
+  return HORIZONTAL_HEADER.test(body) ? preamble + body.replace(HORIZONTAL_HEADER, '$1TD') : undefined
+}
 
 const wrapLabels = (columns: number) => [...COMPACT, '--ascii-flowchart-node-label-wrap-width', String(columns)]
 
@@ -22,8 +38,8 @@ function flowchartAttempts(source: string): Attempt[] {
   // side-by-side subgraphs. The label-wrap steps run only once a diagram is
   // already too wide, so they stay compact.
   const layouts = [AUTO, wrapLabels(12), wrapLabels(6)]
-  const sources = [source]
-  if (HORIZONTAL_HEADER.test(source)) sources.push(source.replace(HORIZONTAL_HEADER, '$1TD'))
+  const vertical = verticalVariant(source)
+  const sources = vertical === undefined ? [source] : [source, vertical]
   return sources.flatMap(s => layouts.map(flags => ({ source: s, flags })))
 }
 
