@@ -1,0 +1,4 @@
+# Claude Code lays the mod API types here each time it loads the mod from this folder.
+.claude-plugin/types/
+# Claude Code also writes this tsconfig, which extends those types.
+tsconfig.json

@@ -18,6 +18,7 @@ claude plugin install sc-output-styles
 claude plugin install sc-extras
 claude plugin install sc-skills
 claude plugin install sc-refactor
+claude plugin install sc-mods
 ```
 
 **What's included:**
@@ -28,6 +29,7 @@ claude plugin install sc-refactor
 - **sc-extras** _(optional)_: Utility commands for root cause analysis, claim verification, adversarial analysis, and context wizards
 - **sc-skills** _(optional)_: Mermaid diagrams, codebase pattern detection, hypothesis testing, Socratic thinking, file querying, frontend design, image generation, and command generation
 - **sc-refactor** _(optional)_: PR review with ticket integration, codebase health checks, and specialized analysis agents for refactoring workflows
+- **sc-mods** _(optional)_: Claude Code mods. Draws mermaid diagrams in replies as Unicode text in the terminal. See [`plugins/sc-mods/README.md`](plugins/sc-mods/README.md)
 
 ## Updating
 
@@ -41,6 +43,7 @@ claude plugin install sc-output-styles@simpleclaude
 claude plugin install sc-extras@simpleclaude
 claude plugin install sc-skills@simpleclaude
 claude plugin install sc-refactor@simpleclaude
+claude plugin install sc-mods@simpleclaude
 ```
 
 ## Quick Start
@@ -99,9 +102,12 @@ SimpleClaude/
 │   ├── sc-output-styles/         # Output styles plugin: personality & structured formats
 │   ├── sc-extras/                # Extras plugin: utility commands
 │   ├── sc-skills/                # Skills plugin: diagrams, patterns, design, querying
-│   └── sc-refactor/              # Refactor plugin: PR review & analysis agents
+│   ├── sc-refactor/              # Refactor plugin: PR review & analysis agents
+│   └── sc-mods/                  # Mods plugin: mermaid diagrams drawn in the terminal
 ├── scripts/
-│   └── install.rb                # Installation/update script
+│   ├── install.rb                # Installation/update script
+│   ├── fetch-merman.sh           # Downloads the merman binaries sc-mods runs
+│   └── publish-mods-dist.sh      # Publishes sc-mods to the sc-mods-dist branch
 ├── docs/                         # Documentation
 └── README.md                     # This file
 ```

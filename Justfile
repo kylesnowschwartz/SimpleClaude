@@ -45,9 +45,9 @@ bump type:
     for f in plugins/*/.claude-plugin/plugin.json; do
         plugin=$(echo "$f" | cut -d/ -f2)
 
-        # Update marketplace.json entry
+        # Update marketplace.json entry, and its local-path "-dev" twin where one exists
         jq --arg name "$plugin" --arg v "$new" \
-            '(.plugins[] | select(.name == $name)).version = $v' \
+            '(.plugins[] | select(.name == $name or .name == ($name + "-dev"))).version = $v' \
             .claude-plugin/marketplace.json | sponge .claude-plugin/marketplace.json
 
         # Update plugin's own plugin.json
@@ -60,7 +60,7 @@ bump type:
 
     echo "'Just bump' done. Changes staged and ready. Run 'just release' to commit, tag, and push."
 
-# Commit, tag, and push the release
+# Commit, tag, and push the release, then republish sc-mods-dist
 release:
     #!/usr/bin/env zsh
     set -e
@@ -95,12 +95,50 @@ release:
 
     echo "Released v$v"
 
+    # sc-mods installs come from the sc-mods-dist branch, which only a
+    # publish moves to the new version. The tag stays either way.
+    if ! ./scripts/fetch-merman.sh; then
+        echo "Error: v$v is released, but the merman binaries could not be fetched, so sc-mods-dist was not republished."
+        echo "Retry with: just fetch-merman && just publish-mods"
+        exit 1
+    fi
+    if ! "{{just_executable()}}" publish-mods; then
+        echo "Error: v$v is released, but sc-mods-dist was not republished."
+        echo "Retry with: just publish-mods"
+        exit 1
+    fi
+
+# Download the pinned merman-cli binaries sc-mods runs (does nothing when present)
+fetch-merman:
+    ./scripts/fetch-merman.sh
+
+# Compare the pinned merman version with merman's latest release (changes nothing)
+check-merman:
+    ./scripts/fetch-merman.sh --check
+
+# Publish sc-mods with its merman binaries to the sc-mods-dist branch
+publish-mods:
+    #!/usr/bin/env zsh
+    set -e
+    for platform in darwin_arm64 darwin_amd64 linux_arm64 linux_amd64; do
+        if [[ ! -x plugins/sc-mods/bin/merman-cli_$platform ]]; then
+            echo "Error: plugins/sc-mods/bin/merman-cli_$platform is missing. Run scripts/fetch-merman.sh first."
+            exit 1
+        fi
+    done
+    ./scripts/publish-mods-dist.sh
+
 # Syntax-check all hook Ruby files, then run hook unit/integration tests
 test:
     @find plugins/sc-hooks/hooks -name '*.rb' -print0 | xargs -0 -n1 ruby -c
     @ruby test/test_auto_format_batch.rb
     @ruby test/test_error_handling.rb
     @ruby test/test_tool_command.rb
+
+# Validate and test the sc-mods mods (needs the claude CLI)
+test-mods:
+    claude plugin validate plugins/sc-mods
+    claude plugin test plugins/sc-mods
 
 # Smoke test external CLI invocations (codex/gemini)
 test-cli target="all":
