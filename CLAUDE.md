@@ -119,7 +119,7 @@ This prints the pinned and latest merman versions, exits 0 when they match and 1
 
 1. Edit `MERMAN_VERSION` in `scripts/fetch-merman.sh`
 2. `just fetch-merman`
-3. `just test-mods`
+3. `just test-mods` and `just test-mods-real`
 4. Check diagrams live in `claude --plugin-dir plugins/sc-mods`
 5. Commit
 6. Release (`just bump` then `just release`), which republishes `sc-mods-dist`

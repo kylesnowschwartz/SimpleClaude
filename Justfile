@@ -145,6 +145,20 @@ test-mods:
 test-ste *files:
     ./test/test_ste_lint.py {{files}}
 
+# Draw fixture diagrams with the real merman-cli; run after changing the draw path or upgrading merman (needs `just fetch-merman` and bun)
+test-mods-real:
+    #!/usr/bin/env zsh
+    set -e
+    if ! plugins/sc-mods/bin/merman-cli --version >/dev/null 2>&1; then
+        echo "Error: merman-cli cannot run for this machine. Run 'just fetch-merman' first."
+        exit 1
+    fi
+    if ! command -v bun >/dev/null; then
+        echo "Error: bun is not installed. Install it from https://bun.sh to run these tests."
+        exit 1
+    fi
+    bun test test/sc-mods
+
 # Smoke test external CLI invocations (codex/gemini)
 test-cli target="all":
     ./test/test_adversarial_cli_smoke.sh {{target}}
