@@ -11,7 +11,7 @@ import {
   type Placement,
   type PromptView,
 } from '../hooks/prompt-jump'
-import { rowsOfTranscriptFields } from '../hooks/transcript-order'
+import { rowsOfTranscriptFields, TranscriptOrder } from '../hooks/transcript-order'
 import { drawsEngineDefaults, ok, recordToasts } from './support'
 
 const BAND = {
@@ -417,6 +417,18 @@ test('after /resume, the count is the resumed conversation’s', async ($, on) =
   await drawPrompt($, 'p7')
   await settle(session)
   expect(await bandCount($)).toBe('2/2')
+})
+
+test('a row recorded again under a new id is placed, its tool calls keeping their first place', () => {
+  const order = TranscriptOrder.of([
+    { ids: ['p1'], isPrompt: true },
+    { ids: ['r1', 'toolu_1'], isPrompt: false },
+    { ids: ['r1-again', 'toolu_1'], isPrompt: false },
+    { ids: ['r1'], isPrompt: false },
+  ])
+  expect(order.placeOf(['r1-again'])).toBe(2)
+  expect(order.placeOf(['toolu_1'])).toBe(1)
+  expect(order.placeOf(['r1'])).toBe(1)
 })
 
 test('grep output of a transcript file reads back as its rows, a subagent row and a reminder left out of the prompts', () => {

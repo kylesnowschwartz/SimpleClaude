@@ -23,15 +23,19 @@ export class TranscriptOrder {
     return order
   }
 
-  /** Places the row after every row placed so far, unless it is placed already. */
+  /**
+   * Places the row after every row placed so far, unless its own id is
+   * placed already. A row recorded again under a new id carries tool calls
+   * placed with the first record, which keep that first place.
+   */
   add(row: StoredRow) {
-    if (row.ids.some(id => this.#placeOf.has(id))) return
+    const [id] = row.ids
+    if (id === undefined || this.#placeOf.has(id)) return
 
     const place = this.#rowCount
     this.#rowCount += 1
-    for (const id of row.ids) this.#placeOf.set(id, place)
-    const [id] = row.ids
-    if (row.isPrompt && id !== undefined) this.#prompts.push({ place, id })
+    for (const each of row.ids) if (!this.#placeOf.has(each)) this.#placeOf.set(each, place)
+    if (row.isPrompt) this.#prompts.push({ place, id })
   }
 
   /** The place of the first row holding one of the ids: a group of tool calls sits at its first call's. */
