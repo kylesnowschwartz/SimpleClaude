@@ -1,27 +1,11 @@
-import type { On, ProcessRunResult, RenderElement } from 'claude-code'
+import type { On } from 'claude-code'
 import type { Engine } from 'claude-code/testing'
 import { expect, test } from 'claude-code/testing'
+import { DRAWING, MERMAN_VERSION, captureTexts, fenced, ok, render } from './support'
 
-const DRAWING = '┌───┐\n│ A │\n└───┘'
 const MAX_DRAWINGS = 200
 
-const ok = (stdout: string): ProcessRunResult => ({
-  exitCode: 0,
-  stdout,
-  stderr: '',
-  isStdoutTruncated: false,
-  isStderrTruncated: false,
-})
-
-const diagram = (index: number) => '```mermaid\nstateDiagram-v2\n  [*] --> S' + index + '\n```'
-
-const render = (text: string, requestId: string) => ({
-  surface: 'terminal' as const,
-  component: 'AssistantMessage' as const,
-  requestId,
-  viewport: { columns: 100, rows: 40 },
-  props: { text, isFirstOfReply: true },
-})
+const diagram = (index: number) => fenced('stateDiagram-v2\n  [*] --> S' + index)
 
 type DrawCounter = { draws: number }
 
@@ -29,19 +13,17 @@ type DrawCounter = { draws: number }
 function standInEngine(on: On, { failFirstDraw = false } = {}): DrawCounter {
   const counter = { draws: 0 }
   on('process.run', async (_$, e) => {
-    if (e.argv.includes('--version')) return { value: ok('merman-cli 0.8.0\n') }
+    if (e.argv.includes('--version')) return { value: MERMAN_VERSION }
     counter.draws += 1
     if (failFirstDraw && counter.draws === 1) return { deny: 'spawn failed' }
     return { value: ok(DRAWING) }
   })
-  on('ui.render', { component: 'AssistantMessage' }, async (_$, e) => {
-    return { type: 'Text', props: {}, children: [e.props.text] } as unknown as RenderElement
-  })
+  captureTexts(on)
   return counter
 }
 
 const drawEach = async ($: Engine, indexes: number[]) => {
-  for (const index of indexes) await $.ui.render(render(diagram(index), `diagram-${index}`))
+  for (const index of indexes) await $.ui.render(render(diagram(index), { requestId: `diagram-${index}` }))
 }
 
 const range = (from: number, to: number) => Array.from({ length: to - from + 1 }, (_, offset) => from + offset)

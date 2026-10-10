@@ -59,9 +59,9 @@ test('a fence opened on a list marker line continues under spaces', () => {
 test('a fence in a blockquote is found, and ends with the quote', () => {
   const quoted = '> ```mermaid\n> graph TD\n> ```'
   expect(sourcesIn(quoted)).toEqual(['graph TD'])
-  const [unclosed] = findMermaidFences('> ```mermaid\n> graph TD\nPlain text')
-  expect(unclosed?.isClosed).toBe(true)
-  expect(unclosed?.source).toBe('graph TD')
+  const [endedByQuote] = findMermaidFences('> ```mermaid\n> graph TD\nPlain text')
+  expect(endedByQuote?.isClosed).toBe(true)
+  expect(endedByQuote?.source).toBe('graph TD')
 })
 
 test('a quoted fence stays open across a blank last line, which is still arriving', () => {
