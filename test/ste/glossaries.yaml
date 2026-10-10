@@ -1,0 +1,3 @@
+glossaries:
+  - path: simpleclaude.jsonl
+    cardinality: 1
