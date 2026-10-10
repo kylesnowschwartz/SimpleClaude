@@ -101,14 +101,37 @@ function consistentShown(shown: ShownEntry[], placed: readonly PlacedEntry[]): S
 export const entriesOnScreen = (placed: readonly PlacedEntry[]): PlacedEntry[] =>
   consistentShown(shownEntries(placed), placed).map(shown => shown.placed)
 
+const isTopLineShown = ({ entry }: PlacedEntry) => entry.placement.kind === 'onScreen' && entry.placement.firstLine === 0
+
+/**
+ * Whether the view is at the transcript's end with the last prompt on
+ * screen. The view cannot scroll that prompt any higher.
+ */
+export function isLastPromptAtEnd({ placed, prompts }: PromptView): boolean {
+  const last = prompts.at(-1)
+  const onScreen = entriesOnScreen(placed)
+  const end = onScreen.at(-1)
+  const isEndInView = end !== undefined && end === placed.at(-1) && end.entry.placement.kind === 'onScreen' && end.entry.placement.isBottomShown
+  return last !== undefined && isEndInView && onScreen.some(({ entry }) => entry.requestId === last.id)
+}
+
 /**
  * The prompt the view is on: the one that owns the topmost entry on screen,
- * itself or an entry of its turn, or BEFORE_FIRST above every prompt. With
- * no entry on screen, it is the prompt last jumped to, else the newest.
- * Undefined while no prompt is known.
+ * itself or an entry of its turn, or BEFORE_FIRST above every prompt. At the
+ * transcript's end with the last prompt on screen, it is the last prompt,
+ * whose top counts as shown when its first line is anywhere in view: the
+ * view cannot bring that line higher. With no entry on screen, it is the
+ * prompt last jumped to, else the newest. Undefined while no prompt is known.
  */
-export function anchorOf({ placed, prompts, lastJumped }: PromptView): Anchor | undefined {
+export function anchorOf(view: PromptView): Anchor | undefined {
+  const { placed, prompts, lastJumped } = view
   if (prompts.length === 0) return undefined
+
+  if (isLastPromptAtEnd(view)) {
+    const last = prompts.length - 1
+    const isTopShown = entriesOnScreen(placed).some(each => each.entry.requestId === prompts[last]?.id && isTopLineShown(each))
+    return { index: last, isTopShown }
+  }
 
   const [top] = entriesOnScreen(placed)
   if (top === undefined) {
@@ -117,8 +140,7 @@ export function anchorOf({ placed, prompts, lastJumped }: PromptView): Anchor | 
   }
 
   const index = prompts.findLastIndex(prompt => prompt.place <= top.place)
-  const { entry } = top
-  const isTopShown = entry.placement.kind === 'onScreen' && entry.placement.firstLine === 0 && prompts[index]?.id === entry.requestId
+  const isTopShown = isTopLineShown(top) && prompts[index]?.id === top.entry.requestId
   return { index, isTopShown }
 }
 
@@ -133,19 +155,6 @@ export function jumpTarget(view: PromptView, step: Step): StoredPrompt | undefin
 
   const target = step === -1 && !anchor.isTopShown ? anchor.index : anchor.index + step
   return target === BEFORE_FIRST ? undefined : view.prompts[target]
-}
-
-/**
- * Whether ▶ has nowhere to go: the step lands on the last prompt, which is
- * on screen with the transcript's end in view, so the view cannot move it up.
- */
-export function isAtLastPrompt(view: PromptView, target: StoredPrompt): boolean {
-  if (target !== view.prompts.at(-1)) return false
-
-  const onScreen = entriesOnScreen(view.placed)
-  const end = onScreen.at(-1)
-  const isEndInView = end !== undefined && end === view.placed.at(-1) && end.entry.placement.kind === 'onScreen' && end.entry.placement.isBottomShown
-  return isEndInView && onScreen.some(({ entry }) => entry.requestId === target.id)
 }
 
 /** `7/8` while the view is on the seventh of eight prompts; empty with none known, or above the first. */
@@ -290,7 +299,7 @@ async function publishPosition($: EngineInterface, trail: PromptTrail) {
 async function jump($: EngineInterface, trail: PromptTrail, step: Step) {
   const view = viewOf(trail)
   const target = jumpTarget(view, step)
-  if (target === undefined || (step === 1 && isAtLastPrompt(view, target))) {
+  if (target === undefined) {
     $.ui.toast(step === -1 ? 'No earlier prompt' : 'No later prompt')
     return
   }

@@ -5,7 +5,7 @@ import {
   anchorOf,
   entriesOnScreen,
   jumpTarget,
-  isAtLastPrompt,
+  isLastPromptAtEnd,
   positionText,
   type DrawnEntry,
   type Placement,
@@ -366,7 +366,7 @@ test('after a reload at the bottom, the count is among every stored prompt, not 
   await drawReply($, 'r8', { first: 0, last: 2, of: 3 })
   await drawPrompt($, 'p7')
   await settle(session)
-  expect(await bandCount($)).toBe('7/8')
+  expect(await bandCount($)).toBe('8/8')
 })
 
 test('while the transcript is still being read, no count shows', async ($, on) => {
@@ -503,7 +503,7 @@ test('there is nothing before the first prompt or after the last', () => {
 })
 
 test('the anchor is the topmost prompt on screen, noting whether its top shows', () => {
-  expect(anchorOf(drawnView([prompt('p1'), prompt('p2', TOP), prompt('p3', TOP)]))).toEqual({ index: 1, isTopShown: true })
+  expect(anchorOf(drawnView([prompt('p1'), prompt('p2', TOP), prompt('p3', TOP), reply('r3')]))).toEqual({ index: 1, isTopShown: true })
   expect(anchorOf(drawnView([prompt('p1'), prompt('p2', shownFrom(4))], 'p1'))).toEqual({ index: 1, isTopShown: false })
 })
 
@@ -571,19 +571,32 @@ test('a row reported off screen between two shown rows leaves out the older repo
 })
 
 test('the topmost row on screen decides, a reply above a prompt included', () => {
-  expect(anchorOf(drawnView([prompt('p1'), reply('r1', shownFrom(30)), prompt('p2', TOP)]))).toEqual({ index: 0, isTopShown: false })
+  expect(anchorOf(drawnView([prompt('p1'), reply('r1', shownFrom(30)), prompt('p2', TOP), reply('r2')]))).toEqual({ index: 0, isTopShown: false })
 })
 
 // --- At the end of the transcript ---------------------------------------
 
-test('the last prompt on screen with the transcript’s end in view has nowhere further to go', () => {
-  const atBottom = drawnView([prompt('p7'), reply('r7', shownFrom(20, { reportedAt: 1 })), prompt('p8', shownFrom(0, { reportedAt: 2 })), reply('r8', shownFrom(0, { reportedAt: 3 }))])
-  const last = atBottom.prompts.at(-1)
-  expect(last !== undefined && isAtLastPrompt(atBottom, last)).toBe(true)
+const STORED_EIGHT = ['p1', 'r1', 'p2', 'r2', 'p3', 'r3', 'p4', 'r4', 'p5', 'r5', 'p6', 'r6', 'p7', 'r7', 'p8', 'r8']
 
-  const replyRunsOn = drawnView([prompt('p8', TOP), reply('r8', shownFrom(0, { isBottomShown: false }))])
-  const only = replyRunsOn.prompts.at(-1)
-  expect(only !== undefined && isAtLastPrompt(replyRunsOn, only)).toBe(false)
+test('at the transcript’s end with the last prompt on screen, the view is on the last prompt', () => {
+  const atBottom = storedView(STORED_EIGHT, [prompt('p7'), reply('r7', shownFrom(20, { reportedAt: 1 })), prompt('p8', shownFrom(0, { reportedAt: 2 })), reply('r8', shownFrom(0, { reportedAt: 3 }))])
+  expect(isLastPromptAtEnd(atBottom)).toBe(true)
+  expect(anchorOf(atBottom)).toEqual({ index: 7, isTopShown: true })
+  expect(positionText(atBottom)).toBe('8/8')
+  expect(jumpTarget(atBottom, 1)).toBeUndefined()
+  expect(idOf(jumpTarget(atBottom, -1))).toBe('p7')
+})
+
+test('at the transcript’s end with the last prompt’s first line above the view, a step back goes to that line first', () => {
+  const tallPrompt = storedView(STORED_EIGHT, [reply('r7'), prompt('p8', shownFrom(4)), reply('r8', TOP)])
+  expect(anchorOf(tallPrompt)).toEqual({ index: 7, isTopShown: false })
+  expect(idOf(jumpTarget(tallPrompt, -1))).toBe('p8')
+})
+
+test('with the last prompt’s reply running past the screen, the view is not at the end', () => {
+  const replyRunsOn = storedView(STORED_EIGHT, [reply('r7', TOP), prompt('p8', TOP), reply('r8', shownFrom(0, { isBottomShown: false }))])
+  expect(isLastPromptAtEnd(replyRunsOn)).toBe(false)
+  expect(positionText(replyRunsOn)).toBe('7/8')
 })
 
 // The kit scrolls no transcript, so a jump it tries fails with a toast, where a step with nowhere to go says so.
