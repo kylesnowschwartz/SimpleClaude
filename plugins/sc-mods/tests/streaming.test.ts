@@ -57,6 +57,14 @@ test('a quoted fence streaming in at a line break shows the placeholder', async 
   expect(seen).toEqual(['> ' + PLACEHOLDER + '\n'])
 })
 
+test('an older reply with an unclosed fence keeps its source during a later turn', async ($, on) => {
+  const seen = standInEngine(on)
+  await $.ui.render(render(STREAMING, 'older-reply'))
+  await startTurn($, 'turn-2')
+  await $.ui.render(render(STREAMING, 'older-reply'))
+  expect(seen).toEqual([STREAMING, STREAMING])
+})
+
 test('an unclosed fence shows its source once the turn completes', async ($, on) => {
   const seen = standInEngine(on)
   await startTurn($, 'turn-1')
