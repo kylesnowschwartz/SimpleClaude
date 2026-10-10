@@ -241,14 +241,15 @@ async function jump($: EngineInterface, trail: PromptTrail, step: Step) {
 }
 
 /**
- * Why the transcript did not move to the row, or undefined once it did.
- * Claude Code scrolls to a row its transcript has drawn; the window stays
- * where it is when the row's top cannot reach the window's top (a prompt
- * near the end), and that answers as moved.
+ * Why the transcript did not move to the row, or undefined once it did. The
+ * row lands at the window's bottom, just above the prompt box, with the rows
+ * after it out of view. Claude Code scrolls to a row its transcript has
+ * drawn; the window stays where it is when the row cannot reach the bottom
+ * (a prompt near the start), and that answers as moved.
  */
 async function scrollRefusal($: EngineInterface, requestId: string): Promise<string | undefined> {
   try {
-    return (await $.ui.scroll({ to: { requestId }, block: 'start' })).deny
+    return (await $.ui.scroll({ to: { requestId }, block: 'end' })).deny
   } catch (error) {
     // Where no surface scrolls the transcript, the call rejects instead of denying.
     return error instanceof Error ? error.message : String(error)
@@ -256,9 +257,10 @@ async function scrollRefusal($: EngineInterface, requestId: string): Promise<str
 }
 
 /**
- * The band's ◀ and ▶ buttons, which scroll the transcript to the previous or
- * next of the person's prompts, with the arrows' place among them between.
- * Hotkeys 1 and 2 press them while the band holds the keyboard.
+ * The band's ◀ and ▶ buttons, which scroll the transcript so the previous or
+ * next of the person's prompts sits at the bottom of the view, with the
+ * arrows' place among them between. Hotkeys 1 and 2 press them while the
+ * band holds the keyboard.
  *
  * The prompts counted are those the transcript file holds since its last
  * compaction, read when the plugin loads or at the first press, and those
