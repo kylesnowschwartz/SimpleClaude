@@ -1,5 +1,6 @@
 import { atom, read, update } from 'claude-code'
 import type { EngineInterface, Register } from 'claude-code'
+import { displayWidth } from './display-width'
 import { findMermaidFences, replaceFences, type FenceReplacement, type MermaidFence } from './fences'
 import { drawDiagram, type Runner } from './merman'
 
@@ -73,17 +74,20 @@ function drawingFor(run: Runner, source: string, width: number): Promise<string 
   return drawing.catch(() => undefined)
 }
 
-type Replacing = { run: Runner; width: number; isTurnRunning: boolean }
+/** `columns` is the reply's width; a fence in a list or quote has less. */
+type Replacing = { run: Runner; columns: number; isTurnRunning: boolean }
+
+const widthFor = (fence: MermaidFence, columns: number) => columns - displayWidth(fence.linePrefix)
 
 /**
  * What a fence shows in place of its source: its drawing once closed, a
  * placeholder while it streams in. Undefined keeps the source: merman
  * refused it, or it never closed and no turn is still writing it.
  */
-async function replacementText(fence: MermaidFence, { run, width, isTurnRunning }: Replacing): Promise<string | undefined> {
+async function replacementText(fence: MermaidFence, { run, columns, isTurnRunning }: Replacing): Promise<string | undefined> {
   if (!fence.isClosed) return isTurnRunning ? DRAWING_PLACEHOLDER : undefined
 
-  const drawing = await drawingFor(run, fence.source, width)
+  const drawing = await drawingFor(run, fence.source, widthFor(fence, columns))
   return drawing === undefined ? undefined : textBlock(drawing)
 }
 
@@ -122,13 +126,13 @@ export const register: Register = (on, options) => {
     if (check === 'timed-out' && mermanCheck === pendingCheck) mermanCheck = undefined
     if (check !== 'runnable') return next(e)
 
-    const width = e.viewport ? e.viewport.columns - GUTTER : WIDTH_WITHOUT_VIEWPORT
+    const columns = e.viewport ? e.viewport.columns - GUTTER : WIDTH_WITHOUT_VIEWPORT
     const run: Runner = (args, stdin) => $.process.run([bin, ...args], { stdin, timeoutMs: RUN_TIMEOUT_MS })
     // Reading the turns subscribes this message to them, which only a message
     // still streaming a fence needs.
     const hasUnclosedFence = fences.some(fence => !fence.isClosed)
     const isTurnRunning = hasUnclosedFence && (await read($, runningTurns)).length > 0
-    const replacements = await replacementsFor(fences, { run, width, isTurnRunning })
+    const replacements = await replacementsFor(fences, { run, columns, isTurnRunning })
     if (replacements.length === 0) return next(e)
 
     const text = replaceFences(e.props.text, replacements)
