@@ -59,6 +59,16 @@ for (const surface of SURFACES) {
     expect(toasts).toEqual([`Copied ${REPLY.length} characters`])
   })
 
+  test(`${surface}: the toast counts an emoji as one character`, async ($, on) => {
+    captureTexts(on)
+    recordCopies(on)
+    const toasts = recordToasts(on)
+    const reply = await mountReply($, surface, 'Done 🎉')
+
+    await reply.press({ key: COPY_KEY })
+    expect(toasts).toEqual(['Copied 6 characters'])
+  })
+
   test(`${surface}: a copy that does not take toasts the reason`, async ($, on) => {
     captureTexts(on)
     recordCopies(on, { isCopied: false, reason: 'no-clipboard' })

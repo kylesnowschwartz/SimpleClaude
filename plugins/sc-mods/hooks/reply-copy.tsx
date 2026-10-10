@@ -2,7 +2,8 @@ import type { EngineInterface, On, RenderSurface } from 'claude-code'
 
 async function copyReply($: EngineInterface, markdown: string, surface: RenderSurface) {
   const result = await $.ui.copy({ text: markdown, surface })
-  $.ui.toast(result.isCopied ? `Copied ${markdown.length} characters` : `Copy failed: ${result.reason}`)
+  // A string's length counts UTF-16 units, two for most emoji; its iterator yields code points, one each.
+  $.ui.toast(result.isCopied ? `Copied ${[...markdown].length} characters` : `Copy failed: ${result.reason}`)
 }
 
 /**
