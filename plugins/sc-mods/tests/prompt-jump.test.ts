@@ -1,4 +1,4 @@
-import type { On, PromptOrigin, SessionMessage } from 'claude-code'
+import type { On, PromptOrigin, RenderElement, SessionMessage } from 'claude-code'
 import type { Engine, MockClock } from 'claude-code/testing'
 import { expect, mock, test } from 'claude-code/testing'
 import {
@@ -175,10 +175,22 @@ async function bandCount($: Engine) {
 
 // --- The band -----------------------------------------------------------
 
-test('the band draws ◀ on hotkey 1 and ▶ on hotkey 2', async $ => {
+test('the band draws ◀ on hotkey 1 and ▶ on hotkey 2', async ($, on) => {
+  drawsEngineDefaults(on)
   const band = await mountBand($)
   expect((await band.find({ key: 'prompt-jump:previous' }))?.props).toMatchObject({ label: '◀', hotkey: '1' })
   expect((await band.find({ key: 'prompt-jump:next' }))?.props).toMatchObject({ label: '▶', hotkey: '2' })
+})
+
+test('the band keeps what the plugins beneath it draw, above the arrows', async ($, on) => {
+  on('ui.render', { component: 'AbovePrompt' }, async () => ({
+    type: 'Box',
+    props: { key: 'beneath' },
+    children: [],
+  }) as unknown as RenderElement)
+  const band = await mountBand($)
+  expect(await band.find({ key: 'beneath' })).toBeDefined()
+  expect(await band.find({ key: 'prompt-jump:previous' })).toBeDefined()
 })
 
 test('the band yields to a survey', async ($, on) => {
@@ -194,6 +206,7 @@ test('the band stays out of an agent transcript', async ($, on) => {
 })
 
 test('with no prompt known, ◀ says there is no earlier prompt and no count shows', async ($, on) => {
+  drawsEngineDefaults(on)
   const toasts = recordToasts(on)
   const band = await mountBand($)
   expect(await band.find(POSITION)).toBeUndefined()

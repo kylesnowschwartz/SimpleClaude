@@ -452,12 +452,17 @@ export function registerPromptJump(on: On) {
     if (e.props.hasSurvey || e.props.view.agentId !== undefined) return next(e)
 
     const position = await read($, PROMPT_POSITION)
+    // The band is shared: what the plugins beneath draw stays, above the arrows.
+    const beneath = await next(e)
     const { Box, Button, Text } = $.ui.resolve(e)
     return (
-      <Box flexDirection="row" columnGap={1}>
-        <Button key="prompt-jump:previous" hotkey="1" label="◀" onPress={() => jump($, trail, -1)} />
-        {position === '' ? null : <Text dimColor>{position}</Text>}
-        <Button key="prompt-jump:next" hotkey="2" label="▶" onPress={() => jump($, trail, 1)} />
+      <Box flexDirection="column">
+        {beneath}
+        <Box flexDirection="row" columnGap={1}>
+          <Button key="prompt-jump:previous" hotkey="1" label="◀" onPress={() => jump($, trail, -1)} />
+          {position === '' ? null : <Text dimColor>{position}</Text>}
+          <Button key="prompt-jump:next" hotkey="2" label="▶" onPress={() => jump($, trail, 1)} />
+        </Box>
       </Box>
     )
   })
