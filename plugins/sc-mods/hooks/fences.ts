@@ -19,7 +19,7 @@ export type MermaidFence = {
 /** One block's new text, put in place of the block's lines. */
 export type FenceReplacement = { fence: MermaidFence; text: string }
 
-/** `isLast` marks the line a streaming reply is still writing. */
+/** `isLast` marks the reply's final line, which can be cut off mid-line. */
 type Line = { text: string; start: number; end: number; isLast: boolean }
 
 type FenceRun = { char: string; length: number; info: string }
@@ -175,8 +175,8 @@ class FenceScanner {
 
   /** A line without the block's quote marker ends the quote, and the block inside it. */
   private readPastQuote(open: OpenFence, line: Line): void {
-    // A blank last line is a line still arriving, which says nothing yet
-    // about whether the blockquote goes on.
+    // A reply can end part way into a line, so a blank last line does not
+    // show that the blockquote has ended.
     if (line.isLast && line.text.trim() === '') return
 
     this.finish(open, true)
