@@ -45,6 +45,7 @@ const QUOTE_MARKER = '>'
 const INDENT = /^ +/
 const QUOTE = /^> ?/
 const LIST_MARKER = /^(?:[-*+]|\d{1,9}[.)]) /
+const PREFIX_PIECES = [INDENT, QUOTE, LIST_MARKER]
 const LIST_MARKER_ANYWHERE = /[-*+]|\d{1,9}[.)]/g
 
 function splitLines(text: string): Line[] {
@@ -58,13 +59,22 @@ function splitLines(text: string): Line[] {
   return lines
 }
 
+/** The indentation, quote marker or list marker that `text` starts with. */
+function nextPrefixPiece(text: string): string | undefined {
+  for (const pattern of PREFIX_PIECES) {
+    const match = pattern.exec(text)
+    if (match !== null) return match[0]
+  }
+  return undefined
+}
+
 /** Splits a line into its container prefix and what follows it. */
 function readPrefix(line: string): { prefix: string; rest: string } {
   let rest = line
-  for (;;) {
-    const piece = INDENT.exec(rest) ?? QUOTE.exec(rest) ?? LIST_MARKER.exec(rest)
-    if (piece === null) break
-    rest = rest.slice(piece[0].length)
+  let piece = nextPrefixPiece(rest)
+  while (piece !== undefined) {
+    rest = rest.slice(piece.length)
+    piece = nextPrefixPiece(rest)
   }
   return { prefix: line.slice(0, line.length - rest.length), rest }
 }
@@ -139,24 +149,38 @@ class FenceScanner {
   }
 
   private read(line: Line): void {
-    if (this.open !== undefined) return this.readInsideFence(this.open, line)
-    if (this.isInComment) return this.readInsideComment(line)
-    this.readOutside(line)
+    if (this.open !== undefined) {
+      this.readInsideFence(this.open, line)
+    } else if (this.isInComment) {
+      this.readInsideComment(line)
+    } else {
+      this.readOutside(line)
+    }
   }
 
   private readInsideFence(open: OpenFence, line: Line): void {
     const body = stripLinePrefix(line.text, open.linePrefix)
-    // A blank last line is a line still arriving, which says nothing yet
-    // about whether the blockquote goes on.
-    if (body === undefined && line.isLast && line.text.trim() === '') return
     if (body === undefined) {
-      this.finish(open, true)
-      return this.read(line)
+      this.readPastQuote(open, line)
+      return
     }
 
     open.end = line.end
-    if (closesFence(body, open)) return this.finish(open, true)
+    if (closesFence(body, open)) {
+      this.finish(open, true)
+      return
+    }
     open.bodyLines.push(body)
+  }
+
+  /** A line without the block's quote marker ends the quote, and the block inside it. */
+  private readPastQuote(open: OpenFence, line: Line): void {
+    // A blank last line is a line still arriving, which says nothing yet
+    // about whether the blockquote goes on.
+    if (line.isLast && line.text.trim() === '') return
+
+    this.finish(open, true)
+    this.read(line)
   }
 
   private readInsideComment(line: Line): void {

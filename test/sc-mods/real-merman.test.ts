@@ -2,7 +2,6 @@
 // Run with `just test-mods-real`, which checks the binary is fetched first.
 import { spawnSync } from 'node:child_process'
 import { expect, test } from 'bun:test'
-import { displayWidth } from '../../plugins/sc-mods/hooks/display-width'
 import { drawDiagram, type RunResult, type Runner } from '../../plugins/sc-mods/hooks/merman'
 
 const MERMAN_CLI = new URL('../../plugins/sc-mods/bin/merman-cli', import.meta.url).pathname
@@ -21,7 +20,9 @@ const runMerman: Runner = async (args, stdin): Promise<RunResult> => {
   return { exitCode: result.status, stdout: result.stdout, stderr: result.stderr }
 }
 
-const widestLine = (drawing: string) => Math.max(...drawing.split('\n').map(displayWidth))
+// merman draws with box-drawing characters and the diagram's ASCII labels,
+// each one terminal cell.
+const widestLine = (drawing: string) => Math.max(...drawing.split('\n').map(line => Array.from(line).length))
 
 test('a flowchart is drawn with its node labels, within the width', async () => {
   const drawing = await drawDiagram(runMerman, FLOWCHART, WIDTH)

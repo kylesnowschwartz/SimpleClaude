@@ -1,6 +1,5 @@
 import { atom, read, update } from 'claude-code'
 import type { EngineInterface, Register } from 'claude-code'
-import { displayWidth } from './display-width'
 import { findMermaidFences, replaceFences, type FenceReplacement, type MermaidFence } from './fences'
 import { drawDiagram, type Runner } from './merman'
 import { noteMessageDrawn, noteTurnEnded, noteTurnStarted, turnThatWrote } from './turns'
@@ -99,29 +98,32 @@ function drawingFor(run: Runner, source: string, width: number): Promise<string 
   return drawing.catch(() => undefined)
 }
 
-/** `columns` is the reply's width; a fence in a list or quote has less. */
-type Replacing = { run: Runner; columns: number; isTurnRunning: boolean }
+type DrawConditions = { run: Runner; replyColumns: number; isTurnRunning: boolean }
 
-const widthFor = (fence: MermaidFence, columns: number) => columns - displayWidth(fence.linePrefix)
+// A list or quote prefix is ASCII, one cell a character.
+const widthFor = (fence: MermaidFence, replyColumns: number) => replyColumns - fence.linePrefix.length
 
 /**
  * What a fence shows in place of its source: its drawing once closed, a
  * placeholder while it streams in. Undefined keeps the source: merman
  * refused it, or it never closed and no turn is still writing it.
  */
-async function replacementText(fence: MermaidFence, { run, columns, isTurnRunning }: Replacing): Promise<string | undefined> {
+async function replacementText(fence: MermaidFence, { run, replyColumns, isTurnRunning }: DrawConditions): Promise<string | undefined> {
   if (!fence.isClosed) return isTurnRunning ? DRAWING_PLACEHOLDER : undefined
 
-  const drawing = await drawingFor(run, fence.source, widthFor(fence, columns))
+  const drawing = await drawingFor(run, fence.source, widthFor(fence, replyColumns))
   return drawing === undefined ? undefined : textBlock(drawing)
 }
 
-async function replacementsFor(fences: MermaidFence[], replacing: Replacing): Promise<FenceReplacement[]> {
-  const texts = await Promise.all(fences.map(fence => replacementText(fence, replacing)))
-  return fences.flatMap((fence, index) => {
-    const text = texts[index]
-    return text === undefined ? [] : [{ fence, text }]
-  })
+type PossibleReplacement = { fence: MermaidFence; text: string | undefined }
+
+const replacesSource = (candidate: PossibleReplacement): candidate is FenceReplacement => candidate.text !== undefined
+
+async function replacementsFor(fences: MermaidFence[], conditions: DrawConditions): Promise<FenceReplacement[]> {
+  const candidates = await Promise.all(
+    fences.map(async fence => ({ fence, text: await replacementText(fence, conditions) })),
+  )
+  return candidates.filter(replacesSource)
 }
 
 /** Whether the turn running when this message was first drawn still runs. */
@@ -163,11 +165,11 @@ export const register: Register = (on, options) => {
     if (check === 'timed-out' && mermanCheck === pendingCheck) mermanCheck = undefined
     if (check !== 'runnable') return next(e)
 
-    const columns = e.viewport ? e.viewport.columns - GUTTER : WIDTH_WITHOUT_VIEWPORT
+    const replyColumns = e.viewport ? e.viewport.columns - GUTTER : WIDTH_WITHOUT_VIEWPORT
     const run: Runner = (args, stdin) => $.process.run([bin, ...args], { stdin, timeoutMs: RUN_TIMEOUT_MS })
     const hasUnclosedFence = fences.some(fence => !fence.isClosed)
     const isTurnRunning = hasUnclosedFence && (await isTurnWriting($, e.requestId))
-    const replacements = await replacementsFor(fences, { run, columns, isTurnRunning })
+    const replacements = await replacementsFor(fences, { run, replyColumns, isTurnRunning })
     if (replacements.length === 0) return next(e)
 
     const text = replaceFences(e.props.text, replacements)
