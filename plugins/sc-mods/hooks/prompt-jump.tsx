@@ -12,10 +12,12 @@ export type Step = -1 | 1
  * new prompt puts them. `storedRead` is the read of the transcript file,
  * under way or done; undefined until it starts, and again when it found no
  * file or a file behind the conversation, so the next need tries again.
+ * `endRow` is the id of the row the conversation stored last, where its end
+ * is drawn; undefined until it stores one while the plugin runs.
  */
-export type PromptTrail = { prompts: string[]; at: number | undefined; storedRead: Promise<void> | undefined }
+export type PromptTrail = { prompts: string[]; at: number | undefined; storedRead: Promise<void> | undefined; endRow: string | undefined }
 
-export const newTrail = (): PromptTrail => ({ prompts: [], at: undefined, storedRead: undefined })
+export const newTrail = (): PromptTrail => ({ prompts: [], at: undefined, storedRead: undefined, endRow: undefined })
 
 /** Whether the person sent it: typed at the terminal, or through Remote Control. */
 export const isPersonsPrompt = (origin: { kind: string }) => origin.kind === 'composer' || origin.kind === 'bridge'
@@ -229,6 +231,11 @@ async function jump($: EngineInterface, trail: PromptTrail, step: Step) {
   await readStored($, trail)
   const target = jumpTarget(trail, step)
   if (target === undefined) {
+    if (step === 1 && trail.endRow !== undefined) {
+      const refusal = await scrollRefusal($, trail.endRow)
+      if (refusal !== undefined) $.ui.toast(`Can't scroll to the end: ${refusal}`)
+      return
+    }
     $.ui.toast(step === -1 ? 'No earlier prompt' : 'No later prompt')
     return
   }
@@ -259,8 +266,9 @@ async function scrollRefusal($: EngineInterface, requestId: string): Promise<str
 /**
  * The band's ◀ and ▶ buttons, which scroll the transcript so the previous or
  * next of the person's prompts sits at the bottom of the view, with the
- * arrows' place among them between. Hotkeys 1 and 2 press them while the
- * band holds the keyboard.
+ * arrows' place among them between; on the newest prompt, ▶ scrolls to the
+ * end of the conversation. Hotkeys 1 and 2 press them while the band holds
+ * the keyboard.
  *
  * The prompts counted are those the transcript file holds since its last
  * compaction, read when the plugin loads or at the first press, and those
@@ -286,6 +294,7 @@ export function registerPromptJump(on: On) {
   })
 
   on('session.append', ($, e, next) => {
+    if (e.agentId === undefined) trail.endRow = e.uuid
     const id = promptIdOf(e)
     if (id !== undefined) {
       notePrompt(trail, id)

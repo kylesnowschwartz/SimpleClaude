@@ -187,13 +187,29 @@ test('a subagent’s prompt is not counted', async ($, on) => {
   expect(await bandCount($)).toBe('1/1')
 })
 
-test('at the newest prompt, ▶ says there is no later prompt', async ($, on) => {
-  drawsEngineDefaults(on)
+test('with no row stored since the plugin loaded, ▶ at the newest prompt says there is no later prompt', async ($, on) => {
+  const file = storedSession(on, [promptLine(1, 'p1'), promptLine(5, 'p2')].join('\n'))
   const toasts = recordToasts(on)
-  await storeAll($, 'p1', 'p2')
+  await load($, file)
   const band = await mountBand($)
   await band.press({ key: 'prompt-jump:next' })
   expect(toasts).toEqual(['No later prompt'])
+  expect((await band.find(POSITION))?.text).toBe('2/2')
+})
+
+// The kit has no transcript to scroll, so its scroll fails the way a surface without one does.
+test('at the newest prompt, ▶ scrolls to the row stored last, and the count stays', async ($, on) => {
+  drawsEngineDefaults(on)
+  const toasts = recordToasts(on)
+  await storeAll($, 'p1', 'p2')
+  await store($, 'reply-2', { door: 'delivery', origin: { kind: 'model', model: 'claude' } })
+  const band = await mountBand($)
+  await band.press({ key: 'prompt-jump:next' })
+  expect(toasts.length).toBe(1)
+  expect(toasts[0]).toMatch(/^Can't scroll to the end: \S/)
+  expect((await band.find(POSITION))?.text).toBe('2/2')
+  await band.press({ key: 'prompt-jump:previous' })
+  expect((await band.find(POSITION))?.text).toBe('1/2')
 })
 
 // The kit has no transcript to scroll, so its scroll fails the way a surface without one does.
