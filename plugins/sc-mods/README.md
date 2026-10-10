@@ -80,6 +80,14 @@ Check and test the mod:
 just test-mods
 ```
 
+These tests stand in for merman-cli, so they run without the binaries. To draw a flowchart, a sequence diagram and an invalid diagram with the real merman-cli, fetch the binaries and install [bun](https://bun.sh), then run:
+
+```bash
+just test-mods-real
+```
+
+It stops with an error if merman-cli cannot run on your machine.
+
 Every `just release` republishes the `sc-mods-dist` branch. To publish it on its own, run `just publish-mods`, which stops unless all four binaries are present.
 
 ## Limitations
