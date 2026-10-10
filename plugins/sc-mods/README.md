@@ -2,9 +2,12 @@
 
 Claude Code mods from SimpleClaude. A mod is a plugin that changes Claude Code's own interface; see the [mods documentation](https://code.claude.com/docs/en/plugins/mods/overview).
 
-sc-mods holds one mod today: it draws the mermaid diagrams in Claude's replies as Unicode text, so you can read a diagram in the terminal without copying it into a renderer.
+sc-mods does two things:
 
-## What it does
+- It draws the mermaid diagrams in Claude's replies as Unicode text, so you can read a diagram in the terminal without copying it into a renderer.
+- It puts `◀` and `▶` buttons in the band above the prompt, which scroll the conversation to your previous or next prompt.
+
+## Mermaid diagrams
 
 When a reply contains a closed mermaid code block, the mod runs [merman](https://github.com/Latias94/merman) on the diagram and shows the drawing in place of the source. Nothing else in the reply changes, and the conversation the model sees still holds the mermaid source.
 
@@ -30,6 +33,14 @@ After:
 A mermaid code block is one whose fence is three or more backticks or tildes and whose language, the first word after the fence, is `mermaid` in any case. It closes on the same fence character repeated at least as many times. A block indented inside a list item or a `>` blockquote is drawn there, with the drawing kept inside the item or quote. A mermaid block inside another code block, such as a ` ````markdown ` example, or inside an HTML comment, is left as it is.
 
 The drawing has to fit the terminal's width. For a flowchart that is too wide, the mod tries a compact layout, then wraps long node labels, then turns a left-to-right chart top-to-bottom. A sequence diagram gets a second, automatic layout. If no layout fits, or merman cannot read the diagram, the source stays as it was.
+
+## Jump between prompts
+
+The band above the prompt shows two buttons, `◀` and `▶`. Click one, or type `1` or `2` into an empty prompt box, to scroll the conversation so your previous or next prompt sits at the top of the view. A digit typed into a prompt box that already holds text is typed as usual.
+
+The step counts from the topmost of your prompts on screen. If that prompt's first line is scrolled out of view, `◀` first goes back to its top. A toast says so when there is no earlier or later prompt, and gives Claude Code's reason when it does not scroll.
+
+Jumping needs fullscreen mode, where Claude Code draws the conversation itself. The classic layout leaves the conversation to the terminal's scrollback and refuses the scroll.
 
 ## Install
 
@@ -94,5 +105,7 @@ Every `just release` republishes the `sc-mods-dist` branch. To publish it on its
 
 - A mermaid block without a closing fence shows its source.
 - Some merman drawings have layout quirks: a flowchart edge that loops back runs against the boxes ([#183](https://github.com/Latias94/merman/issues/183)), a state diagram can print two transition labels run together ([#184](https://github.com/Latias94/merman/issues/184)), a long sequence message label can run past the next lifeline ([#185](https://github.com/Latias94/merman/issues/185)), and in a narrow terminal two side-by-side subgraphs can share a border ([#186](https://github.com/Latias94/merman/issues/186)).
+- The jump buttons know a prompt once its row has been drawn in this session. After a restart or `/resume`, prompts further back than the screen has shown are not jump targets until you scroll past them.
+- The jump buttons step through the main conversation, and are hidden while an agent's transcript is on screen.
 - The mod is built for the terminal. The desktop app and the VS Code extension are untested.
 - merman-cli ships for macOS and Linux. On other systems the diagrams stay as source unless `MERMAN_PATH` points at a merman-cli.

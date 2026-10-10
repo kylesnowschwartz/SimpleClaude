@@ -1,6 +1,7 @@
 import type { EngineInterface, Register } from 'claude-code'
 import { findMermaidFences, replaceFences, type FenceReplacement, type MermaidFence } from './fences'
 import { drawDiagram, type Runner } from './merman'
+import { registerPromptJump } from './prompt-jump'
 
 // The reply's indent plus a margin column on each side.
 const GUTTER = 4
@@ -115,6 +116,8 @@ async function replacementsFor(fences: MermaidFence[], conditions: DrawCondition
 }
 
 export const register: Register = (on, options) => {
+  registerPromptJump(on)
+
   const configuredPath = typeof options.MERMAN_PATH === 'string' ? options.MERMAN_PATH.trim() : ''
 
   on('ui.render', { component: 'AssistantMessage' }, async ($, e, next) => {

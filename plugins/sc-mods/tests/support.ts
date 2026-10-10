@@ -38,3 +38,18 @@ export function captureTexts(on: On): string[] {
   })
   return texts
 }
+
+/** Stands for the notification bar. Returns each toast's text, in order. */
+export function recordToasts(on: On): string[] {
+  const toasts: string[] = []
+  on('ui.toast', async (_$, e) => {
+    toasts.push(e.text)
+    return { value: undefined }
+  })
+  return toasts
+}
+
+/** Stands for the engine's own drawing of every component, as an empty Box. */
+export function drawsEngineDefaults(on: On) {
+  on('ui.render', async () => ({ type: 'Box', props: {}, children: [] }) as unknown as RenderElement)
+}
