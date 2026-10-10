@@ -3,6 +3,7 @@ import type { EngineInterface, Register } from 'claude-code'
 import { displayWidth } from './display-width'
 import { findMermaidFences, replaceFences, type FenceReplacement, type MermaidFence } from './fences'
 import { drawDiagram, type Runner } from './merman'
+import { noteMessageDrawn, noteTurnEnded, noteTurnStarted, turnThatWrote } from './turns'
 
 // The reply's indent plus a margin column on each side.
 const GUTTER = 4
@@ -33,8 +34,9 @@ const MAX_DRAWINGS = 200
 const drawings = new Map<string, Promise<string | undefined>>()
 
 /**
- * Kept in the session's state so a reload mid-turn still knows the turn is
- * running, and so a message drawn while a turn ran is drawn again when it ends.
+ * The ids of the main-loop turns that have started and not yet completed,
+ * kept in the session's state so a drawing that read it is drawn again when
+ * a turn ends. Only a reply a running turn is writing reads it.
  */
 const runningTurns = atom({ plugin: 'sc-mods', key: 'runningTurns' } as const, [])
 
@@ -111,24 +113,36 @@ async function replacementsFor(fences: MermaidFence[], replacing: Replacing): Pr
   })
 }
 
+/** Whether the turn running when this message was first drawn still runs. */
+async function isTurnWriting($: EngineInterface, messageId: string): Promise<boolean> {
+  const turnId = turnThatWrote(messageId)
+  if (turnId === undefined) return false
+
+  const turns = await read($, runningTurns)
+  return turns.includes(turnId)
+}
+
 export const register: Register = (on, options) => {
   const configuredPath = typeof options.MERMAN_PATH === 'string' ? options.MERMAN_PATH.trim() : ''
 
   on('turn.start', async ($, e, next) => {
+    noteTurnStarted(e.turnId)
     await update($, runningTurns, turns => [...turns, e.turnId])
     return next(e)
   })
 
   // Every main-loop turn ends in turn.complete, an interrupted one with reason
-  // 'aborted'. A subagent's run raises no turn.start, so its completion finds
-  // no id to remove. A turn already running when the mod loads raised its
-  // turn.start before this hook existed: its unclosed fences show their source.
+  // 'aborted'. A subagent's run raises no turn.start, so its completion matches
+  // no turn. A turn already running when the mod loads raised its turn.start
+  // before this hook existed, so its reply counts as written by no turn.
   on('turn.complete', async ($, e, next) => {
+    noteTurnEnded(e.turnId)
     await update($, runningTurns, turns => turns.filter(turnId => turnId !== e.turnId))
     return next(e)
   })
 
   on('ui.render', { component: 'AssistantMessage' }, async ($, e, next) => {
+    noteMessageDrawn(e.requestId)
     const fences = findMermaidFences(e.props.text)
     if (fences.length === 0) return next(e)
 
@@ -140,10 +154,8 @@ export const register: Register = (on, options) => {
 
     const columns = e.viewport ? e.viewport.columns - GUTTER : WIDTH_WITHOUT_VIEWPORT
     const run: Runner = (args, stdin) => $.process.run([bin, ...args], { stdin, timeoutMs: RUN_TIMEOUT_MS })
-    // Reading the turns subscribes this message to them, which only a message
-    // still streaming a fence needs.
     const hasUnclosedFence = fences.some(fence => !fence.isClosed)
-    const isTurnRunning = hasUnclosedFence && (await read($, runningTurns)).length > 0
+    const isTurnRunning = hasUnclosedFence && (await isTurnWriting($, e.requestId))
     const replacements = await replacementsFor(fences, { run, columns, isTurnRunning })
     if (replacements.length === 0) return next(e)
 
