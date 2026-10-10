@@ -112,7 +112,9 @@ Every `just release` republishes the `sc-mods-dist` branch. To publish it on its
 
 - A mermaid block without a closing fence shows its source.
 - Some merman drawings have layout quirks: a flowchart edge that loops back runs against the boxes ([#183](https://github.com/Latias94/merman/issues/183)), a state diagram can print two transition labels run together ([#184](https://github.com/Latias94/merman/issues/184)), a long sequence message label can run past the next lifeline ([#185](https://github.com/Latias94/merman/issues/185)), and in a narrow terminal two side-by-side subgraphs can share a border ([#186](https://github.com/Latias94/merman/issues/186)).
-- The jump buttons know a prompt once its row has been drawn in this session. After a restart or `/resume`, prompts further back than the screen has shown are not jump targets until you scroll past them, and the count leaves them out of its total.
+- The jump buttons know a prompt once its row has been drawn in this session. After a restart or `/resume`, prompts further back than the screen has shown are left out of the count, and reaching them takes one extra press: the first press scrolls the oldest drawn row into view so Claude Code draws the rows above it.
+- The count and the jumps place rows by the session's newest 4096 messages; older turns in a very long session are not counted.
+- A prompt waiting in the queue while Claude works is counted once it is sent.
 - The jump buttons step through the main conversation, and are hidden while an agent's transcript is on screen.
 - The mod is built for the terminal. The desktop app and the VS Code extension are untested.
 - merman-cli ships for macOS and Linux. On other systems the diagrams stay as source unless `MERMAN_PATH` points at a merman-cli.

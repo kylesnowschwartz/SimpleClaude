@@ -40,7 +40,8 @@ for (const surface of SURFACES) {
     const engineTexts = captureTexts(on)
     const reply = await mountReply($, surface, REPLY)
 
-    expect(engineTexts).toEqual(['Here is the flow:\n\n```text\n' + DRAWING + '\n```\n\nThat is all.'])
+    // The reply can be drawn more than once; every drawing gets the diagram.
+    expect([...new Set(engineTexts)]).toEqual(['Here is the flow:\n\n```text\n' + DRAWING + '\n```\n\nThat is all.'])
     const buttons = await reply.findAll({ type: 'Button' })
     expect(buttons.map(button => button.key)).toEqual([COPY_KEY])
     expect(buttons[0]?.props).toMatchObject({ label: '⧉ copy', dimColor: true })
