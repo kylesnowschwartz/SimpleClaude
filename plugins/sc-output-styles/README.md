@@ -20,6 +20,8 @@ Curated output styles for Claude Code that modify how Claude communicates and fo
 
 - **bottom-line** - Tail-first responses for readers who skim, get interrupted, and decide sequentially. Replies close with a standalone "Net:" block (outcome, next step, pending decisions); plans chunked into phases with a done/now/left state line; every decision offered with a recommended default.
 
+- **bottom-line-ste** - The bottom-line style, written in ASD-STE100 Simplified Technical English: short sentences, one instruction per sentence, and a controlled vocabulary.
+
 ### Structured Output Styles
 
 - **structured-html** - Responses formatted as semantic HTML with proper tags, indentation, and structure.
@@ -52,6 +54,7 @@ Curated output styles for Claude Code that modify how Claude communicates and fo
 All styles are standard markdown files with frontmatter. Check the `output-styles/` directory for examples.
 
 Frontmatter fields:
+
 - `description`: Brief explanation of the style's purpose
 - `keep-coding-instructions`: Set to `true` to retain coding capabilities (recommended for all SimpleClaude styles)
 

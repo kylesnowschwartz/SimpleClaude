@@ -29,13 +29,19 @@ just test
 
 # Or via Justfile
 just test-cli    # CLI smoke tests
+
+# Lint the bottom-line-ste output style against ASD-STE100 — requires uv
+just test-ste
 ```
+
+`just test-ste` runs [stelint](https://pypi.org/project/stelint/) through `test/test_ste_lint.py`. It fails only on the rules in `GATED_RULES` (unapproved words, phrasal verbs, -ing forms, contractions, passive voice, and sentences over 20 words). It prints the count of other warnings as advisory, because those rules misfire on Markdown instruction files. `just test-ste --all` prints every warning. `test/ste/simpleclaude.jsonl` allows the technical words the style uses. To allow a new word, add it there with the value `"__REMOVE__"`.
 
 `just test` runs `ruby -c` over every hook file to catch syntax errors. The CLI smoke test verifies codex/gemini produce real reviews (not plan-confirmation prompts or empty output).
 
 ## Architecture
 
 SimpleClaude consists of these plugins:
+
 - **sc-core**: Core framework with intent-based commands and specialized agents
 - **sc-hooks**: Auto-formatting and lint checks (Stop), plus tool monitoring (PreToolUse: steers GitHub WebFetch to the `gh` CLI)
 - **sc-output-styles**: Curated output styles — personality-driven (Linus, Austen, Lovelace, Ousterhout, Starfleet, Mayo Clinic) and structured formats (HTML, JSON, Markdown, Semantic Markdown, YAML)
@@ -47,6 +53,7 @@ SimpleClaude consists of these plugins:
 **sc-mods binaries**: sc-mods runs vendored merman-cli binaries; see [Vendored merman binaries (sc-mods)](#vendored-merman-binaries-sc-mods).
 
 **Lightweight agent architecture**: Commands spawn focused agents via `Task()` calls for token-efficient execution
+
 - **Specialized agents**: sc-code-architect, sc-code-explorer, sc-code-reviewer, sc-research-github, sc-research-repo, sc-research-web
 - Token-efficient through isolated agent contexts and focused task delegation
 
@@ -224,6 +231,7 @@ rm -rf /tmp/hook-test
 ```
 
 Key flags:
+
 - **`env -u CLAUDECODE`**: Required when your terminal has `CLAUDECODE` set (e.g. running from inside a Claude session's terminal)
 - **`--setting-sources local`**: Disables all user/marketplace plugins, loads ONLY `--plugin-dir` ones
 - **`--plugin-dir`**: Loads the dev plugin from source (not the installed cache)
@@ -232,6 +240,7 @@ Key flags:
 - **`--max-turns N`**: Caps turns to prevent runaway sessions
 
 Hook event visibility in `--output-format stream-json`:
+
 - **SessionStart** hooks: visible as `hook_started`/`hook_response` events
 - **Stop/PostToolUse** hooks: NOT visible as explicit events in stream-json. Verify via log files instead (`~/.claude/logs/hooks/`)
 

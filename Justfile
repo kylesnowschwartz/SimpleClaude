@@ -140,6 +140,11 @@ test-mods:
     claude plugin validate plugins/sc-mods
     claude plugin test plugins/sc-mods
 
+# {{files}}: Markdown files to lint; defaults to the bottom-line-ste output style
+# Lint STE output styles against ASD-STE100 with stelint (needs uv) — run after editing bottom-line-ste.md
+test-ste *files:
+    ./test/test_ste_lint.py {{files}}
+
 # Smoke test external CLI invocations (codex/gemini)
 test-cli target="all":
     ./test/test_adversarial_cli_smoke.sh {{target}}
