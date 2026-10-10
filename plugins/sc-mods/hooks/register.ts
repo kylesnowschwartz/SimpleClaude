@@ -22,10 +22,13 @@ const DEV_CHECKOUT_ROOT = /\/plugins\/sc-mods\/?$/
 // outlived its timeoutMs; any other rejection is a failure to run.
 const TIMED_OUT = /still running after/
 
+// Enough for every diagram of a long session, each at a few widths.
+const MAX_DRAWINGS = 200
+
 /**
  * Each diagram's drawing, keyed by width and source; undefined keeps the
  * source. Only settled outcomes stay: a draw that rejected is dropped so a
- * later render tries it again.
+ * later render tries it again. Past MAX_DRAWINGS the oldest is dropped.
  */
 const drawings = new Map<string, Promise<string | undefined>>()
 
@@ -60,6 +63,15 @@ async function checkMerman($: EngineInterface, bin: string): Promise<MermanCheck
   return 'missing'
 }
 
+function remember(key: string, drawing: Promise<string | undefined>) {
+  drawings.set(key, drawing)
+  if (drawings.size <= MAX_DRAWINGS) return
+
+  // A Map iterates in insertion order, so its first key is the oldest.
+  const [oldestKey] = drawings.keys()
+  if (oldestKey !== undefined) drawings.delete(oldestKey)
+}
+
 function drawingFor(run: Runner, source: string, width: number): Promise<string | undefined> {
   const key = `${width}\0${source}`
   let drawing = drawings.get(key)
@@ -68,7 +80,7 @@ function drawingFor(run: Runner, source: string, width: number): Promise<string 
     attempt.catch(() => {
       if (drawings.get(key) === attempt) drawings.delete(key)
     })
-    drawings.set(key, attempt)
+    remember(key, attempt)
     drawing = attempt
   }
   return drawing.catch(() => undefined)
