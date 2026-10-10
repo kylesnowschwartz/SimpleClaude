@@ -1,3 +1,4 @@
+import { atom, read, update } from 'claude-code'
 import type { EngineInterface, On, OnScreen, PromptOrigin, UiScrollBlock } from 'claude-code'
 import {
   appendedRow,
@@ -144,7 +145,9 @@ export type PlacedEntry = { place: number; entry: DrawnEntry }
  * - `drawn`: the entries drawn so far, by site and requestId;
  * - `reportClock`: counts the reports of where entries are, to order them;
  * - `lastJumped`: the requestId of the prompt last jumped to;
- * - `positionShown`: the count the band was last asked to show;
+ * - `positionShown`: the count last written for the band, undefined before
+ *   the first write since the plugin loaded;
+ * - `isPublishDue`: whether a write of the count is on its way;
  * - `conversation`: counts the conversations the process has gone on to, so
  *   a transcript read started in an earlier one is dropped.
  */
@@ -154,7 +157,8 @@ export type PromptTrail = {
   drawn: Map<string, Drawn>
   reportClock: number
   lastJumped: string | undefined
-  positionShown: string
+  positionShown: string | undefined
+  isPublishDue: boolean
   conversation: number
 }
 
@@ -164,13 +168,15 @@ export const newTrail = (conversation = 0): PromptTrail => ({
   drawn: new Map(),
   reportClock: 0,
   lastJumped: undefined,
-  positionShown: '',
+  positionShown: undefined,
+  isPublishDue: false,
   conversation,
 })
 
 /** Forgets the conversation that ended: `/clear` and `/resume` go on in this process with other prompts. */
 function startOver(trail: PromptTrail) {
-  Object.assign(trail, newTrail(trail.conversation + 1), { positionShown: trail.positionShown })
+  const { positionShown, isPublishDue } = trail
+  Object.assign(trail, newTrail(trail.conversation + 1), { positionShown, isPublishDue })
 }
 
 /** The drawn entries whose stored rows are known, in transcript order. */
@@ -213,13 +219,32 @@ export function noteTranscript(trail: PromptTrail, rows: readonly StoredRow[]) {
 }
 
 /**
- * Redraws the band when its count changed. An entry scrolling does not
- * change the band's props, so the band would keep its old count. Asking only
- * on a change keeps the redraw this causes from asking again.
+ * The count the band shows. An entry scrolling does not change the band's
+ * props, so the band reads the count from state, and a write draws the band
+ * again without drawing the transcript's entries.
  */
-function redrawBandIfMoved($: EngineInterface, trail: PromptTrail) {
-  if (currentPosition(trail) === trail.positionShown) return
-  $.ui.invalidate('ui.render')
+const PROMPT_POSITION = atom({ plugin: 'sc-mods', key: 'promptPosition' } as const, '')
+
+// Folds the entries one redraw draws into one count.
+const PUBLISH_DELAY_MS = 16
+
+/**
+ * Writes the count once the entries being drawn are noted. A render hook
+ * cannot write state, so the write waits on the clock.
+ */
+function schedulePublish($: EngineInterface, trail: PromptTrail) {
+  if (trail.isPublishDue) return
+  trail.isPublishDue = true
+  $.clock.after(PUBLISH_DELAY_MS, () => void publishPosition($, trail))
+}
+
+async function publishPosition($: EngineInterface, trail: PromptTrail) {
+  trail.isPublishDue = false
+  const position = currentPosition(trail)
+  if (position === trail.positionShown) return
+
+  trail.positionShown = position
+  await update($, PROMPT_POSITION, () => position)
 }
 
 /**
@@ -252,7 +277,7 @@ async function jump($: EngineInterface, trail: PromptTrail, step: Step) {
     return
   }
   trail.lastJumped = target.requestId
-  redrawBandIfMoved($, trail)
+  schedulePublish($, trail)
 }
 
 /**
@@ -314,7 +339,7 @@ async function readStoredRows($: EngineInterface, trail: PromptTrail, locate: ()
     if (trail.conversation !== conversation) return
 
     noteTranscript(trail, rowsOfTranscriptRead(read))
-    redrawBandIfMoved($, trail)
+    schedulePublish($, trail)
   } catch (error) {
     // The prompts stored before the plugin loaded go uncounted.
     $.ui.log(`sc-mods: could not read the transcript: ${error instanceof Error ? error.message : String(error)}`, { to: 'debug' })
@@ -349,7 +374,7 @@ export function registerPromptJump(on: On) {
   on('session.end', ($, e, next) => {
     if (e.reason === 'clear' || e.reason === 'resume') {
       startOver(trail)
-      redrawBandIfMoved($, trail)
+      schedulePublish($, trail)
     }
     return next(e)
   })
@@ -370,36 +395,35 @@ export function registerPromptJump(on: On) {
     // A prompt drawn as one line is a queued one, drawn under a new id each redraw.
     if (isPersonsPrompt(e.props.origin) && e.props.isExpanded) {
       noteDrawn(trail, `prompt:${e.requestId}`, { requestId: e.requestId, isPrompt: true }, [e.requestId], e.props.onScreen)
-      redrawBandIfMoved($, trail)
+      schedulePublish($, trail)
     }
     return next(e)
   })
 
   on('ui.render', { component: 'AssistantMessage' }, ($, e, next) => {
     noteDrawn(trail, `reply:${e.requestId}`, { requestId: e.requestId, isPrompt: false }, [e.requestId], e.props.onScreen)
-    redrawBandIfMoved($, trail)
+    schedulePublish($, trail)
     return next(e)
   })
 
   on('ui.render', { component: 'ToolUse' }, ($, e, next) => {
     noteDrawn(trail, `tool:${e.requestId}`, { requestId: e.requestId, isPrompt: false }, [e.props.tool_use_id], e.props.onScreen)
-    redrawBandIfMoved($, trail)
+    schedulePublish($, trail)
     return next(e)
   })
 
   on('ui.render', { component: 'ToolGroup' }, ($, e, next) => {
     const toolUseIds = e.props.calls.flatMap(call => call.tool_use_id ?? [])
     noteDrawn(trail, `tools:${e.requestId}`, { requestId: e.requestId, isPrompt: false }, toolUseIds, e.props.onScreen)
-    redrawBandIfMoved($, trail)
+    schedulePublish($, trail)
     return next(e)
   })
 
-  on('ui.render', { component: 'AbovePrompt' }, ($, e, next) => {
+  on('ui.render', { component: 'AbovePrompt' }, async ($, e, next) => {
     // The prompts it knows are the main conversation's, not an agent's.
     if (e.props.hasSurvey || e.props.view.agentId !== undefined) return next(e)
 
-    const position = currentPosition(trail)
-    trail.positionShown = position
+    const position = await read($, PROMPT_POSITION)
     const { Box, Button, Text } = $.ui.resolve(e)
     return (
       <Box flexDirection="row" columnGap={1}>

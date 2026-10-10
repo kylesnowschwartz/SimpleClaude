@@ -241,6 +241,32 @@ test('the count follows a reply scrolling into view, with no change to the band'
   expect((await band.find(POSITION))?.text).toBe('1/2')
 })
 
+test('a new count draws the band again, and none of the transcript’s rows', async ($, on) => {
+  const replyDraws: string[] = []
+  on('ui.render', { component: 'AssistantMessage' }, async (_$, e, next) => {
+    replyDraws.push(e.requestId)
+    return next(e)
+  })
+  const session = storedSession(on)
+  await storeAll($, session, rows('p1', 'r1', 'p2', 'r2'))
+  await drawAll($, ['p1', 'p2'])
+  await $.ui.mount({
+    plugin: 'sc-mods',
+    surface: 'terminal',
+    component: 'AssistantMessage',
+    requestId: 'r2',
+    props: { text: 'reply r2', isFirstOfReply: true, onScreen: null },
+  })
+  await settle(session)
+  const band = await mountBand($)
+  replyDraws.length = 0
+
+  await drawReply($, 'r1', { first: 10, last: 40, of: 80 })
+  await settle(session)
+  expect((await band.find(POSITION))?.text).toBe('1/2')
+  expect(replyDraws).toEqual(['r1'])
+})
+
 // The kit has no transcript to scroll, so its scroll fails the way a surface without one does.
 test('a scroll that does not move the transcript toasts why', async ($, on) => {
   const session = storedSession(on)
