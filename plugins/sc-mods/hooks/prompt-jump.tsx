@@ -314,6 +314,7 @@ async function scrollRefusal($: EngineInterface, requestId: string): Promise<str
   }
 }
 
+const TRANSCRIPT_FIND_TIMEOUT_MS = 5000
 const TRANSCRIPT_READ_TIMEOUT_MS = 10000
 
 async function configDir($: EngineInterface): Promise<string | undefined> {
@@ -328,7 +329,7 @@ async function findTranscript($: EngineInterface): Promise<string | undefined> {
   const dir = await configDir($)
   if (dir === undefined) return undefined
 
-  const found = await $.process.run(findTranscriptCommand(dir, await $.session.id()))
+  const found = await $.process.run(findTranscriptCommand(dir, await $.session.id()), { timeoutMs: TRANSCRIPT_FIND_TIMEOUT_MS })
   return found.stdout.trim() || undefined
 }
 
