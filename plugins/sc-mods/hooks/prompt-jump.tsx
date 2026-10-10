@@ -45,10 +45,22 @@ export function notePrompt(trail: PromptTrail, id: string) {
   trail.at = undefined
 }
 
-/** Puts the prompts the transcript file held before the prompts stored since, each once. */
+/**
+ * Puts the prompts the transcript file held before the first prompt already
+ * known, each once: all of them while none is known, those up to the first
+ * known where the file holds it, and none where it does not (a prompt from
+ * before the file's last compaction, or one the file has not stored yet).
+ * The arrows keep the prompt they are on.
+ */
 export function noteStored(trail: PromptTrail, ids: readonly string[]) {
-  const held = new Set(ids)
-  trail.prompts = [...ids, ...trail.prompts.filter(id => !held.has(id))]
+  const [first] = trail.prompts
+  const olderCount = first === undefined ? ids.length : ids.indexOf(first)
+  if (olderCount <= 0) return
+
+  const older = ids.slice(0, olderCount)
+  const held = new Set(older)
+  trail.prompts = [...older, ...trail.prompts.filter(id => !held.has(id))]
+  if (trail.at !== undefined) trail.at += older.length
 }
 
 /** Forgets the conversation that ended: `/clear` and `/resume` go on in this process with other prompts. */

@@ -221,10 +221,56 @@ test('on load, the prompts the transcript file holds are counted, before the one
 
   await store($, 'p3')
   expect(await bandCount($)).toBe('3/3')
+})
+
+test('with no prompt known, every prompt the file holds is taken', () => {
+  const trail = newTrail()
+  noteStored(trail, ['p1', 'p2', 'p3'])
+  expect(trail.prompts).toEqual(['p1', 'p2', 'p3'])
+  expect(positionText(trail)).toBe('3/3')
+})
+
+test('the file’s prompts before the first one known go in front, and the arrows keep their prompt', () => {
   const trail = newTrail()
   notePrompt(trail, 'p3')
+  notePrompt(trail, 'p4')
+  trail.at = 0
+  noteStored(trail, ['p1', 'p2', 'p3', 'p4'])
+  expect(trail.prompts).toEqual(['p1', 'p2', 'p3', 'p4'])
+  expect(trail.at).toBe(2)
+  expect(positionText(trail)).toBe('3/4')
+})
+
+test('a file read after a compaction adds nothing before the prompts known since before it', () => {
+  const trail = newTrail()
+  const before = Array.from({ length: 13 }, (_, n) => `P${n + 1}`)
+  const after = Array.from({ length: 9 }, (_, n) => `P${n + 14}`)
+  for (const id of [...before, ...after]) notePrompt(trail, id)
+  noteStored(trail, after)
+  expect(trail.prompts).toEqual([...before, ...after])
+  expect(jumpTarget(trail, -1)).toBe(20)
+})
+
+test('a file that does not hold the first prompt known adds nothing', () => {
+  const trail = newTrail()
+  notePrompt(trail, 'p9')
   noteStored(trail, ['p1', 'p2'])
-  expect(trail.prompts).toEqual(['p1', 'p2', 'p3'])
+  expect(trail.prompts).toEqual(['p9'])
+})
+
+test('the repro: prompts, a compaction, more prompts, then the first press reads the file', async ($, on) => {
+  const file = storedSession(on, undefined)
+  const toasts = recordToasts(on)
+  await load($, file)
+  const before = Array.from({ length: 13 }, (_, n) => `P${n + 1}`)
+  const after = Array.from({ length: 9 }, (_, n) => `P${n + 14}`)
+  await storeAll($, ...before, ...after)
+  file.fields = [...before.map((id, n) => promptLine(n + 1, id)), boundaryLine(20), ...after.map((id, n) => promptLine(n + 21, id))].join('\n')
+  const band = await mountBand($)
+  await band.press({ key: 'prompt-jump:previous' })
+  await file.clock.advance(SETTLE_MS)
+  expect(toasts[0]).toMatch(/^Can't jump to that prompt: \S/)
+  expect((await band.find(POSITION))?.text).toBe('22/22')
 })
 
 test('a prompt stored before the read ends is counted once', async ($, on) => {
