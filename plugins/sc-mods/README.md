@@ -57,7 +57,7 @@ claude plugin install sc-mods --marketplace kylesnowschwartz/SimpleClaude
 
 This installs from the `sc-mods-dist` branch, which carries merman-cli for macOS and Linux on arm64 and x86_64. Nothing is downloaded when the mod runs.
 
-**A mod runs with your permissions.** It runs inside Claude Code and can start programs as you. This one starts only merman-cli, it makes no network calls, and it writes no files. The copy button writes to the clipboard through Claude Code, the way `/copy` does. Read [`hooks/register.ts`](hooks/register.ts) before you install it.
+**A mod runs with your permissions.** It runs inside Claude Code and can start programs as you. This one starts merman-cli to draw diagrams, and `find` and `grep` to read the session's own transcript file (`<session id>.jsonl` under `~/.claude/projects/`, or `$CLAUDE_CONFIG_DIR/projects/`). It makes no network calls and writes no files. The copy button writes to the clipboard through Claude Code, the way `/copy` does. Read [`hooks/register.ts`](hooks/register.ts) before you install it.
 
 ## Settings
 
@@ -114,6 +114,7 @@ Every `just release` republishes the `sc-mods-dist` branch. To publish it on its
 - Some merman drawings have layout quirks: a flowchart edge that loops back runs against the boxes ([#183](https://github.com/Latias94/merman/issues/183)), a state diagram can print two transition labels run together ([#184](https://github.com/Latias94/merman/issues/184)), a long sequence message label can run past the next lifeline ([#185](https://github.com/Latias94/merman/issues/185)), and in a narrow terminal two side-by-side subgraphs can share a border ([#186](https://github.com/Latias94/merman/issues/186)).
 - When the mod loads into a session that already has prompts (a restart, `/resume`, a plugin reload), it runs `find` and `grep` once over the session's transcript file to learn those prompts, and shows no count until that read ends. Without those commands on the `PATH`, the older prompts are not counted. In a transcript long enough that grep's output passes 4 MiB (tens of thousands of rows), the rows past that point are not counted.
 - A prompt waiting in the queue while Claude works is counted once it is sent.
+- After a rewind (Esc Esc, or editing an earlier prompt), the prompts the rewind went back past are still counted until the mod next reads the transcript: on a restart, a plugin reload or `/resume`.
 - The jump buttons step through the main conversation, and are hidden while an agent's transcript is on screen.
 - The mod is built for the terminal. The desktop app and the VS Code extension are untested.
 - merman-cli ships for macOS and Linux. On other systems the diagrams stay as source unless `MERMAN_PATH` points at a merman-cli.
