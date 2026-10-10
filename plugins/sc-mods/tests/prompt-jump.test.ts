@@ -306,6 +306,23 @@ test('rows stored after a reload follow the rows the transcript file kept', asyn
   expect(await bandCount($)).toBe('1/2')
 })
 
+test('a compaction stored while the plugin runs leaves the prompts before it uncounted', async ($, on) => {
+  const session = storedSession(on)
+  await load($, session)
+  await storeAll($, session, rows('p1', 'r1'))
+  await $.session.append({
+    message: { type: 'system', name: 'compact_boundary', content: [{ type: 'text', text: 'Conversation compacted' }] },
+    door: 'notice',
+    origin: { kind: 'engine' },
+    uuid: 'boundary',
+  } as Parameters<Engine['session']['append']>[0])
+  await storeAll($, session, rows('p2', 'r2'))
+  await drawPrompt($, 'p2', { onScreen: TOP_SHOWN })
+  await drawReply($, 'r2')
+  await settle(session)
+  expect(await bandCount($)).toBe('1/1')
+})
+
 test('the same reply text in two turns counts under the turn it was drawn in', async ($, on) => {
   const kept = [row('p1', 'first'), row('r1', 'Done.'), row('p2', 'second'), row('r2', 'Done.')]
   const session = storedSession(on, kept)
@@ -417,6 +434,29 @@ test('after /resume, the count is the resumed conversation’s', async ($, on) =
   await drawPrompt($, 'p7')
   await settle(session)
   expect(await bandCount($)).toBe('2/2')
+})
+
+/** What `grep -n -o` prints of a transcript line: its parent link, its id, and a person's origin for a `p…` row. */
+const linkedLine = (line: number, id: string, parent: string | null) =>
+  [`${line}:"parentUuid":${parent === null ? 'null' : `"${parent}"`}`, `${line}:"uuid":"${id}"`, ...(isPromptId(id) ? [`${line}:"origin":{"kind":"human"`] : [])].join('\n')
+
+const idsOfFields = (...lines: string[]) => rowsOfTranscriptFields(lines.join('\n')).map(({ ids }) => ids[0])
+
+test('a transcript read leaves out the rows a rewind went back past', () => {
+  const fields = [
+    linkedLine(1, 'p1', null),
+    linkedLine(2, 'r1', 'p1'),
+    linkedLine(3, 'p2', 'r1'),
+    linkedLine(4, 'r2', 'p2'),
+    linkedLine(5, 'p2-edited', 'r1'),
+    linkedLine(6, 'r2-edited', 'p2-edited'),
+  ]
+  expect(idsOfFields(...fields)).toEqual(['p1', 'r1', 'p2-edited', 'r2-edited'])
+})
+
+test('a transcript read leaves out the rows before the last compaction', () => {
+  const fields = [linkedLine(1, 'p1', null), linkedLine(2, 'r1', 'p1'), linkedLine(3, 'boundary', null), linkedLine(4, 'p2', 'boundary'), linkedLine(5, 'r2', 'p2')]
+  expect(idsOfFields(...fields)).toEqual(['boundary', 'p2', 'r2'])
 })
 
 test('a row recorded again under a new id is placed, its tool calls keeping their first place', () => {

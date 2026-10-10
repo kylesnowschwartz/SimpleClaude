@@ -256,8 +256,16 @@ export function noteDrawn(trail: PromptTrail, key: string, drawn: Omit<DrawnEntr
   trail.drawn.set(key, { entry: { ...drawn, placement: placementOf(onScreen, trail.reportClock) }, ids })
 }
 
-/** Places a row the conversation stores, and keeps it to lay over a transcript read under way. */
-export function noteStored(trail: PromptTrail, row: StoredRow) {
+/**
+ * Places a row the conversation stores, and keeps it to lay over a transcript
+ * read under way. A compaction's boundary starts the conversation again: the
+ * rows before it are no longer the conversation's.
+ */
+export function noteStored(trail: PromptTrail, row: StoredRow, { startsAgain = false } = {}) {
+  if (startsAgain) {
+    trail.appended = []
+    trail.order = new TranscriptOrder()
+  }
   trail.appended.push(row)
   trail.order.add(row)
 }
@@ -411,7 +419,7 @@ export function registerPromptJump(on: On) {
 
   on('session.append', ($, e, next) => {
     const row = appendedRow(e)
-    if (row !== undefined) noteStored(trail, row)
+    if (row !== undefined) noteStored(trail, row, { startsAgain: e.message.name === 'compact_boundary' })
     return next(e)
   })
 

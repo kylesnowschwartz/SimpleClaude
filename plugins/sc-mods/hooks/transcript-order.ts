@@ -71,8 +71,9 @@ export function appendedRow(e: SessionAppendInput): StoredRow | undefined {
  * keeps it. Inside a JSON string every quote is escaped, so these match the
  * line's own fields and never text the row quotes.
  */
-const ROW_FIELDS = '"uuid":"[^"]+"|"type":"tool_use","id":"[^"]+"|"origin":\\{"kind":"[a-z-]+"|"isMeta":true|"isSidechain":true'
+const ROW_FIELDS = '"parentUuid":(null|"[^"]+")|"uuid":"[^"]+"|"type":"tool_use","id":"[^"]+"|"origin":\\{"kind":"[a-z-]+"|"isMeta":true|"isSidechain":true'
 
+const PARENT_FIELD = /^"parentUuid":(?:null|"([^"]+)")$/
 const UUID_FIELD = /^"uuid":"([^"]+)"$/
 const TOOL_USE_FIELD = /^"type":"tool_use","id":"([^"]+)"$/
 // The transcript files the person's own prompts under this origin.
@@ -95,7 +96,20 @@ function linesOf(grepOutput: string): LineFields[] {
   return lines
 }
 
-function rowOfLine({ fields }: LineFields): StoredRow | undefined {
+/**
+ * A transcript row and the row it follows: a parent id, null where the
+ * conversation starts again (its first row, or a compaction's boundary), or
+ * undefined for a line that names none, which follows the line before it.
+ */
+type LinkedRow = { row: StoredRow; parent: string | null | undefined }
+
+function parentOf(fields: readonly string[]): string | null | undefined {
+  // The line's own parent link is its first field.
+  const link = fields.map(field => PARENT_FIELD.exec(field)).find(found => found !== null)
+  return link === undefined ? undefined : (link[1] ?? null)
+}
+
+function rowOfLine({ fields }: LineFields): LinkedRow | undefined {
   if (fields.includes('"isSidechain":true')) return undefined
 
   const ids = fields.flatMap(field => UUID_FIELD.exec(field)?.[1] ?? [])
@@ -103,11 +117,29 @@ function rowOfLine({ fields }: LineFields): StoredRow | undefined {
 
   const toolUseIds = fields.flatMap(field => TOOL_USE_FIELD.exec(field)?.[1] ?? [])
   const isPrompt = fields.includes(PERSONS_ORIGIN) && !fields.includes('"isMeta":true')
-  return { ids: [...ids, ...toolUseIds], isPrompt }
+  return { row: { ids: [...ids, ...toolUseIds], isPrompt }, parent: parentOf(fields) }
+}
+
+/**
+ * The rows of the conversation as it stands: the newest row and the rows it
+ * follows, back to where the conversation last started again. A rewind
+ * leaves the rows after the point rewound to off this line, and a
+ * compaction leaves the rows before its boundary off it.
+ */
+function currentBranch(linked: readonly LinkedRow[]): StoredRow[] {
+  const byId = new Map(linked.map((each, at) => [each.row.ids[0], at]))
+  const onBranch = new Set<number>()
+  let at: number | undefined = linked.length - 1
+  while (at !== undefined && at >= 0 && !onBranch.has(at)) {
+    onBranch.add(at)
+    const { parent }: LinkedRow = linked[at] as LinkedRow
+    at = parent === undefined ? at - 1 : parent === null ? undefined : byId.get(parent)
+  }
+  return linked.flatMap((each, place) => (onBranch.has(place) ? [each.row] : []))
 }
 
 /** The main conversation's rows, in order, from `grep -n -o` of ROW_FIELDS over a transcript file. */
-export const rowsOfTranscriptFields = (grepOutput: string): StoredRow[] => linesOf(grepOutput).flatMap(line => rowOfLine(line) ?? [])
+export const rowsOfTranscriptFields = (grepOutput: string): StoredRow[] => currentBranch(linesOf(grepOutput).flatMap(line => rowOfLine(line) ?? []))
 
 /**
  * The command that prints ROW_FIELDS of each line of a transcript file. A
