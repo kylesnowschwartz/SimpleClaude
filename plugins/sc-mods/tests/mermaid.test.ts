@@ -127,6 +127,14 @@ test('a fence in a list item becomes a text block inside that item', async ($, o
   expect(renders[0]?.stdin).toBe('flowchart TD\n  A-->B')
 })
 
+test('a fence in a quoted list item is drawn narrower by its prefix', async ($, on) => {
+  const renders = stubMerman(on, () => ok(DRAWING))
+  captureText(on)
+  await $.ui.render(render('> - ```mermaid\n>   flowchart TD\n>   ```', 104))
+  const argv = renders[0]?.argv ?? []
+  expect(argv[argv.indexOf('--ascii-max-width') + 1]).toBe('96')
+})
+
 test('a mermaid fence quoted in a markdown example stays as source', async ($, on) => {
   const renders = stubMerman(on, () => ok(DRAWING))
   const seen = captureText(on)
