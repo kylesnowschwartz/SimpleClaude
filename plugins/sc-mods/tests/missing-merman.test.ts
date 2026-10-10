@@ -1,15 +1,5 @@
-import type { RenderElement } from 'claude-code'
 import { expect, test } from 'claude-code/testing'
-
-const fenced = (source: string) => '```mermaid\n' + source + '\n```'
-
-const render = (text: string, requestId: string) => ({
-  surface: 'terminal' as const,
-  component: 'AssistantMessage' as const,
-  requestId,
-  viewport: { columns: 100, rows: 40 },
-  props: { text, isFirstOfReply: true },
-})
+import { captureTexts, fenced, render } from './support'
 
 const MERMAN_PATH = '/opt/merman/merman-cli'
 
@@ -24,16 +14,12 @@ test('a merman-cli that cannot run keeps every fence and is tried once', { optio
     toasts.push(e.text)
     return { value: undefined }
   })
-  const seen: string[] = []
-  on('ui.render', { component: 'AssistantMessage' }, async (_$, e) => {
-    seen.push(e.props.text)
-    return { type: 'Text', props: {}, children: [e.props.text] } as unknown as RenderElement
-  })
+  const seen = captureTexts(on)
 
   const first = fenced('flowchart TD\n  A-->B')
   const second = fenced('sequenceDiagram\n  A->>B: hi')
-  await $.ui.render(render(first, 'one'))
-  await $.ui.render(render(second, 'two'))
+  await $.ui.render(render(first, { requestId: 'one' }))
+  await $.ui.render(render(second, { requestId: 'two' }))
 
   expect(seen).toEqual([first, second])
   expect(argvs).toEqual([[MERMAN_PATH, '--version']])
