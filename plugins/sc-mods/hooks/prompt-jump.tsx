@@ -1,311 +1,269 @@
-import type { EngineInterface, On, OnScreen, PromptOrigin, SessionMessage, UiScrollBlock } from 'claude-code'
+import type { EngineInterface, On, OnScreen, PromptOrigin, UiScrollBlock } from 'claude-code'
+import {
+  appendedRow,
+  findTranscriptCommand,
+  rowsOfTranscriptRead,
+  transcriptFieldsCommand,
+  TranscriptOrder,
+  type StoredRow,
+} from './transcript-order'
 
 /** A step through the person's prompts: back to the previous one, or on to the next. */
 export type Step = -1 | 1
 
-/**
- * A transcript row by its requestId: one of the person's prompts, or a row
- * of the turn that follows one (reply text, a tool call). `firstRowShown`
- * is the first of its rows the viewport shows: 0 when its top is in view,
- * null while it is off screen, undefined where the surface does not say.
- * `isBottomShown` says whether its last row is in view, and `reportedAt`
- * orders the reports of where rows are.
- */
-export type TranscriptRow = {
-  requestId: string
-  isPrompt: boolean
-  firstRowShown: number | null | undefined
-  isBottomShown?: boolean
-  reportedAt?: number
-}
+/** Where a drawn entry is on screen: from its line `firstLine`, with or without its last line. */
+export type OnScreenPlacement = { kind: 'onScreen'; firstLine: number; isBottomShown: boolean; reportedAt: number }
 
-/** The prompt the view is on, by index among the prompts, and whether its top row is in view. */
+/**
+ * Where a drawn entry's lines were last reported: never (the surface does
+ * not say), off screen, or on screen. `reportedAt` orders the reports.
+ */
+export type Placement = { kind: 'unreported' } | { kind: 'offScreen' } | OnScreenPlacement
+
+/**
+ * A transcript entry the screen has drawn: one of the person's prompts, or
+ * an entry of the turn that follows one (a block of reply text, a tool call).
+ */
+export type DrawnEntry = { requestId: string; isPrompt: boolean; placement: Placement }
+
+/** The prompt the view is on, by index among the prompts, and whether its top line is in view. */
 export type Anchor = { index: number; isTopShown: boolean }
 
 /** The anchor index while the view is above the first known prompt. */
 const BEFORE_FIRST = -1
 
-const isShown = (row: TranscriptRow) => row.firstRowShown !== null && row.firstRowShown !== undefined
+const UNREPORTED: Placement = { kind: 'unreported' }
+const OFF_SCREEN: Placement = { kind: 'offScreen' }
 
-/**
- * Whether two rows shown one after the other in transcript order can be on
- * screen together: the upper one's bottom and the lower one's top in view,
- * with no row between them reported off screen.
- */
-function canShowTogether(upper: TranscriptRow, lower: TranscriptRow, between: readonly TranscriptRow[]) {
-  return upper.isBottomShown !== false && lower.firstRowShown === 0 && between.every(row => row.firstRowShown !== null)
+/** An entry on screen, with its index among the entries. */
+type ShownEntry = { at: number; entry: DrawnEntry; placement: OnScreenPlacement }
+
+const shownEntries = (entries: readonly DrawnEntry[]): ShownEntry[] =>
+  entries.flatMap((entry, at) => (entry.placement.kind === 'onScreen' ? [{ at, entry, placement: entry.placement }] : []))
+
+/** Each item with the one after it. */
+function neighbours<T>(items: readonly T[]): Array<[T, T]> {
+  const pairs: Array<[T, T]> = []
+  items.forEach((item, at) => {
+    const next = items[at + 1]
+    if (next !== undefined) pairs.push([item, next])
+  })
+  return pairs
 }
 
 /**
- * The rows on screen, in transcript order. Claude Code reports a row's
- * place when it is drawn and, on a scroll, for the rows at the viewport's
- * edges only, so a row the view moved past in one step keeps reporting
- * where it was. The rows on screen are one unbroken run; where two reports
- * cannot both hold, the older one is out of date and is left out.
+ * Whether two entries shown one after the other can be on screen together:
+ * the upper one's last line and the lower one's first in view, with no entry
+ * between them reported off screen.
  */
-export function rowsOnScreen(rows: readonly TranscriptRow[]): TranscriptRow[] {
-  let shown = rows.flatMap((row, at) => (isShown(row) ? [at] : []))
-  for (;;) {
-    const clash = shown.findIndex((at, i) => {
-      const next = shown[i + 1]
-      const [upper, lower] = [rows[at], next === undefined ? undefined : rows[next]]
-      return upper !== undefined && lower !== undefined && !canShowTogether(upper, lower, rows.slice(at + 1, next))
-    })
-    if (clash < 0) return shown.flatMap(at => rows[at] ?? [])
+const canShowTogether = ([upper, lower]: [ShownEntry, ShownEntry], entries: readonly DrawnEntry[]) =>
+  upper.placement.isBottomShown &&
+  lower.placement.firstLine === 0 &&
+  entries.slice(upper.at + 1, lower.at).every(entry => entry.placement.kind !== 'offScreen')
 
-    const [upperAt, lowerAt] = [shown[clash] ?? 0, shown[clash + 1] ?? 0]
-    const isUpperOlder = (rows[upperAt]?.reportedAt ?? -1) < (rows[lowerAt]?.reportedAt ?? -1)
-    const stale = isUpperOlder ? upperAt : lowerAt
-    shown = shown.filter(at => at !== stale)
-  }
+const olderReport = ([upper, lower]: [ShownEntry, ShownEntry]) =>
+  upper.placement.reportedAt < lower.placement.reportedAt ? upper : lower
+
+/** The shown entries left once every report that clashes with a newer one is dropped. */
+function consistentShown(shown: ShownEntry[], entries: readonly DrawnEntry[]): ShownEntry[] {
+  const clash = neighbours(shown).find(pair => !canShowTogether(pair, entries))
+  if (clash === undefined) return shown
+
+  const stale = olderReport(clash)
+  return consistentShown(
+    shown.filter(candidate => candidate !== stale),
+    entries,
+  )
 }
+
+/**
+ * The entries on screen, in transcript order. Claude Code reports where an
+ * entry is when it is drawn and, on a scroll, for the entries at the
+ * viewport's edges only, so an entry the view moved past in one step keeps
+ * reporting where it was. The entries on screen are one unbroken run; where
+ * two reports cannot both hold, the older one is out of date.
+ */
+export const entriesOnScreen = (entries: readonly DrawnEntry[]): DrawnEntry[] =>
+  consistentShown(shownEntries(entries), entries).map(shown => shown.entry)
 
 /** The prompts that can be jumped to, in transcript order. */
-export const promptsOf = (rows: readonly TranscriptRow[]) => rows.filter(row => row.isPrompt)
-
-/** The prompt at or above the row at `at`, by index among the prompts; undefined above the first. */
-function owningPrompt(rows: readonly TranscriptRow[], at: number): number | undefined {
-  const promptsAbove = promptsOf(rows.slice(0, at + 1)).length
-  return promptsAbove > 0 ? promptsAbove - 1 : undefined
-}
+export const promptsOf = (entries: readonly DrawnEntry[]) => entries.filter(entry => entry.isPrompt)
 
 /**
- * The prompt the view is on: the one that owns the topmost row on screen,
- * itself or a row of its turn. With no tracked row on screen, it is the
- * prompt last jumped to, else the newest. Undefined while no prompt is known.
+ * The prompt the view is on: the one that owns the topmost entry on screen,
+ * itself or an entry of its turn, or BEFORE_FIRST above every known prompt.
+ * With no entry on screen, it is the prompt last jumped to, else the newest.
+ * Undefined while no prompt is known.
  */
-export function anchorOf(rows: readonly TranscriptRow[], lastJumped: number): Anchor | undefined {
-  const promptCount = promptsOf(rows).length
-  if (promptCount === 0) return undefined
+export function anchorOf(entries: readonly DrawnEntry[], lastJumped: string | undefined): Anchor | undefined {
+  const prompts = promptsOf(entries)
+  if (prompts.length === 0) return undefined
 
-  const topShown = rowsOnScreen(rows)[0]
-  const topmost = topShown === undefined ? -1 : rows.indexOf(topShown)
-  if (topmost >= 0) {
-    const row = rows[topmost]
-    // A row above every known prompt: the view is before the first of them.
-    const owner = owningPrompt(rows, topmost) ?? BEFORE_FIRST
-    return { index: owner, isTopShown: row?.isPrompt === true && row.firstRowShown === 0 }
+  const [top] = entriesOnScreen(entries)
+  if (top === undefined) {
+    const jumped = prompts.findIndex(prompt => prompt.requestId === lastJumped)
+    return { index: jumped >= 0 ? jumped : prompts.length - 1, isTopShown: false }
   }
-  return { index: lastJumped >= 0 && lastJumped < promptCount ? lastJumped : promptCount - 1, isTopShown: false }
+
+  const promptsDown = promptsOf(entries.slice(0, entries.indexOf(top) + 1)).length
+  const isTopShown = top.isPrompt && top.placement.kind === 'onScreen' && top.placement.firstLine === 0
+  return { index: promptsDown > 0 ? promptsDown - 1 : BEFORE_FIRST, isTopShown }
 }
 
 /**
- * The index among the prompts a step from the anchor lands on, or undefined
- * past either end. A step back from inside a turn, or from a prompt whose
- * top is out of view, lands on that prompt's own top first.
+ * The prompt a step from the anchor lands on, or undefined past either end.
+ * A step back from inside a turn, or from a prompt whose top is out of view,
+ * lands on that prompt's own top first.
  */
-export function jumpTarget(rows: readonly TranscriptRow[], lastJumped: number, step: Step): number | undefined {
-  const anchor = anchorOf(rows, lastJumped)
+export function jumpTarget(entries: readonly DrawnEntry[], lastJumped: string | undefined, step: Step): DrawnEntry | undefined {
+  const anchor = anchorOf(entries, lastJumped)
   if (anchor === undefined) return undefined
 
   const target = step === -1 && !anchor.isTopShown ? anchor.index : anchor.index + step
-  return target >= 0 && target < promptsOf(rows).length ? target : undefined
+  return target === BEFORE_FIRST ? undefined : promptsOf(entries)[target]
 }
 
 /** `2/5` while the view is on the second of five known prompts; empty with none known, or above the first known. */
-export function positionText(rows: readonly TranscriptRow[], lastJumped: number): string {
-  const anchor = anchorOf(rows, lastJumped)
+export function positionText(entries: readonly DrawnEntry[], lastJumped: string | undefined): string {
+  const anchor = anchorOf(entries, lastJumped)
   if (anchor === undefined || anchor.index === BEFORE_FIRST) return ''
-  return `${anchor.index + 1}/${promptsOf(rows).length}`
+  return `${anchor.index + 1}/${promptsOf(entries).length}`
 }
 
-/** What finds a drawn row's message in the session: a prompt's text, a reply block's text, or tool call ids. */
-export type MessageMatch = { kind: 'prompt' | 'reply'; text: string } | { kind: 'tools'; toolUseIds: readonly string[] }
+/** A drawn entry and the ids that find its stored row: its own, or for a group of tool calls each call's. */
+type Drawn = { entry: DrawnEntry; ids: readonly string[] }
 
-/** A drawn row and the message it was found in, by its index in the session's messages. */
-export type SeenRow = { row: TranscriptRow; match: MessageMatch; message?: number }
+/** A drawn entry and its stored row's place in the transcript. */
+export type PlacedEntry = { place: number; entry: DrawnEntry }
 
-/** The rows drawn so far by key in the order first drawn, the prompt last jumped to, and the count the band was asked to show. */
+/**
+ * What the band knows of the session:
+ * - `order`: where each stored row of the conversation sits;
+ * - `appended`: the rows stored since the plugin loaded, laid over a read of
+ *   the transcript file that finishes after them;
+ * - `drawn`: the entries drawn so far, by site and requestId;
+ * - `reportClock`: counts the reports of where entries are, to order them;
+ * - `lastJumped`: the requestId of the prompt last jumped to;
+ * - `positionShown`: the count the band was last asked to show.
+ */
 export type PromptTrail = {
-  seen: Map<string, SeenRow>
-  // The first and last of the session's replies, by message index.
-  turnSpan: { first: number; last: number } | undefined
-  isRefreshDue: boolean
-  reports: number
-  lastJumped: number
-  requestedPosition: string
+  order: TranscriptOrder
+  appended: StoredRow[]
+  drawn: Map<string, Drawn>
+  reportClock: number
+  lastJumped: string | undefined
+  positionShown: string
 }
 
 export const newTrail = (): PromptTrail => ({
-  seen: new Map(),
-  turnSpan: undefined,
-  isRefreshDue: false,
-  reports: 0,
-  lastJumped: -1,
-  requestedPosition: '',
+  order: new TranscriptOrder(),
+  appended: [],
+  drawn: new Map(),
+  reportClock: 0,
+  lastJumped: undefined,
+  positionShown: '',
 })
 
-/**
- * The rows found in the session, in transcript order. A row drawn but not
- * yet found is left out until it is.
- */
-export function transcriptRows(trail: PromptTrail): TranscriptRow[] {
-  const found = [...trail.seen.values()].filter((seen): seen is SeenRow & { message: number } => seen.message !== undefined)
-  // Blocks of one message keep the order they were drawn in.
-  return found.sort((a, b) => a.message - b.message).map(seen => seen.row)
-}
-
-const currentPosition = (trail: PromptTrail) => positionText(transcriptRows(trail), trail.lastJumped)
-
-/** Records a drawn row's place on screen; a redraw that does not report the viewport keeps what was last known. */
-export function noteRow(trail: PromptTrail, key: string, row: TranscriptRow, match: MessageMatch) {
-  const known = trail.seen.get(key)
-  const reported = row.firstRowShown === undefined ? row : { ...row, reportedAt: (trail.reports += 1) }
-  if (known === undefined) trail.seen.set(key, { row: reported, match })
-  else if (row.firstRowShown !== undefined) known.row = reported
-}
-
-const isMatchFor = (match: MessageMatch, message: SessionMessage) => {
-  if (match.kind === 'tools') return message.toolUses.some(use => match.toolUseIds.includes(use.tool_use_id))
-  if (match.kind === 'prompt') return message.role === 'user' && message.text.trim() === match.text.trim()
-  return message.role === 'assistant' && match.text.trim() !== '' && message.text.includes(match.text.trim())
-}
-
-/**
- * Of several messages a row could be, the one that fits between the found
- * rows drawn before and after it; the newest when no found row is near.
- */
-function between(candidates: number[], after: number | undefined, before: number | undefined): number | undefined {
-  const fitting = candidates.filter(index => (after === undefined || index >= after) && (before === undefined || index <= before))
-  const pool = fitting.length > 0 ? fitting : candidates
-  return after !== undefined ? pool[0] : pool.at(-1)
-}
-
-/**
- * Finds each drawn row's message in the session's messages, which are in
- * transcript order. A prompt takes a message no other prompt holds. A row
- * one message fits is found first; where several fit (the same words sent
- * twice), the row takes the one between its found neighbours in the order
- * drawn. Rows with no message (a prompt still being sent or waiting in the
- * queue) are dropped, and looked for again if drawn again.
- */
-export function findMessages(trail: PromptTrail, messages: readonly SessionMessage[]) {
-  const replies = messages.flatMap((message, index) => (message.role === 'assistant' ? [index] : []))
-  const [first, last] = [replies[0], replies.at(-1)]
-  trail.turnSpan = first === undefined || last === undefined ? undefined : { first, last }
-
-  const entries = [...trail.seen]
-  const heldByPrompts = new Set(entries.flatMap(([, s]) => (s.match.kind === 'prompt' && s.message !== undefined ? [s.message] : [])))
-  const candidatesOf = (seen: SeenRow) =>
-    messages.flatMap((message, index) =>
-      isMatchFor(seen.match, message) && !(seen.match.kind === 'prompt' && heldByPrompts.has(index)) ? [index] : [],
-    )
-  const settle = (seen: SeenRow, message: number) => {
-    seen.message = message
-    if (seen.match.kind === 'prompt') heldByPrompts.add(message)
-  }
-
-  const ambiguous: number[] = []
-  entries.forEach(([key, seen], at) => {
-    if (seen.message !== undefined) return
-    const candidates = candidatesOf(seen)
-    if (candidates.length === 0) trail.seen.delete(key)
-    else if (candidates.length === 1 && candidates[0] !== undefined) settle(seen, candidates[0])
-    else ambiguous.push(at)
+/** The drawn entries whose stored rows are known, in transcript order. */
+export function placedEntries(trail: PromptTrail): PlacedEntry[] {
+  const placed = [...trail.drawn.values()].flatMap(({ entry, ids }) => {
+    const place = trail.order.placeOf(ids)
+    return place === undefined ? [] : [{ place, entry }]
   })
-
-  const foundAt = (at: number) => entries[at]?.[1].message
-  for (const at of ambiguous) {
-    const seen = entries[at]?.[1]
-    if (seen === undefined) continue
-    const after = entries.slice(0, at).map(([, s]) => s.message).findLast(m => m !== undefined)
-    const before = entries.slice(at + 1).map((_, offset) => foundAt(at + 1 + offset)).find(m => m !== undefined)
-    const message = between(candidatesOf(seen), after, before)
-    if (message !== undefined) settle(seen, message)
-  }
+  // Entries of one stored row keep the order they were first drawn in.
+  return placed.sort((a, b) => a.place - b.place)
 }
 
-const hasUnfound = (trail: PromptTrail) => [...trail.seen.values()].some(seen => seen.message === undefined)
+export const entriesInOrder = (trail: PromptTrail) => placedEntries(trail).map(placed => placed.entry)
 
-// Folds the rows drawn in one redraw into one read of the session's messages.
-const REFRESH_DELAY_MS = 100
+const currentPosition = (trail: PromptTrail) => positionText(entriesInOrder(trail), trail.lastJumped)
 
-async function refreshMessages($: EngineInterface, trail: PromptTrail) {
-  trail.isRefreshDue = false
-  findMessages(trail, await $.session.messages())
-  redrawBandIfMoved($, trail)
+function placementOf(onScreen: OnScreen | null | undefined, reportedAt: number): Placement {
+  if (onScreen === undefined) return UNREPORTED
+  if (onScreen === null) return OFF_SCREEN
+  return { kind: 'onScreen', firstLine: onScreen.first, isBottomShown: onScreen.last >= onScreen.of - 1, reportedAt }
+}
+
+/** Records where a drawn entry is; a redraw that does not say keeps what was last reported. */
+export function noteDrawn(trail: PromptTrail, key: string, drawn: Omit<DrawnEntry, 'placement'>, ids: readonly string[], onScreen: OnScreen | null | undefined) {
+  if (onScreen === undefined && trail.drawn.has(key)) return
+
+  trail.reportClock += 1
+  trail.drawn.set(key, { entry: { ...drawn, placement: placementOf(onScreen, trail.reportClock) }, ids })
+}
+
+/** Places a row the conversation stores, and keeps it to lay over a transcript read under way. */
+export function noteStored(trail: PromptTrail, row: StoredRow) {
+  trail.appended.push(row)
+  trail.order.add(row)
+}
+
+/** Places the rows a transcript file holds, then the rows stored since the plugin loaded. */
+export function noteTranscript(trail: PromptTrail, rows: readonly StoredRow[]) {
+  trail.order = TranscriptOrder.of([...rows, ...trail.appended])
 }
 
 /**
- * Asks for a redraw when the band's count changed, and for a read of the
- * session's messages while drawn rows are not yet found. A row scrolling
- * does not change the band's props, so the band would keep its old count.
- * Asking only on a change keeps the redraw this causes from asking again.
+ * Redraws the band when its count changed. An entry scrolling does not
+ * change the band's props, so the band would keep its old count. Asking only
+ * on a change keeps the redraw this causes from asking again.
  */
 function redrawBandIfMoved($: EngineInterface, trail: PromptTrail) {
-  if (hasUnfound(trail) && !trail.isRefreshDue) {
-    trail.isRefreshDue = true
-    $.clock.after(REFRESH_DELAY_MS, () => void refreshMessages($, trail))
-  }
-
-  const position = currentPosition(trail)
-  if (position === trail.requestedPosition) return
-
-  trail.requestedPosition = position
+  if (currentPosition(trail) === trail.positionShown) return
   $.ui.invalidate('ui.render')
 }
 
-function noteDrawnRow($: EngineInterface, trail: PromptTrail, key: string, row: TranscriptRow, match: MessageMatch) {
-  noteRow(trail, key, row, match)
-  redrawBandIfMoved($, trail)
-}
-
-/** A row's report of where it is: its first row shown, and whether its last is. */
-const placeOnScreen = (onScreen: OnScreen | null | undefined) => ({
-  firstRowShown: onScreen && onScreen.first,
-  isBottomShown: onScreen ? onScreen.last >= onScreen.of - 1 : undefined,
-})
-
-const turnRow = (requestId: string, onScreen: OnScreen | null | undefined): TranscriptRow => ({
-  requestId,
-  isPrompt: false,
-  ...placeOnScreen(onScreen),
-})
-
 /**
- * The row at the found end of the transcript in the step's direction, when
- * the session holds turns past it that no drawn row has shown yet.
+ * The drawn entry at the end of the transcript in the step's direction,
+ * when a prompt the screen has not drawn lies past it.
  */
-export function unseenEdge(trail: PromptTrail, step: Step): string | undefined {
-  const found = [...trail.seen.values()].flatMap(seen => (seen.message === undefined ? [] : [seen]))
-  if (found.length === 0 || trail.turnSpan === undefined) return undefined
+export function unseenEdge(placed: readonly PlacedEntry[], order: TranscriptOrder, step: Step): DrawnEntry | undefined {
+  const edge = step === -1 ? placed[0] : placed.at(-1)
+  if (edge === undefined) return undefined
 
-  const messages = found.map(seen => seen.message ?? 0)
-  const edge = step === -1 ? Math.min(...messages) : Math.max(...messages)
-  const edgeRow = found.find(seen => seen.message === edge)?.row
-  // A reply at the top edge has its prompt above it.
-  const hasTurnsPast = step === -1 ? trail.turnSpan.first < edge || edgeRow?.isPrompt === false : trail.turnSpan.last > edge
-  return hasTurnsPast ? edgeRow?.requestId : undefined
+  const hasPromptPast = step === -1 ? order.hasPromptBefore(edge.place) : order.hasPromptAfter(edge.place)
+  return hasPromptPast ? edge.entry : undefined
 }
 
 async function jump($: EngineInterface, trail: PromptTrail, step: Step) {
-  const rows = transcriptRows(trail)
-  const target = jumpTarget(rows, trail.lastJumped, step)
-  const prompt = target === undefined ? undefined : promptsOf(rows)[target]
-  if (target === undefined || prompt === undefined) {
-    // Claude Code draws only the rows near the view, so turns past the drawn
-    // ones have no row to jump to yet. Moving the edge row to the far side of
-    // the view draws them, and the next press reaches their prompts.
-    const edge = unseenEdge(trail, step)
-    if (edge !== undefined) {
-      const refusal = await scrollRefusal($, edge, step === -1 ? 'end' : 'start')
-      if (refusal !== undefined) $.ui.toast(`Can't jump to that prompt: ${refusal}`)
-      return
-    }
-    $.ui.toast(step === -1 ? 'No earlier prompt' : 'No later prompt')
+  const placed = placedEntries(trail)
+  const target = jumpTarget(
+    placed.map(({ entry }) => entry),
+    trail.lastJumped,
+    step,
+  )
+  if (target === undefined) {
+    await revealPastEdge($, trail, placed, step)
     return
   }
 
-  const refusal = await scrollRefusal($, prompt.requestId, 'start')
+  const refusal = await scrollRefusal($, target.requestId, 'start')
   if (refusal !== undefined) {
     $.ui.toast(`Can't jump to that prompt: ${refusal}`)
     return
   }
-  trail.lastJumped = target
+  trail.lastJumped = target.requestId
   redrawBandIfMoved($, trail)
 }
 
-/** Why the transcript did not move to the row, or undefined once it did. */
+/**
+ * Claude Code draws only the entries near the view, so a prompt past the
+ * drawn ones has nothing to jump to yet. Moving the edge entry to the far
+ * side of the view draws the entries beyond it, and the next press reaches
+ * their prompts.
+ */
+async function revealPastEdge($: EngineInterface, trail: PromptTrail, placed: readonly PlacedEntry[], step: Step) {
+  const edge = unseenEdge(placed, trail.order, step)
+  if (edge === undefined) {
+    $.ui.toast(step === -1 ? 'No earlier prompt' : 'No later prompt')
+    return
+  }
+
+  const refusal = await scrollRefusal($, edge.requestId, step === -1 ? 'end' : 'start')
+  if (refusal !== undefined) $.ui.toast(`Can't jump to that prompt: ${refusal}`)
+}
+
+/** Why the transcript did not move to the entry, or undefined once it did. */
 async function scrollRefusal($: EngineInterface, requestId: string, block: UiScrollBlock): Promise<string | undefined> {
   try {
     return (await $.ui.scroll({ to: { requestId }, block })).deny
@@ -315,8 +273,38 @@ async function scrollRefusal($: EngineInterface, requestId: string, block: UiScr
   }
 }
 
-// The prompt being sent draws under this id until it is stored.
-const IN_FLIGHT = 'placeholder'
+const TRANSCRIPT_READ_TIMEOUT_MS = 10000
+
+async function configDir($: EngineInterface): Promise<string | undefined> {
+  const configured = await $.env.get('CLAUDE_CONFIG_DIR')
+  if (configured !== undefined) return configured
+
+  const home = await $.env.get('HOME')
+  return home === undefined ? undefined : `${home}/.claude`
+}
+
+async function findTranscript($: EngineInterface): Promise<string | undefined> {
+  const dir = await configDir($)
+  if (dir === undefined) return undefined
+
+  const found = await $.process.run(findTranscriptCommand(dir, await $.session.id()))
+  return found.stdout.trim() || undefined
+}
+
+/** Reads the transcript file for the rows stored before the plugin loaded: a restart, a resume or a reload. */
+async function readStoredRows($: EngineInterface, trail: PromptTrail) {
+  try {
+    const path = await findTranscript($)
+    if (path === undefined) return
+
+    const read = await $.process.run(transcriptFieldsCommand(path), { timeoutMs: TRANSCRIPT_READ_TIMEOUT_MS })
+    noteTranscript(trail, rowsOfTranscriptRead(read))
+    redrawBandIfMoved($, trail)
+  } catch (error) {
+    // The prompts stored before the plugin loaded go uncounted.
+    $.ui.log(`sc-mods: could not read the transcript: ${error instanceof Error ? error.message : String(error)}`, { to: 'debug' })
+  }
+}
 
 const isPersonsPrompt = (origin: PromptOrigin) => origin.kind === 'composer' || origin.kind === 'bridge'
 
@@ -325,45 +313,55 @@ const isPersonsPrompt = (origin: PromptOrigin) => origin.kind === 'composer' || 
  * scroll the transcript to the previous or next prompt, with the view's
  * place among the prompts between them.
  *
- * Claude Code draws only the rows near the view, and draws them again after
- * a reload, so the order rows are drawn in is not transcript order. Each row
- * is found in the session's messages, which are. The turn rows watched are
- * reply text and tool calls, single or folded: a tool-heavy turn can fill
- * the screen with no reply text. A tool's output is folded to a few lines
- * under its call, so it is not watched. The watchers pass every row on
- * unchanged.
+ * Claude Code draws only the entries near the view, and draws them again
+ * after a reload, so the order entries are drawn in is not transcript order.
+ * Each drawn entry is placed by its stored row's place in the conversation:
+ * rows stored while the plugin runs as they are stored, older ones from the
+ * transcript file. The turn entries watched are reply text and tool calls,
+ * single or folded: a tool-heavy turn can fill the screen with no reply
+ * text. A tool's output is folded to a few lines under its call, so it is
+ * not watched. The watchers pass every entry on unchanged.
  */
 export function registerPromptJump(on: On) {
   const trail = newTrail()
 
+  on('session.start', async ($, e, next) => {
+    const started = await next(e)
+    void readStoredRows($, trail)
+    return started
+  })
+
+  on('session.append', ($, e, next) => {
+    const row = appendedRow(e)
+    if (row !== undefined) noteStored(trail, row)
+    return next(e)
+  })
+
   on('ui.render', { component: 'UserMessage' }, ($, e, next) => {
     // A prompt drawn as one line is a queued one, drawn under a new id each redraw.
-    if (e.requestId !== IN_FLIGHT && isPersonsPrompt(e.props.origin) && e.props.isExpanded) {
-      const shown = e.props.onScreen
-      const row = { requestId: e.requestId, isPrompt: true, ...placeOnScreen(shown) }
-      noteDrawnRow($, trail, `prompt:${e.requestId}`, row, { kind: 'prompt', text: e.props.text })
+    if (isPersonsPrompt(e.props.origin) && e.props.isExpanded) {
+      noteDrawn(trail, `prompt:${e.requestId}`, { requestId: e.requestId, isPrompt: true }, [e.requestId], e.props.onScreen)
+      redrawBandIfMoved($, trail)
     }
     return next(e)
   })
 
   on('ui.render', { component: 'AssistantMessage' }, ($, e, next) => {
-    // A summary stands for text the model wrote; the session holds that text, not the summary.
-    if (!e.props.isSummary) {
-      const match: MessageMatch = { kind: 'reply', text: e.props.text }
-      noteDrawnRow($, trail, `reply:${e.requestId}`, turnRow(e.requestId, e.props.onScreen), match)
-    }
+    noteDrawn(trail, `reply:${e.requestId}`, { requestId: e.requestId, isPrompt: false }, [e.requestId], e.props.onScreen)
+    redrawBandIfMoved($, trail)
     return next(e)
   })
 
   on('ui.render', { component: 'ToolUse' }, ($, e, next) => {
-    const match: MessageMatch = { kind: 'tools', toolUseIds: [e.props.tool_use_id] }
-    noteDrawnRow($, trail, `tool:${e.requestId}`, turnRow(e.requestId, e.props.onScreen), match)
+    noteDrawn(trail, `tool:${e.requestId}`, { requestId: e.requestId, isPrompt: false }, [e.props.tool_use_id], e.props.onScreen)
+    redrawBandIfMoved($, trail)
     return next(e)
   })
 
   on('ui.render', { component: 'ToolGroup' }, ($, e, next) => {
-    const toolUseIds = e.props.calls.flatMap(call => (call.tool_use_id === undefined ? [] : [call.tool_use_id]))
-    noteDrawnRow($, trail, `tools:${e.requestId}`, turnRow(e.requestId, e.props.onScreen), { kind: 'tools', toolUseIds })
+    const toolUseIds = e.props.calls.flatMap(call => call.tool_use_id ?? [])
+    noteDrawn(trail, `tools:${e.requestId}`, { requestId: e.requestId, isPrompt: false }, toolUseIds, e.props.onScreen)
+    redrawBandIfMoved($, trail)
     return next(e)
   })
 
@@ -372,7 +370,7 @@ export function registerPromptJump(on: On) {
     if (e.props.hasSurvey || e.props.view.agentId !== undefined) return next(e)
 
     const position = currentPosition(trail)
-    trail.requestedPosition = position
+    trail.positionShown = position
     const { Box, Button, Text } = $.ui.resolve(e)
     return (
       <Box flexDirection="row" columnGap={1}>
