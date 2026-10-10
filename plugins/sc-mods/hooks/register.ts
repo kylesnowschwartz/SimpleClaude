@@ -1,3 +1,4 @@
+import { atom, read, update } from 'claude-code'
 import type { EngineInterface, Register } from 'claude-code'
 import { findMermaidFences, replaceFences, type FenceReplacement, type MermaidFence } from './fences'
 import { drawDiagram, type Runner } from './merman'
@@ -9,6 +10,8 @@ const RUN_TIMEOUT_MS = 5000
 // A new binary's first launch can wait on the OS scanning it.
 const CHECK_TIMEOUT_MS = 15000
 const NOTICE_TIMEOUT_MS = 15000
+
+const DRAWING_PLACEHOLDER = '*Drawing Mermaid diagram…*'
 
 // A dev checkout loads the plugin from the repository's plugins/ folder;
 // an install loads it from Claude Code's plugin cache.
@@ -24,6 +27,12 @@ const TIMED_OUT = /still running after/
  * later render tries it again.
  */
 const drawings = new Map<string, Promise<string | undefined>>()
+
+/**
+ * Kept in the session's state so a reload mid-turn still knows the turn is
+ * running, and so a message drawn while a turn ran is drawn again when it ends.
+ */
+const runningTurns = atom({ plugin: 'sc-mods', key: 'runningTurns' } as const, [])
 
 /** Whether merman-cli runs; `timed-out` is not an answer and is asked again. */
 type MermanCheck = 'runnable' | 'missing' | 'timed-out'
@@ -64,21 +73,44 @@ function drawingFor(run: Runner, source: string, width: number): Promise<string 
   return drawing.catch(() => undefined)
 }
 
+type Replacing = { run: Runner; width: number; isTurnRunning: boolean }
+
 /**
- * A text block for each closed fence merman could draw. A fence still
- * streaming in, or one merman refused, keeps its source.
+ * What a fence shows in place of its source: its drawing once closed, a
+ * placeholder while it streams in. Undefined keeps the source: merman
+ * refused it, or it never closed and no turn is still writing it.
  */
-async function drawnReplacements(run: Runner, fences: MermaidFence[], width: number): Promise<FenceReplacement[]> {
-  const closedFences = fences.filter(fence => fence.isClosed)
-  const drawn = await Promise.all(closedFences.map(fence => drawingFor(run, fence.source, width)))
-  return closedFences.flatMap((fence, index) => {
-    const drawing = drawn[index]
-    return drawing === undefined ? [] : [{ fence, text: textBlock(drawing) }]
+async function replacementText(fence: MermaidFence, { run, width, isTurnRunning }: Replacing): Promise<string | undefined> {
+  if (!fence.isClosed) return isTurnRunning ? DRAWING_PLACEHOLDER : undefined
+
+  const drawing = await drawingFor(run, fence.source, width)
+  return drawing === undefined ? undefined : textBlock(drawing)
+}
+
+async function replacementsFor(fences: MermaidFence[], replacing: Replacing): Promise<FenceReplacement[]> {
+  const texts = await Promise.all(fences.map(fence => replacementText(fence, replacing)))
+  return fences.flatMap((fence, index) => {
+    const text = texts[index]
+    return text === undefined ? [] : [{ fence, text }]
   })
 }
 
 export const register: Register = (on, options) => {
   const configuredPath = typeof options.MERMAN_PATH === 'string' ? options.MERMAN_PATH.trim() : ''
+
+  on('turn.start', async ($, e, next) => {
+    await update($, runningTurns, turns => [...turns, e.turnId])
+    return next(e)
+  })
+
+  // Every main-loop turn ends in turn.complete, an interrupted one with reason
+  // 'aborted'. A subagent's run raises no turn.start, so its completion finds
+  // no id to remove. A turn already running when the mod loads raised its
+  // turn.start before this hook existed: its unclosed fences show their source.
+  on('turn.complete', async ($, e, next) => {
+    await update($, runningTurns, turns => turns.filter(turnId => turnId !== e.turnId))
+    return next(e)
+  })
 
   on('ui.render', { component: 'AssistantMessage' }, async ($, e, next) => {
     const fences = findMermaidFences(e.props.text)
@@ -92,7 +124,11 @@ export const register: Register = (on, options) => {
 
     const width = e.viewport ? e.viewport.columns - GUTTER : WIDTH_WITHOUT_VIEWPORT
     const run: Runner = (args, stdin) => $.process.run([bin, ...args], { stdin, timeoutMs: RUN_TIMEOUT_MS })
-    const replacements = await drawnReplacements(run, fences, width)
+    // Reading the turns subscribes this message to them, which only a message
+    // still streaming a fence needs.
+    const hasUnclosedFence = fences.some(fence => !fence.isClosed)
+    const isTurnRunning = hasUnclosedFence && (await read($, runningTurns)).length > 0
+    const replacements = await replacementsFor(fences, { run, width, isTurnRunning })
     if (replacements.length === 0) return next(e)
 
     const text = replaceFences(e.props.text, replacements)
