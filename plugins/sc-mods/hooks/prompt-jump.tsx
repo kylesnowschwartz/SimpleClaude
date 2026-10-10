@@ -1,8 +1,9 @@
 import { atom, read, update } from 'claude-code'
-import type { EngineInterface, On, OnScreen, PromptOrigin } from 'claude-code'
+import type { EngineInterface, On, OnScreen } from 'claude-code'
 import {
   appendedRow,
   findTranscriptCommand,
+  isPersonsPrompt,
   rowsOfTranscriptRead,
   transcriptFieldsCommand,
   TranscriptOrder,
@@ -328,7 +329,11 @@ async function readStoredRows($: EngineInterface, trail: PromptTrail, locate: ()
   }
 }
 
-const isPersonsPrompt = (origin: PromptOrigin) => origin.kind === 'composer' || origin.kind === 'bridge'
+/** Notes a drawn entry, then asks for the count it may change. */
+function watchDrawn($: EngineInterface, trail: PromptTrail, key: string, drawn: Omit<DrawnEntry, 'placement'>, ids: readonly string[], onScreen: OnScreen | null | undefined) {
+  noteDrawn(trail, key, drawn, ids, onScreen)
+  schedulePublish($, trail)
+}
 
 /**
  * The band's ◀ and ▶ buttons, hotkeys 1 and 2 in an empty prompt box, which
@@ -376,28 +381,24 @@ export function registerPromptJump(on: On) {
   on('ui.render', { component: 'UserMessage' }, ($, e, next) => {
     // A prompt drawn as one line is a queued one, drawn under a new id each redraw.
     if (isPersonsPrompt(e.props.origin) && e.props.isExpanded) {
-      noteDrawn(trail, `prompt:${e.requestId}`, { requestId: e.requestId, isPrompt: true }, [e.requestId], e.props.onScreen)
-      schedulePublish($, trail)
+      watchDrawn($, trail, `prompt:${e.requestId}`, { requestId: e.requestId, isPrompt: true }, [e.requestId], e.props.onScreen)
     }
     return next(e)
   })
 
   on('ui.render', { component: 'AssistantMessage' }, ($, e, next) => {
-    noteDrawn(trail, `reply:${e.requestId}`, { requestId: e.requestId, isPrompt: false }, [e.requestId], e.props.onScreen)
-    schedulePublish($, trail)
+    watchDrawn($, trail, `reply:${e.requestId}`, { requestId: e.requestId, isPrompt: false }, [e.requestId], e.props.onScreen)
     return next(e)
   })
 
   on('ui.render', { component: 'ToolUse' }, ($, e, next) => {
-    noteDrawn(trail, `tool:${e.requestId}`, { requestId: e.requestId, isPrompt: false }, [e.props.tool_use_id], e.props.onScreen)
-    schedulePublish($, trail)
+    watchDrawn($, trail, `tool:${e.requestId}`, { requestId: e.requestId, isPrompt: false }, [e.props.tool_use_id], e.props.onScreen)
     return next(e)
   })
 
   on('ui.render', { component: 'ToolGroup' }, ($, e, next) => {
     const toolUseIds = e.props.calls.flatMap(call => call.tool_use_id ?? [])
-    noteDrawn(trail, `tools:${e.requestId}`, { requestId: e.requestId, isPrompt: false }, toolUseIds, e.props.onScreen)
-    schedulePublish($, trail)
+    watchDrawn($, trail, `tools:${e.requestId}`, { requestId: e.requestId, isPrompt: false }, toolUseIds, e.props.onScreen)
     return next(e)
   })
 

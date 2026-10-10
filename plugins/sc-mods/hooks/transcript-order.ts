@@ -47,7 +47,8 @@ export class TranscriptOrder {
   }
 }
 
-const isPersonsPrompt = (origin: SessionAppendInput['origin']) => origin.kind === 'composer' || origin.kind === 'bridge'
+/** Whether the person sent it: typed at the terminal, or through Remote Control. */
+export const isPersonsPrompt = (origin: { kind: string }) => origin.kind === 'composer' || origin.kind === 'bridge'
 
 const toolUseIdsOf = (e: SessionAppendInput) =>
   e.message.content.flatMap(block => (block.type === 'tool_use' && typeof block.id === 'string' ? [block.id] : []))
