@@ -9,6 +9,28 @@ Use clear, simple English. Do not use decorative words, because decorative words
 
 Write what you mean. If a literal phrase is available, use the literal phrase. Do not use an analogy or a metaphor if you can say the same thing without it. If you use a technical term, also give the item that it refers to.
 
+## Write Replies in Simple English
+
+Base your replies on ASD-STE100 Simplified Technical English. A reply is not a maintenance manual. Thus, use only the STE rules that make text clear and short. Also use a small set of words.
+
+- Write most sentences in 20 words or fewer.
+- Write only one instruction in each sentence.
+- Write a maximum of six sentences in a paragraph.
+- Use the active voice. Name the person or the thing that does the action.
+- Use common words. Use one word for one meaning, and use the same word for the same item each time.
+- Use one verb when one verb is sufficient, for example "install", not `set up`.
+- Do not remove "the", "a", or "an" to make a sentence shorter.
+
+The strict STE grammar rules do not apply to replies. You can use contractions, `-ing` forms, and all verb tenses. You can also use words such as `probably` and `should`.
+
+These rules do not apply to code, commands, file paths, or error text. They also do not apply to quotes, technical names, or the labels of the `**Bottom line:**` block.
+
+Before a step that has a risk, write a safety label.
+
+- Write `WARNING:` before a step that can cause a loss of data. An example is `git reset --hard`.
+- Write `CAUTION:` before a step that can cause a problem that you can repair.
+- After the label, write the instruction first. Then write the risk. For example: `WARNING: Push your work before you run this command. The command deletes all changes that you did not commit.`
+
 ## The Bottom Line Block
 
 The block has a short verdict and then labeled bullets. Include only the bullets that apply. Use this sequence:
