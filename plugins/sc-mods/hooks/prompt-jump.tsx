@@ -1,18 +1,21 @@
 import { atom, read, update } from 'claude-code'
-import type { EngineInterface, On, SessionAppendInput } from 'claude-code'
+import type { EngineInterface, On, ProcessRunResult, SessionAppendInput } from 'claude-code'
 
 /** A step through the person's prompts: back to the previous one, or on to the next. */
 export type Step = -1 | 1
 
 /**
- * The person's prompts the conversation has stored since the plugin loaded,
- * by their stored row ids, in the order sent, and `at`: the index of the
- * prompt the arrows last jumped to, or undefined while they rest on the
- * newest prompt, where every new prompt puts them.
+ * The person's prompts the conversation keeps, by their stored row ids, in
+ * the order sent: those its transcript file held when the plugin loaded,
+ * then those stored since. `at` is the index of the prompt the arrows last
+ * jumped to, or undefined while they rest on the newest prompt, where every
+ * new prompt puts them. `storedRead` is the read of the transcript file,
+ * under way or done; undefined until it starts, and again when it found no
+ * file, so the next need tries again.
  */
-export type PromptTrail = { prompts: string[]; at: number | undefined }
+export type PromptTrail = { prompts: string[]; at: number | undefined; storedRead: Promise<void> | undefined }
 
-export const newTrail = (): PromptTrail => ({ prompts: [], at: undefined })
+export const newTrail = (): PromptTrail => ({ prompts: [], at: undefined, storedRead: undefined })
 
 /** Whether the person sent it: typed at the terminal, or through Remote Control. */
 export const isPersonsPrompt = (origin: { kind: string }) => origin.kind === 'composer' || origin.kind === 'bridge'
@@ -37,15 +40,151 @@ export const positionText = (trail: PromptTrail): string => (trail.prompts.lengt
 
 /** Adds a prompt the conversation stored; the arrows rest on it. */
 export function notePrompt(trail: PromptTrail, id: string) {
+  if (trail.prompts.includes(id)) return
   trail.prompts.push(id)
   trail.at = undefined
 }
 
+/** Puts the prompts the transcript file held before the prompts stored since, each once. */
+export function noteStored(trail: PromptTrail, ids: readonly string[]) {
+  const held = new Set(ids)
+  trail.prompts = [...ids, ...trail.prompts.filter(id => !held.has(id))]
+}
+
 /** Forgets the conversation that ended: `/clear` and `/resume` go on in this process with other prompts. */
 function startOver(trail: PromptTrail) {
-  trail.prompts = []
-  trail.at = undefined
+  Object.assign(trail, newTrail())
 }
+
+// --- The prompts a transcript file holds --------------------------------
+
+/**
+ * The fields of a transcript line that tell a prompt the person typed: its
+ * row type and id, who wrote it, whether the person sees it as typed or a
+ * subagent keeps it, and a compaction's boundary. Inside a JSON string every
+ * quote is escaped, so these match the line's own fields and never text the
+ * row quotes.
+ */
+const ROW_FIELDS = '"type":"user"|"origin":\\{"kind":"human"|"isMeta":true|"isSidechain":true|"subtype":"compact_boundary"|"uuid":"[^"]+"'
+
+const UUID_FIELD = /^"uuid":"([^"]+)"$/
+
+/** The command that prints ROW_FIELDS of each line of a transcript file, as `grep -n -o` does: `<line>:<field>`. */
+export const transcriptFieldsCommand = (path: string) => ['grep', '-a', '-n', '-o', '-E', ROW_FIELDS, path]
+
+/** Each line's fields, in file order. */
+function linesOf(grepOutput: string): string[][] {
+  const lines: Array<{ line: string; fields: string[] }> = []
+  for (const printed of grepOutput.split('\n')) {
+    const colon = printed.indexOf(':')
+    if (colon < 0) continue
+
+    const [line, field] = [printed.slice(0, colon), printed.slice(colon + 1)]
+    const current = lines.at(-1)
+    if (current?.line === line) current.fields.push(field)
+    else lines.push({ line, fields: [field] })
+  }
+  return lines.map(({ fields }) => fields)
+}
+
+const isPersonsRow = (fields: readonly string[]) =>
+  fields.includes('"type":"user"') && fields.includes('"origin":{"kind":"human"') && !fields.includes('"isMeta":true') && !fields.includes('"isSidechain":true')
+
+/**
+ * The ids of the person's prompts since the last compaction, in order, from
+ * `grep -n -o` of ROW_FIELDS over a transcript file. Claude Code draws a
+ * resumed conversation from its last compaction's boundary, so the prompts
+ * before it have no row to scroll to.
+ */
+export function storedPromptIds(grepOutput: string): string[] {
+  let ids: string[] = []
+  for (const fields of linesOf(grepOutput)) {
+    if (fields.includes('"subtype":"compact_boundary"')) {
+      ids = []
+      continue
+    }
+    const id = fields.map(field => UUID_FIELD.exec(field)?.[1]).find(found => found !== undefined)
+    if (id !== undefined && isPersonsRow(fields)) ids.push(id)
+  }
+  return ids
+}
+
+// grep's exit status when it read the file and matched nothing.
+const NO_MATCH = 1
+
+/** The prompt ids `transcriptFieldsCommand` found, from what it printed and how it exited. */
+export function promptIdsOfRead({ exitCode, stdout, stderr }: ProcessRunResult): string[] {
+  if (exitCode === 0) return storedPromptIds(stdout)
+  if (exitCode === NO_MATCH) return []
+  throw new Error(stderr.trim() || `grep exited ${exitCode}`)
+}
+
+/**
+ * The command that prints the path of the session's transcript file:
+ * `<id>.jsonl` in one of the config folder's project folders. It is searched
+ * for rather than built, since a project folder's name is Claude Code's own
+ * encoding of the project's path.
+ */
+export const findTranscriptCommand = (configDir: string, sessionId: string) => [
+  'find',
+  `${configDir}/projects`,
+  '-maxdepth',
+  '2',
+  '-name',
+  `${sessionId}.jsonl`,
+  '-print',
+  '-quit',
+]
+
+const TRANSCRIPT_FIND_TIMEOUT_MS = 5000
+const TRANSCRIPT_READ_TIMEOUT_MS = 10000
+
+async function configDir($: EngineInterface): Promise<string | undefined> {
+  const configured = await $.env.get('CLAUDE_CONFIG_DIR')
+  if (configured !== undefined) return configured
+
+  const home = await $.env.get('HOME')
+  return home === undefined ? undefined : `${home}/.claude`
+}
+
+async function findTranscript($: EngineInterface): Promise<string | undefined> {
+  const dir = await configDir($)
+  if (dir === undefined) return undefined
+
+  const found = await $.process.run(findTranscriptCommand(dir, await $.session.id()), { timeoutMs: TRANSCRIPT_FIND_TIMEOUT_MS })
+  return found.stdout.trim() || undefined
+}
+
+/**
+ * Reads the transcript file once for the prompts the conversation stored
+ * before the plugin saw them: those of a session resumed or continued, or
+ * one the plugin loaded into. A session's file is written with its first
+ * row, so a read that finds none leaves the next need to read again.
+ */
+function readStored($: EngineInterface, trail: PromptTrail): Promise<void> {
+  if (trail.storedRead !== undefined) return trail.storedRead
+
+  const pending = (async () => {
+    try {
+      const path = await findTranscript($)
+      if (path === undefined) {
+        if (trail.storedRead === pending) trail.storedRead = undefined
+        return
+      }
+      const read = await $.process.run(transcriptFieldsCommand(path), { timeoutMs: TRANSCRIPT_READ_TIMEOUT_MS })
+      if (trail.storedRead !== pending) return
+      noteStored(trail, promptIdsOfRead(read))
+      await publishPosition($, trail)
+    } catch (error) {
+      // The prompts stored before the plugin loaded go uncounted.
+      $.ui.log(`sc-mods: could not read the transcript: ${error instanceof Error ? error.message : String(error)}`, { to: 'debug' })
+    }
+  })()
+  trail.storedRead = pending
+  return pending
+}
+
+// --- The band -----------------------------------------------------------
 
 /**
  * The count the band shows. A jump does not change the band's props, so the
@@ -57,6 +196,7 @@ const PROMPT_POSITION = atom({ plugin: 'sc-mods', key: 'promptPosition' } as con
 const publishPosition = ($: EngineInterface, trail: PromptTrail) => update($, PROMPT_POSITION, () => positionText(trail))
 
 async function jump($: EngineInterface, trail: PromptTrail, step: Step) {
+  await readStored($, trail)
   const target = jumpTarget(trail, step)
   if (target === undefined) {
     $.ui.toast(step === -1 ? 'No earlier prompt' : 'No later prompt')
@@ -92,14 +232,20 @@ async function scrollRefusal($: EngineInterface, requestId: string): Promise<str
  * next of the person's prompts, with the arrows' place among them between.
  * Hotkeys 1 and 2 press them while the band holds the keyboard.
  *
- * The prompts counted are those stored since the plugin loaded: the rows a
- * session held before then are not drawn, so there is nothing to scroll to.
- * The arrows step from the prompt last jumped to, so a press moves them on
- * even where the window could not move; the person's own scrolling does not
- * move them.
+ * The prompts counted are those the transcript file holds since its last
+ * compaction, read when the plugin loads or at the first press, and those
+ * stored since. The arrows step from the prompt last jumped to, so a press
+ * moves them on even where the window could not move; the person's own
+ * scrolling does not move them.
  */
 export function registerPromptJump(on: On) {
   const trail = newTrail()
+
+  on('session.start', async ($, e, next) => {
+    const started = await next(e)
+    void readStored($, trail)
+    return started
+  })
 
   on('session.end', ($, e, next) => {
     if (e.reason === 'clear' || e.reason === 'resume') {

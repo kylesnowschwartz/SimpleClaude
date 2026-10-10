@@ -1,8 +1,8 @@
-import type { PromptOrigin, RenderElement, SessionAppendDoor } from 'claude-code'
-import type { Engine } from 'claude-code/testing'
-import { expect, test } from 'claude-code/testing'
-import { jumpTarget, newTrail, notePrompt, positionText, type PromptTrail } from '../hooks/prompt-jump'
-import { drawsEngineDefaults, recordToasts } from './support'
+import type { On, PromptOrigin, RenderElement, SessionAppendDoor } from 'claude-code'
+import type { Engine, MockClock } from 'claude-code/testing'
+import { expect, mock, test } from 'claude-code/testing'
+import { jumpTarget, newTrail, notePrompt, noteStored, positionText, storedPromptIds, type PromptTrail } from '../hooks/prompt-jump'
+import { drawsEngineDefaults, ok, recordToasts } from './support'
 
 const BAND = {
   hasSurvey: false,
@@ -18,6 +18,10 @@ const mountBand = ($: Engine, props: Partial<typeof BAND> = {}) =>
 
 const COMPOSER: PromptOrigin = { kind: 'composer' }
 const POSITION = { type: 'Text' }
+const HOME = '/home/person'
+const TRANSCRIPT = `${HOME}/.claude/projects/-work/session.jsonl`
+// Long enough for the transcript read a load or a press starts.
+const SETTLE_MS = 50
 
 // --- The session beneath the plugin -------------------------------------
 
@@ -35,6 +39,37 @@ const store = ($: Engine, uuid: string, { door = 'prompt', origin = COMPOSER, is
 
 async function storeAll($: Engine, ...uuids: string[]) {
   for (const uuid of uuids) await store($, uuid)
+}
+
+/** A transcript line as `grep -n -o` prints its fields: the person's prompt `id`, or a compaction's boundary. */
+const promptLine = (line: number, id: string) => [`${line}:"type":"user"`, `${line}:"uuid":"${id}"`, `${line}:"origin":{"kind":"human"`].join('\n')
+const boundaryLine = (line: number) => `${line}:"subtype":"compact_boundary"\n${line}:"uuid":"boundary-${line}"`
+
+/** What the session's transcript file holds, by what `grep` prints of it; undefined for no file yet, UNREADABLE for one grep cannot read. */
+type StoredFile = { fields: string | undefined; clock: MockClock }
+
+const UNREADABLE = Symbol('unreadable').toString()
+
+/** Stands for the session beneath the plugin: its id, its home, and the `find` and `grep` the read runs. */
+function storedSession(on: On, fields: string | undefined): StoredFile {
+  drawsEngineDefaults(on)
+  const file: StoredFile = { fields, clock: mock.clock(on) }
+  mock.env(on, { HOME })
+  on('session.id', async () => ({ value: 'session' }))
+  on('session.start', async (_$, e) => ({ cwd: e.cwd }))
+  on('session.end', async (_$, e) => ({ sessionId: e.sessionId }))
+  on('process.run', async (_$, e) => {
+    if (e.argv[0] === 'find') return { value: ok(file.fields === undefined ? '' : `${TRANSCRIPT}\n`) }
+    const isReadable = e.argv.at(-1) === TRANSCRIPT && file.fields !== undefined && file.fields !== UNREADABLE
+    return { value: isReadable ? ok(file.fields as string) : { ...ok(''), exitCode: 2, stderr: 'no such file' } }
+  })
+  return file
+}
+
+/** The plugin loading into the session, then the read it starts settling. */
+async function load($: Engine, file: StoredFile) {
+  await $.session.start({ cwd: '/work', surface: 'terminal', isInteractive: true })
+  await file.clock.advance(SETTLE_MS)
 }
 
 async function bandCount($: Engine) {
@@ -175,6 +210,65 @@ test('after /resume, the count is of the prompts sent since', async ($, on) => {
 
   await storeAll($, 'p7', 'p8')
   expect(await bandCount($)).toBe('2/2')
+})
+
+// --- The prompts the transcript file holds ------------------------------
+
+test('on load, the prompts the transcript file holds are counted, before the ones stored since', async ($, on) => {
+  const file = storedSession(on, [promptLine(1, 'p1'), promptLine(5, 'p2')].join('\n'))
+  await load($, file)
+  expect(await bandCount($)).toBe('2/2')
+
+  await store($, 'p3')
+  expect(await bandCount($)).toBe('3/3')
+  const trail = newTrail()
+  notePrompt(trail, 'p3')
+  noteStored(trail, ['p1', 'p2'])
+  expect(trail.prompts).toEqual(['p1', 'p2', 'p3'])
+})
+
+test('a prompt stored before the read ends is counted once', async ($, on) => {
+  const file = storedSession(on, [promptLine(1, 'p1'), promptLine(5, 'p2')].join('\n'))
+  await $.session.start({ cwd: '/work', surface: 'terminal', isInteractive: true })
+  await store($, 'p2')
+  await file.clock.advance(SETTLE_MS)
+  expect(await bandCount($)).toBe('2/2')
+})
+
+test('with no transcript file at load, the first press reads it', async ($, on) => {
+  const file = storedSession(on, undefined)
+  const toasts = recordToasts(on)
+  await load($, file)
+  await store($, 'p3')
+  expect(await bandCount($)).toBe('1/1')
+
+  file.fields = [promptLine(1, 'p1'), promptLine(5, 'p2'), promptLine(9, 'p3')].join('\n')
+  const band = await mountBand($)
+  await band.press({ key: 'prompt-jump:previous' })
+  await file.clock.advance(SETTLE_MS)
+  expect(toasts[0]).toMatch(/^Can't jump to that prompt: \S/)
+  expect((await band.find(POSITION))?.text).toBe('3/3')
+})
+
+test('a transcript file that cannot be read leaves the prompts stored since counted', async ($, on) => {
+  const file = storedSession(on, UNREADABLE)
+  await load($, file)
+  await store($, 'p1')
+  expect(await bandCount($)).toBe('1/1')
+})
+
+test('the prompts of a transcript file are those of the person since the last compaction', () => {
+  const fields = [
+    promptLine(1, 'p1'),
+    `2:"type":"user"\n2:"uuid":"reminder"\n2:"origin":{"kind":"human"\n2:"isMeta":true`,
+    `3:"type":"user"\n3:"uuid":"agent-row"\n3:"origin":{"kind":"human"\n3:"isSidechain":true`,
+    `4:"type":"user"\n4:"uuid":"tool-result"`,
+    boundaryLine(5),
+    promptLine(6, 'p2'),
+    promptLine(7, 'p3'),
+  ].join('\n')
+  expect(storedPromptIds(fields)).toEqual(['p2', 'p3'])
+  expect(storedPromptIds('')).toEqual([])
 })
 
 // --- Stepping through the prompts ---------------------------------------
