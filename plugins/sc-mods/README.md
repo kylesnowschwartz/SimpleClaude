@@ -39,7 +39,7 @@ The drawing has to fit the terminal's width. For a flowchart that is too wide, t
 
 The band above the prompt shows two buttons, `◀` and `▶`, with a dim count between them: `[ ◀ ] 2/5 [ ▶ ]` while the view is on the second of five prompts. The count follows the view as you scroll or jump. Click a button, or type `1` or `2` into an empty prompt box, to scroll the conversation so your previous or next prompt sits at the top of the view. A digit typed into a prompt box that already holds text is typed as usual.
 
-The view is on the topmost of your prompts on screen. When none is on screen, inside a long reply, it is on the prompt last jumped to, else the newest. The count and the step both start from that prompt. If that prompt's first line is scrolled out of view, `◀` first goes back to its top. A toast says so when there is no earlier or later prompt, and gives Claude Code's reason when it does not scroll.
+The view is on the prompt that owns the topmost row on screen: the prompt itself, or a row of Claude's reply to it (its text or its tool calls). When the screen shows none of those rows, it is on the prompt last jumped to, else the newest. The count and the step both start from that prompt. If that prompt's first line is scrolled out of view, as when you are partway through its reply, `◀` first goes back to its top. A toast says so when there is no earlier or later prompt, and gives Claude Code's reason when it does not scroll.
 
 Jumping needs fullscreen mode, where Claude Code draws the conversation itself. The classic layout leaves the conversation to the terminal's scrollback and refuses the scroll.
 

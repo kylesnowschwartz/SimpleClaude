@@ -1,7 +1,7 @@
 import type { PromptOrigin } from 'claude-code'
 import type { Engine } from 'claude-code/testing'
 import { expect, test } from 'claude-code/testing'
-import { anchorOf, jumpTarget, positionText, type PromptRow } from '../hooks/prompt-jump'
+import { anchorOf, jumpTarget, positionText, type TranscriptRow } from '../hooks/prompt-jump'
 import { drawsEngineDefaults, recordToasts } from './support'
 
 const BAND = {
@@ -30,7 +30,12 @@ const renderPrompt = ($: Engine, requestId: string, origin: PromptOrigin = COMPO
 
 const POSITION = { type: 'Text' }
 
-const row = (requestId: string, firstRowShown: number | null): PromptRow => ({ requestId, firstRowShown })
+const row = (requestId: string, firstRowShown: number | null): TranscriptRow => ({ requestId, isPrompt: true, firstRowShown })
+const reply = (requestId: string, firstRowShown: number | null): TranscriptRow => ({ requestId, isPrompt: false, firstRowShown })
+
+const renderReply = ($: Engine, requestId: string, onScreen: OnScreen = null) =>
+  $.ui.render({ surface: 'terminal', component: 'AssistantMessage', requestId, props: { text: requestId, isFirstOfReply: true, onScreen } })
+
 
 test('the band draws ◀ on hotkey 1 and ▶ on hotkey 2', async $ => {
   const band = await mountBand($)
@@ -150,4 +155,50 @@ test('with no prompt on screen, the anchor is the prompt last jumped to, else th
 test('the count reads the anchor and the prompts known', () => {
   expect(positionText([row('p1', null), row('p2', 0), row('p3', null)], -1)).toBe('2/3')
   expect(positionText([], -1)).toBe('')
+})
+
+test('with only a reply on screen, the anchor is the prompt that owns it', () => {
+  const rows = [row('p1', null), reply('r1', null), row('p2', null), reply('r2', 7), row('p3', null), reply('r3', null)]
+  expect(anchorOf(rows, 2)).toEqual({ index: 1, isTopShown: false })
+  expect(positionText(rows, 2)).toBe('2/3')
+})
+
+test('a step back from a reply lands on the top of the prompt that owns it', () => {
+  const rows = [row('p1', null), reply('r1', null), row('p2', null), reply('r2', 7), row('p3', null)]
+  expect(jumpTarget(rows, 2, -1)).toBe(1)
+  expect(jumpTarget(rows, 2, 1)).toBe(2)
+})
+
+test('the topmost row on screen decides, a reply above a prompt included', () => {
+  const rows = [row('p1', null), reply('r1', 30), row('p2', 0)]
+  expect(anchorOf(rows, -1)).toEqual({ index: 0, isTopShown: false })
+})
+
+test('rows of the in-flight prompt belong to it once it is stored', async ($, on) => {
+  drawsEngineDefaults(on)
+  await renderPrompt($, 'p1')
+  await renderPrompt($, 'placeholder')
+  await renderReply($, 'r2')
+  await renderPrompt($, 'p2')
+  await renderPrompt($, 'p3')
+  const band = await mountBand($)
+  expect((await band.find(POSITION))?.text).toBe('3/3')
+
+  await renderReply($, 'r2', { first: 5, last: 30, of: 60 })
+  expect((await band.find(POSITION))?.text).toBe('2/3')
+  await renderPrompt($, 'p1', COMPOSER, { first: 0, last: 2, of: 3 })
+  expect((await band.find(POSITION))?.text).toBe('1/3')
+})
+
+test('the count follows a reply scrolling into view with no prompt on screen', async ($, on) => {
+  drawsEngineDefaults(on)
+  await renderPrompt($, 'p1')
+  await renderReply($, 'r1')
+  await renderPrompt($, 'p2')
+  await renderReply($, 'r2')
+  const band = await mountBand($)
+  expect((await band.find(POSITION))?.text).toBe('2/2')
+
+  await renderReply($, 'r1', { first: 10, last: 40, of: 80 })
+  expect((await band.find(POSITION))?.text).toBe('1/2')
 })
