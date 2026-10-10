@@ -6,12 +6,11 @@ import {
   entriesOnScreen,
   jumpTarget,
   positionText,
-  undrawnPromptPast,
   type DrawnEntry,
   type Placement,
-  type PlacedEntry,
+  type PromptView,
 } from '../hooks/prompt-jump'
-import { rowsOfTranscriptFields, TranscriptOrder } from '../hooks/transcript-order'
+import { rowsOfTranscriptFields } from '../hooks/transcript-order'
 import { drawsEngineDefaults, ok, recordToasts } from './support'
 
 const BAND = {
@@ -72,12 +71,13 @@ type StoredSession = { rows: Row[]; files: Map<string, readonly Row[]>; clock: M
  * Stands for the session: the rows its transcript file kept before the
  * plugin loaded, and every row the conversation holds, read back as messages.
  */
-function storedSession(on: On, kept: readonly Row[] = []): StoredSession {
+function storedSession(on: On, kept: readonly Row[] = [], { readMs = 0 } = {}): StoredSession {
   drawsEngineDefaults(on)
   const session: StoredSession = { rows: [...kept], files: new Map([[TRANSCRIPT, kept]]), clock: mock.clock(on) }
   mock.env(on, { HOME })
   on('process.run', async (_$, e) => {
     if (e.argv[0] === 'find') return { value: ok(`${TRANSCRIPT}\n`) }
+    if (readMs > 0) await session.clock.sleep(readMs)
     return { value: ok(transcriptFields(session.files.get(e.argv.at(-1) ?? '') ?? [])) }
   })
   on('session.messages', async () => ({ value: session.rows.slice(-MESSAGE_WINDOW).map(messageOf) }))
@@ -352,7 +352,32 @@ test('rows drawn on either side of the 4096th stored message keep transcript ord
   await drawPrompt($, 'p4050', { onScreen: TOP_SHOWN })
   await drawReply($, 'r4195')
   await settle(session)
-  expect(await bandCount($)).toBe('2/2')
+  // 2048 prompts kept, 50 stored after; p4050 is the 2026th.
+  expect(await bandCount($)).toBe('2026/2098')
+})
+
+test('after a reload at the bottom, the count is among every stored prompt, not only the drawn ones', async ($, on) => {
+  const session = storedSession(on, rows('p1', 'r1', 'p2', 'r2', 'p3', 'r3', 'p4', 'r4', 'p5', 'r5', 'p6', 'r6', 'p7', 'r7', 'p8', 'r8'))
+  await load($, session)
+  await drawAll($, ['p6', 'r6'])
+  await drawReply($, 'r7', { first: 20, last: 40, of: 41 })
+  await drawPrompt($, 'p8', { onScreen: { first: 0, last: 0, of: 1 } })
+  await drawReply($, 'r8', { first: 0, last: 2, of: 3 })
+  await drawPrompt($, 'p7')
+  await settle(session)
+  expect(await bandCount($)).toBe('7/8')
+})
+
+test('while the transcript is still being read, no count shows', async ($, on) => {
+  const session = storedSession(on, rows('p1', 'r1', 'p2', 'r2'), { readMs: 1000 })
+  await $.session.start({ cwd: '/work', surface: 'terminal', isInteractive: true })
+  await storeAll($, session, rows('p3'))
+  await drawPrompt($, 'p3', { onScreen: TOP_SHOWN })
+  await settle(session)
+  expect(await bandCount($)).toBeUndefined()
+
+  await session.clock.advance(1000)
+  expect(await bandCount($)).toBe('3/3')
 })
 
 test('a tool call row is placed by its call id', async ($, on) => {
@@ -428,76 +453,100 @@ const TOP = shownFrom(0)
 const prompt = (requestId: string, placement: Placement = OFF): DrawnEntry => ({ requestId, isPrompt: true, placement })
 const reply = (requestId: string, placement: Placement = OFF): DrawnEntry => ({ requestId, isPrompt: false, placement })
 
-const idOf = (entry: DrawnEntry | undefined) => entry?.requestId
+/**
+ * The view of a transcript holding `storedIds` in order (prompts named
+ * `p…`), the drawn entries placed among them.
+ */
+function storedView(storedIds: readonly string[], drawn: readonly DrawnEntry[], lastJumped?: string): PromptView {
+  const placed = drawn.map(entry => ({ place: storedIds.indexOf(entry.requestId), entry }))
+  const prompts = storedIds.flatMap((id, place) => (isPromptId(id) ? [{ place, id }] : []))
+  return { placed, prompts, lastJumped }
+}
+
+/** The view where every stored row is drawn. */
+const drawnView = (entries: readonly DrawnEntry[], lastJumped?: string) =>
+  storedView(
+    entries.map(entry => entry.requestId),
+    entries,
+    lastJumped,
+  )
+
+const idOf = (target: { id: string } | undefined) => target?.id
 
 test('a step back from the newest prompt, its top out of view, lands on its own top', () => {
-  expect(idOf(jumpTarget([prompt('p1'), prompt('p2', shownFrom(3))], undefined, -1))).toBe('p2')
+  expect(idOf(jumpTarget(drawnView([prompt('p1'), prompt('p2', shownFrom(3))]), -1))).toBe('p2')
 })
 
 test('a step back from a prompt whose top shows lands on the one before', () => {
-  expect(idOf(jumpTarget([prompt('p1'), prompt('p2', TOP)], undefined, -1))).toBe('p1')
+  expect(idOf(jumpTarget(drawnView([prompt('p1'), prompt('p2', TOP)]), -1))).toBe('p1')
 })
 
 test('a step on counts from the topmost prompt on screen', () => {
-  expect(idOf(jumpTarget([prompt('p1'), prompt('p2', TOP), prompt('p3', TOP), prompt('p4')], undefined, 1))).toBe('p3')
+  expect(idOf(jumpTarget(drawnView([prompt('p1'), prompt('p2', TOP), prompt('p3', TOP), prompt('p4')]), 1))).toBe('p3')
 })
 
 test('with no row on screen, a step counts from the prompt last jumped to', () => {
   const prompts = [prompt('p1'), prompt('p2'), prompt('p3')]
-  expect(idOf(jumpTarget(prompts, 'p1', 1))).toBe('p2')
-  expect(idOf(jumpTarget(prompts, 'p2', -1))).toBe('p2')
+  expect(idOf(jumpTarget(drawnView(prompts, 'p1'), 1))).toBe('p2')
+  expect(idOf(jumpTarget(drawnView(prompts, 'p2'), -1))).toBe('p2')
 })
 
 test('with no row on screen and no jump yet, a step back lands on the newest prompt', () => {
-  expect(idOf(jumpTarget([prompt('p1'), prompt('p2')], undefined, -1))).toBe('p2')
+  expect(idOf(jumpTarget(drawnView([prompt('p1'), prompt('p2')]), -1))).toBe('p2')
 })
 
 test('there is nothing before the first prompt or after the last', () => {
-  expect(jumpTarget([prompt('p1', TOP), prompt('p2')], undefined, -1)).toBeUndefined()
-  expect(jumpTarget([prompt('p1'), prompt('p2', TOP)], undefined, 1)).toBeUndefined()
-  expect(jumpTarget([], undefined, 1)).toBeUndefined()
+  expect(jumpTarget(drawnView([prompt('p1', TOP), prompt('p2')]), -1)).toBeUndefined()
+  expect(jumpTarget(drawnView([prompt('p1'), prompt('p2', TOP)]), 1)).toBeUndefined()
+  expect(jumpTarget(drawnView([]), 1)).toBeUndefined()
 })
 
 test('the anchor is the topmost prompt on screen, noting whether its top shows', () => {
-  expect(anchorOf([prompt('p1'), prompt('p2', TOP), prompt('p3', TOP)], undefined)).toEqual({ index: 1, isTopShown: true })
-  expect(anchorOf([prompt('p1'), prompt('p2', shownFrom(4))], 'p1')).toEqual({ index: 1, isTopShown: false })
+  expect(anchorOf(drawnView([prompt('p1'), prompt('p2', TOP), prompt('p3', TOP)]))).toEqual({ index: 1, isTopShown: true })
+  expect(anchorOf(drawnView([prompt('p1'), prompt('p2', shownFrom(4))], 'p1'))).toEqual({ index: 1, isTopShown: false })
 })
 
 test('with no row on screen, the anchor is the prompt last jumped to, else the newest', () => {
   const prompts = [prompt('p1'), prompt('p2'), prompt('p3')]
-  expect(anchorOf(prompts, 'p1')).toEqual({ index: 0, isTopShown: false })
-  expect(anchorOf(prompts, undefined)).toEqual({ index: 2, isTopShown: false })
-  expect(anchorOf([], undefined)).toBeUndefined()
+  expect(anchorOf(drawnView(prompts, 'p1'))).toEqual({ index: 0, isTopShown: false })
+  expect(anchorOf(drawnView(prompts))).toEqual({ index: 2, isTopShown: false })
+  expect(anchorOf(drawnView([]))).toBeUndefined()
 })
 
 test('the prompt last jumped to stays the anchor when an older prompt becomes known', () => {
-  expect(anchorOf([prompt('p2'), prompt('p3')], 'p2')).toEqual({ index: 0, isTopShown: false })
-  expect(anchorOf([prompt('p1'), prompt('p2'), prompt('p3')], 'p2')).toEqual({ index: 1, isTopShown: false })
+  expect(anchorOf(drawnView([prompt('p2'), prompt('p3')], 'p2'))).toEqual({ index: 0, isTopShown: false })
+  expect(anchorOf(drawnView([prompt('p1'), prompt('p2'), prompt('p3')], 'p2'))).toEqual({ index: 1, isTopShown: false })
 })
 
 test('the count reads the anchor and the prompts known', () => {
-  expect(positionText([prompt('p1'), prompt('p2', TOP), prompt('p3')], undefined)).toBe('2/3')
-  expect(positionText([], undefined)).toBe('')
+  expect(positionText(drawnView([prompt('p1'), prompt('p2', TOP), prompt('p3')]))).toBe('2/3')
+  expect(positionText(drawnView([]))).toBe('')
+})
+
+test('the count is among every stored prompt, drawn or not', () => {
+  const stored = ['p1', 'r1', 'p2', 'r2', 'p3', 'r3', 'p4', 'r4', 'p5', 'r5', 'p6', 'r6', 'p7', 'r7', 'p8', 'r8']
+  const view = storedView(stored, [prompt('p6'), reply('r6'), prompt('p7', TOP), reply('r7', shownFrom(0, { isBottomShown: false })), prompt('p8')])
+  expect(positionText(view)).toBe('7/8')
+  expect(idOf(jumpTarget(view, -1))).toBe('p6')
 })
 
 test('with only a reply on screen, the anchor is the prompt that owns it', () => {
-  const entries = [prompt('p1'), reply('r1'), prompt('p2'), reply('r2', shownFrom(7)), prompt('p3'), reply('r3')]
-  expect(anchorOf(entries, 'p3')).toEqual({ index: 1, isTopShown: false })
-  expect(positionText(entries, 'p3')).toBe('2/3')
+  const view = drawnView([prompt('p1'), reply('r1'), prompt('p2'), reply('r2', shownFrom(7)), prompt('p3'), reply('r3')], 'p3')
+  expect(anchorOf(view)).toEqual({ index: 1, isTopShown: false })
+  expect(positionText(view)).toBe('2/3')
 })
 
 test('a step back from a reply lands on the top of the prompt that owns it', () => {
-  const entries = [prompt('p1'), reply('r1'), prompt('p2'), reply('r2', shownFrom(7)), prompt('p3')]
-  expect(idOf(jumpTarget(entries, 'p3', -1))).toBe('p2')
-  expect(idOf(jumpTarget(entries, 'p3', 1))).toBe('p3')
+  const view = drawnView([prompt('p1'), reply('r1'), prompt('p2'), reply('r2', shownFrom(7)), prompt('p3')], 'p3')
+  expect(idOf(jumpTarget(view, -1))).toBe('p2')
+  expect(idOf(jumpTarget(view, 1))).toBe('p3')
 })
 
-test('a reply on screen above every known prompt puts the view before the first of them', () => {
-  const entries = [reply('r5', TOP), prompt('p6'), reply('r6')]
-  expect(anchorOf(entries, 'p6')).toEqual({ index: -1, isTopShown: false })
-  expect(jumpTarget(entries, 'p6', -1)).toBeUndefined()
-  expect(idOf(jumpTarget(entries, 'p6', 1))).toBe('p6')
-  expect(positionText(entries, 'p6')).toBe('')
+test('a reply on screen whose prompt is not drawn counts under that prompt', () => {
+  const view = storedView(['p5', 'r5', 'p6', 'r6'], [reply('r5', TOP), prompt('p6'), reply('r6')])
+  expect(positionText(view)).toBe('1/2')
+  expect(idOf(jumpTarget(view, -1))).toBe('p5')
+  expect(idOf(jumpTarget(view, 1))).toBe('p6')
 })
 
 // A jump moves the view past a tall reply in one step; the reply was at no
@@ -506,49 +555,22 @@ test('a row the view jumped past, still reported on screen, does not hold the an
   const tallReplyBefore = reply('r5', shownFrom(0, { isBottomShown: false, reportedAt: 1 }))
   const nextPrompt = prompt('p6', shownFrom(0, { reportedAt: 2 }))
   const nextReply = reply('r6', shownFrom(0, { isBottomShown: false, reportedAt: 3 }))
-  const entries = [prompt('p5'), tallReplyBefore, nextPrompt, nextReply]
-  expect(entriesOnScreen(entries).map(entry => entry.requestId)).toEqual(['p6', 'r6'])
-  expect(anchorOf(entries, 'p5')).toEqual({ index: 1, isTopShown: true })
-  expect(positionText(entries, 'p5')).toBe('2/2')
-  expect(jumpTarget(entries, 'p5', 1)).toBeUndefined()
-  expect(idOf(jumpTarget(entries, 'p5', -1))).toBe('p5')
+  const view = drawnView([prompt('p5'), tallReplyBefore, nextPrompt, nextReply], 'p5')
+  expect(entriesOnScreen(view.placed).map(({ entry }) => entry.requestId)).toEqual(['p6', 'r6'])
+  expect(anchorOf(view)).toEqual({ index: 1, isTopShown: true })
+  expect(positionText(view)).toBe('2/2')
+  expect(jumpTarget(view, 1)).toBeUndefined()
+  expect(idOf(jumpTarget(view, -1))).toBe('p5')
 })
 
 test('a row reported off screen between two shown rows leaves out the older report', () => {
   const upper = prompt('p1', shownFrom(0, { reportedAt: 1 }))
   const lower = prompt('p3', shownFrom(0, { reportedAt: 5 }))
-  expect(anchorOf([upper, reply('r1'), lower], undefined)).toEqual({ index: 1, isTopShown: true })
+  expect(anchorOf(drawnView([upper, reply('r1'), lower]))).toEqual({ index: 1, isTopShown: true })
 })
 
 test('the topmost row on screen decides, a reply above a prompt included', () => {
-  expect(anchorOf([prompt('p1'), reply('r1', shownFrom(30)), prompt('p2', TOP)], undefined)).toEqual({ index: 0, isTopShown: false })
-})
-
-// --- Past the drawn rows ------------------------------------------------
-
-/** The transcript's rows in order, the drawn ones placed among them. */
-function placedAmong(storedIds: readonly string[], drawn: readonly DrawnEntry[]) {
-  const order = TranscriptOrder.of(storedIds.map(id => ({ ids: [id], isPrompt: isPromptId(id) })))
-  const placed: PlacedEntry[] = drawn.map(entry => ({ place: order.placeOf([entry.requestId]) ?? -1, entry }))
-  return { order, placed }
-}
-
-test('past the drawn rows, a step goes to the stored prompt beyond them', () => {
-  const { order, placed } = placedAmong(['p1', 'r1', 'p2', 'r2', 'p3', 'r3', 'p4', 'r4'], [prompt('p3', TOP), reply('r3')])
-  expect(undrawnPromptPast(placed, order, -1)).toBe('p2')
-  expect(undrawnPromptPast(placed, order, 1)).toBe('p4')
-})
-
-test('at the ends of the session, there is no prompt past the drawn rows', () => {
-  const drawn = [prompt('p1', TOP), reply('r1'), prompt('p2'), reply('r2')]
-  const { order, placed } = placedAmong(['p1', 'r1', 'p2', 'r2'], drawn)
-  expect(undrawnPromptPast(placed, order, -1)).toBeUndefined()
-  expect(undrawnPromptPast(placed, order, 1)).toBeUndefined()
-})
-
-test('a reply drawn at the top edge steps back to its own prompt', () => {
-  const { order, placed } = placedAmong(['p1', 'r1', 'p2'], [reply('r1', TOP), prompt('p2')])
-  expect(undrawnPromptPast(placed, order, -1)).toBe('p1')
+  expect(anchorOf(drawnView([prompt('p1'), reply('r1', shownFrom(30)), prompt('p2', TOP)]))).toEqual({ index: 0, isTopShown: false })
 })
 
 // The kit scrolls no transcript, so a jump it tries fails with a toast, where a step with nowhere to go says so.

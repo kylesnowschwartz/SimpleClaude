@@ -112,8 +112,7 @@ Every `just release` republishes the `sc-mods-dist` branch. To publish it on its
 
 - A mermaid block without a closing fence shows its source.
 - Some merman drawings have layout quirks: a flowchart edge that loops back runs against the boxes ([#183](https://github.com/Latias94/merman/issues/183)), a state diagram can print two transition labels run together ([#184](https://github.com/Latias94/merman/issues/184)), a long sequence message label can run past the next lifeline ([#185](https://github.com/Latias94/merman/issues/185)), and in a narrow terminal two side-by-side subgraphs can share a border ([#186](https://github.com/Latias94/merman/issues/186)).
-- The count's total is the prompts whose rows have been drawn since the mod loaded. After a restart, `/resume` or a plugin reload, prompts further back than the screen has shown are left out of the total until they are drawn; ◀ and ▶ still step to them.
-- When the mod loads into a session that already has prompts (a restart, `/resume`, a plugin reload), it runs `find` and `grep` once over the session's transcript file to learn the order of those prompts. Without those commands on the `PATH`, the older prompts are not counted.
+- When the mod loads into a session that already has prompts (a restart, `/resume`, a plugin reload), it runs `find` and `grep` once over the session's transcript file to learn those prompts, and shows no count until that read ends. Without those commands on the `PATH`, the older prompts are not counted. In a transcript long enough that grep's output passes 4 MiB (tens of thousands of rows), the rows past that point are not counted.
 - A prompt waiting in the queue while Claude works is counted once it is sent.
 - The jump buttons step through the main conversation, and are hidden while an agent's transcript is on screen.
 - The mod is built for the terminal. The desktop app and the VS Code extension are untested.

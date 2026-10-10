@@ -13,7 +13,7 @@ export type StoredRow = { ids: readonly string[]; isPrompt: boolean }
  */
 export class TranscriptOrder {
   readonly #placeOf = new Map<string, number>()
-  readonly #prompts: Array<{ place: number; id: string }> = []
+  readonly #prompts: StoredPrompt[] = []
   #rowCount = 0
 
   /** The rows in order; a row whose id is placed already keeps its first place. */
@@ -40,12 +40,14 @@ export class TranscriptOrder {
     return places.length === 0 ? undefined : Math.min(...places)
   }
 
-  /** The id of the person's nearest prompt before the place (step -1) or after it (step 1). */
-  promptPast(place: number, step: -1 | 1): string | undefined {
-    const prompt = step === 1 ? this.#prompts.find(p => p.place > place) : this.#prompts.findLast(p => p.place < place)
-    return prompt?.id
+  /** The person's prompts, in transcript order. */
+  prompts(): readonly StoredPrompt[] {
+    return this.#prompts
   }
 }
+
+/** One of the person's prompts the conversation keeps: its place in the transcript, and its id. */
+export type StoredPrompt = { place: number; id: string }
 
 /** Whether the person sent it: typed at the terminal, or through Remote Control. */
 export const isPersonsPrompt = (origin: { kind: string }) => origin.kind === 'composer' || origin.kind === 'bridge'
