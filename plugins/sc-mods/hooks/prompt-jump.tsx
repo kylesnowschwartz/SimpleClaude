@@ -11,7 +11,7 @@ export type Step = -1 | 1
  * jumped to, or undefined while they rest on the newest prompt, where every
  * new prompt puts them. `storedRead` is the read of the transcript file,
  * under way or done; undefined until it starts, and again when it found no
- * file, so the next need tries again.
+ * file or a file behind the conversation, so the next need tries again.
  */
 export type PromptTrail = { prompts: string[]; at: number | undefined; storedRead: Promise<void> | undefined }
 
@@ -20,9 +20,15 @@ export const newTrail = (): PromptTrail => ({ prompts: [], at: undefined, stored
 /** Whether the person sent it: typed at the terminal, or through Remote Control. */
 export const isPersonsPrompt = (origin: { kind: string }) => origin.kind === 'composer' || origin.kind === 'bridge'
 
-/** The id of the person's prompt a `session.append` stores in the main conversation; undefined for any other row. */
+/**
+ * The id of the person's prompt a `session.append` stores in the main
+ * conversation; undefined for any other row. A prompt sent while a turn
+ * runs its tools is delivered into that turn as a `queued_command` row, and
+ * drawn as a prompt all the same.
+ */
 export function promptIdOf(e: SessionAppendInput): string | undefined {
-  const isPrompt = e.agentId === undefined && e.door === 'prompt' && isPersonsPrompt(e.origin) && e.message.isMeta !== true
+  const isTyped = e.door === 'prompt' || (e.door === 'delivery' && e.message.name === 'queued_command')
+  const isPrompt = e.agentId === undefined && isTyped && isPersonsPrompt(e.origin) && e.message.isMeta !== true
   return isPrompt ? e.uuid : undefined
 }
 
@@ -77,7 +83,7 @@ function startOver(trail: PromptTrail) {
  * quote is escaped, so these match the line's own fields and never text the
  * row quotes.
  */
-const ROW_FIELDS = '"type":"user"|"origin":\\{"kind":"human"|"isMeta":true|"isSidechain":true|"subtype":"compact_boundary"|"uuid":"[^"]+"'
+const ROW_FIELDS = '"type":"user"|"type":"attachment"|"type":"queued_command"|"origin":\\{"kind":"human"|"isMeta":true|"isSidechain":true|"subtype":"compact_boundary"|"uuid":"[^"]+"'
 
 const UUID_FIELD = /^"uuid":"([^"]+)"$/
 
@@ -99,8 +105,12 @@ function linesOf(grepOutput: string): string[][] {
   return lines.map(({ fields }) => fields)
 }
 
+// A prompt typed at rest is a user row; one delivered into a running turn is a queued_command attachment row.
+const isTypedRow = (fields: readonly string[]) =>
+  fields.includes('"type":"user"') || (fields.includes('"type":"attachment"') && fields.includes('"type":"queued_command"'))
+
 const isPersonsRow = (fields: readonly string[]) =>
-  fields.includes('"type":"user"') && fields.includes('"origin":{"kind":"human"') && !fields.includes('"isMeta":true') && !fields.includes('"isSidechain":true')
+  isTypedRow(fields) && fields.includes('"origin":{"kind":"human"') && !fields.includes('"isMeta":true') && !fields.includes('"isSidechain":true')
 
 /**
  * The ids of the person's prompts since the last compaction, in order, from
@@ -124,8 +134,13 @@ export function storedPromptIds(grepOutput: string): string[] {
 // grep's exit status when it read the file and matched nothing.
 const NO_MATCH = 1
 
+/** Whether the file read holds the row anywhere, before its last compaction included. */
+export const readHoldsRow = (grepOutput: string, id: string) => grepOutput.includes(`"uuid":"${id}"`)
+
 /** The prompt ids `transcriptFieldsCommand` found, from what it printed and how it exited. */
-export function promptIdsOfRead({ exitCode, stdout, stderr }: ProcessRunResult): string[] {
+export function promptIdsOfRead({ exitCode, stdout, stderr, isStdoutTruncated }: ProcessRunResult): string[] {
+  // A cut output loses the newest rows, the ones a jump reaches.
+  if (isStdoutTruncated) throw new Error('grep output truncated')
   if (exitCode === 0) return storedPromptIds(stdout)
   if (exitCode === NO_MATCH) return []
   throw new Error(stderr.trim() || `grep exited ${exitCode}`)
@@ -186,6 +201,9 @@ function readStored($: EngineInterface, trail: PromptTrail): Promise<void> {
       const read = await $.process.run(transcriptFieldsCommand(path), { timeoutMs: TRANSCRIPT_READ_TIMEOUT_MS })
       if (trail.storedRead !== pending) return
       noteStored(trail, promptIdsOfRead(read))
+      // A file that holds none of the prompts known lags the conversation: the next need reads it again.
+      const [first] = trail.prompts
+      if (first !== undefined && !readHoldsRow(read.stdout, first)) trail.storedRead = undefined
       await publishPosition($, trail)
     } catch (error) {
       // The prompts stored before the plugin loaded go uncounted.
@@ -215,11 +233,9 @@ async function jump($: EngineInterface, trail: PromptTrail, step: Step) {
     return
   }
 
+  // The arrows move on past a prompt the transcript cannot reach (one a rewind took away), so the next press goes beyond it.
   const refusal = await scrollRefusal($, trail.prompts[target] as string)
-  if (refusal !== undefined) {
-    $.ui.toast(`Can't jump to that prompt: ${refusal}`)
-    return
-  }
+  if (refusal !== undefined) $.ui.toast(`Can't jump to that prompt: ${refusal}`)
   trail.at = target
   await publishPosition($, trail)
 }
