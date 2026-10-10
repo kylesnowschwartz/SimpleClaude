@@ -117,6 +117,25 @@ test('a flowchart after a frontmatter block still falls back to TD', async ($, o
   expect(renders[3]?.stdin).toBe(preamble + WIDE_LR.replace('flowchart LR', 'flowchart TD'))
 })
 
+test('a fence in a list item becomes a text block inside that item', async ($, on) => {
+  const renders = stubMerman(on, () => ok(DRAWING))
+  const seen = captureText(on)
+  const text = '1. Flow:\n\n   ```mermaid\n   flowchart TD\n     A-->B\n   ```\n2. Done'
+  await $.ui.render(render(text, 100))
+  const indentedDrawing = DRAWING.split('\n').map(line => '   ' + line).join('\n')
+  expect(seen.text).toBe('1. Flow:\n\n   ```text\n' + indentedDrawing + '\n   ```\n2. Done')
+  expect(renders[0]?.stdin).toBe('flowchart TD\n  A-->B')
+})
+
+test('a mermaid fence quoted in a markdown example stays as source', async ($, on) => {
+  const renders = stubMerman(on, () => ok(DRAWING))
+  const seen = captureText(on)
+  const text = '````markdown\n' + fenced(FLOWCHART) + '\n````'
+  await $.ui.render(render(text, 100))
+  expect(seen.text).toBe(text)
+  expect(renders.length).toBe(0)
+})
+
 test('a flowchart after an init directive and comments still falls back to TD', async ($, on) => {
   const preamble = '%%{init: {"theme": "dark"}}%%\n%% the release pipeline\n\n'
   const renders = stubMerman(on, (_argv, stdin) => (stdin.includes('flowchart TD') ? ok(DRAWING) : failed(OVERFLOW)))

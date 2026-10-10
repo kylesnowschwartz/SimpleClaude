@@ -1,8 +1,6 @@
 import type { EngineInterface, Register } from 'claude-code'
+import { findMermaidFences, replaceFences, type FenceReplacement, type MermaidFence } from './fences'
 import { drawDiagram, type Runner } from './merman'
-
-// Only closed fences match, so a fence still streaming in is left as source.
-const CLOSED_FENCE = /^```mermaid[ \t]*\n([\s\S]*?)\n```[ \t]*$/gm
 
 // The reply's indent plus a margin column on each side.
 const GUTTER = 4
@@ -66,13 +64,25 @@ function drawingFor(run: Runner, source: string, width: number): Promise<string 
   return drawing.catch(() => undefined)
 }
 
+/**
+ * A text block for each closed fence merman could draw. A fence still
+ * streaming in, or one merman refused, keeps its source.
+ */
+async function drawnReplacements(run: Runner, fences: MermaidFence[], width: number): Promise<FenceReplacement[]> {
+  const closedFences = fences.filter(fence => fence.isClosed)
+  const drawn = await Promise.all(closedFences.map(fence => drawingFor(run, fence.source, width)))
+  return closedFences.flatMap((fence, index) => {
+    const drawing = drawn[index]
+    return drawing === undefined ? [] : [{ fence, text: textBlock(drawing) }]
+  })
+}
+
 export const register: Register = (on, options) => {
   const configuredPath = typeof options.MERMAN_PATH === 'string' ? options.MERMAN_PATH.trim() : ''
 
   on('ui.render', { component: 'AssistantMessage' }, async ($, e, next) => {
-    const text = e.props.text
-    const sources = [...text.matchAll(CLOSED_FENCE)].map(match => match[1] ?? '')
-    if (sources.length === 0) return next(e)
+    const fences = findMermaidFences(e.props.text)
+    if (fences.length === 0) return next(e)
 
     const bin = configuredPath || `${$.plugin.root}/bin/merman-cli`
     const pendingCheck = (mermanCheck ??= checkMerman($, bin))
@@ -82,14 +92,10 @@ export const register: Register = (on, options) => {
 
     const width = e.viewport ? e.viewport.columns - GUTTER : WIDTH_WITHOUT_VIEWPORT
     const run: Runner = (args, stdin) => $.process.run([bin, ...args], { stdin, timeoutMs: RUN_TIMEOUT_MS })
-    const pending = sources.map(source => drawingFor(run, source, width))
-    const drawn = new Map<string, string | undefined>()
-    for (const [index, source] of sources.entries()) drawn.set(source, await pending[index])
+    const replacements = await drawnReplacements(run, fences, width)
+    if (replacements.length === 0) return next(e)
 
-    const rewritten = text.replace(CLOSED_FENCE, (fence, source: string) => {
-      const drawing = drawn.get(source)
-      return drawing === undefined ? fence : textBlock(drawing)
-    })
-    return next({ ...e, props: { ...e.props, text: rewritten } })
+    const text = replaceFences(e.props.text, replacements)
+    return next({ ...e, props: { ...e.props, text } })
   })
 }
