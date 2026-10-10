@@ -106,8 +106,7 @@ SimpleClaude/
 │   └── sc-mods/                  # Mods plugin: mermaid diagrams, prompt jumps, reply copy
 ├── scripts/
 │   ├── install.rb                # Installation/update script
-│   ├── fetch-merman.sh           # Downloads the merman binaries sc-mods runs
-│   └── publish-mods-dist.sh      # Publishes sc-mods to the sc-mods-dist branch
+│   └── update-merman.sh          # Pins the merman release sc-mods downloads
 ├── docs/                         # Documentation
 └── README.md                     # This file
 ```

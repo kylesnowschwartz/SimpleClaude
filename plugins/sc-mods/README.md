@@ -55,29 +55,23 @@ The button takes a mouse click only. The conversation's rows can't take keyboard
 claude plugin install sc-mods --marketplace kylesnowschwartz/SimpleClaude
 ```
 
-This installs from the `sc-mods-dist` branch, which carries merman-cli for macOS and Linux on arm64 and x86_64. Nothing is downloaded when the mod runs.
+The plugin holds no merman binary. The first time a diagram needs drawing, `bin/merman-cli` downloads the merman release archive for your machine from [merman's GitHub releases](https://github.com/Latias94/merman/releases), checks it against the sha256 pinned in [`bin/merman.pin`](bin/merman.pin), and keeps the binary and merman's licenses in `${XDG_CACHE_HOME:-~/.cache}/sc-mods/merman-<version>/`. Later sessions run the cached binary, so the network is needed once per merman version. A plugin update that pins a new version downloads it and removes the old one from the cache.
 
-**A mod runs with your permissions.** It runs inside Claude Code and can start programs as you. This one starts merman-cli to draw diagrams, and `find` and `grep` to read the session's own transcript file (`<session id>.jsonl` under `~/.claude/projects/`, or `$CLAUDE_CONFIG_DIR/projects/`). It makes no network calls and writes no files. The copy button writes to the clipboard through Claude Code, the way `/copy` does. Read [`hooks/register.ts`](hooks/register.ts) before you install it.
+merman-cli runs on macOS and on Linux with glibc, on arm64 and x86_64. The download needs `curl` and `shasum` or `sha256sum`, and on Linux also `xz`.
+
+**A mod runs with your permissions.** It runs inside Claude Code and can start programs as you. This one starts merman-cli to draw diagrams, and `find` and `grep` to read the session's own transcript file (`<session id>.jsonl` under `~/.claude/projects/`, or `$CLAUDE_CONFIG_DIR/projects/`). Its only network call and its only file writes are the merman download above. The copy button writes to the clipboard through Claude Code, the way `/copy` does. Read [`hooks/register.ts`](hooks/register.ts) and [`bin/merman-cli`](bin/merman-cli) before you install it.
 
 ## Settings
 
 | Setting | What it does |
 |---|---|
-| `MERMAN_PATH` | Absolute path to a merman-cli to run instead of the bundled one. Leave it unset to use the bundled one. Set it at install with `--config MERMAN_PATH=/path/to/merman-cli`, or later with `/plugin configure`. |
+| `MERMAN_PATH` | Absolute path to a merman-cli to run instead of the downloaded one. With it set, nothing is downloaded. Set it at install with `--config MERMAN_PATH=/path/to/merman-cli`, or later with `/plugin configure`. |
 
-If merman-cli cannot run, every diagram stays as source and Claude Code shows one notice saying how to fix it.
+If merman-cli cannot run, every diagram stays as source and Claude Code shows one notice with the reason, such as a failed download or a missing `curl`.
 
 ## Development
 
-The binaries are not in the main branch. Fetch them into `bin/` first:
-
-```bash
-just fetch-merman
-```
-
-This runs `scripts/fetch-merman.sh`, which downloads the pinned merman release, checks each archive against its published checksum, and puts one binary per platform beside the `bin/merman-cli` launcher, with merman's licenses in `bin/merman-licenses/`. Running it again does nothing. `just check-merman` reports whether a newer merman release is out.
-
-Then load the plugin from the checkout, either for one session:
+Load the plugin from the checkout, either for one session:
 
 ```bash
 claude --plugin-dir plugins/sc-mods
@@ -87,10 +81,10 @@ or as an installed plugin that reads straight from your checkout:
 
 ```bash
 claude plugin marketplace add /path/to/SimpleClaude
-claude plugin install sc-mods-dev@simpleclaude
+claude plugin install sc-mods@simpleclaude
 ```
 
-With `sc-mods-dev`, edit the files and run `/reload-plugins`. Don't install `sc-mods` and `sc-mods-dev` together, or every diagram is handled twice.
+Then edit the files and run `/reload-plugins`.
 
 Check and test the mod:
 
@@ -98,15 +92,22 @@ Check and test the mod:
 just test-mods
 ```
 
-These tests stand in for merman-cli, so they run without the binaries. To draw a flowchart, a sequence diagram and an invalid diagram with the real merman-cli, fetch the binaries and install [bun](https://bun.sh), then run:
+These tests stand in for merman-cli, so they need no binary. `just test` includes the launcher's tests, which download from local archives rather than the network. To draw a flowchart, a sequence diagram and an invalid diagram with the real merman-cli, install [bun](https://bun.sh), then run:
 
 ```bash
 just test-mods-real
 ```
 
-It stops with an error if merman-cli cannot run on your machine.
+It downloads merman-cli into the cache if it is not there, and stops with the launcher's reason if merman-cli cannot run on your machine.
 
-Every `just release` republishes the `sc-mods-dist` branch. To publish it on its own, run `just publish-mods`, which stops unless all four binaries are present.
+### Upgrade merman
+
+`just check-merman` reports whether a newer merman release is out. To move to it:
+
+1. `just update-merman <version>` writes the version and the published checksum of each platform's archive to `bin/merman.pin`.
+2. `just test-mods` and `just test-mods-real`.
+3. Check a few diagrams live in `claude --plugin-dir plugins/sc-mods`.
+4. Commit, then release with `just bump` and `just release`.
 
 ## Limitations
 
@@ -117,4 +118,5 @@ Every `just release` republishes the `sc-mods-dist` branch. To publish it on its
 - After a rewind (Esc Esc, or editing an earlier prompt), the prompts the rewind went back past are still counted until the mod next reads the transcript: on a restart, a plugin reload or `/resume`.
 - The jump buttons step through the main conversation, and are hidden while an agent's transcript is on screen.
 - The mod is built for the terminal. The desktop app and the VS Code extension are untested.
-- merman-cli ships for macOS and Linux. On other systems the diagrams stay as source unless `MERMAN_PATH` points at a merman-cli.
+- merman publishes merman-cli for macOS and glibc Linux only. On other systems, musl Linux such as Alpine included, the diagrams stay as source unless `MERMAN_PATH` points at a merman-cli.
+- The first diagram after a new merman version waits for the download. If the download takes longer than 15 seconds, that reply keeps its source and the next diagram tries again.

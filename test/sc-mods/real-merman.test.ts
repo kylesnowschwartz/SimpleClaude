@@ -1,5 +1,5 @@
 // Draws diagrams with the real merman-cli through sc-mods' draw path.
-// Run with `just test-mods-real`, which checks the binary is fetched first.
+// Run with `just test-mods-real`, which first runs the launcher so the cache holds merman-cli.
 import { spawnSync } from 'node:child_process'
 import { expect, test } from 'bun:test'
 import { drawDiagram, type RunResult, type Runner } from '../../plugins/sc-mods/hooks/merman'

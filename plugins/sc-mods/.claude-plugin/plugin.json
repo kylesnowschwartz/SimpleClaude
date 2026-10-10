@@ -13,7 +13,7 @@
     "MERMAN_PATH": {
       "type": "string",
       "title": "merman-cli path",
-      "description": "Absolute path to a merman-cli to run instead of the one bundled with the plugin. Leave it unset to use the bundled one."
+      "description": "Absolute path to a merman-cli to run instead of the one the plugin downloads on first use. With it set, nothing is downloaded."
     }
   }
 }

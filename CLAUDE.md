@@ -36,7 +36,7 @@ just test-ste
 
 `just test-ste` runs [stelint](https://pypi.org/project/stelint/) through `test/test_ste_lint.py`. It fails only on the rules in `GATED_RULES` (unapproved words, phrasal verbs, -ing forms, contractions, passive voice, and sentences over 20 words). It prints the count of other warnings as advisory, because those rules misfire on Markdown instruction files. `just test-ste --all` prints every warning. `test/ste/simpleclaude.jsonl` allows the technical words the style uses. To allow a new word, add it there with the value `"__REMOVE__"`.
 
-`just test` runs `ruby -c` over every hook file to catch syntax errors. The CLI smoke test verifies codex/gemini produce real reviews (not plan-confirmation prompts or empty output).
+`just test` runs `ruby -c` over every hook file to catch syntax errors, then the hook tests and the sc-mods merman-cli launcher tests. The CLI smoke test verifies codex/gemini produce real reviews (not plan-confirmation prompts or empty output).
 
 ## Architecture
 
@@ -48,9 +48,9 @@ SimpleClaude consists of these plugins:
 - **sc-extras**: Utility commands for root cause analysis, claim verification, adversarial analysis, and context wizards
 - **sc-skills**: Skills for mermaid diagrams, codebase pattern detection, hypothesis testing, Socratic thinking, file querying, frontend design, image generation, and command generation
 - **sc-refactor**: PR review with ticket integration, codebase health checks, and specialized analysis agents for refactoring workflows
-- **sc-mods**: Claude Code mods, written as a TypeScript hooks module (`hooks/hooks.json` lists `{"modules": [...]}`). Draws mermaid fences in replies as Unicode text by running the bundled merman-cli, jumps between prompts from the band above the prompt, and copies a reply's markdown
+- **sc-mods**: Claude Code mods, written as a TypeScript hooks module (`hooks/hooks.json` lists `{"modules": [...]}`). Draws mermaid fences in replies as Unicode text by running merman-cli, jumps between prompts from the band above the prompt, and copies a reply's markdown
 
-**sc-mods binaries**: sc-mods runs vendored merman-cli binaries; see [Vendored merman binaries (sc-mods)](#vendored-merman-binaries-sc-mods).
+**sc-mods merman-cli**: sc-mods downloads merman-cli on first use; see [merman-cli (sc-mods)](#merman-cli-sc-mods).
 
 **Lightweight agent architecture**: Commands spawn focused agents via `Task()` calls for token-efficient execution
 
@@ -71,9 +71,8 @@ SimpleClaude consists of these plugins:
   6. Commit: `git commit -m "chore: Bump version to vX.X.X"`
   7. Tag: `git tag vX.X.X`
   8. Push: `git push && git push --tags`
-  9. Republish the `sc-mods-dist` branch at the new version (`just publish-mods`)
 
-`just bump` covers steps 1 and 3-5 (it does not touch CLAUDE.md), and `just release` covers steps 6-9: after the tag is pushed it fetches the merman binaries and runs `just publish-mods`. If that publish fails, the release stays tagged and pushed, the recipe exits non-zero, and `just publish-mods` retries it.
+`just bump` covers steps 1 and 3-5 (it does not touch CLAUDE.md), and `just release` covers steps 6-8.
 
 ## Vendored Dependencies
 
@@ -93,19 +92,13 @@ This fetches the latest from the fork, strips dev files, and copies to each hook
 ./scripts/vendor-claude-hooks.sh --check
 ```
 
-## Vendored merman binaries (sc-mods)
+## merman-cli (sc-mods)
 
-sc-mods draws mermaid diagrams by running [merman](https://github.com/Latias94/merman)'s `merman-cli`. The release binaries for macOS and Linux on arm64 and x86_64 live in `plugins/sc-mods/bin/` as `merman-cli_<os>_<arch>`, with merman's licenses in `plugins/sc-mods/bin/merman-licenses/`. They are gitignored on `main`. The committed `plugins/sc-mods/bin/merman-cli` launcher picks the binary for the machine it runs on. The pinned version is `MERMAN_VERSION` in `scripts/fetch-merman.sh`.
+sc-mods draws mermaid diagrams by running [merman](https://github.com/Latias94/merman)'s `merman-cli`. The repository holds no merman binary. The mod runs the `plugins/sc-mods/bin/merman-cli` launcher, which downloads this machine's release archive on first use, checks it against the sha256 pinned in `plugins/sc-mods/bin/merman.pin`, and keeps the binary with merman's licenses in `${XDG_CACHE_HOME:-~/.cache}/sc-mods/merman-<version>/`. Later runs start the cached binary. A download for a new version removes the cached copies of other versions. When the launcher cannot provide a binary it exits 127 with the reason on stderr, and the mod shows that reason in its notice.
 
-Installs of `sc-mods` come from the `sc-mods-dist` branch: the plugin tree as committed at `HEAD` plus the four binaries and the licenses, at the branch root, as one commit. `just publish-mods` (`scripts/publish-mods-dist.sh`) rewrites it, and every `just release` runs that publish. Never edit `sc-mods-dist` by hand. The marketplace's `sc-mods-dev` entry reads `./plugins/sc-mods` from the checkout instead. `just bump` sets the version on both entries.
+merman publishes builds for macOS and glibc Linux on arm64 and x86_64. The download needs `curl` and `shasum` or `sha256sum`, plus `xz` on Linux. `test/test_merman_launcher.rb` (part of `just test`) tests the launcher against local archives, with no network.
 
-### First-time setup
-
-```bash
-just fetch-merman
-```
-
-This downloads the pinned release, checks each archive against its published checksum, and extracts the binaries and licenses. It does nothing when they are already present.
+The marketplace's `sc-mods` entry installs `./plugins/sc-mods` from `main`, like every other plugin.
 
 ### Check for updates
 
@@ -117,12 +110,11 @@ This prints the pinned and latest merman versions, exits 0 when they match and 1
 
 ### Upgrade merman
 
-1. Edit `MERMAN_VERSION` in `scripts/fetch-merman.sh`
-2. `just fetch-merman`
-3. `just test-mods` and `just test-mods-real`
-4. Check diagrams live in `claude --plugin-dir plugins/sc-mods`
-5. Commit
-6. Release (`just bump` then `just release`), which republishes `sc-mods-dist`
+1. `just update-merman <version>`, which writes the version and the four published checksums to `merman.pin` (`scripts/update-merman.sh`)
+2. `just test-mods` and `just test-mods-real`; the second downloads the new version into the cache
+3. Check diagrams live in `claude --plugin-dir plugins/sc-mods`
+4. Commit
+5. Release (`just bump` then `just release`)
 
 ## Agent Tool Permissions
 
