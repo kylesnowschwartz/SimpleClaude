@@ -19,7 +19,8 @@ export type MermaidFence = {
 /** One block's new text, put in place of the block's lines. */
 export type FenceReplacement = { fence: MermaidFence; text: string }
 
-type Line = { text: string; start: number; end: number }
+/** `isLast` marks the line a streaming reply is still writing. */
+type Line = { text: string; start: number; end: number; isLast: boolean }
 
 type FenceRun = { char: string; length: number; info: string }
 
@@ -49,8 +50,9 @@ const LIST_MARKER_ANYWHERE = /[-*+]|\d{1,9}[.)]/g
 function splitLines(text: string): Line[] {
   const lines: Line[] = []
   let start = 0
-  for (const lineText of text.split('\n')) {
-    lines.push({ text: lineText, start, end: start + lineText.length })
+  const lineTexts = text.split('\n')
+  for (const [index, lineText] of lineTexts.entries()) {
+    lines.push({ text: lineText, start, end: start + lineText.length, isLast: index === lineTexts.length - 1 })
     start += lineText.length + 1
   }
   return lines
@@ -144,6 +146,9 @@ class FenceScanner {
 
   private readInsideFence(open: OpenFence, line: Line): void {
     const body = stripLinePrefix(line.text, open.linePrefix)
+    // A blank last line is a line still arriving, which says nothing yet
+    // about whether the blockquote goes on.
+    if (body === undefined && line.isLast && line.text.trim() === '') return
     if (body === undefined) {
       this.finish(open, true)
       return this.read(line)
