@@ -135,6 +135,19 @@ export function jumpTarget(view: PromptView, step: Step): StoredPrompt | undefin
   return target === BEFORE_FIRST ? undefined : view.prompts[target]
 }
 
+/**
+ * Whether ▶ has nowhere to go: the step lands on the last prompt, which is
+ * on screen with the transcript's end in view, so the view cannot move it up.
+ */
+export function isAtLastPrompt(view: PromptView, target: StoredPrompt): boolean {
+  if (target !== view.prompts.at(-1)) return false
+
+  const onScreen = entriesOnScreen(view.placed)
+  const end = onScreen.at(-1)
+  const isEndInView = end !== undefined && end === view.placed.at(-1) && end.entry.placement.kind === 'onScreen' && end.entry.placement.isBottomShown
+  return isEndInView && onScreen.some(({ entry }) => entry.requestId === target.id)
+}
+
 /** `7/8` while the view is on the seventh of eight prompts; empty with none known, or above the first. */
 export function positionText(view: PromptView): string {
   const anchor = anchorOf(view)
@@ -277,7 +290,7 @@ async function publishPosition($: EngineInterface, trail: PromptTrail) {
 async function jump($: EngineInterface, trail: PromptTrail, step: Step) {
   const view = viewOf(trail)
   const target = jumpTarget(view, step)
-  if (target === undefined) {
+  if (target === undefined || (step === 1 && isAtLastPrompt(view, target))) {
     $.ui.toast(step === -1 ? 'No earlier prompt' : 'No later prompt')
     return
   }

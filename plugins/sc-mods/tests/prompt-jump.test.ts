@@ -5,6 +5,7 @@ import {
   anchorOf,
   entriesOnScreen,
   jumpTarget,
+  isAtLastPrompt,
   positionText,
   type DrawnEntry,
   type Placement,
@@ -573,6 +574,18 @@ test('the topmost row on screen decides, a reply above a prompt included', () =>
   expect(anchorOf(drawnView([prompt('p1'), reply('r1', shownFrom(30)), prompt('p2', TOP)]))).toEqual({ index: 0, isTopShown: false })
 })
 
+// --- At the end of the transcript ---------------------------------------
+
+test('the last prompt on screen with the transcript’s end in view has nowhere further to go', () => {
+  const atBottom = drawnView([prompt('p7'), reply('r7', shownFrom(20, { reportedAt: 1 })), prompt('p8', shownFrom(0, { reportedAt: 2 })), reply('r8', shownFrom(0, { reportedAt: 3 }))])
+  const last = atBottom.prompts.at(-1)
+  expect(last !== undefined && isAtLastPrompt(atBottom, last)).toBe(true)
+
+  const replyRunsOn = drawnView([prompt('p8', TOP), reply('r8', shownFrom(0, { isBottomShown: false }))])
+  const only = replyRunsOn.prompts.at(-1)
+  expect(only !== undefined && isAtLastPrompt(replyRunsOn, only)).toBe(false)
+})
+
 // The kit scrolls no transcript, so a jump it tries fails with a toast, where a step with nowhere to go says so.
 test('a step on from a reply taller than the screen tries the next stored prompt, not drawn yet', async ($, on) => {
   const session = storedSession(on, rows('p5', 'r5', 'p6', 'r6'))
@@ -585,4 +598,17 @@ test('a step on from a reply taller than the screen tries the next stored prompt
   await band.press({ key: 'prompt-jump:next' })
   expect(toasts.length).toBe(1)
   expect(toasts[0]).toMatch(/^Can't jump to that prompt: \S/)
+})
+
+test('a step on at the last prompt, the transcript’s end in view, says there is no later prompt', async ($, on) => {
+  const session = storedSession(on, rows('p1', 'r1', 'p2', 'r2'))
+  const toasts = recordToasts(on)
+  await load($, session)
+  await drawReply($, 'r1', { first: 5, last: 9, of: 10 })
+  await drawPrompt($, 'p2', { onScreen: TOP_SHOWN })
+  await drawReply($, 'r2', { first: 0, last: 3, of: 4 })
+  await settle(session)
+  const band = await mountBand($)
+  await band.press({ key: 'prompt-jump:next' })
+  expect(toasts).toEqual(['No later prompt'])
 })
