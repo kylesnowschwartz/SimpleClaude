@@ -50,6 +50,13 @@ test('an unclosed fence shows a placeholder while its turn runs', async ($, on) 
   expect(seen).toEqual(['Here it comes:\n\n' + PLACEHOLDER])
 })
 
+test('a quoted fence streaming in at a line break shows the placeholder', async ($, on) => {
+  const seen = standInEngine(on)
+  await startTurn($, 'turn-1')
+  await $.ui.render(render('> ```mermaid\n> flowchart TD\n', 'quoted'))
+  expect(seen).toEqual(['> ' + PLACEHOLDER + '\n'])
+})
+
 test('an unclosed fence shows its source once the turn completes', async ($, on) => {
   const seen = standInEngine(on)
   await startTurn($, 'turn-1')

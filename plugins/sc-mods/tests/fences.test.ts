@@ -64,6 +64,12 @@ test('a fence in a blockquote is found, and ends with the quote', () => {
   expect(unclosed?.source).toBe('graph TD')
 })
 
+test('a quoted fence stays open across a blank last line, which is still arriving', () => {
+  const [fence] = findMermaidFences('> ```mermaid\n> graph TD\n')
+  expect(fence?.isClosed).toBe(false)
+  expect(fence?.source).toBe('graph TD')
+})
+
 test('a mermaid fence inside another code block is an example, not a diagram', () => {
   const text = '````markdown\n```mermaid\ngraph TD\n```\n````\n\n```mermaid\nsequenceDiagram\n```'
   expect(sourcesIn(text)).toEqual(['sequenceDiagram'])
