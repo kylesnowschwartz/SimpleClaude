@@ -128,12 +128,13 @@ publish-mods:
     done
     ./scripts/publish-mods-dist.sh
 
-# Syntax-check all hook Ruby files, then run hook unit/integration tests
+# Syntax-check all hook Ruby files, then run the hook and merman-cli launcher tests
 test:
     @find plugins/sc-hooks/hooks -name '*.rb' -print0 | xargs -0 -n1 ruby -c
     @ruby test/test_auto_format_batch.rb
     @ruby test/test_error_handling.rb
     @ruby test/test_tool_command.rb
+    @ruby test/test_merman_launcher.rb
 
 # Validate and test the sc-mods mods (needs the claude CLI)
 test-mods:

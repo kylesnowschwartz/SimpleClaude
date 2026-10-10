@@ -1,0 +1,7 @@
+# The merman release bin/merman-cli downloads, and the sha256 of each
+# platform's archive. `just update-merman <version>` writes this file.
+version 0.8.0
+aarch64-apple-darwin a6c167096897bf7d314c5170970478b3c7df92ac9d9d292ca25578ae80cac98e
+x86_64-apple-darwin 2fbfe19aeb11b68ec2129ba3e268d1f4ba4cb275f299bbde4ac34be275f8a8aa
+aarch64-unknown-linux-gnu d022e2d4a784d0cbe348203f7c1318b65d1a5f8db257fd26d27d38830d455c96
+x86_64-unknown-linux-gnu 005211cfdac64eaab4dc338b03ecc3d973c76869e3f949166ddd09d78368abc0

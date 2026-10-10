@@ -8,13 +8,10 @@ import { registerReplyCopy } from './reply-copy'
 const GUTTER = 4
 const WIDTH_WITHOUT_VIEWPORT = 100
 const RUN_TIMEOUT_MS = 5000
-// A new binary's first launch can wait on the OS scanning it.
+// The first check of a merman version downloads it, and a new binary's first
+// launch can wait on the OS scanning it.
 const CHECK_TIMEOUT_MS = 15000
 const NOTICE_TIMEOUT_MS = 15000
-
-// A dev checkout loads the plugin from the repository's plugins/ folder;
-// an install loads it from Claude Code's plugin cache.
-const DEV_CHECKOUT_ROOT = /\/plugins\/sc-mods\/?$/
 
 // How Claude Code words a $.process.run rejection for a command that
 // outlived its timeoutMs; any other rejection is a failure to run.
@@ -37,21 +34,27 @@ let mermanCheck: Promise<MermanCheck> | undefined
 
 const textBlock = (drawing: string) => '```text\n' + drawing + '\n```'
 
-function missingMermanNotice(pluginRoot: string): string {
-  const remedy = DEV_CHECKOUT_ROOT.test(pluginRoot)
-    ? 'run scripts/fetch-merman.sh in the SimpleClaude checkout'
-    : 'reinstall the sc-mods plugin, or set MERMAN_PATH to a merman-cli'
-  return `sc-mods: merman-cli could not run, so mermaid diagrams stay as source. To fix it, ${remedy}.`
+/** The notice for a merman-cli that cannot run; `reason` is its last stderr line, if any. */
+function missingMermanNotice(reason: string | undefined): string {
+  const because = reason ? ` (${reason})` : ''
+  return (
+    `sc-mods: merman-cli could not run${because}, so mermaid diagrams stay as source. ` +
+    'To fix it, restart Claude Code once the cause is fixed, or set MERMAN_PATH to a merman-cli.'
+  )
 }
 
+const lastLine = (text: string) => text.trim().split('\n').pop() || undefined
+
 async function checkMerman($: EngineInterface, bin: string): Promise<MermanCheck> {
+  let reason: string | undefined
   try {
-    const { exitCode } = await $.process.run([bin, '--version'], { timeoutMs: CHECK_TIMEOUT_MS })
+    const { exitCode, stderr } = await $.process.run([bin, '--version'], { timeoutMs: CHECK_TIMEOUT_MS })
     if (exitCode === 0) return 'runnable'
+    reason = lastLine(stderr)
   } catch (error) {
     if (error instanceof Error && TIMED_OUT.test(error.message)) return 'timed-out'
   }
-  $.ui.toast(missingMermanNotice($.plugin.root), { timeoutMs: NOTICE_TIMEOUT_MS })
+  $.ui.toast(missingMermanNotice(reason), { timeoutMs: NOTICE_TIMEOUT_MS })
   return 'missing'
 }
 

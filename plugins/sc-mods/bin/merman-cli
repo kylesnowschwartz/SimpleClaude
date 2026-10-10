@@ -1,31 +1,116 @@
 #!/bin/sh
-# Runs the merman-cli binary built for this machine. The plugin ships one
-# binary per platform beside this script, and the mod runs this path, so the
-# choice happens here rather than at install time.
+# Runs the merman-cli release built for this machine, at the version and
+# checksums pinned in merman.pin beside this script.
+#
+# The binary lives in ${XDG_CACHE_HOME:-~/.cache}/sc-mods/merman-<version>/,
+# with merman's licenses. When it is not there, this script downloads this
+# platform's release archive, checks it against the pinned sha256, unpacks it
+# into the cache and removes the cached copies of other merman versions.
+#
+# It exits 127, with the reason on stderr, whenever it cannot provide a
+# binary. SC_MODS_MERMAN_RELEASES replaces the URL the release archives are
+# downloaded from.
 set -eu
 
-case $(uname -s) in
-    Darwin) operating_system=darwin ;;
-    Linux) operating_system=linux ;;
-    *)
-        echo "merman-cli: no binary for $(uname -s) $(uname -m)" >&2
-        exit 127
-        ;;
-esac
+releases_url=${SC_MODS_MERMAN_RELEASES:-https://github.com/Latias94/merman/releases/download}
+pin_file="$(dirname "$0")/merman.pin"
+cache_root="${XDG_CACHE_HOME:-$HOME/.cache}/sc-mods"
+operating_system=$(uname -s)
 
-case $(uname -m) in
-    arm64 | aarch64) architecture=arm64 ;;
-    x86_64 | amd64) architecture=amd64 ;;
-    *)
-        echo "merman-cli: no binary for $(uname -s) $(uname -m)" >&2
-        exit 127
-        ;;
-esac
-
-binary="$(dirname "$0")/merman-cli_${operating_system}_${architecture}"
-if [ ! -x "$binary" ]; then
-    echo "merman-cli: no binary at $binary; run scripts/fetch-merman.sh in a SimpleClaude checkout, or reinstall the sc-mods plugin" >&2
+fail() {
+    echo "merman-cli: $1" >&2
     exit 127
+}
+
+case $operating_system/$(uname -m) in
+    Darwin/arm64 | Darwin/aarch64) target=aarch64-apple-darwin ;;
+    Darwin/x86_64) target=x86_64-apple-darwin ;;
+    Linux/aarch64 | Linux/arm64) target=aarch64-unknown-linux-gnu ;;
+    Linux/x86_64 | Linux/amd64) target=x86_64-unknown-linux-gnu ;;
+    *) fail "merman publishes no binary for $operating_system $(uname -m)" ;;
+esac
+
+pinned() {
+    awk -v key="$1" '$1 == key { print $2 }' "$pin_file"
+}
+
+[ -r "$pin_file" ] || fail "cannot read $pin_file"
+version=$(pinned version)
+checksum=$(pinned "$target")
+[ -n "$version" ] || fail "$pin_file names no version"
+[ -n "$checksum" ] || fail "$pin_file has no checksum for $target"
+
+install_dir="$cache_root/merman-$version"
+binary="$install_dir/merman-cli"
+
+if [ -x "$binary" ]; then
+    exec "$binary" "$@"
 fi
 
+require() {
+    command -v "$1" >/dev/null 2>&1 ||
+        fail "downloading merman $version needs $1, which is not on PATH"
+}
+
+require curl
+require tar
+# GNU tar unpacks .xz through the xz program; macOS tar has xz built in.
+if [ "$operating_system" = Linux ]; then
+    require xz
+fi
+if command -v shasum >/dev/null 2>&1; then
+    sha256_of() { shasum -a 256 "$1" | cut -d' ' -f1; }
+elif command -v sha256sum >/dev/null 2>&1; then
+    sha256_of() { sha256sum "$1" | cut -d' ' -f1; }
+else
+    fail "downloading merman $version needs shasum or sha256sum, which are not on PATH"
+fi
+
+mkdir -p "$cache_root" || fail "cannot create $cache_root"
+download_dir=$(mktemp -d "$cache_root/.download.XXXXXX") ||
+    fail "cannot create a download folder in $cache_root"
+trap 'rm -rf -- "$download_dir"' EXIT
+trap 'exit 127' HUP INT TERM
+
+archive="merman-cli-$target.tar.xz"
+archive_url="$releases_url/v$version/$archive"
+unpacked="$download_dir/merman-cli-$target"
+
+curl -fsSL -o "$download_dir/$archive" "$archive_url" ||
+    fail "could not download $archive_url"
+
+actual=$(sha256_of "$download_dir/$archive")
+[ "$actual" = "$checksum" ] ||
+    fail "$archive has sha256 $actual, but merman.pin expects $checksum"
+
+tar -xJf "$download_dir/$archive" -C "$download_dir" \
+    "merman-cli-$target/merman-cli" \
+    "merman-cli-$target/LICENSE-APACHE" \
+    "merman-cli-$target/LICENSE-MIT" \
+    "merman-cli-$target/THIRD_PARTY_LICENSES" \
+    "merman-cli-$target/THIRD_PARTY_NOTICES.md" ||
+    fail "$archive does not hold merman-cli and its licenses"
+chmod 0755 "$unpacked/merman-cli"
+mv "$unpacked" "$download_dir/merman-$version"
+
+# A folder with no runnable binary cannot be a finished install, so clear it
+# for the rename below.
+if [ -e "$install_dir" ] && [ ! -x "$binary" ]; then
+    rm -rf -- "$install_dir"
+fi
+
+# Moving the folder into the cache root is one rename, so the binary appears
+# whole or not at all. The rename fails when another session finished the
+# same download first, and that session's copy serves.
+mv "$download_dir/merman-$version" "$cache_root/" 2>/dev/null || [ -x "$binary" ] ||
+    fail "cannot move merman $version into $cache_root"
+
+for cached in "$cache_root"/merman-*; do
+    if [ "$cached" != "$install_dir" ]; then
+        rm -rf -- "$cached"
+    fi
+done
+
+rm -rf -- "$download_dir"
+trap - EXIT HUP INT TERM
 exec "$binary" "$@"
