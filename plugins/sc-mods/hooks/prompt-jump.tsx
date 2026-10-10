@@ -1,5 +1,5 @@
 import { atom, read, update } from 'claude-code'
-import type { EngineInterface, On, OnScreen, PromptOrigin, UiScrollBlock } from 'claude-code'
+import type { EngineInterface, On, OnScreen, PromptOrigin } from 'claude-code'
 import {
   appendedRow,
   findTranscriptCommand,
@@ -248,59 +248,41 @@ async function publishPosition($: EngineInterface, trail: PromptTrail) {
 }
 
 /**
- * The drawn entry at the end of the transcript in the step's direction,
- * when a prompt the screen has not drawn lies past it.
+ * The id of the stored prompt just past the drawn entries in the step's
+ * direction. Claude Code draws only the entries near the view, and scrolls
+ * to a stored row whether it is drawn or not.
  */
-export function unseenEdge(placed: readonly PlacedEntry[], order: TranscriptOrder, step: Step): DrawnEntry | undefined {
+export function undrawnPromptPast(placed: readonly PlacedEntry[], order: TranscriptOrder, step: Step): string | undefined {
   const edge = step === -1 ? placed[0] : placed.at(-1)
-  if (edge === undefined) return undefined
-
-  const hasPromptPast = step === -1 ? order.hasPromptBefore(edge.place) : order.hasPromptAfter(edge.place)
-  return hasPromptPast ? edge.entry : undefined
+  return edge === undefined ? undefined : order.promptPast(edge.place, step)
 }
 
 async function jump($: EngineInterface, trail: PromptTrail, step: Step) {
   const placed = placedEntries(trail)
-  const target = jumpTarget(
+  const drawnTarget = jumpTarget(
     placed.map(({ entry }) => entry),
     trail.lastJumped,
     step,
   )
+  const target = drawnTarget?.requestId ?? undrawnPromptPast(placed, trail.order, step)
   if (target === undefined) {
-    await revealPastEdge($, trail, placed, step)
-    return
-  }
-
-  const refusal = await scrollRefusal($, target.requestId, 'start')
-  if (refusal !== undefined) {
-    $.ui.toast(`Can't jump to that prompt: ${refusal}`)
-    return
-  }
-  trail.lastJumped = target.requestId
-  schedulePublish($, trail)
-}
-
-/**
- * Claude Code draws only the entries near the view, so a prompt past the
- * drawn ones has nothing to jump to yet. Moving the edge entry to the far
- * side of the view draws the entries beyond it, and the next press reaches
- * their prompts.
- */
-async function revealPastEdge($: EngineInterface, trail: PromptTrail, placed: readonly PlacedEntry[], step: Step) {
-  const edge = unseenEdge(placed, trail.order, step)
-  if (edge === undefined) {
     $.ui.toast(step === -1 ? 'No earlier prompt' : 'No later prompt')
     return
   }
 
-  const refusal = await scrollRefusal($, edge.requestId, step === -1 ? 'end' : 'start')
-  if (refusal !== undefined) $.ui.toast(`Can't jump to that prompt: ${refusal}`)
+  const refusal = await scrollRefusal($, target)
+  if (refusal !== undefined) {
+    $.ui.toast(`Can't jump to that prompt: ${refusal}`)
+    return
+  }
+  trail.lastJumped = target
+  schedulePublish($, trail)
 }
 
 /** Why the transcript did not move to the entry, or undefined once it did. */
-async function scrollRefusal($: EngineInterface, requestId: string, block: UiScrollBlock): Promise<string | undefined> {
+async function scrollRefusal($: EngineInterface, requestId: string): Promise<string | undefined> {
   try {
-    return (await $.ui.scroll({ to: { requestId }, block })).deny
+    return (await $.ui.scroll({ to: { requestId }, block: 'start' })).deny
   } catch (error) {
     // Where no surface scrolls the transcript, the call rejects instead of denying.
     return error instanceof Error ? error.message : String(error)

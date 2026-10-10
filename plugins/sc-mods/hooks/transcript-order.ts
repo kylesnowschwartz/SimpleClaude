@@ -2,7 +2,7 @@ import type { ProcessRunResult, SessionAppendInput } from 'claude-code'
 
 /**
  * A row the main conversation keeps, by the ids a drawn row of it carries:
- * the stored row's own id, and the ids of the tool calls it makes.
+ * the stored row's own id first, then the ids of the tool calls it makes.
  */
 export type StoredRow = { ids: readonly string[]; isPrompt: boolean }
 
@@ -13,7 +13,7 @@ export type StoredRow = { ids: readonly string[]; isPrompt: boolean }
  */
 export class TranscriptOrder {
   readonly #placeOf = new Map<string, number>()
-  readonly #promptPlaces: number[] = []
+  readonly #prompts: Array<{ place: number; id: string }> = []
   #rowCount = 0
 
   /** The rows in order; a row whose id is placed already keeps its first place. */
@@ -30,7 +30,8 @@ export class TranscriptOrder {
     const place = this.#rowCount
     this.#rowCount += 1
     for (const id of row.ids) this.#placeOf.set(id, place)
-    if (row.isPrompt) this.#promptPlaces.push(place)
+    const [id] = row.ids
+    if (row.isPrompt && id !== undefined) this.#prompts.push({ place, id })
   }
 
   /** The place of the first row holding one of the ids: a group of tool calls sits at its first call's. */
@@ -39,14 +40,10 @@ export class TranscriptOrder {
     return places.length === 0 ? undefined : Math.min(...places)
   }
 
-  hasPromptBefore(place: number): boolean {
-    const first = this.#promptPlaces[0]
-    return first !== undefined && first < place
-  }
-
-  hasPromptAfter(place: number): boolean {
-    const last = this.#promptPlaces.at(-1)
-    return last !== undefined && last > place
+  /** The id of the person's nearest prompt before the place (step -1) or after it (step 1). */
+  promptPast(place: number, step: -1 | 1): string | undefined {
+    const prompt = step === 1 ? this.#prompts.find(p => p.place > place) : this.#prompts.findLast(p => p.place < place)
+    return prompt?.id
   }
 }
 

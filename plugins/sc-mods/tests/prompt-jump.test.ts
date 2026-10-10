@@ -6,7 +6,7 @@ import {
   entriesOnScreen,
   jumpTarget,
   positionText,
-  unseenEdge,
+  undrawnPromptPast,
   type DrawnEntry,
   type Placement,
   type PlacedEntry,
@@ -533,20 +533,34 @@ function placedAmong(storedIds: readonly string[], drawn: readonly DrawnEntry[])
   return { order, placed }
 }
 
-test('past the drawn rows, a step moves the edge row so the turns beyond it get drawn', () => {
+test('past the drawn rows, a step goes to the stored prompt beyond them', () => {
   const { order, placed } = placedAmong(['p1', 'r1', 'p2', 'r2', 'p3', 'r3', 'p4', 'r4'], [prompt('p3', TOP), reply('r3')])
-  expect(idOf(unseenEdge(placed, order, -1))).toBe('p3')
-  expect(idOf(unseenEdge(placed, order, 1))).toBe('r3')
+  expect(undrawnPromptPast(placed, order, -1)).toBe('p2')
+  expect(undrawnPromptPast(placed, order, 1)).toBe('p4')
 })
 
-test('at the ends of the session, there is nothing past the drawn rows', () => {
+test('at the ends of the session, there is no prompt past the drawn rows', () => {
   const drawn = [prompt('p1', TOP), reply('r1'), prompt('p2'), reply('r2')]
   const { order, placed } = placedAmong(['p1', 'r1', 'p2', 'r2'], drawn)
-  expect(unseenEdge(placed, order, -1)).toBeUndefined()
-  expect(unseenEdge(placed, order, 1)).toBeUndefined()
+  expect(undrawnPromptPast(placed, order, -1)).toBeUndefined()
+  expect(undrawnPromptPast(placed, order, 1)).toBeUndefined()
 })
 
-test('a reply drawn at the top edge has its prompt above it to draw', () => {
+test('a reply drawn at the top edge steps back to its own prompt', () => {
   const { order, placed } = placedAmong(['p1', 'r1', 'p2'], [reply('r1', TOP), prompt('p2')])
-  expect(idOf(unseenEdge(placed, order, -1))).toBe('r1')
+  expect(undrawnPromptPast(placed, order, -1)).toBe('p1')
+})
+
+// The kit scrolls no transcript, so a jump it tries fails with a toast, where a step with nowhere to go says so.
+test('a step on from a reply taller than the screen tries the next stored prompt, not drawn yet', async ($, on) => {
+  const session = storedSession(on, rows('p5', 'r5', 'p6', 'r6'))
+  const toasts = recordToasts(on)
+  await load($, session)
+  await drawPrompt($, 'p5')
+  await drawReply($, 'r5', { first: 0, last: 30, of: 145 })
+  await settle(session)
+  const band = await mountBand($)
+  await band.press({ key: 'prompt-jump:next' })
+  expect(toasts.length).toBe(1)
+  expect(toasts[0]).toMatch(/^Can't jump to that prompt: \S/)
 })
