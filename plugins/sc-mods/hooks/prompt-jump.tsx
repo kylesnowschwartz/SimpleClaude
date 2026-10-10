@@ -144,7 +144,9 @@ export type PlacedEntry = { place: number; entry: DrawnEntry }
  * - `drawn`: the entries drawn so far, by site and requestId;
  * - `reportClock`: counts the reports of where entries are, to order them;
  * - `lastJumped`: the requestId of the prompt last jumped to;
- * - `positionShown`: the count the band was last asked to show.
+ * - `positionShown`: the count the band was last asked to show;
+ * - `conversation`: counts the conversations the process has gone on to, so
+ *   a transcript read started in an earlier one is dropped.
  */
 export type PromptTrail = {
   order: TranscriptOrder
@@ -153,16 +155,23 @@ export type PromptTrail = {
   reportClock: number
   lastJumped: string | undefined
   positionShown: string
+  conversation: number
 }
 
-export const newTrail = (): PromptTrail => ({
+export const newTrail = (conversation = 0): PromptTrail => ({
   order: new TranscriptOrder(),
   appended: [],
   drawn: new Map(),
   reportClock: 0,
   lastJumped: undefined,
   positionShown: '',
+  conversation,
 })
+
+/** Forgets the conversation that ended: `/clear` and `/resume` go on in this process with other prompts. */
+function startOver(trail: PromptTrail) {
+  Object.assign(trail, newTrail(trail.conversation + 1), { positionShown: trail.positionShown })
+}
 
 /** The drawn entries whose stored rows are known, in transcript order. */
 export function placedEntries(trail: PromptTrail): PlacedEntry[] {
@@ -291,13 +300,19 @@ async function findTranscript($: EngineInterface): Promise<string | undefined> {
   return found.stdout.trim() || undefined
 }
 
-/** Reads the transcript file for the rows stored before the plugin loaded: a restart, a resume or a reload. */
-async function readStoredRows($: EngineInterface, trail: PromptTrail) {
+/**
+ * Reads the transcript file for the rows the conversation stored before the
+ * plugin saw them: those of a session it loaded into, or one resumed.
+ */
+async function readStoredRows($: EngineInterface, trail: PromptTrail, locate: () => Promise<string | undefined>) {
+  const conversation = trail.conversation
   try {
-    const path = await findTranscript($)
+    const path = await locate()
     if (path === undefined) return
 
     const read = await $.process.run(transcriptFieldsCommand(path), { timeoutMs: TRANSCRIPT_READ_TIMEOUT_MS })
+    if (trail.conversation !== conversation) return
+
     noteTranscript(trail, rowsOfTranscriptRead(read))
     redrawBandIfMoved($, trail)
   } catch (error) {
@@ -327,8 +342,22 @@ export function registerPromptJump(on: On) {
 
   on('session.start', async ($, e, next) => {
     const started = await next(e)
-    void readStoredRows($, trail)
+    void readStoredRows($, trail, () => findTranscript($))
     return started
+  })
+
+  on('session.end', ($, e, next) => {
+    if (e.reason === 'clear' || e.reason === 'resume') {
+      startOver(trail)
+      redrawBandIfMoved($, trail)
+    }
+    return next(e)
+  })
+
+  // A resumed conversation's rows were stored before this process saw them.
+  on('classic.SessionStart', ($, e, next) => {
+    if (e.source === 'resume') void readStoredRows($, trail, async () => e.transcript_path || undefined)
+    return next(e)
   })
 
   on('session.append', ($, e, next) => {

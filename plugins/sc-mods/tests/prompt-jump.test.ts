@@ -65,21 +65,45 @@ const messageOf = ({ id, text, toolUseIds = [] }: Row): SessionMessage => ({
 // The newest messages `$.session.messages()` returns.
 const MESSAGE_WINDOW = 4096
 
-type StoredSession = { rows: Row[]; clock: MockClock }
+/** The rows the current conversation holds, and each transcript file's rows by path. */
+type StoredSession = { rows: Row[]; files: Map<string, readonly Row[]>; clock: MockClock }
 
 /**
  * Stands for the session: the rows its transcript file kept before the
- * plugin loaded, and every row it holds, read back as messages.
+ * plugin loaded, and every row the conversation holds, read back as messages.
  */
 function storedSession(on: On, kept: readonly Row[] = []): StoredSession {
   drawsEngineDefaults(on)
-  const session: StoredSession = { rows: [...kept], clock: mock.clock(on) }
+  const session: StoredSession = { rows: [...kept], files: new Map([[TRANSCRIPT, kept]]), clock: mock.clock(on) }
   mock.env(on, { HOME })
-  on('process.run', async (_$, e) => ({ value: ok(e.argv[0] === 'find' ? `${TRANSCRIPT}\n` : transcriptFields(kept)) }))
+  on('process.run', async (_$, e) => {
+    if (e.argv[0] === 'find') return { value: ok(`${TRANSCRIPT}\n`) }
+    return { value: ok(transcriptFields(session.files.get(e.argv.at(-1) ?? '') ?? [])) }
+  })
   on('session.messages', async () => ({ value: session.rows.slice(-MESSAGE_WINDOW).map(messageOf) }))
   on('session.start', async (_$, e) => ({ cwd: e.cwd }))
+  on('session.end', async (_$, e) => ({ sessionId: e.sessionId }))
   on('session.id', async () => ({ value: 'session' }))
+  on('classic.SessionStart', async () => ({}))
   return session
+}
+
+/** `/clear`: the conversation ends and the process goes on with an empty one. */
+async function clear($: Engine, session: StoredSession) {
+  await $.session.end({ reason: 'clear', sessionId: 'session', resume: { id: 'session' } })
+  session.rows = []
+  await $.classic.SessionStart({ source: 'clear' })
+  await settle(session)
+}
+
+/** `/resume`: the conversation ends and the process goes on with a stored one. */
+async function resume($: Engine, session: StoredSession, resumed: readonly Row[]) {
+  const transcript = `${HOME}/.claude/projects/-work/resumed.jsonl`
+  await $.session.end({ reason: 'resume', sessionId: 'session', resume: { id: 'session' } })
+  session.rows = [...resumed]
+  session.files.set(transcript, resumed)
+  await $.classic.SessionStart({ source: 'resume', transcript_path: transcript })
+  await settle(session)
 }
 
 const settle = (session: StoredSession) => session.clock.advance(SETTLE_MS)
@@ -312,6 +336,35 @@ test('a tool call row is placed by its call id', async ($, on) => {
   await drawTool($, 'toolu_1', TOP_SHOWN)
   await settle(session)
   expect(await bandCount($)).toBe('1/1')
+})
+
+test('after /clear, the count starts over with the new conversation', async ($, on) => {
+  const session = storedSession(on)
+  await storeAll($, session, rows('p1', 'r1', 'p2', 'r2'))
+  await drawAll($, ['p1', 'r1', 'p2', 'r2'])
+  await settle(session)
+  await clear($, session)
+  expect(await bandCount($)).toBeUndefined()
+
+  await storeAll($, session, rows('p3', 'r3'))
+  await drawPrompt($, 'p3', { onScreen: TOP_SHOWN })
+  await drawReply($, 'r3')
+  await settle(session)
+  expect(await bandCount($)).toBe('1/1')
+})
+
+test('after /resume, the count is the resumed conversation’s', async ($, on) => {
+  const session = storedSession(on)
+  await storeAll($, session, rows('p1', 'r1'))
+  await drawAll($, ['p1', 'r1'])
+  await settle(session)
+  await resume($, session, rows('p7', 'r7', 'p8', 'r8'))
+
+  await drawPrompt($, 'p8', { onScreen: TOP_SHOWN })
+  await drawReply($, 'r8')
+  await drawPrompt($, 'p7')
+  await settle(session)
+  expect(await bandCount($)).toBe('2/2')
 })
 
 test('grep output of a transcript file reads back as its rows, a subagent row and a reminder left out of the prompts', () => {
