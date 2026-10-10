@@ -37,9 +37,9 @@ The drawing has to fit the terminal's width. For a flowchart that is too wide, t
 
 ## Jump between prompts
 
-The band above the prompt shows two buttons, `◀` and `▶`. Click one, or type `1` or `2` into an empty prompt box, to scroll the conversation so your previous or next prompt sits at the top of the view. A digit typed into a prompt box that already holds text is typed as usual.
+The band above the prompt shows two buttons, `◀` and `▶`, with a dim count between them: `[ ◀ ] 2/5 [ ▶ ]` while the view is on the second of five prompts. The count follows the view as you scroll or jump. Click a button, or type `1` or `2` into an empty prompt box, to scroll the conversation so your previous or next prompt sits at the top of the view. A digit typed into a prompt box that already holds text is typed as usual.
 
-The step counts from the topmost of your prompts on screen. If that prompt's first line is scrolled out of view, `◀` first goes back to its top. A toast says so when there is no earlier or later prompt, and gives Claude Code's reason when it does not scroll.
+The view is on the topmost of your prompts on screen. When none is on screen, inside a long reply, it is on the prompt last jumped to, else the newest. The count and the step both start from that prompt. If that prompt's first line is scrolled out of view, `◀` first goes back to its top. A toast says so when there is no earlier or later prompt, and gives Claude Code's reason when it does not scroll.
 
 Jumping needs fullscreen mode, where Claude Code draws the conversation itself. The classic layout leaves the conversation to the terminal's scrollback and refuses the scroll.
 
@@ -112,7 +112,7 @@ Every `just release` republishes the `sc-mods-dist` branch. To publish it on its
 
 - A mermaid block without a closing fence shows its source.
 - Some merman drawings have layout quirks: a flowchart edge that loops back runs against the boxes ([#183](https://github.com/Latias94/merman/issues/183)), a state diagram can print two transition labels run together ([#184](https://github.com/Latias94/merman/issues/184)), a long sequence message label can run past the next lifeline ([#185](https://github.com/Latias94/merman/issues/185)), and in a narrow terminal two side-by-side subgraphs can share a border ([#186](https://github.com/Latias94/merman/issues/186)).
-- The jump buttons know a prompt once its row has been drawn in this session. After a restart or `/resume`, prompts further back than the screen has shown are not jump targets until you scroll past them.
+- The jump buttons know a prompt once its row has been drawn in this session. After a restart or `/resume`, prompts further back than the screen has shown are not jump targets until you scroll past them, and the count leaves them out of its total.
 - The jump buttons step through the main conversation, and are hidden while an agent's transcript is on screen.
 - The mod is built for the terminal. The desktop app and the VS Code extension are untested.
 - merman-cli ships for macOS and Linux. On other systems the diagrams stay as source unless `MERMAN_PATH` points at a merman-cli.

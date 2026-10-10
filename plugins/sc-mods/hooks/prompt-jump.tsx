@@ -10,6 +10,9 @@ export type Step = -1 | 1
  */
 export type PromptRow = { requestId: string; firstRowShown: number | null | undefined }
 
+/** The prompt the view is on, by index, and whether its top row is in view. */
+export type Anchor = { index: number; isTopShown: boolean }
+
 // The prompt being sent draws under this id until it is stored, and
 // nothing can be scrolled to under it.
 const IN_FLIGHT = 'placeholder'
@@ -19,33 +22,62 @@ const isPersonsPrompt = (origin: PromptOrigin) => origin.kind === 'composer' || 
 const isShown = (row: PromptRow) => row.firstRowShown !== null && row.firstRowShown !== undefined
 
 /**
- * The index of the prompt a step lands on, or undefined past either end.
- *
- * The step counts from the topmost prompt on screen. With none on screen
- * the view is inside a long turn, so it counts from the prompt last jumped
- * to, else the newest. A step back from a prompt whose top is out of view
- * lands on that prompt's own top first.
+ * The prompt the view is on: the topmost prompt on screen. With none on
+ * screen the view is inside a long turn, so it is the prompt last jumped
+ * to, else the newest. Undefined while no prompt is known.
  */
-export function jumpTarget(prompts: readonly PromptRow[], lastJumped: number, step: Step): number | undefined {
+export function anchorOf(prompts: readonly PromptRow[], lastJumped: number): Anchor | undefined {
   if (prompts.length === 0) return undefined
 
   const topmostShown = prompts.findIndex(isShown)
-  const anchor = topmostShown >= 0 ? topmostShown : lastJumped >= 0 ? lastJumped : prompts.length - 1
-  const isAnchorTopShown = topmostShown >= 0 && prompts[anchor]?.firstRowShown === 0
+  if (topmostShown >= 0) return { index: topmostShown, isTopShown: prompts[topmostShown]?.firstRowShown === 0 }
+  return { index: lastJumped >= 0 ? lastJumped : prompts.length - 1, isTopShown: false }
+}
 
-  const target = step === -1 && !isAnchorTopShown ? anchor : anchor + step
+/**
+ * The index of the prompt a step from the anchor lands on, or undefined
+ * past either end. A step back from a prompt whose top is out of view lands
+ * on that prompt's own top first.
+ */
+export function jumpTarget(prompts: readonly PromptRow[], lastJumped: number, step: Step): number | undefined {
+  const anchor = anchorOf(prompts, lastJumped)
+  if (anchor === undefined) return undefined
+
+  const target = step === -1 && !anchor.isTopShown ? anchor.index : anchor.index + step
   return target >= 0 && target < prompts.length ? target : undefined
 }
 
-/** The prompts seen so far, in transcript order, and the one last jumped to. */
+/** `2/5` while the view is on the second of five known prompts; empty with none known. */
+export function positionText(prompts: readonly PromptRow[], lastJumped: number): string {
+  const anchor = anchorOf(prompts, lastJumped)
+  return anchor === undefined ? '' : `${anchor.index + 1}/${prompts.length}`
+}
+
+/** The prompts seen so far, in transcript order, the one last jumped to, and the count the band was asked to show. */
 type PromptTrail = {
   // A Map keeps the order prompts were first drawn, which is transcript order.
   firstRowShown: Map<string, number | null | undefined>
   lastJumped: number
+  requestedPosition: string
 }
 
 const promptRows = (trail: PromptTrail): PromptRow[] =>
   [...trail.firstRowShown].map(([requestId, shown]) => ({ requestId, firstRowShown: shown }))
+
+const currentPosition = (trail: PromptTrail) => positionText(promptRows(trail), trail.lastJumped)
+
+/**
+ * Redraws the band when its count changed. A prompt row scrolling does not
+ * change the band's props, so the band would keep its old count. Asking only
+ * on a change keeps the redraw this causes from asking again.
+ */
+function redrawBandIfMoved($: EngineInterface, trail: PromptTrail) {
+  const position = currentPosition(trail)
+  if (position === trail.requestedPosition) return
+
+  trail.requestedPosition = position
+  $.ui.invalidate('ui.render')
+}
 
 async function jump($: EngineInterface, trail: PromptTrail, step: Step) {
   const prompts = promptRows(trail)
@@ -62,6 +94,7 @@ async function jump($: EngineInterface, trail: PromptTrail, step: Step) {
     return
   }
   trail.lastJumped = target
+  redrawBandIfMoved($, trail)
 }
 
 /** Why the transcript did not move to the row, or undefined once it did. */
@@ -76,11 +109,12 @@ async function scrollRefusal($: EngineInterface, requestId: string): Promise<str
 
 /**
  * The band's ◀ and ▶ buttons, hotkeys 1 and 2 in an empty prompt box, which
- * scroll the transcript to the previous or next prompt. Prompt ids are
- * learned as their rows render.
+ * scroll the transcript to the previous or next prompt, with the view's
+ * place among the prompts between them. Prompt ids are learned as their
+ * rows render.
  */
 export function registerPromptJump(on: On) {
-  const trail: PromptTrail = { firstRowShown: new Map(), lastJumped: -1 }
+  const trail: PromptTrail = { firstRowShown: new Map(), lastJumped: -1, requestedPosition: '' }
 
   on('ui.render', { component: 'UserMessage' }, ($, e, next) => {
     if (e.requestId !== IN_FLIGHT && isPersonsPrompt(e.props.origin)) {
@@ -88,6 +122,7 @@ export function registerPromptJump(on: On) {
       // A redraw that does not report the viewport keeps what was last known.
       if (shown !== undefined || !trail.firstRowShown.has(e.requestId)) {
         trail.firstRowShown.set(e.requestId, shown && shown.first)
+        redrawBandIfMoved($, trail)
       }
     }
     return next(e)
@@ -97,10 +132,13 @@ export function registerPromptJump(on: On) {
     // The prompts it knows are the main conversation's, not an agent's.
     if (e.props.hasSurvey || e.props.view.agentId !== undefined) return next(e)
 
-    const { Box, Button } = $.ui.resolve(e)
+    const position = currentPosition(trail)
+    trail.requestedPosition = position
+    const { Box, Button, Text } = $.ui.resolve(e)
     return (
       <Box flexDirection="row" columnGap={1}>
         <Button key="prompt-jump:previous" hotkey="1" label="◀" onPress={() => jump($, trail, -1)} />
+        {position === '' ? null : <Text dimColor>{position}</Text>}
         <Button key="prompt-jump:next" hotkey="2" label="▶" onPress={() => jump($, trail, 1)} />
       </Box>
     )
