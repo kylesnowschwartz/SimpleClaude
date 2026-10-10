@@ -109,6 +109,15 @@ test('a fence in a quoted list item is drawn narrower by its prefix', async ($, 
   expect(argv[argv.indexOf('--ascii-max-width') + 1]).toBe('96')
 })
 
+test('a fence with no closing line keeps its source', async ($, on) => {
+  const renders = stubMerman(on, () => ok(DRAWING))
+  const seen = captureTexts(on)
+  const text = 'Here:\n\n```mermaid\nflowchart TD\n  A-->'
+  await $.ui.render(renderAt(text, 100))
+  expect(seen.at(-1)).toBe(text)
+  expect(renders.length).toBe(0)
+})
+
 test('a mermaid fence quoted in a markdown example stays as source', async ($, on) => {
   const renders = stubMerman(on, () => ok(DRAWING))
   const seen = captureTexts(on)

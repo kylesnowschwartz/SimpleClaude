@@ -64,7 +64,7 @@ test('a fence in a blockquote is found, and ends with the quote', () => {
   expect(endedByQuote?.source).toBe('graph TD')
 })
 
-test('a quoted fence stays open across a blank last line, which is still arriving', () => {
+test('a quoted fence stays open across a blank last line', () => {
   const [fence] = findMermaidFences('> ```mermaid\n> graph TD\n')
   expect(fence?.isClosed).toBe(false)
   expect(fence?.source).toBe('graph TD')

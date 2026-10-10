@@ -8,7 +8,6 @@
   "homepage": "https://github.com/kylesnowschwartz/SimpleClaude",
   "repository": "https://github.com/kylesnowschwartz/SimpleClaude",
   "license": "MIT",
-  "types": "./types/index.d.ts",
   "userConfig": {
     "MERMAN_PATH": {
       "type": "string",

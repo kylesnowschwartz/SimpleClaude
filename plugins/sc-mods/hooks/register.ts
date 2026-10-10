@@ -1,8 +1,6 @@
-import { atom, read, update } from 'claude-code'
 import type { EngineInterface, Register } from 'claude-code'
 import { findMermaidFences, replaceFences, type FenceReplacement, type MermaidFence } from './fences'
 import { drawDiagram, type Runner } from './merman'
-import { noteMessageDrawn, noteTurnEnded, noteTurnStarted, turnThatWrote } from './turns'
 
 // The reply's indent plus a margin column on each side.
 const GUTTER = 4
@@ -11,8 +9,6 @@ const RUN_TIMEOUT_MS = 5000
 // A new binary's first launch can wait on the OS scanning it.
 const CHECK_TIMEOUT_MS = 15000
 const NOTICE_TIMEOUT_MS = 15000
-
-const DRAWING_PLACEHOLDER = '*Drawing Mermaid diagram…*'
 
 // A dev checkout loads the plugin from the repository's plugins/ folder;
 // an install loads it from Claude Code's plugin cache.
@@ -31,13 +27,6 @@ const MAX_DRAWINGS = 200
  * render tries it again. Past MAX_DRAWINGS the least recently used goes.
  */
 const drawings = new Map<string, Promise<string | undefined>>()
-
-/**
- * The ids of the main-loop turns that have started and not yet completed,
- * kept in the session's state so a drawing that read it is drawn again when
- * a turn ends. Only a reply a running turn is writing reads it.
- */
-const runningTurns = atom({ plugin: 'sc-mods', key: 'runningTurns' } as const, [])
 
 /** Whether merman-cli runs; `timed-out` is not an answer and is asked again. */
 type MermanCheck = 'runnable' | 'missing' | 'timed-out'
@@ -98,18 +87,17 @@ function drawingFor(run: Runner, source: string, width: number): Promise<string 
   return drawing.catch(() => undefined)
 }
 
-type DrawConditions = { run: Runner; replyColumns: number; isTurnRunning: boolean }
+type DrawConditions = { run: Runner; replyColumns: number }
 
 // A list or quote prefix is ASCII, one cell a character.
 const widthFor = (fence: MermaidFence, replyColumns: number) => replyColumns - fence.linePrefix.length
 
 /**
- * What a fence shows in place of its source: its drawing once closed, a
- * placeholder while it streams in. Undefined keeps the source: merman
- * refused it, or it never closed and no turn is still writing it.
+ * A text block of the fence's drawing. Undefined keeps the source: the
+ * fence has not closed, or merman refused it.
  */
-async function replacementText(fence: MermaidFence, { run, replyColumns, isTurnRunning }: DrawConditions): Promise<string | undefined> {
-  if (!fence.isClosed) return isTurnRunning ? DRAWING_PLACEHOLDER : undefined
+async function replacementText(fence: MermaidFence, { run, replyColumns }: DrawConditions): Promise<string | undefined> {
+  if (!fence.isClosed) return undefined
 
   const drawing = await drawingFor(run, fence.source, widthFor(fence, replyColumns))
   return drawing === undefined ? undefined : textBlock(drawing)
@@ -126,36 +114,10 @@ async function replacementsFor(fences: MermaidFence[], conditions: DrawCondition
   return candidates.filter(replacesSource)
 }
 
-/** Whether the turn running when this message was first drawn still runs. */
-async function isTurnWriting($: EngineInterface, messageId: string): Promise<boolean> {
-  const turnId = turnThatWrote(messageId)
-  if (turnId === undefined) return false
-
-  const turns = await read($, runningTurns)
-  return turns.includes(turnId)
-}
-
 export const register: Register = (on, options) => {
   const configuredPath = typeof options.MERMAN_PATH === 'string' ? options.MERMAN_PATH.trim() : ''
 
-  on('turn.start', async ($, e, next) => {
-    noteTurnStarted(e.turnId)
-    await update($, runningTurns, turns => [...turns, e.turnId])
-    return next(e)
-  })
-
-  // Every main-loop turn ends in turn.complete, an interrupted one with reason
-  // 'aborted'. A subagent's run raises no turn.start, so its completion matches
-  // no turn. A turn already running when the mod loads raised its turn.start
-  // before this hook existed, so its reply counts as written by no turn.
-  on('turn.complete', async ($, e, next) => {
-    noteTurnEnded(e.turnId)
-    await update($, runningTurns, turns => turns.filter(turnId => turnId !== e.turnId))
-    return next(e)
-  })
-
   on('ui.render', { component: 'AssistantMessage' }, async ($, e, next) => {
-    noteMessageDrawn(e.requestId)
     const fences = findMermaidFences(e.props.text)
     if (fences.length === 0) return next(e)
 
@@ -167,9 +129,7 @@ export const register: Register = (on, options) => {
 
     const replyColumns = e.viewport ? e.viewport.columns - GUTTER : WIDTH_WITHOUT_VIEWPORT
     const run: Runner = (args, stdin) => $.process.run([bin, ...args], { stdin, timeoutMs: RUN_TIMEOUT_MS })
-    const hasUnclosedFence = fences.some(fence => !fence.isClosed)
-    const isTurnRunning = hasUnclosedFence && (await isTurnWriting($, e.requestId))
-    const replacements = await replacementsFor(fences, { run, replyColumns, isTurnRunning })
+    const replacements = await replacementsFor(fences, { run, replyColumns })
     if (replacements.length === 0) return next(e)
 
     const text = replaceFences(e.props.text, replacements)
