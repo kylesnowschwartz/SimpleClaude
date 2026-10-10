@@ -48,7 +48,7 @@ SimpleClaude consists of these plugins:
 - **sc-extras**: Utility commands for root cause analysis, claim verification, adversarial analysis, and context wizards
 - **sc-skills**: Skills for mermaid diagrams, codebase pattern detection, hypothesis testing, Socratic thinking, file querying, frontend design, image generation, and command generation
 - **sc-refactor**: PR review with ticket integration, codebase health checks, and specialized analysis agents for refactoring workflows
-- **sc-mods**: Claude Code mods, written as a TypeScript hooks module (`hooks/hooks.json` lists `{"modules": [...]}`). Draws mermaid fences in replies as Unicode text by running the bundled merman-cli
+- **sc-mods**: Claude Code mods, written as a TypeScript hooks module (`hooks/hooks.json` lists `{"modules": [...]}`). Draws mermaid fences in replies as Unicode text by running the bundled merman-cli, jumps between prompts from the band above the prompt, and copies a reply's markdown
 
 **sc-mods binaries**: sc-mods runs vendored merman-cli binaries; see [Vendored merman binaries (sc-mods)](#vendored-merman-binaries-sc-mods).
 

@@ -2,10 +2,11 @@
 
 Claude Code mods from SimpleClaude. A mod is a plugin that changes Claude Code's own interface; see the [mods documentation](https://code.claude.com/docs/en/plugins/mods/overview).
 
-sc-mods does two things:
+sc-mods does three things:
 
 - It draws the mermaid diagrams in Claude's replies as Unicode text, so you can read a diagram in the terminal without copying it into a renderer.
 - It puts `◀` and `▶` buttons in the band above the prompt, which scroll the conversation to your previous or next prompt.
+- It puts a `⧉ copy` button under Claude's replies, which copies the reply's markdown.
 
 ## Mermaid diagrams
 
@@ -42,6 +43,12 @@ The step counts from the topmost of your prompts on screen. If that prompt's fir
 
 Jumping needs fullscreen mode, where Claude Code draws the conversation itself. The classic layout leaves the conversation to the terminal's scrollback and refuses the scroll.
 
+## Copy a reply
+
+A dim `⧉ copy` button sits under each block of Claude's reply text. Click it to put that block's markdown on the clipboard, as Claude wrote it: a mermaid diagram is copied as its source, not as the drawing. A toast says how many characters were copied, or why nothing was. A reply split by tool calls has a button under each block of text.
+
+The button takes a mouse click only. The conversation's rows can't take keyboard focus, so no key presses it.
+
 ## Install
 
 ```bash
@@ -50,7 +57,7 @@ claude plugin install sc-mods --marketplace kylesnowschwartz/SimpleClaude
 
 This installs from the `sc-mods-dist` branch, which carries merman-cli for macOS and Linux on arm64 and x86_64. Nothing is downloaded when the mod runs.
 
-**A mod runs with your permissions.** It runs inside Claude Code and can start programs as you. This one starts only merman-cli, it makes no network calls, and it writes no files. Read [`hooks/register.ts`](hooks/register.ts) before you install it.
+**A mod runs with your permissions.** It runs inside Claude Code and can start programs as you. This one starts only merman-cli, it makes no network calls, and it writes no files. The copy button writes to the clipboard through Claude Code, the way `/copy` does. Read [`hooks/register.ts`](hooks/register.ts) before you install it.
 
 ## Settings
 

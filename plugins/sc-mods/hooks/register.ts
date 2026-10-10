@@ -2,6 +2,7 @@ import type { EngineInterface, Register } from 'claude-code'
 import { findMermaidFences, replaceFences, type FenceReplacement, type MermaidFence } from './fences'
 import { drawDiagram, type Runner } from './merman'
 import { registerPromptJump } from './prompt-jump'
+import { registerReplyCopy } from './reply-copy'
 
 // The reply's indent plus a margin column on each side.
 const GUTTER = 4
@@ -116,6 +117,9 @@ async function replacementsFor(fences: MermaidFence[], conditions: DrawCondition
 }
 
 export const register: Register = (on, options) => {
+  // Registered first so it sits outermost: it copies the reply's text as
+  // Claude wrote it and puts its button under the diagrams drawn beneath it.
+  registerReplyCopy(on)
   registerPromptJump(on)
 
   const configuredPath = typeof options.MERMAN_PATH === 'string' ? options.MERMAN_PATH.trim() : ''
