@@ -108,13 +108,14 @@ release:
         exit 1
     fi
 
-# Download the pinned merman-cli binaries sc-mods runs (does nothing when present)
-fetch-merman:
-    ./scripts/fetch-merman.sh
+# {{version}}: the merman release to pin, such as 0.8.0
+# Pin a merman release for sc-mods by writing its version and archive checksums to plugins/sc-mods/bin/merman.pin
+update-merman version:
+    ./scripts/update-merman.sh {{version}}
 
 # Compare the pinned merman version with merman's latest release (changes nothing)
 check-merman:
-    ./scripts/fetch-merman.sh --check
+    ./scripts/update-merman.sh --check
 
 # Publish sc-mods with its merman binaries to the sc-mods-dist branch
 publish-mods:
@@ -146,12 +147,12 @@ test-mods:
 test-ste *files:
     ./test/test_ste_lint.py {{files}}
 
-# Draw fixture diagrams with the real merman-cli; run after changing the draw path or upgrading merman (needs `just fetch-merman` and bun)
+# Draw fixture diagrams with the real merman-cli; run after changing the draw path or upgrading merman (needs bun, and the network the first time a merman version runs)
 test-mods-real:
     #!/usr/bin/env zsh
     set -e
-    if ! plugins/sc-mods/bin/merman-cli --version >/dev/null 2>&1; then
-        echo "Error: merman-cli cannot run for this machine. Run 'just fetch-merman' first."
+    if ! plugins/sc-mods/bin/merman-cli --version >/dev/null; then
+        echo "Error: merman-cli cannot run for this machine, for the reason above."
         exit 1
     fi
     if ! command -v bun >/dev/null; then

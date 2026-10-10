@@ -1,4 +1,0 @@
-# scripts/fetch-merman.sh downloads these: one merman-cli per platform and the
-# licenses that ship with them. The launcher beside them is committed.
-merman-cli_*
-merman-licenses/
