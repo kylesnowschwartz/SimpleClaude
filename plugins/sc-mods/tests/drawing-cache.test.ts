@@ -1,4 +1,5 @@
-import type { ProcessRunResult, RenderElement } from 'claude-code'
+import type { On, ProcessRunResult, RenderElement } from 'claude-code'
+import type { Engine } from 'claude-code/testing'
 import { expect, test } from 'claude-code/testing'
 
 const DRAWING = '┌───┐\n│ A │\n└───┘'
@@ -22,25 +23,51 @@ const render = (text: string, requestId: string) => ({
   props: { text, isFirstOfReply: true },
 })
 
-test('past the cache size, the oldest drawing is drawn again and the newest is not', async ($, on) => {
-  let draws = 0
+type DrawCounter = { draws: number }
+
+/** Stands for the engine: merman runs, and `failFirstDraw` makes the first draw reject. */
+function standInEngine(on: On, { failFirstDraw = false } = {}): DrawCounter {
+  const counter = { draws: 0 }
   on('process.run', async (_$, e) => {
     if (e.argv.includes('--version')) return { value: ok('merman-cli 0.8.0\n') }
-    draws += 1
+    counter.draws += 1
+    if (failFirstDraw && counter.draws === 1) return { deny: 'spawn failed' }
     return { value: ok(DRAWING) }
   })
   on('ui.render', { component: 'AssistantMessage' }, async (_$, e) => {
     return { type: 'Text', props: {}, children: [e.props.text] } as unknown as RenderElement
   })
+  return counter
+}
 
-  for (let index = 0; index <= MAX_DRAWINGS; index += 1) {
-    await $.ui.render(render(diagram(index), `fill-${index}`))
-  }
-  expect(draws).toBe(MAX_DRAWINGS + 1)
+const drawEach = async ($: Engine, indexes: number[]) => {
+  for (const index of indexes) await $.ui.render(render(diagram(index), `diagram-${index}`))
+}
 
-  await $.ui.render(render(diagram(MAX_DRAWINGS), 'newest-again'))
-  expect(draws).toBe(MAX_DRAWINGS + 1)
+const range = (from: number, to: number) => Array.from({ length: to - from + 1 }, (_, offset) => from + offset)
 
-  await $.ui.render(render(diagram(0), 'oldest-again'))
-  expect(draws).toBe(MAX_DRAWINGS + 2)
+test('past the cache size, the least recently used drawing goes first', async ($, on) => {
+  const counter = standInEngine(on)
+  await drawEach($, range(0, MAX_DRAWINGS - 1))
+  expect(counter.draws).toBe(MAX_DRAWINGS)
+
+  await drawEach($, [0])
+  expect(counter.draws).toBe(MAX_DRAWINGS)
+
+  await drawEach($, [MAX_DRAWINGS])
+  expect(counter.draws).toBe(MAX_DRAWINGS + 1)
+
+  await drawEach($, [0])
+  expect(counter.draws).toBe(MAX_DRAWINGS + 1)
+
+  await drawEach($, [1])
+  expect(counter.draws).toBe(MAX_DRAWINGS + 2)
+})
+
+test('a rejected draw leaves the cache, so the next render draws it again', async ($, on) => {
+  const counter = standInEngine(on, { failFirstDraw: true })
+  await drawEach($, [0, 0])
+  expect(counter.draws).toBe(2)
+  await drawEach($, [0])
+  expect(counter.draws).toBe(2)
 })
