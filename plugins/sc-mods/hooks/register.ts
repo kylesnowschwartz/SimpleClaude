@@ -27,9 +27,9 @@ const TIMED_OUT = /still running after/
 const MAX_DRAWINGS = 200
 
 /**
- * Each diagram's drawing, keyed by width and source; undefined keeps the
- * source. Only settled outcomes stay: a draw that rejected is dropped so a
- * later render tries it again. Past MAX_DRAWINGS the oldest is dropped.
+ * Each diagram's drawing, finished or under way, keyed by width and source;
+ * undefined keeps the source. A draw that rejects is removed so a later
+ * render tries it again. Past MAX_DRAWINGS the least recently used goes.
  */
 const drawings = new Map<string, Promise<string | undefined>>()
 
@@ -65,26 +65,37 @@ async function checkMerman($: EngineInterface, bin: string): Promise<MermanCheck
   return 'missing'
 }
 
+/** A cached drawing, moved to the newest end so it is the last to go. */
+function recall(key: string): Promise<string | undefined> | undefined {
+  const drawing = drawings.get(key)
+  if (drawing === undefined) return undefined
+
+  drawings.delete(key)
+  drawings.set(key, drawing)
+  return drawing
+}
+
 function remember(key: string, drawing: Promise<string | undefined>) {
   drawings.set(key, drawing)
   if (drawings.size <= MAX_DRAWINGS) return
 
-  // A Map iterates in insertion order, so its first key is the oldest.
-  const [oldestKey] = drawings.keys()
-  if (oldestKey !== undefined) drawings.delete(oldestKey)
+  // A Map iterates in insertion order, so its first key is the least recently used.
+  const [leastRecentKey] = drawings.keys()
+  if (leastRecentKey !== undefined) drawings.delete(leastRecentKey)
+}
+
+function startDrawing(run: Runner, source: string, width: number, key: string): Promise<string | undefined> {
+  const attempt = drawDiagram(run, source, width)
+  attempt.catch(() => {
+    if (drawings.get(key) === attempt) drawings.delete(key)
+  })
+  remember(key, attempt)
+  return attempt
 }
 
 function drawingFor(run: Runner, source: string, width: number): Promise<string | undefined> {
   const key = `${width}\0${source}`
-  let drawing = drawings.get(key)
-  if (drawing === undefined) {
-    const attempt = drawDiagram(run, source, width)
-    attempt.catch(() => {
-      if (drawings.get(key) === attempt) drawings.delete(key)
-    })
-    remember(key, attempt)
-    drawing = attempt
-  }
+  const drawing = recall(key) ?? startDrawing(run, source, width, key)
   return drawing.catch(() => undefined)
 }
 
