@@ -1,327 +1,83 @@
 import { atom, read, update } from 'claude-code'
-import type { EngineInterface, On, OnScreen } from 'claude-code'
-import {
-  appendedRow,
-  findTranscriptCommand,
-  isPersonsPrompt,
-  rowsOfTranscriptRead,
-  transcriptFieldsCommand,
-  TranscriptOrder,
-  type StoredPrompt,
-  type StoredRow,
-} from './transcript-order'
+import type { EngineInterface, On, SessionAppendInput } from 'claude-code'
 
 /** A step through the person's prompts: back to the previous one, or on to the next. */
 export type Step = -1 | 1
 
-/** Where a drawn entry is on screen: from its line `firstLine`, with or without its last line. */
-export type OnScreenPlacement = { kind: 'onScreen'; firstLine: number; isBottomShown: boolean; reportedAt: number }
-
 /**
- * Where a drawn entry's lines were last reported: never (the surface does
- * not say), off screen, or on screen. `reportedAt` orders the reports.
+ * The person's prompts the conversation has stored since the plugin loaded,
+ * by their stored row ids, in the order sent, and `at`: the index of the
+ * prompt the arrows last jumped to, or undefined while they rest on the
+ * newest prompt, where every new prompt puts them.
  */
-export type Placement = { kind: 'unreported' } | { kind: 'offScreen' } | OnScreenPlacement
+export type PromptTrail = { prompts: string[]; at: number | undefined }
 
-/**
- * A transcript entry the screen has drawn: one of the person's prompts, or
- * an entry of the turn that follows one (a block of reply text, a tool call).
- */
-export type DrawnEntry = { requestId: string; isPrompt: boolean; placement: Placement }
+export const newTrail = (): PromptTrail => ({ prompts: [], at: undefined })
 
-/** A drawn entry and its stored row's place in the transcript. */
-export type PlacedEntry = { place: number; entry: DrawnEntry }
+/** Whether the person sent it: typed at the terminal, or through Remote Control. */
+export const isPersonsPrompt = (origin: { kind: string }) => origin.kind === 'composer' || origin.kind === 'bridge'
 
-/**
- * What the count and the jumps read: the drawn entries in transcript order,
- * every prompt the conversation keeps, and the prompt last jumped to.
- */
-export type PromptView = { placed: readonly PlacedEntry[]; prompts: readonly StoredPrompt[]; lastJumped: string | undefined }
-
-/** The prompt the view is on, by index among the prompts, and whether its top line is in view. */
-export type Anchor = { index: number; isTopShown: boolean }
-
-/** The anchor index while the view is above the first prompt. */
-const BEFORE_FIRST = -1
-
-const UNREPORTED: Placement = { kind: 'unreported' }
-const OFF_SCREEN: Placement = { kind: 'offScreen' }
-
-/** An entry on screen, with its index among the drawn entries. */
-type ShownEntry = { at: number; placed: PlacedEntry; placement: OnScreenPlacement }
-
-const shownEntries = (placed: readonly PlacedEntry[]): ShownEntry[] =>
-  placed.flatMap((each, at) => {
-    const { placement } = each.entry
-    return placement.kind === 'onScreen' ? [{ at, placed: each, placement }] : []
-  })
-
-/** Each item with the one after it. */
-function neighbours<T>(items: readonly T[]): Array<[T, T]> {
-  const pairs: Array<[T, T]> = []
-  items.forEach((item, at) => {
-    const next = items[at + 1]
-    if (next !== undefined) pairs.push([item, next])
-  })
-  return pairs
+/** The id of the person's prompt a `session.append` stores in the main conversation; undefined for any other row. */
+export function promptIdOf(e: SessionAppendInput): string | undefined {
+  const isPrompt = e.agentId === undefined && e.door === 'prompt' && isPersonsPrompt(e.origin) && e.message.isMeta !== true
+  return isPrompt ? e.uuid : undefined
 }
 
-/**
- * Whether two entries shown one after the other can be on screen together:
- * the upper one's last line and the lower one's first in view, with no entry
- * between them reported off screen.
- */
-const canShowTogether = ([upper, lower]: [ShownEntry, ShownEntry], placed: readonly PlacedEntry[]) =>
-  upper.placement.isBottomShown &&
-  lower.placement.firstLine === 0 &&
-  placed.slice(upper.at + 1, lower.at).every(each => each.entry.placement.kind !== 'offScreen')
+/** The index of the prompt the arrows are on: the one last jumped to, else the newest. */
+const indexOn = ({ prompts, at }: PromptTrail) => at ?? prompts.length - 1
 
-const olderReport = ([upper, lower]: [ShownEntry, ShownEntry]) =>
-  upper.placement.reportedAt < lower.placement.reportedAt ? upper : lower
-
-/** The shown entries left once every report that clashes with a newer one is dropped. */
-function consistentShown(shown: ShownEntry[], placed: readonly PlacedEntry[]): ShownEntry[] {
-  const clash = neighbours(shown).find(pair => !canShowTogether(pair, placed))
-  if (clash === undefined) return shown
-
-  const stale = olderReport(clash)
-  return consistentShown(
-    shown.filter(candidate => candidate !== stale),
-    placed,
-  )
+/** The index of the prompt a step from the one the arrows are on lands on, or undefined past either end. */
+export function jumpTarget(trail: PromptTrail, step: Step): number | undefined {
+  const target = indexOn(trail) + step
+  return target >= 0 && target < trail.prompts.length ? target : undefined
 }
 
-/**
- * The entries on screen, in transcript order. Claude Code reports where an
- * entry is when it is drawn and, on a scroll, for the entries at the
- * viewport's edges only, so an entry the view moved past in one step keeps
- * reporting where it was. The entries on screen are one unbroken run; where
- * two reports cannot both hold, the older one is out of date.
- */
-export const entriesOnScreen = (placed: readonly PlacedEntry[]): PlacedEntry[] =>
-  consistentShown(shownEntries(placed), placed).map(shown => shown.placed)
+/** `7/8` while the arrows are on the seventh of eight prompts; empty with none known. */
+export const positionText = (trail: PromptTrail): string => (trail.prompts.length === 0 ? '' : `${indexOn(trail) + 1}/${trail.prompts.length}`)
 
-const isTopLineShown = ({ entry }: PlacedEntry) => entry.placement.kind === 'onScreen' && entry.placement.firstLine === 0
-
-/**
- * Whether the view is at the transcript's end with the last prompt on
- * screen. The view cannot scroll that prompt any higher.
- */
-export function isLastPromptAtEnd({ placed, prompts }: PromptView): boolean {
-  const last = prompts.at(-1)
-  const onScreen = entriesOnScreen(placed)
-  const end = onScreen.at(-1)
-  const isEndInView = end !== undefined && end === placed.at(-1) && end.entry.placement.kind === 'onScreen' && end.entry.placement.isBottomShown
-  return last !== undefined && isEndInView && onScreen.some(({ entry }) => entry.requestId === last.id)
+/** Adds a prompt the conversation stored; the arrows rest on it. */
+export function notePrompt(trail: PromptTrail, id: string) {
+  trail.prompts.push(id)
+  trail.at = undefined
 }
-
-/**
- * The prompt the view is on: the one that owns the topmost entry on screen,
- * itself or an entry of its turn, or BEFORE_FIRST above every prompt. At the
- * transcript's end with the last prompt on screen, it is the last prompt,
- * whose top counts as shown when its first line is anywhere in view: the
- * view cannot bring that line higher. With no entry on screen, it is the
- * prompt last jumped to, else the newest. Undefined while no prompt is known.
- */
-export function anchorOf(view: PromptView): Anchor | undefined {
-  const { placed, prompts, lastJumped } = view
-  if (prompts.length === 0) return undefined
-
-  if (isLastPromptAtEnd(view)) {
-    const last = prompts.length - 1
-    const isTopShown = entriesOnScreen(placed).some(each => each.entry.requestId === prompts[last]?.id && isTopLineShown(each))
-    return { index: last, isTopShown }
-  }
-
-  const [top] = entriesOnScreen(placed)
-  if (top === undefined) {
-    const jumped = prompts.findIndex(prompt => prompt.id === lastJumped)
-    return { index: jumped >= 0 ? jumped : prompts.length - 1, isTopShown: false }
-  }
-
-  const index = prompts.findLastIndex(prompt => prompt.place <= top.place)
-  const isTopShown = isTopLineShown(top) && prompts[index]?.id === top.entry.requestId
-  return { index, isTopShown }
-}
-
-/**
- * The prompt a step from the anchor lands on, or undefined past either end.
- * A step back from inside a turn, or from a prompt whose top is out of view,
- * lands on that prompt's own top first.
- */
-export function jumpTarget(view: PromptView, step: Step): StoredPrompt | undefined {
-  const anchor = anchorOf(view)
-  if (anchor === undefined) return undefined
-
-  const target = step === -1 && !anchor.isTopShown ? anchor.index : anchor.index + step
-  return target === BEFORE_FIRST ? undefined : view.prompts[target]
-}
-
-/** `7/8` while the view is on the seventh of eight prompts; empty with none known, or above the first. */
-export function positionText(view: PromptView): string {
-  const anchor = anchorOf(view)
-  if (anchor === undefined || anchor.index === BEFORE_FIRST) return ''
-  return `${anchor.index + 1}/${view.prompts.length}`
-}
-
-/** A drawn entry and the ids that find its stored row: its own, or for a group of tool calls each call's. */
-type Drawn = { entry: DrawnEntry; ids: readonly string[] }
-
-/**
- * What the band knows of the session:
- * - `order`: where each stored row of the conversation sits;
- * - `appended`: the rows stored since the plugin loaded, laid over a read of
- *   the transcript file that finishes after them;
- * - `isReadingTranscript`: whether that read is under way;
- * - `drawn`: the entries drawn so far, by site and requestId;
- * - `reportClock`: counts the reports of where entries are, to order them;
- * - `lastJumped`: the id of the prompt last jumped to;
- * - `positionShown`: the count last written for the band, undefined before
- *   the first write since the plugin loaded;
- * - `isPublishDue`: whether a write of the count is on its way;
- * - `conversation`: counts the conversations the process has gone on to, so
- *   a transcript read started in an earlier one is dropped.
- */
-export type PromptTrail = {
-  order: TranscriptOrder
-  appended: StoredRow[]
-  isReadingTranscript: boolean
-  drawn: Map<string, Drawn>
-  reportClock: number
-  lastJumped: string | undefined
-  positionShown: string | undefined
-  isPublishDue: boolean
-  conversation: number
-}
-
-export const newTrail = (conversation = 0): PromptTrail => ({
-  order: new TranscriptOrder(),
-  appended: [],
-  isReadingTranscript: false,
-  drawn: new Map(),
-  reportClock: 0,
-  lastJumped: undefined,
-  positionShown: undefined,
-  isPublishDue: false,
-  conversation,
-})
 
 /** Forgets the conversation that ended: `/clear` and `/resume` go on in this process with other prompts. */
 function startOver(trail: PromptTrail) {
-  const { positionShown, isPublishDue } = trail
-  Object.assign(trail, newTrail(trail.conversation + 1), { positionShown, isPublishDue })
-}
-
-/** The drawn entries whose stored rows are known, in transcript order. */
-export function placedEntries(trail: PromptTrail): PlacedEntry[] {
-  const placed = [...trail.drawn.values()].flatMap(({ entry, ids }) => {
-    const place = trail.order.placeOf(ids)
-    return place === undefined ? [] : [{ place, entry }]
-  })
-  // Entries of one stored row keep the order they were first drawn in.
-  return placed.sort((a, b) => a.place - b.place)
+  trail.prompts = []
+  trail.at = undefined
 }
 
 /**
- * The person's prompts the conversation keeps, with any drawn as the
- * person's that the stored rows did not mark: a prompt sent while Claude
- * worked is stored as a row the engine folds into the turn.
- */
-function promptsOf(trail: PromptTrail, placed: readonly PlacedEntry[]): readonly StoredPrompt[] {
-  const stored = trail.order.prompts()
-  const storedIds = new Set(stored.map(prompt => prompt.id))
-  const drawnOnly = placed.flatMap(({ place, entry }) => (entry.isPrompt && !storedIds.has(entry.requestId) ? [{ place, id: entry.requestId }] : []))
-  return drawnOnly.length === 0 ? stored : [...stored, ...drawnOnly].sort((a, b) => a.place - b.place)
-}
-
-export function viewOf(trail: PromptTrail): PromptView {
-  const placed = placedEntries(trail)
-  return { placed, prompts: promptsOf(trail, placed), lastJumped: trail.lastJumped }
-}
-
-// The count waits for the transcript read: the prompts known before it ends are only the newest.
-const currentPosition = (trail: PromptTrail) => (trail.isReadingTranscript ? '' : positionText(viewOf(trail)))
-
-function placementOf(onScreen: OnScreen | null | undefined, reportedAt: number): Placement {
-  if (onScreen === undefined) return UNREPORTED
-  if (onScreen === null) return OFF_SCREEN
-  return { kind: 'onScreen', firstLine: onScreen.first, isBottomShown: onScreen.last >= onScreen.of - 1, reportedAt }
-}
-
-/** Records where a drawn entry is; a redraw that does not say keeps what was last reported. */
-export function noteDrawn(trail: PromptTrail, key: string, drawn: Omit<DrawnEntry, 'placement'>, ids: readonly string[], onScreen: OnScreen | null | undefined) {
-  if (onScreen === undefined && trail.drawn.has(key)) return
-
-  trail.reportClock += 1
-  trail.drawn.set(key, { entry: { ...drawn, placement: placementOf(onScreen, trail.reportClock) }, ids })
-}
-
-/**
- * Places a row the conversation stores, and keeps it to lay over a transcript
- * read under way. A compaction's boundary starts the conversation again: the
- * rows before it are no longer the conversation's.
- */
-export function noteStored(trail: PromptTrail, row: StoredRow, { startsAgain = false } = {}) {
-  if (startsAgain) {
-    trail.appended = []
-    trail.order = new TranscriptOrder()
-  }
-  trail.appended.push(row)
-  trail.order.add(row)
-}
-
-/** Places the rows a transcript file holds, then the rows stored since the plugin loaded. */
-export function noteTranscript(trail: PromptTrail, rows: readonly StoredRow[]) {
-  trail.order = TranscriptOrder.of([...rows, ...trail.appended])
-}
-
-/**
- * The count the band shows. An entry scrolling does not change the band's
- * props, so the band reads the count from state, and a write draws the band
- * again without drawing the transcript's entries.
+ * The count the band shows. A jump does not change the band's props, so the
+ * band reads the count from state, and a write draws the band again without
+ * drawing the transcript's rows.
  */
 const PROMPT_POSITION = atom({ plugin: 'sc-mods', key: 'promptPosition' } as const, '')
 
-// Folds the entries one redraw draws into one count.
-const PUBLISH_DELAY_MS = 16
-
-/**
- * Writes the count once the entries being drawn are noted. A render hook
- * cannot write state, so the write waits on the clock.
- */
-function schedulePublish($: EngineInterface, trail: PromptTrail) {
-  if (trail.isPublishDue) return
-  trail.isPublishDue = true
-  $.clock.after(PUBLISH_DELAY_MS, () => void publishPosition($, trail))
-}
-
-async function publishPosition($: EngineInterface, trail: PromptTrail) {
-  trail.isPublishDue = false
-  const position = currentPosition(trail)
-  if (position === trail.positionShown) return
-
-  trail.positionShown = position
-  await update($, PROMPT_POSITION, () => position)
-}
+const publishPosition = ($: EngineInterface, trail: PromptTrail) => update($, PROMPT_POSITION, () => positionText(trail))
 
 async function jump($: EngineInterface, trail: PromptTrail, step: Step) {
-  const view = viewOf(trail)
-  const target = jumpTarget(view, step)
+  const target = jumpTarget(trail, step)
   if (target === undefined) {
     $.ui.toast(step === -1 ? 'No earlier prompt' : 'No later prompt')
     return
   }
 
-  const refusal = await scrollRefusal($, target.id)
+  const refusal = await scrollRefusal($, trail.prompts[target] as string)
   if (refusal !== undefined) {
     $.ui.toast(`Can't jump to that prompt: ${refusal}`)
     return
   }
-  trail.lastJumped = target.id
-  schedulePublish($, trail)
+  trail.at = target
+  await publishPosition($, trail)
 }
 
-/** Why the transcript did not move to the row, or undefined once it did. Claude Code scrolls to a stored row whether it is drawn or not. */
+/**
+ * Why the transcript did not move to the row, or undefined once it did.
+ * Claude Code scrolls to a row its transcript has drawn; the window stays
+ * where it is when the row's top cannot reach the window's top (a prompt
+ * near the end), and that answers as moved.
+ */
 async function scrollRefusal($: EngineInterface, requestId: string): Promise<string | undefined> {
   try {
     return (await $.ui.scroll({ to: { requestId }, block: 'start' })).deny
@@ -331,119 +87,34 @@ async function scrollRefusal($: EngineInterface, requestId: string): Promise<str
   }
 }
 
-const TRANSCRIPT_FIND_TIMEOUT_MS = 5000
-const TRANSCRIPT_READ_TIMEOUT_MS = 10000
-
-async function configDir($: EngineInterface): Promise<string | undefined> {
-  const configured = await $.env.get('CLAUDE_CONFIG_DIR')
-  if (configured !== undefined) return configured
-
-  const home = await $.env.get('HOME')
-  return home === undefined ? undefined : `${home}/.claude`
-}
-
-async function findTranscript($: EngineInterface): Promise<string | undefined> {
-  const dir = await configDir($)
-  if (dir === undefined) return undefined
-
-  const found = await $.process.run(findTranscriptCommand(dir, await $.session.id()), { timeoutMs: TRANSCRIPT_FIND_TIMEOUT_MS })
-  return found.stdout.trim() || undefined
-}
-
 /**
- * Reads the transcript file for the rows the conversation stored before the
- * plugin saw them: those of a session it loaded into, or one resumed.
- */
-async function readStoredRows($: EngineInterface, trail: PromptTrail, locate: () => Promise<string | undefined>) {
-  const conversation = trail.conversation
-  trail.isReadingTranscript = true
-  try {
-    const path = await locate()
-    if (path === undefined) return
-
-    const read = await $.process.run(transcriptFieldsCommand(path), { timeoutMs: TRANSCRIPT_READ_TIMEOUT_MS })
-    if (trail.conversation === conversation) noteTranscript(trail, rowsOfTranscriptRead(read))
-  } catch (error) {
-    // The prompts stored before the plugin loaded go uncounted.
-    $.ui.log(`sc-mods: could not read the transcript: ${error instanceof Error ? error.message : String(error)}`, { to: 'debug' })
-  } finally {
-    if (trail.conversation === conversation) {
-      trail.isReadingTranscript = false
-      schedulePublish($, trail)
-    }
-  }
-}
-
-/** Notes a drawn entry, then asks for the count it may change. */
-function watchDrawn($: EngineInterface, trail: PromptTrail, key: string, drawn: Omit<DrawnEntry, 'placement'>, ids: readonly string[], onScreen: OnScreen | null | undefined) {
-  noteDrawn(trail, key, drawn, ids, onScreen)
-  schedulePublish($, trail)
-}
-
-/**
- * The band's ◀ and ▶ buttons, hotkeys 1 and 2 in an empty prompt box, which
- * scroll the transcript to the previous or next prompt, with the view's
- * place among the prompts between them.
+ * The band's ◀ and ▶ buttons, which scroll the transcript to the previous or
+ * next of the person's prompts, with the arrows' place among them between.
+ * Hotkeys 1 and 2 press them while the band holds the keyboard.
  *
- * Claude Code draws only the entries near the view, and draws them again
- * after a reload, so the order entries are drawn in is not transcript order.
- * Each drawn entry is placed by its stored row's place in the conversation:
- * rows stored while the plugin runs as they are stored, older ones from the
- * transcript file. The turn entries watched are reply text and tool calls,
- * single or folded: a tool-heavy turn can fill the screen with no reply
- * text. A tool's output is folded to a few lines under its call, so it is
- * not watched. The watchers pass every entry on unchanged.
+ * The prompts counted are those stored since the plugin loaded: the rows a
+ * session held before then are not drawn, so there is nothing to scroll to.
+ * The arrows step from the prompt last jumped to, so a press moves them on
+ * even where the window could not move; the person's own scrolling does not
+ * move them.
  */
 export function registerPromptJump(on: On) {
   const trail = newTrail()
 
-  on('session.start', async ($, e, next) => {
-    const started = await next(e)
-    void readStoredRows($, trail, () => findTranscript($))
-    return started
-  })
-
   on('session.end', ($, e, next) => {
     if (e.reason === 'clear' || e.reason === 'resume') {
       startOver(trail)
-      schedulePublish($, trail)
+      void publishPosition($, trail)
     }
-    return next(e)
-  })
-
-  // A resumed conversation's rows were stored before this process saw them.
-  on('classic.SessionStart', ($, e, next) => {
-    if (e.source === 'resume') void readStoredRows($, trail, async () => e.transcript_path || undefined)
     return next(e)
   })
 
   on('session.append', ($, e, next) => {
-    const row = appendedRow(e)
-    if (row !== undefined) noteStored(trail, row, { startsAgain: e.message.name === 'compact_boundary' })
-    return next(e)
-  })
-
-  on('ui.render', { component: 'UserMessage' }, ($, e, next) => {
-    // A prompt drawn as one line is a queued one, drawn under a new id each redraw.
-    if (isPersonsPrompt(e.props.origin) && e.props.isExpanded) {
-      watchDrawn($, trail, `prompt:${e.requestId}`, { requestId: e.requestId, isPrompt: true }, [e.requestId], e.props.onScreen)
+    const id = promptIdOf(e)
+    if (id !== undefined) {
+      notePrompt(trail, id)
+      void publishPosition($, trail)
     }
-    return next(e)
-  })
-
-  on('ui.render', { component: 'AssistantMessage' }, ($, e, next) => {
-    watchDrawn($, trail, `reply:${e.requestId}`, { requestId: e.requestId, isPrompt: false }, [e.requestId], e.props.onScreen)
-    return next(e)
-  })
-
-  on('ui.render', { component: 'ToolUse' }, ($, e, next) => {
-    watchDrawn($, trail, `tool:${e.requestId}`, { requestId: e.requestId, isPrompt: false }, [e.props.tool_use_id], e.props.onScreen)
-    return next(e)
-  })
-
-  on('ui.render', { component: 'ToolGroup' }, ($, e, next) => {
-    const toolUseIds = e.props.calls.flatMap(call => call.tool_use_id ?? [])
-    watchDrawn($, trail, `tools:${e.requestId}`, { requestId: e.requestId, isPrompt: false }, toolUseIds, e.props.onScreen)
     return next(e)
   })
 

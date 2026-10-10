@@ -37,9 +37,9 @@ The drawing has to fit the terminal's width. For a flowchart that is too wide, t
 
 ## Jump between prompts
 
-The band above the prompt shows two buttons, `◀` and `▶`, with a dim count between them: `[ ◀ ] 2/5 [ ▶ ]` while the view is on the second of five prompts. The count follows the view as you scroll or jump. Click a button, or type `1` or `2` into an empty prompt box, to scroll the conversation so your previous or next prompt sits at the top of the view. A digit typed into a prompt box that already holds text is typed as usual.
+The band above the prompt shows two buttons, `◀` and `▶`, with a dim count between them: `[ ◀ ] 2/5 [ ▶ ]` while the arrows are on the second of five prompts. Click a button to scroll the conversation so your previous or next prompt sits at the top of the view. The hotkeys `1` and `2` press the buttons while the band holds the keyboard: press ctrl+x then tab to move the keyboard to the band, or click in it; Esc returns it to the prompt box.
 
-The view is on the prompt that owns the topmost row on screen: the prompt itself, or a row of Claude's reply to it (its text or its tool calls). At the end of the conversation, with your last prompt on screen, it is on that last prompt. When the screen shows none of those rows, it is on the prompt last jumped to, else the newest. The count and the step both start from that prompt. If that prompt's first line is scrolled out of view, as when you are partway through its reply, `◀` first goes back to its top. A toast says so when there is no earlier or later prompt, and gives Claude Code's reason when it does not scroll.
+The arrows count the prompts you have sent since the mod loaded and step from the prompt they last jumped to; each new prompt you send puts them back on the newest. Scrolling the conversation yourself does not move them. A toast says so when there is no earlier or later prompt, and gives Claude Code's reason when it does not scroll.
 
 Jumping needs fullscreen mode, where Claude Code draws the conversation itself. The classic layout leaves the conversation to the terminal's scrollback and refuses the scroll.
 
@@ -59,7 +59,7 @@ The plugin holds no merman binary. The first time a diagram needs drawing, `bin/
 
 merman-cli runs on macOS and on Linux with glibc, on arm64 and x86_64. The download needs `curl` and `shasum` or `sha256sum`, and on Linux also `xz`.
 
-**A mod runs with your permissions.** It runs inside Claude Code and can start programs as you. This one starts merman-cli to draw diagrams, and `find` and `grep` to read the session's own transcript file (`<session id>.jsonl` under `~/.claude/projects/`, or `$CLAUDE_CONFIG_DIR/projects/`). Its only network call and its only file writes are the merman download above. The copy button writes to the clipboard through Claude Code, the way `/copy` does. Read [`hooks/register.ts`](hooks/register.ts) and [`bin/merman-cli`](bin/merman-cli) before you install it.
+**A mod runs with your permissions.** It runs inside Claude Code and can start programs as you. This one starts merman-cli to draw diagrams. Its only network call and its only file writes are the merman download above. The copy button writes to the clipboard through Claude Code, the way `/copy` does. Read [`hooks/register.ts`](hooks/register.ts) and [`bin/merman-cli`](bin/merman-cli) before you install it.
 
 ## Settings
 
@@ -113,9 +113,8 @@ It downloads merman-cli into the cache if it is not there, and stops with the la
 
 - A mermaid block without a closing fence shows its source.
 - Some merman drawings have layout quirks: a flowchart edge that loops back runs against the boxes ([#183](https://github.com/Latias94/merman/issues/183)), a state diagram can print two transition labels run together ([#184](https://github.com/Latias94/merman/issues/184)), a long sequence message label can run past the next lifeline ([#185](https://github.com/Latias94/merman/issues/185)), and in a narrow terminal two side-by-side subgraphs can share a border ([#186](https://github.com/Latias94/merman/issues/186)).
-- When the mod loads into a session that already has prompts (a restart, `/resume`, a plugin reload), it runs `find` and `grep` once over the session's transcript file to learn those prompts, and shows no count until that read ends. Without those commands on the `PATH`, the older prompts are not counted. In a transcript long enough that grep's output passes 4 MiB (tens of thousands of rows), the rows past that point are not counted.
-- A prompt waiting in the queue while Claude works is counted once it is sent.
-- After a rewind (Esc Esc, or editing an earlier prompt), the prompts the rewind went back past are still counted until the mod next reads the transcript: on a restart, a plugin reload or `/resume`.
+- The jump buttons count the prompts sent since the mod loaded. Prompts a session held before then (a restart, `/resume`, a plugin reload) are not counted; Claude Code does not draw those rows, so there is nothing to scroll to.
+- After a rewind (Esc Esc, or editing an earlier prompt), the prompts the rewind went back past stay counted until `/clear` or `/resume`.
 - The jump buttons step through the main conversation, and are hidden while an agent's transcript is on screen.
 - The mod is built for the terminal. The desktop app and the VS Code extension are untested.
 - merman publishes merman-cli for macOS and glibc Linux only. On other systems, musl Linux such as Alpine included, the diagrams stay as source unless `MERMAN_PATH` points at a merman-cli.
