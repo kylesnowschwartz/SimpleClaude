@@ -20,7 +20,7 @@ Curated output styles for Claude Code that modify how Claude communicates and fo
 
 - **bottom-line** - Tail-first responses for readers who skim, get interrupted, and decide sequentially. Replies close with a standalone "Net:" block (outcome, next step, pending decisions); plans chunked into phases with a done/now/left state line; every decision offered with a recommended default.
 
-- **bottom-line-ste** - The bottom-line style, written in ASD-STE100 Simplified Technical English: short sentences, one instruction per sentence, and a controlled vocabulary.
+- **bottom-line-ste** - The bottom-line style, written in ASD-STE100 Simplified Technical English. Replies follow a relaxed subset of STE (short sentences, one instruction per sentence, active voice, a small vocabulary) and mark risky steps with `WARNING:` and `CAUTION:`.
 
 ### Structured Output Styles
 
