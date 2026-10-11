@@ -39,7 +39,7 @@ SimpleClaude consists of these plugins:
 - **sc-output-styles**: Curated output styles — personality-driven (Linus, Austen, Lovelace, Ousterhout, Starfleet, Mayo Clinic) and structured formats (HTML, JSON, Markdown, Semantic Markdown, YAML)
 - **sc-extras**: The `sc-review-and-refactor` skill, which routes review and refactoring work to named techniques (general diff review goes to the built-in `/code-review`), plus adversarial analysis, context wizards, and clean-room design
 - **sc-research**: Research agents for library source (via opensrc), GitHub search (via gh), and web research
-- **sc-skills**: Skills for codebase pattern detection, hypothesis testing, Socratic thinking, file querying, frontend design, image generation, and command generation
+- **sc-skills**: Skills for hypothesis testing, Socratic thinking, functional thinking, file querying, image generation, and coding rules
 - **sc-docs**: Writing and diagram skills: `human-writing` for plain prose and `sc-mermaid` for flowchart and sequence diagrams
 - **sc-mods**: Claude Code mods, written as a TypeScript hooks module (`hooks/hooks.json` lists `{"modules": [...]}`). Draws mermaid fences in replies as Unicode text by running merman-cli, jumps between prompts from the band above the prompt, and copies a reply's markdown
 

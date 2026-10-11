@@ -29,7 +29,7 @@ claude plugin install sc-mods
 - **sc-output-styles** _(optional)_: Curated output styles — personality-driven (Linus, Austen, Lovelace, Ousterhout, Starfleet, Mayo Clinic) and structured formats (HTML, JSON, Markdown, Semantic Markdown, YAML)
 - **sc-extras** _(optional)_: The `sc-review-and-refactor` skill, which routes review and refactoring work to a named technique (safe refactoring, test-quality review, verifying findings and claims, root-cause analysis, PR review threads); general diff review goes to the built-in `/code-review`. Also adversarial analysis, context wizards, and clean-room design
 - **sc-research** _(optional)_: Research agents for library source (via opensrc), GitHub search (via gh), and web research
-- **sc-skills** _(optional)_: Codebase pattern detection, hypothesis testing, Socratic thinking, file querying, frontend design, image generation, and command generation
+- **sc-skills** _(optional)_: Hypothesis testing, Socratic thinking, functional thinking, file querying, image generation, and coding rules
 - **sc-docs** _(optional)_: Writing and diagram skills: `human-writing` for plain prose in Slack messages, emails, PRs, issues, and docs, and `sc-mermaid` for flowchart and sequence diagrams
 - **sc-mods** _(optional)_: Claude Code mods. Draws mermaid diagrams in replies as Unicode text in the terminal, adds prompt-jump buttons above the prompt, and a copy button under each reply. See [`plugins/sc-mods/README.md`](plugins/sc-mods/README.md)
 
