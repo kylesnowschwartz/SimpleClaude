@@ -1,6 +1,6 @@
 {
   "name": "sc-research",
-  "version": "8.1.0",
+  "version": "8.1.1",
   "description": "Research agents: library source via opensrc, GitHub search via gh, and web research",
   "author": {
     "name": "Kyle Snow Schwartz"
