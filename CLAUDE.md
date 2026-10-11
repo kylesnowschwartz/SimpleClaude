@@ -4,7 +4,7 @@ This file provides guidance to [Claude Code](https://github.com/anthropics/claud
 
 ## Critical Rules
 
-- **important** `plugins/` contains all SimpleClaude plugins (sc-core, sc-hooks, sc-output-styles, sc-extras, sc-research, sc-skills, sc-mods)
+- **important** `plugins/` contains all SimpleClaude plugins (sc-core, sc-hooks, sc-output-styles, sc-extras, sc-research, sc-skills, sc-docs, sc-mods)
 - Command changes: update commands consistently across all 4+1 core-commands (sc-plan, sc-work, sc-explore, sc-review, sc-workflow)
 - Plugin structure: Each plugin in `plugins/` has `.claude-plugin/plugin.json`, plus optional `commands/`, `agents/`, `hooks/`, `output-styles/` directories
 - Description metadata: Use RFC 2119 obligation language (uppercase SHOULD/MUST) in `description` fields of SKILL.md and agent frontmatter to signal activation intent to AI agents
@@ -39,7 +39,8 @@ SimpleClaude consists of these plugins:
 - **sc-output-styles**: Curated output styles — personality-driven (Linus, Austen, Lovelace, Ousterhout, Starfleet, Mayo Clinic) and structured formats (HTML, JSON, Markdown, Semantic Markdown, YAML)
 - **sc-extras**: The `sc-review-and-refactor` skill, which routes review and refactoring work to named techniques (general diff review goes to the built-in `/code-review`), plus adversarial analysis, context wizards, and clean-room design
 - **sc-research**: Research agents for library source (via opensrc), GitHub search (via gh), and web research
-- **sc-skills**: Skills for mermaid diagrams, codebase pattern detection, hypothesis testing, Socratic thinking, file querying, frontend design, image generation, and command generation
+- **sc-skills**: Skills for codebase pattern detection, hypothesis testing, Socratic thinking, file querying, frontend design, image generation, and command generation
+- **sc-docs**: Writing and diagram skills: `human-writing` for plain prose and `sc-mermaid` for flowchart and sequence diagrams
 - **sc-mods**: Claude Code mods, written as a TypeScript hooks module (`hooks/hooks.json` lists `{"modules": [...]}`). Draws mermaid fences in replies as Unicode text by running merman-cli, jumps between prompts from the band above the prompt, and copies a reply's markdown
 
 **sc-mods merman-cli**: sc-mods downloads merman-cli on first use; see [merman-cli (sc-mods)](#merman-cli-sc-mods).

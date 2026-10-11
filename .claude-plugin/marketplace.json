@@ -121,7 +121,7 @@
     },
     {
       "name": "sc-skills",
-      "description": "Skills and agents for diagrams, codebase patterns, hypothesis testing, Socratic thinking, file querying, frontend design, image generation, and command creation",
+      "description": "Skills and agents for codebase patterns, hypothesis testing, Socratic thinking, file querying, frontend design, image generation, and command creation",
       "version": "7.13.0",
       "author": {
         "name": "Kyle Snow Schwartz"
@@ -133,13 +133,32 @@
       "category": "development",
       "keywords": [
         "skills",
-        "mermaid",
         "patterns",
         "frontend",
         "design",
         "image-generation",
         "hypothesis-testing",
         "file-querying",
+        "claude-code"
+      ]
+    },
+    {
+      "name": "sc-docs",
+      "description": "Writing and mermaid diagram skills: plain prose for Slack, email, PRs, issues, and docs, plus flowchart and sequence diagrams",
+      "version": "7.13.0",
+      "author": {
+        "name": "Kyle Snow Schwartz"
+      },
+      "source": "./plugins/sc-docs",
+      "homepage": "https://github.com/kylesnowschwartz/SimpleClaude",
+      "repository": "https://github.com/kylesnowschwartz/SimpleClaude",
+      "license": "MIT",
+      "category": "productivity",
+      "keywords": [
+        "writing",
+        "mermaid",
+        "diagrams",
+        "documentation",
         "claude-code"
       ]
     },

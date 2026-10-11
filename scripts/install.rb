@@ -51,7 +51,8 @@ module SimpleClaude
       { name: 'sc-extras', desc: 'review-and-refactor skill, 2 more skills, 3 commands' },
       { name: 'sc-research', desc: '3 research agents' },
       { name: 'sc-output-styles', desc: '8 output style personalities' },
-      { name: 'sc-skills', desc: 'frontend design, image gen' }
+      { name: 'sc-skills', desc: 'frontend design, image gen' },
+      { name: 'sc-docs', desc: 'writing and mermaid diagram skills' }
     ].freeze
 
     COLORS = { green: "\e[32m", yellow: "\e[33m", red: "\e[31m", blue: "\e[34m", reset: "\e[0m" }.freeze

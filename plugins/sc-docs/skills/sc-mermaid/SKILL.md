@@ -48,7 +48,7 @@ Parse `$ARGUMENTS` to determine diagram type:
 ### Deliverables
 
 1. Mermaid diagram file (`{descriptive-name}.mmd`)
-2. Syntax validation: `mmdc -i <file>.mmd --parseOnly` (fix errors if any)
+2. Syntax validation: `mmdc -i <file>.mmd -o /tmp/<name>.svg -q`. A nonzero exit or a `Parse error` on stderr means a syntax error; fix it and run again
 3. Bulleted architectural explanation
 4. Validation report with file path references
 5. Viewing instructions (optionally render: `mmdc -i <file>.mmd -o preview.png`)
