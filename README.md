@@ -18,7 +18,6 @@ claude plugin install sc-output-styles
 claude plugin install sc-extras
 claude plugin install sc-research
 claude plugin install sc-skills
-claude plugin install sc-refactor
 claude plugin install sc-mods
 ```
 
@@ -27,10 +26,9 @@ claude plugin install sc-mods
 - **sc-core**: Intent-based commands and specialized agents for planning, implementation, exploration, and review
 - **sc-hooks** _(optional)_: Auto-formatting and lint checks on stop, plus tool monitoring (steers GitHub WebFetch to the `gh` CLI)
 - **sc-output-styles** _(optional)_: Curated output styles — personality-driven (Linus, Austen, Lovelace, Ousterhout, Starfleet, Mayo Clinic) and structured formats (HTML, JSON, Markdown, Semantic Markdown, YAML)
-- **sc-extras** _(optional)_: Utility commands for root cause analysis, claim verification, adversarial analysis, and context wizards
+- **sc-extras** _(optional)_: The `sc-review-and-refactor` skill, which routes review and refactoring work to a named technique (safe refactoring, test-quality review, verifying findings and claims, root-cause analysis, PR review threads); general diff review goes to the built-in `/code-review`. Also adversarial analysis, context wizards, and clean-room design
 - **sc-research** _(optional)_: Research agents for library source (via opensrc), GitHub search (via gh), and web research
 - **sc-skills** _(optional)_: Mermaid diagrams, codebase pattern detection, hypothesis testing, Socratic thinking, file querying, frontend design, image generation, and command generation
-- **sc-refactor** _(optional)_: PR review with ticket integration, codebase health checks, and specialized analysis agents for refactoring workflows
 - **sc-mods** _(optional)_: Claude Code mods. Draws mermaid diagrams in replies as Unicode text in the terminal, adds prompt-jump buttons above the prompt, and a copy button under each reply. See [`plugins/sc-mods/README.md`](plugins/sc-mods/README.md)
 
 ## Updating
@@ -45,7 +43,6 @@ claude plugin install sc-output-styles@simpleclaude
 claude plugin install sc-extras@simpleclaude
 claude plugin install sc-research@simpleclaude
 claude plugin install sc-skills@simpleclaude
-claude plugin install sc-refactor@simpleclaude
 claude plugin install sc-mods@simpleclaude
 ```
 
@@ -59,17 +56,14 @@ claude plugin install sc-mods@simpleclaude
 /sc-core:sc-review "Check security vulnerabilities in auth module"
 /sc-core:sc-workflow "Start structured development for OAuth support"
 
-# PR review and refactoring
-/sc-refactor:sc-review-pr 42              # Full PR review with ticket context
-/sc-refactor:sc-pr-comments 42            # Fetch unresolved PR comments
-/sc-refactor:sc-resolve-pr-parallel 42    # Batch resolve PR feedback
-/sc-refactor:sc-cleanup src/              # Post-AI session cleanup
-/sc-refactor:sc-codebase-health src/      # Full codebase health analysis
+# Review and refactoring
+/code-review high my-branch               # Built-in general review: level first, then target
+/sc-extras:sc-review-and-refactor did this branch do everything the ticket asked?   # Requirements trace
+/sc-extras:sc-review-and-refactor resolve the review threads on PR 42              # PR review threads
+/sc-extras:sc-review-and-refactor why does the login test fail?                     # Root-cause analysis
 
 # Utilities
-/sc-extras:sc-five-whys                   # Root cause analysis
 /sc-skills:sc-mermaid flowchart auth      # Generate architecture diagrams
-/sc-extras:sc-validate-task               # Validate completed work
 /sc-skills:sc-worktrees                   # Manage git worktrees
 ```
 
@@ -106,10 +100,9 @@ SimpleClaude/
 │   ├── sc-core/        # Core plugin: commands & agents
 │   ├── sc-hooks/                 # Hooks plugin: auto-format, lint, tool monitoring
 │   ├── sc-output-styles/         # Output styles plugin: personality & structured formats
-│   ├── sc-extras/                # Extras plugin: utility commands
+│   ├── sc-extras/                # Extras plugin: review-and-refactor skill, utility commands
 │   ├── sc-research/              # Research plugin: library source, GitHub, and web agents
 │   ├── sc-skills/                # Skills plugin: diagrams, patterns, design, querying
-│   ├── sc-refactor/              # Refactor plugin: PR review & analysis agents
 │   └── sc-mods/                  # Mods plugin: mermaid diagrams, prompt jumps, reply copy
 ├── scripts/
 │   ├── install.rb                # Installation/update script

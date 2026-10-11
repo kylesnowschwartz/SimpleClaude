@@ -110,11 +110,11 @@ When a specific technique warrants focused application, suggest these specialize
 
 | Situation | Command | When to Suggest |
 |-----------|---------|-----------------|
-| Challenge a conclusion | `/sc-challenge-assumptions` | After reaching a decision, for structured adversarial review |
-| Debug a problem | `/sc-five-whys` | When tracing root causes in code/systems |
-| Verify factual claims | `/sc-extract-and-verify-claims` | When accuracy of assertions matters |
+| Challenge a conclusion | `/sc-review-and-refactor` (refute-findings route) | After reaching a decision, to have a fresh agent try to disprove it |
+| Debug a problem | `/sc-review-and-refactor` (hypothesis-rca route) | When tracing root causes in code/systems |
+| Verify factual claims | `/sc-review-and-refactor` (verify-claims route) | When accuracy of assertions matters |
 | Specify work for agents | `/sc-context-wizard` | After clarity is reached, before implementation |
-| Validate completed work | `/sc-validate-task` | After implementation, to verify against requirements |
+| Validate completed work | `/sc-review-and-refactor` (requirements-trace route) | After implementation, to verify against requirements |
 
 These commands provide structured protocols for specific situations. Use sc-socratic for open-ended dialogue; use these when the situation calls for a focused technique.
 

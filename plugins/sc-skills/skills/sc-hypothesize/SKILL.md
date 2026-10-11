@@ -218,5 +218,5 @@ Create the directory at the start of Phase 1. Write each file as its phase compl
 |-----------|---------|
 | Open-ended uncertainty, no clear options | `/sc-socratic` |
 | Quick implementation after deciding | `/sc-work` |
-| Challenge a conclusion adversarially | `/sc-challenge-assumptions` |
+| Challenge a conclusion adversarially | `/sc-review-and-refactor` (refute-findings route) |
 | Full feature workflow with architecture | `/sc-workflow` |

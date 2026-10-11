@@ -4,7 +4,7 @@ This file provides guidance to [Claude Code](https://github.com/anthropics/claud
 
 ## Critical Rules
 
-- **important** `plugins/` contains all SimpleClaude plugins (sc-core, sc-hooks, sc-output-styles, sc-extras, sc-research, sc-skills, sc-refactor, sc-mods)
+- **important** `plugins/` contains all SimpleClaude plugins (sc-core, sc-hooks, sc-output-styles, sc-extras, sc-research, sc-skills, sc-mods)
 - Command changes: update commands consistently across all 4+1 core-commands (sc-plan, sc-work, sc-explore, sc-review, sc-workflow)
 - Plugin structure: Each plugin in `plugins/` has `.claude-plugin/plugin.json`, plus optional `commands/`, `agents/`, `hooks/`, `output-styles/` directories
 - Description metadata: Use RFC 2119 obligation language (uppercase SHOULD/MUST) in `description` fields of SKILL.md and agent frontmatter to signal activation intent to AI agents
@@ -22,21 +22,13 @@ SimpleClaude's test surface lives in the `test/` directory plus syntax checks:
 # Syntax-check all hook Ruby files
 just test
 
-# Smoke test external CLI invocations (codex/gemini) — requires CLIs installed
-./test/test_adversarial_cli_smoke.sh          # both
-./test/test_adversarial_cli_smoke.sh codex    # codex only
-./test/test_adversarial_cli_smoke.sh gemini   # gemini only
-
-# Or via Justfile
-just test-cli    # CLI smoke tests
-
 # Lint the bottom-line-ste output style against ASD-STE100 — requires uv
 just test-ste
 ```
 
 `just test-ste` runs [stelint](https://pypi.org/project/stelint/) through `test/test_ste_lint.py`. It fails only on the rules in `GATED_RULES` (unapproved words, phrasal verbs, -ing forms, contractions, passive voice, and sentences over 20 words). It prints the count of other warnings as advisory, because those rules misfire on Markdown instruction files. `just test-ste --all` prints every warning. `test/ste/simpleclaude.jsonl` allows the technical words the style uses. To allow a new word, add it there with the value `"__REMOVE__"`.
 
-`just test` runs `ruby -c` over every hook file to catch syntax errors, then the hook tests and the sc-mods merman-cli launcher tests. The CLI smoke test verifies codex/gemini produce real reviews (not plan-confirmation prompts or empty output).
+`just test` runs `ruby -c` over every hook file to catch syntax errors, then the hook tests and the sc-mods merman-cli launcher tests.
 
 ## Architecture
 
@@ -45,10 +37,9 @@ SimpleClaude consists of these plugins:
 - **sc-core**: Core framework with intent-based commands and specialized agents
 - **sc-hooks**: Auto-formatting and lint checks (Stop), plus tool monitoring (PreToolUse: steers GitHub WebFetch to the `gh` CLI)
 - **sc-output-styles**: Curated output styles — personality-driven (Linus, Austen, Lovelace, Ousterhout, Starfleet, Mayo Clinic) and structured formats (HTML, JSON, Markdown, Semantic Markdown, YAML)
-- **sc-extras**: Utility commands for root cause analysis, claim verification, adversarial analysis, and context wizards
+- **sc-extras**: The `sc-review-and-refactor` skill, which routes review and refactoring work to named techniques (general diff review goes to the built-in `/code-review`), plus adversarial analysis, context wizards, and clean-room design
 - **sc-research**: Research agents for library source (via opensrc), GitHub search (via gh), and web research
 - **sc-skills**: Skills for mermaid diagrams, codebase pattern detection, hypothesis testing, Socratic thinking, file querying, frontend design, image generation, and command generation
-- **sc-refactor**: PR review with ticket integration, codebase health checks, and specialized analysis agents for refactoring workflows
 - **sc-mods**: Claude Code mods, written as a TypeScript hooks module (`hooks/hooks.json` lists `{"modules": [...]}`). Draws mermaid fences in replies as Unicode text by running merman-cli, jumps between prompts from the band above the prompt, and copies a reply's markdown
 
 **sc-mods merman-cli**: sc-mods downloads merman-cli on first use; see [merman-cli (sc-mods)](#merman-cli-sc-mods).

@@ -78,7 +78,7 @@
     },
     {
       "name": "sc-extras",
-      "description": "Optional SimpleClaude utilities for root cause analysis, claim verification, adversarial analysis, and context wizards",
+      "description": "Optional SimpleClaude utilities: a review-and-refactor skill that routes to named techniques, adversarial analysis, context wizards, and clean-room design",
       "version": "7.13.0",
       "author": {
         "name": "Kyle Snow Schwartz"
@@ -90,6 +90,8 @@
       "category": "productivity",
       "keywords": [
         "utilities",
+        "code-review",
+        "refactoring",
         "root-cause-analysis",
         "adversarial",
         "verification",
@@ -138,28 +140,6 @@
         "image-generation",
         "hypothesis-testing",
         "file-querying",
-        "claude-code"
-      ]
-    },
-    {
-      "name": "sc-refactor",
-      "description": "Unified review, refactoring, PR comment resolution, and cleanup workflows with specialized analysis agents",
-      "version": "7.13.0",
-      "author": {
-        "name": "Kyle Snow Schwartz"
-      },
-      "source": "./plugins/sc-refactor",
-      "homepage": "https://github.com/kylesnowschwartz/SimpleClaude",
-      "repository": "https://github.com/kylesnowschwartz/SimpleClaude",
-      "license": "MIT",
-      "category": "code-quality",
-      "keywords": [
-        "code-review",
-        "refactoring",
-        "dead-code",
-        "duplication",
-        "cleanup",
-        "agents",
         "claude-code"
       ]
     },

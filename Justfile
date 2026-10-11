@@ -136,9 +136,5 @@ test-mods-real:
     fi
     bun test test/sc-mods
 
-# Smoke test external CLI invocations (codex/gemini)
-test-cli target="all":
-    ./test/test_adversarial_cli_smoke.sh {{target}}
-
 update:
   @claude plugin marketplace update simpleclaude
