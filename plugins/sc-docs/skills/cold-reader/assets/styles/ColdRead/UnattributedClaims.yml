@@ -1,0 +1,24 @@
+---
+extends: existence
+message: "Unattributed claim: '%s'. A reader cannot check a claim with no named source, so say which study, team, or document says this."
+level: suggestion
+ignorecase: true
+tokens:
+  - studies show
+  - studies have shown
+  - studies suggest
+  - research shows
+  - research suggests
+  - research indicates
+  - research has shown
+  - experts agree
+  - experts say
+  - experts argue
+  - it is widely believed
+  - it is widely known
+  - it is well known
+  - it is generally accepted
+  - many believe
+  - some argue
+  - critics say
+  - best practices suggest

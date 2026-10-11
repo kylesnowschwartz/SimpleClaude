@@ -1,0 +1,20 @@
+---
+extends: existence
+message: "'%s' is banned in its metaphorical or workplace sense. Keep it only when literal (an upstream branch, network bandwidth, a physical lever); otherwise state the literal relationship."
+level: suggestion
+ignorecase: true
+tokens:
+  - load-bearing
+  - lever
+  - levers
+  - sits on
+  - sits on top of
+  - rests on
+  - upstream
+  - downstream
+  - alignment
+  - bandwidth
+  - priors
+  - my prior
+  - strong prior
+  - update on

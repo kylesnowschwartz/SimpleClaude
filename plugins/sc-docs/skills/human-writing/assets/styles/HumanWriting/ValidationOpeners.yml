@@ -1,0 +1,12 @@
+---
+extends: existence
+message: "Validation opener '%s'. Respond to the point itself. Keep the match only when it is not the opening of the message and states a real position."
+level: warning
+ignorecase: true
+tokens:
+  - "you're right"
+  - "you're absolutely right"
+  - fair point
+  - good call
+  - great question
+  - great point

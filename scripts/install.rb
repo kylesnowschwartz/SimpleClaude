@@ -52,7 +52,7 @@ module SimpleClaude
       { name: 'sc-research', desc: '3 research agents' },
       { name: 'sc-output-styles', desc: '8 output style personalities' },
       { name: 'sc-skills', desc: 'thinking, file querying, image generation, and rules skills' },
-      { name: 'sc-docs', desc: 'writing and mermaid diagram skills' },
+      { name: 'sc-docs', desc: 'writing, cold-reader review, and mermaid diagram skills' },
       { name: 'sc-mods', desc: 'mermaid diagrams in replies, prompt jumps, and reply copy' }
     ].freeze
 

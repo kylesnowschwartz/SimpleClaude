@@ -1,0 +1,18 @@
+---
+extends: existence
+message: "Corporate or subculture marker '%s'. State the literal relationship or name the people involved."
+level: error
+ignorecase: true
+tokens:
+  - circle back
+  - close the loop
+  - stakeholder
+  - stakeholders
+  - deliver value
+  - value-add
+  - side quest
+  - crux
+  - cruxy
+  - evidence base
+  - the actual question is
+  - is doing the work

@@ -1,0 +1,11 @@
+---
+extends: existence
+message: "Self-labeled tone '%s'. Saying it signals the opposite; delete it and let the message carry its own tone."
+level: error
+ignorecase: true
+tokens:
+  - no agenda
+  - just curious
+  - honest question
+  - to be honest
+  - genuinely

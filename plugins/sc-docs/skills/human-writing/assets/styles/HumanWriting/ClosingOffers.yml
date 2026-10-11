@@ -1,0 +1,13 @@
+---
+extends: existence
+message: "Closing offer '%s'. End when the content ends. Keep it only when the personal voice file relaxes this rule with a specific offer tied to the work."
+level: warning
+ignorecase: true
+tokens:
+  - happy to help
+  - hope that helps
+  - hope this helps
+  - let me know if you have
+  - "let me know if there's"
+  - "don't hesitate"
+  - feel free to reach out

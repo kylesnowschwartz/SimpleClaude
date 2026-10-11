@@ -1,0 +1,15 @@
+---
+extends: existence
+message: "Agentless claim: '%s'. A decision with no named actor leaves the reader unable to tell who is responsible or who to ask; name the person, team, or system that acted."
+level: suggestion
+ignorecase: true
+tokens:
+  - it was decided
+  - it has been decided
+  - the decision was made
+  - a decision was made
+  - it was determined
+  - it was agreed
+  - the choice was made
+  - consensus emerged
+  - a decision emerged

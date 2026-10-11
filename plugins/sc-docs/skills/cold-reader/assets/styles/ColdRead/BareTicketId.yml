@@ -1,0 +1,19 @@
+---
+extends: conditional
+message: "Bare identifier '%s'. A reader without your ticket system cannot resolve a bare code, so give the plain name first, identifier second: 'the settings catalog (PROJ-5411)'."
+level: suggestion
+scope: summary
+first: '\b[A-Z]{2,10}-[0-9]+\b'
+second: '\(([A-Z]{2,10}-[0-9]+)\)'
+exceptions:
+  - ISO-8601
+  - ISO-27001
+  - SHA-1
+  - SHA-256
+  - SHA-512
+  - AES-128
+  - AES-256
+  - UTF-8
+  - UTF-16
+  - COVID-19
+  - CVE-[0-9]{4}

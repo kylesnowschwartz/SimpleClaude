@@ -1,0 +1,21 @@
+---
+extends: existence
+message: "Change narration: '%s'. State only what currently is; history belongs in commits and PRs. A document whose subject is history (ADR, migration, deprecation) can waive this in triage."
+level: warning
+ignorecase: true
+tokens:
+  - previously
+  - no longer
+  - used to be
+  - originally
+  - renamed after
+  - updated after
+  - revised after
+  - after review
+  - as discussed
+  - in an earlier version
+  - in a previous version
+  - in the previous version
+  - has been updated
+  - has been renamed
+  - was renamed

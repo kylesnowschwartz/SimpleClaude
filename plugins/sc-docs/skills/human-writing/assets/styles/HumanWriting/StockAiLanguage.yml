@@ -1,0 +1,32 @@
+---
+extends: existence
+message: "Stock AI phrase '%s'. Use a common word or state the specific fact."
+level: error
+ignorecase: true
+tokens:
+  - delve
+  - delves
+  - delving
+  - tapestry
+  - multifaceted
+  - nuanced
+  - pivotal
+  - crucial
+  - vital
+  - foster
+  - fostering
+  - cultivate
+  - cultivating
+  - unleash
+  - empower
+  - empowers
+  - empowering
+  - embark
+  - embarking
+  - a testament to
+  - serves as
+  - stands as
+  - at its core
+  - "it's important to note"
+  - context-aware
+  - "in today's [\\w-]+ world"

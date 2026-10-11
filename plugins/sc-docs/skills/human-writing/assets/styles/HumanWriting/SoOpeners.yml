@@ -1,0 +1,8 @@
+---
+extends: existence
+message: "Sentence opens with 'So'. A run of 'So ...' conclusion sentences reads mechanical. Keep at most one per document; elsewhere use 'therefore' mid-sentence, 'consequently', 'as a result', 'which means', or restructure so the consequence needs no connector."
+level: suggestion
+ignorecase: false
+nonword: true
+tokens:
+  - '(?:^|[.!?]\s+)So\b'

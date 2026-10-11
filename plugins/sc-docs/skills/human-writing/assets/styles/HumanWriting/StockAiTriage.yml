@@ -1,0 +1,20 @@
+---
+extends: existence
+message: "'%s' is banned in its metaphorical sense. Keep it only when literal or a standard technical term (an upstream branch, a coverage gap, robust to malformed input); otherwise use a common word."
+level: suggestion
+ignorecase: true
+tokens:
+  - navigate
+  - navigating
+  - leverage
+  - leveraging
+  - landscape
+  - gap
+  - gaps
+  - robust
+  - journey
+  - harness
+  - discover
+  - discovered
+  - highlights
+  - underscores

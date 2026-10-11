@@ -1,0 +1,21 @@
+---
+extends: existence
+message: "Evidence narration: '%s'. State the fact itself; how it was established belongs in commits, PRs, and the build log. A discovery or proposal document reporting its own testing evidence can waive this in triage."
+level: warning
+ignorecase: true
+tokens:
+  - verified on
+  - verified against
+  - verified during
+  - as verified
+  - validated on
+  - validated during
+  - validated in
+  - confirmed on
+  - confirmed during
+  - confirmed by testing
+  - tested on a live
+  - during the spike
+  - per the spike
+  - the spike showed
+  - the spike confirmed

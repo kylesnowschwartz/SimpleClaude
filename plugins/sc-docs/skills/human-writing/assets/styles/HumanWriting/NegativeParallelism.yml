@@ -1,0 +1,9 @@
+---
+extends: existence
+message: "Possible negative parallelism ('not X, but Y' / 'X, not Y'). State Y directly. Short corrective instructions such as 'go left, not right' are fine; keep those."
+level: suggestion
+ignorecase: true
+nonword: true
+tokens:
+  - '\bnot \w[^.,;:!?]{0,40}, but\b'
+  - ', not \w+'
