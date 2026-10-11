@@ -9,9 +9,16 @@ SKILL.md's Scripts section shows both commands with the full script paths. Use t
 1. Show the open feedback with the tree command from SKILL.md's Scripts section.
    `--all` adds resolved threads, marked `[RESOLVED]`. Use it when the user wants history.
    The scripts fetch the first 100 reviews, comments, and threads, and the first 20 comments per thread.
+   They print a warning on stderr naming each list GitHub cut short; pass any warning on to the user.
 2. To act on the threads, use the JSON command from SKILL.md's Scripts section. In its output,
    `threads[]` has `threadId`, `path`, `line`, `isOutdated`, and `comments[]` with `author` and `body`.
-3. Group the open threads: bug fix, refactoring request, style, documentation, question, other.
+3. Triage each open thread before any fix. Read the PR title, body, and linked ticket, then mark it
+   in scope, out of scope (valid, but about older code or other work), or unclear. For each fix request, ask:
+   is it a real bug on a normal path; does another layer (validation, types, an earlier check) already
+   guard it; does the fix cost more complexity than the risk it removes. A stream of edge-case findings
+   from a bot reviewer signals diminishing returns. Out-of-scope, unclear, and declined items go to the
+   user with your reason and recommendation, never dropped silently.
+   Group the rest: bug fix, refactoring request, style, documentation, question, other.
    Questions and disagreements go to the user, not to a fix agent.
 4. Group the threads by file. Start one subagent per file, in parallel. Each agent owns every thread in its file
    and edits only that file. Give it those threads (line and every comment) and the instructions in step 5.
@@ -25,10 +32,12 @@ SKILL.md's Scripts section shows both commands with the full script paths. Use t
    - Reports per thread: the comment summary, the change, and status RESOLVED or NEEDS USER.
 6. When all agents finish, read the combined diff yourself. Make any cross-file changes the agents reported.
    Run the linter and the full test suite once.
-7. Do not reply to or resolve threads on GitHub unless the user asks. When asked, resolve one with:
+7. Do not reply to or resolve threads on GitHub unless the user asks. When asked, show the draft replies
+   first. Then reply in the thread, saying what changed or why not, and resolve it:
+   `gh api graphql -f query='mutation($id:ID!,$body:String!){addPullRequestReviewThreadReply(input:{pullRequestReviewThreadId:$id,body:$body}){comment{url}}}' -f id=<threadId> -f body=<reply>`
    `gh api graphql -f query='mutation($id:ID!){resolveReviewThread(input:{threadId:$id}){thread{isResolved}}}' -f id=<threadId>`
 
 Stop / report: one entry per thread with location, request, change made or reason not made, and status;
 then the test result. Leave the commit to the user.
 
-Source: GitHub GraphQL API reference, `PullRequest.reviewThreads` and `resolveReviewThread` (docs.github.com/graphql).
+Source: GitHub GraphQL API reference, `PullRequest.reviewThreads`, `addPullRequestReviewThreadReply`, and `resolveReviewThread` (docs.github.com/graphql).

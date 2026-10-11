@@ -75,13 +75,14 @@ else
 fi
 
 # Fetch reviews, review threads and PR-level comments with GraphQL
-gh api graphql -f query='
+RESPONSE=$(gh api graphql -f query='
 query($owner: String!, $name: String!, $pr: Int!) {
   repository(owner: $owner, name: $name) {
     pullRequest(number: $pr) {
       url
       title
       reviews(first: 100) {
+        totalCount
         nodes {
           id
           databaseId
@@ -94,6 +95,7 @@ query($owner: String!, $name: String!, $pr: Int!) {
         }
       }
       comments(first: 100) {
+        totalCount
         nodes {
           id
           databaseId
@@ -105,6 +107,7 @@ query($owner: String!, $name: String!, $pr: Int!) {
         }
       }
       reviewThreads(first: 100) {
+        totalCount
         nodes {
           id
           isResolved
@@ -112,6 +115,7 @@ query($owner: String!, $name: String!, $pr: Int!) {
           path
           line
           comments(first: 20) {
+            totalCount
             nodes {
               id
               databaseId
@@ -126,7 +130,24 @@ query($owner: String!, $name: String!, $pr: Int!) {
       }
     }
   }
-}' -f owner="$OWNER" -f name="$REPO" -F pr="$PR_NUMBER" | jq --arg filter "$THREAD_FILTER" '
+}' -f owner="$OWNER" -f name="$REPO" -F pr="$PR_NUMBER")
+
+# The query fetches one page per list, so name every list GitHub truncated
+jq -r '
+  .data.repository.pullRequest // empty
+  | (
+      ["reviews", .reviews], ["PR comments", .comments], ["review threads", .reviewThreads]
+      | select(.[1].totalCount > (.[1].nodes | length))
+      | "Warning: fetched \(.[1].nodes | length) of \(.[1].totalCount) \(.[0]); the rest are not shown"
+    ),
+    (
+      .reviewThreads.nodes[]
+      | select(.comments.totalCount > (.comments.nodes | length))
+      | "Warning: the thread on \(.path):\(.line // "outdated") has \(.comments.totalCount) comments; only the first \(.comments.nodes | length) are shown"
+    )
+' <<<"$RESPONSE" >&2
+
+jq '
   if .data.repository.pullRequest == null then
     error("Pull request not found or unavailable")
   else
@@ -176,4 +197,4 @@ query($owner: String!, $name: String!, $pr: Int!) {
     ]
     }
   end
-'
+' <<<"$RESPONSE"
