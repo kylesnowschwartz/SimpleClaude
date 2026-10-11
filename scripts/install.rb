@@ -46,9 +46,10 @@ module SimpleClaude
   # via Claude Code's native plugin CLI.
   class Installer
     PLUGINS = [
-      { name: 'sc-core', desc: 'core framework (5 commands + 7 agents)', required: true },
+      { name: 'sc-core', desc: 'core framework (5 commands + 3 agents)', required: true },
       { name: 'sc-hooks', desc: 'auto-format, lint, and tool monitoring' },
       { name: 'sc-extras', desc: '7 utility commands' },
+      { name: 'sc-research', desc: '3 research agents' },
       { name: 'sc-output-styles', desc: '8 output style personalities' },
       { name: 'sc-skills', desc: 'frontend design, image gen' }
     ].freeze

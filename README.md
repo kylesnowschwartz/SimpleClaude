@@ -16,6 +16,7 @@ claude plugin install sc-core
 claude plugin install sc-hooks
 claude plugin install sc-output-styles
 claude plugin install sc-extras
+claude plugin install sc-research
 claude plugin install sc-skills
 claude plugin install sc-refactor
 claude plugin install sc-mods
@@ -27,6 +28,7 @@ claude plugin install sc-mods
 - **sc-hooks** _(optional)_: Auto-formatting and lint checks on stop, plus tool monitoring (steers GitHub WebFetch to the `gh` CLI)
 - **sc-output-styles** _(optional)_: Curated output styles — personality-driven (Linus, Austen, Lovelace, Ousterhout, Starfleet, Mayo Clinic) and structured formats (HTML, JSON, Markdown, Semantic Markdown, YAML)
 - **sc-extras** _(optional)_: Utility commands for root cause analysis, claim verification, adversarial analysis, and context wizards
+- **sc-research** _(optional)_: Research agents for library source (via opensrc), GitHub search (via gh), and web research
 - **sc-skills** _(optional)_: Mermaid diagrams, codebase pattern detection, hypothesis testing, Socratic thinking, file querying, frontend design, image generation, and command generation
 - **sc-refactor** _(optional)_: PR review with ticket integration, codebase health checks, and specialized analysis agents for refactoring workflows
 - **sc-mods** _(optional)_: Claude Code mods. Draws mermaid diagrams in replies as Unicode text in the terminal, adds prompt-jump buttons above the prompt, and a copy button under each reply. See [`plugins/sc-mods/README.md`](plugins/sc-mods/README.md)
@@ -41,6 +43,7 @@ claude plugin install sc-core@simpleclaude
 claude plugin install sc-hooks@simpleclaude
 claude plugin install sc-output-styles@simpleclaude
 claude plugin install sc-extras@simpleclaude
+claude plugin install sc-research@simpleclaude
 claude plugin install sc-skills@simpleclaude
 claude plugin install sc-refactor@simpleclaude
 claude plugin install sc-mods@simpleclaude
@@ -88,6 +91,9 @@ Each command automatically spawns appropriate agents:
 - `sc-code-explorer` - Traces execution paths and maps architecture
 - `sc-code-architect` - Designs feature architectures from existing patterns
 - `sc-code-reviewer` - Reviews code for bugs, security, and convention adherence
+
+The optional `sc-research` plugin adds research agents that Claude picks by description:
+
 - `sc-research-github` - Searches across GitHub to compare libraries, evaluate projects, and find issues/PRs
 - `sc-research-repo` - Fetches a library's source with opensrc and searches it for docs, APIs, and source code
 - `sc-research-web` - Searches the web for news, blogs, tutorials, and community discussions
@@ -101,6 +107,7 @@ SimpleClaude/
 │   ├── sc-hooks/                 # Hooks plugin: auto-format, lint, tool monitoring
 │   ├── sc-output-styles/         # Output styles plugin: personality & structured formats
 │   ├── sc-extras/                # Extras plugin: utility commands
+│   ├── sc-research/              # Research plugin: library source, GitHub, and web agents
 │   ├── sc-skills/                # Skills plugin: diagrams, patterns, design, querying
 │   ├── sc-refactor/              # Refactor plugin: PR review & analysis agents
 │   └── sc-mods/                  # Mods plugin: mermaid diagrams, prompt jumps, reply copy

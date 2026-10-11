@@ -35,6 +35,28 @@
       ]
     },
     {
+      "name": "sc-research",
+      "description": "Research agents: library source via opensrc, GitHub search via gh, and web research",
+      "version": "7.13.0",
+      "author": {
+        "name": "Kyle Snow Schwartz"
+      },
+      "source": "./plugins/sc-research",
+      "homepage": "https://github.com/kylesnowschwartz/SimpleClaude",
+      "repository": "https://github.com/kylesnowschwartz/SimpleClaude",
+      "license": "MIT",
+      "category": "development",
+      "keywords": [
+        "research",
+        "documentation",
+        "opensrc",
+        "github",
+        "web-search",
+        "agents",
+        "claude-code"
+      ]
+    },
+    {
       "name": "sc-hooks",
       "description": "SimpleClaude hooks for auto-formatting, lint checks, and tool monitoring",
       "version": "7.13.0",

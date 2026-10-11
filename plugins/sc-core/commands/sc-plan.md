@@ -20,9 +20,6 @@ argument-hint: Planning task or requirement to analyze
 
 **Direct Agent Rules (ALWAYS delegate these):**
 
-- **Documentation lookups** → Use `sc-research-repo`
-- **Web searches** → Use `sc-research-web`
-- **GitHub searches** → Use `sc-research-github`
 - **Deep codebase analysis** → Use `sc-code-explorer`
 - **Architecture design** → Use `sc-code-architect`
 - **Code quality review** → Use `sc-code-reviewer`
