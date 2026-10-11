@@ -89,7 +89,7 @@ Each command automatically spawns appropriate agents:
 - `sc-code-architect` - Designs feature architectures from existing patterns
 - `sc-code-reviewer` - Reviews code for bugs, security, and convention adherence
 - `sc-research-github` - Searches across GitHub to compare libraries, evaluate projects, and find issues/PRs
-- `sc-research-repo` - Clones and searches a specific library's repo for docs, APIs, and source code
+- `sc-research-repo` - Fetches a library's source with opensrc and searches it for docs, APIs, and source code
 - `sc-research-web` - Searches the web for news, blogs, tutorials, and community discussions
 
 ### Project Structure

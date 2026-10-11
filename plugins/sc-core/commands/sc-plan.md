@@ -36,7 +36,7 @@ argument-hint: Planning task or requirement to analyze
 
 ## Prior Work Context (Optional)
 
-Before planning, check if `.agent-history/` and `.cloned-sources/` directories exist in the project root:
+Before planning, check if the `.agent-history/` directory exists in the project root:
 
 - **If present and relevant**: Read it and incorporate direct references with absolute paths into your plan. Note any conflicted areas where human judgment is needed.
 - **If it does not exist**: Proceed normally. Do not block planning on prior-work context.

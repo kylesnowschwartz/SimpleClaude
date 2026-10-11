@@ -94,7 +94,7 @@
       "Bash(ruby:*)",
       "Bash(python3:*)"
     ],
-    "additionalDirectories": ["$HOME/Code/Cloned-Sources/"]
+    "additionalDirectories": ["$HOME/.opensrc/"]
   },
   "statusLine": {
     "type": "command",

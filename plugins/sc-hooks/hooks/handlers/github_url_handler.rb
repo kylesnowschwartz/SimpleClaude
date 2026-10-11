@@ -82,8 +82,8 @@ class GitHubUrlHandler < ClaudeHooks::PreToolUse
     lines << "- README:        gh api repos/#{repo}/readme --jq .content | base64 -d"
     lines << "- File tree:     gh api 'repos/#{repo}/git/trees/HEAD?recursive=1' --jq '.tree[].path'"
     lines << "- One file:      gh api repos/#{repo}/contents/PATH --jq .content | base64 -d"
-    lines << '- Full clone:    only when you need git history or a writable tree — ' \
-             "gh repo clone #{repo} .cloned-sources/#{match[:repo]} -- --depth 1"
+    lines << '- Full clone:    only when you need git history, a writable tree, or private access — ' \
+             "gh repo clone #{repo} \"${TMPDIR:-/tmp}/#{match[:repo]}\""
 
     lines.join("\n")
   end

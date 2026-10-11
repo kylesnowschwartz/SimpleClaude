@@ -68,6 +68,7 @@ This is a server capacity issue (not quota) and mostly affects `oauth-personal` 
 Enterprise API key (`gemini-api-key` auth with billing) has better capacity allocation.
 
 Set default in `~/.gemini/settings.json`:
+
 ```json
 { "model": { "name": "gemini-3.1-pro-preview" } }
 ```
@@ -217,6 +218,7 @@ codex exec -C "$PWD" --full-auto "Read /tmp/review-diff.txt and review for corre
 Gemini with `gemini-api-key` auth reads `GEMINI_API_KEY` from the environment. If the key is managed by direnv, it's only available when direnv loads the `.envrc` that exports it. A child directory with its own `.envrc` shadows the parent without inheriting — so the key can be missing depending on which directory the session runs from.
 
 **Pre-flight check** (run before any Gemini invocation):
+
 ```bash
 echo "GEMINI_API_KEY: ${GEMINI_API_KEY:+set (${#GEMINI_API_KEY} chars)}"
 ```
@@ -234,6 +236,7 @@ If unset, tell the user and skip Gemini. Codex does not have this problem — it
 ### Codex: plan-confirmation instead of review
 
 If codex output contains "Plan:" followed by "If you're happy with that approach" — codex didn't execute, it proposed a plan and waited for approval. Two causes:
+
 1. **`-s read-only` in headless mode** — triggers plan confirmation. Use `--full-auto` instead.
 2. **Piped stdin** — `codex exec` ignores stdin entirely. The prompt says "review this" but codex has nothing to review, so it proposes a plan to go find the content. Save to a file and reference it in the prompt instead.
 
@@ -264,12 +267,6 @@ for d in ~/.claude/plugins/marketplaces/*/plugins/codex/scripts/codex-companion.
   [ -f "$d" ] && CODEX_COMPANION="$d" && break
 done
 unsetopt NULL_GLOB 2>/dev/null
-# Project-local .cloned-sources fallback
-if [ -z "$CODEX_COMPANION" ]; then
-  REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null)"
-  [ -n "$REPO_ROOT" ] && [ -f "$REPO_ROOT/.cloned-sources/codex-plugin-cc/plugins/codex/scripts/codex-companion.mjs" ] && \
-    CODEX_COMPANION="$REPO_ROOT/.cloned-sources/codex-plugin-cc/plugins/codex/scripts/codex-companion.mjs"
-fi
 ```
 
 ### Invocation

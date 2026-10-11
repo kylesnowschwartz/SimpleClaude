@@ -99,12 +99,6 @@ for d in ~/.claude/plugins/marketplaces/*/plugins/codex/scripts/codex-companion.
   [ -f "$d" ] && CODEX_COMPANION="$d" && break
 done
 unsetopt NULL_GLOB 2>/dev/null
-# Project-local .cloned-sources fallback
-if [ -z "$CODEX_COMPANION" ]; then
-  REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null)"
-  [ -n "$REPO_ROOT" ] && [ -f "$REPO_ROOT/.cloned-sources/codex-plugin-cc/plugins/codex/scripts/codex-companion.mjs" ] && \
-    CODEX_COMPANION="$REPO_ROOT/.cloned-sources/codex-plugin-cc/plugins/codex/scripts/codex-companion.mjs"
-fi
 echo "CODEX_COMPANION: ${CODEX_COMPANION:-not found}"
 
 # Check Codex CLI auth (companion needs it)
@@ -149,7 +143,7 @@ Pass user focus text as a trailing argument when present: `node "$CODEX_COMPANIO
 
 **Error handling**: If the companion script or `codex review` fails (non-zero exit, empty output, auth error), tell the user:
 
-> Codex review failed. This usually means the codex-plugin-cc plugin isn't set up. Install it from https://github.com/openai/codex-plugin-cc and run `codex login` to authenticate. Proceeding with Gemini + Claude only.
+> Codex review failed. This usually means the codex-plugin-cc plugin isn't set up. Install it from <https://github.com/openai/codex-plugin-cc> and run `codex login` to authenticate. Proceeding with Gemini + Claude only.
 
 Skip Codex and continue with available models. Don't block the review.
 
@@ -232,30 +226,35 @@ Perform your own adversarial analysis of the target using Read, Grep, Glob. This
 Select analysis lenses based on content type:
 
 ### Code lenses
+
 - **Premortem**: This code caused a production incident. What was the root cause? What warning signs were rationalized away?
 - **Mutation probing**: What if this operator were reversed? This condition negated? This constant off by one? Would tests catch it?
 - **Assumption surfacing**: What must be true for this to work? Input format, ordering, concurrency, environment, network, time.
 - **STRIDE-lite**: For security-relevant code — can identity be faked? Data tampered? Information leaked? Availability disrupted? Privileges escalated?
 
 ### Plan/Design lenses
+
 - **Gap analysis**: What steps are missing? What happens between step N and step N+1 that isn't addressed?
 - **Stress test**: What if the key assumption is wrong? What if the dependency is unavailable? What if the data volume is 10x the estimate?
 - **Devil's alternative**: What approach was NOT considered? Why might a completely different strategy work better?
 - **Dependency chain**: What external factors could invalidate this plan? What's the blast radius if one piece fails?
 
 ### Reasoning lenses
+
 - **Steel-man the opposite**: Construct the strongest argument against this conclusion. Does it hold?
 - **Evidence audit**: Is each claim supported? Is supporting evidence cherry-picked, anecdotal, or generalizable?
 - **Hidden premises**: What unstated assumptions connect the evidence to the conclusion? Are they justified?
 - **Alternative explanations**: What other conclusions fit the same evidence equally well?
 
 ### Communication lenses
+
 - **Hostile reader**: Someone who wants to misunderstand will latch onto what?
 - **Missing context**: What does the writer know that the reader doesn't? Where is that gap widest?
 - **Action clarity**: If the reader has to do something, is it unambiguous what, when, and why?
 - **Tone calibration**: Does the tone match the relationship, stakes, and audience expectations?
 
 ### General lenses
+
 - **Internal consistency**: Does the artifact contradict itself? Do different sections agree on facts, terminology, and intent?
 - **Completeness**: What's defined but not used? Referenced but not defined? Implied but not stated?
 - **Fitness for purpose**: Does this actually achieve what it claims to? Where does it fall short of its own stated goals?
@@ -268,11 +267,13 @@ After analysis, organize findings internally as structured objects with: severit
 ### Parse external outputs
 
 **Codex output** — check which file exists to determine parse mode:
+
 - `/tmp/adversarial-codex.json` exists: parse as JSON. Extract `.result.findings` from the companion's payload envelope. Tag each finding with `source: "codex"`.
 - `/tmp/adversarial-codex.txt` exists: extract findings heuristically from freeform text (fallback mode). Tag with `source: "codex"`.
 - Neither exists: Codex did not participate.
 
 **Gemini output** — read `/tmp/adversarial-gemini.json`:
+
 - Try JSON parse directly. If it fails, strip markdown fences (` ```json ... ``` `) and retry. If still fails, treat as freeform text. Tag with `source: "gemini"`.
 
 **Claude findings** — already structured from Phase 3. Tag with `source: "claude"`.

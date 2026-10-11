@@ -25,7 +25,7 @@
 - `sc-code-explorer` - Deeply analyzes existing codebase features by tracing execution paths and mapping architecture
 - `sc-code-architect` - Designs feature architectures by analyzing existing patterns and providing implementation blueprints
 - `sc-code-reviewer` - Reviews code for bugs, security vulnerabilities, and adherence to project conventions
-- `sc-research-repo` - Clones and searches a library's repo for docs, APIs, and source code
+- `sc-research-repo` - Fetches a library's source with opensrc and searches it for docs, APIs, and source code
 - `sc-research-web` - Searches web for news, blogs, tutorials, and community discussions
 
 **Context Preservation:**
