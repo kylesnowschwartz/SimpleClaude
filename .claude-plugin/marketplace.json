@@ -101,7 +101,7 @@
     },
     {
       "name": "sc-output-styles",
-      "description": "Curated output styles for Claude Code: personality-driven and structured formats",
+      "description": "Curated output styles for Claude Code: personality-driven and tail-first reply styles",
       "version": "8.0.0",
       "author": {
         "name": "Kyle Snow Schwartz"

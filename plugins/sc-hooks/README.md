@@ -6,8 +6,8 @@ SimpleClaude hooks for auto-formatting, lint checks, and tool monitoring.
 
 | Event | Handler | Behavior |
 | --- | --- | --- |
-| `Stop` | `AutoFormatHandler` | Formats the files Claude modified (git diff + untracked) before lint runs. Never blocks. |
-| `Stop` | `LintCheckHandler` | Runs linters/type-checkers on the modified files and reports errors back so Claude can fix them. Has a retry guard to avoid infinite stop loops. |
+| `Stop` | `AutoFormatHandler` | At the end of each turn, formats every changed or untracked file in the git working tree under the session directory, including edits Claude did not make (your own edits, other sessions). Runs before lint. Formats nothing outside a git repository. Never blocks. |
+| `Stop` | `LintCheckHandler` | Runs linters/type-checkers on the same set of changed and untracked git files and reports errors back so Claude can fix them. Checks nothing outside a git repository. Has a retry guard to avoid infinite stop loops. |
 | `PreToolUse` (`WebFetch`) | `GitHubUrlHandler` | When Claude WebFetches a github.com repo page, injects a soft hint (via `additionalContext`, no block) suggesting the equivalent `gh` CLI commands. The fetch still proceeds, so reserved site routes (`features`, `marketplace`, …) and raw URLs are never stranded. |
 
 ## Environment Variables

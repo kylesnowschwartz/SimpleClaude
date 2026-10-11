@@ -4,7 +4,7 @@
 require_relative '../../vendor/claude_hooks/lib/claude_hooks'
 require_relative '../concerns/file_handler_support'
 
-# Batch-formats all files Claude modified before lint checks run.
+# Batch-formats every changed and untracked git file before lint checks run.
 #
 # Runs at Stop (not PostToolUse) to avoid per-edit transcript noise and
 # wasted work when Claude edits the same file multiple times. Never blocks —

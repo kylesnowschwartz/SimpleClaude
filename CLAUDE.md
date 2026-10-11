@@ -36,7 +36,7 @@ SimpleClaude consists of these plugins:
 
 - **sc-core**: Core framework with intent-based commands and specialized agents
 - **sc-hooks**: Auto-formatting and lint checks (Stop), plus tool monitoring (PreToolUse: steers GitHub WebFetch to the `gh` CLI)
-- **sc-output-styles**: Curated output styles — personality-driven (Linus, Austen, Lovelace, Ousterhout, Starfleet, Mayo Clinic) and structured formats (HTML, JSON, Markdown, Semantic Markdown, YAML)
+- **sc-output-styles**: Curated output styles — personality-driven (Linus, Austen, Lovelace, Ousterhout, Starfleet, Mayo Clinic, Ogg) and tail-first replies for skimmers (Bottom Line, plus a Simplified Technical English variant)
 - **sc-extras**: The `sc-review-and-refactor` skill, which routes review and refactoring work to named techniques (general diff review goes to the built-in `/code-review`), plus adversarial analysis, context wizards, and clean-room design
 - **sc-research**: Research agents for library source (via opensrc), GitHub search (via gh), and web research
 - **sc-skills**: Skills for hypothesis testing, Socratic thinking, functional thinking, file querying, image generation, and coding rules

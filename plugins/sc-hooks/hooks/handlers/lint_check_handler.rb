@@ -6,10 +6,11 @@ require_relative '../concerns/file_handler_support'
 require_relative '../concerns/lint_runner_support'
 require 'open3'
 
-# Runs linters and type-checkers on files Claude modified, reporting errors
-# back so Claude can fix them before the user notices.
+# Runs linters and type-checkers on changed files, reporting errors back so
+# Claude can fix them before the user notices.
 #
-# Only reports errors in files Claude actually modified (git diff + untracked).
+# Checks every changed and untracked file in the git working tree under cwd
+# (git diff + untracked), including edits Claude did not make.
 # Retry guard prevents infinite loops when errors can't be auto-fixed.
 class LintCheckHandler < ClaudeHooks::Stop
   include FileHandlerSupport

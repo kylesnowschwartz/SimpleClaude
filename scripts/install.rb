@@ -50,7 +50,7 @@ module SimpleClaude
       { name: 'sc-hooks', desc: 'auto-format, lint, and tool monitoring' },
       { name: 'sc-extras', desc: 'review-and-refactor skill, 2 more skills, 3 commands' },
       { name: 'sc-research', desc: '3 research agents' },
-      { name: 'sc-output-styles', desc: '8 output style personalities' },
+      { name: 'sc-output-styles', desc: '9 output styles' },
       { name: 'sc-skills', desc: 'thinking, file querying, image generation, and rules skills' },
       { name: 'sc-docs', desc: 'writing, cold-reader review, and mermaid diagram skills' },
       { name: 'sc-mods', desc: 'mermaid diagrams in replies, prompt jumps, and reply copy' }

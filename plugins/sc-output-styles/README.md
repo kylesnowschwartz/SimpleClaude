@@ -18,21 +18,15 @@ Curated output styles for Claude Code that modify how Claude communicates and fo
 
 - **mayo-clinic** - Authoritative health-guide style adapted for technical topics. Clear explanations, practical self-care steps, and explicit escalation triggers. Calm, confident tone that builds competence.
 
+- **ogg** - Ogg the Neanderthal. Ultra-compressed replies that drop articles, filler, and pleasantries while keeping every technical detail.
+
 - **bottom-line** - Tail-first responses for readers who skim, get interrupted, and decide sequentially. Replies close with a standalone "Net:" block (outcome, next step, pending decisions); plans chunked into phases with a done/now/left state line; every decision offered with a recommended default.
 
 - **bottom-line-ste** - The bottom-line style, written in ASD-STE100 Simplified Technical English. Replies follow a relaxed subset of STE (short sentences, one instruction per sentence, active voice, a small vocabulary) and mark risky steps with `WARNING:` and `CAUTION:`.
 
-### Structured Output Styles
+### Retired Styles
 
-- **structured-html** - Responses formatted as semantic HTML with proper tags, indentation, and structure.
-
-- **structured-json** - Responses formatted as valid JSON with hierarchical key-value pairs and RFC 7159 compliance.
-
-- **structured-yaml** - Responses formatted as valid YAML for easy parsing and integration with automation tools.
-
-- **markdown-style** - Rich markdown formatting with headers, lists, code blocks, and emphasis for maximum readability.
-
-- **semantic-markdown** - Enhanced markdown with semantic structure, clear hierarchies, and logical organization.
+`deprecated/` keeps five retired structured-format styles: structured-html, structured-json, structured-yaml, markdown-style, and semantic-markdown. Claude Code loads styles only from `output-styles/`, so these are not offered by `/output-style`. To use one, copy it into `~/.claude/output-styles/`.
 
 ## Usage
 
@@ -47,7 +41,6 @@ Curated output styles for Claude Code that modify how Claude communicates and fo
 - Output styles modify communication style while maintaining coding, testing, and development features
 - Unlike CLAUDE.md (which supplements), output styles redefine how Claude communicates but keep technical capabilities intact
 - Use personality styles for different work contexts (direct debugging, learning, formal documentation)
-- Use structured styles when integrating Claude's output with other tools
 
 ## Creating Your Own
 

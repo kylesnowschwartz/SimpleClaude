@@ -26,7 +26,7 @@ claude plugin install sc-mods
 
 - **sc-core**: Intent-based commands and specialized agents for planning, implementation, exploration, and review
 - **sc-hooks** _(optional)_: Auto-formatting and lint checks on stop, plus tool monitoring (steers GitHub WebFetch to the `gh` CLI)
-- **sc-output-styles** _(optional)_: Curated output styles — personality-driven (Linus, Austen, Lovelace, Ousterhout, Starfleet, Mayo Clinic) and structured formats (HTML, JSON, Markdown, Semantic Markdown, YAML)
+- **sc-output-styles** _(optional)_: Curated output styles — personality-driven (Linus, Austen, Lovelace, Ousterhout, Starfleet, Mayo Clinic, Ogg) and tail-first replies for skimmers (Bottom Line, plus a Simplified Technical English variant)
 - **sc-extras** _(optional)_: The `sc-review-and-refactor` skill, which routes review and refactoring work to a named technique (safe refactoring, test-quality review, verifying findings and claims, root-cause analysis, PR review threads); general diff review goes to the built-in `/code-review`. Also adversarial analysis, context wizards, and clean-room design
 - **sc-research** _(optional)_: Research agents for library source (via opensrc), GitHub search (via gh), and web research
 - **sc-skills** _(optional)_: Hypothesis testing, Socratic thinking, functional thinking, file querying, image generation, and coding rules

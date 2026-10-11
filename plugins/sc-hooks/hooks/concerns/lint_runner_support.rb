@@ -164,7 +164,7 @@ module LintRunnerSupport # rubocop:disable Metrics/ModuleLength
     [message]
   end
 
-  # Filter tsc output to only errors in files Claude modified.
+  # Filter tsc output to only errors in the changed files being checked.
   def filter_tsc_errors(tsc_output, modified_files)
     modified_basenames = modified_files.to_set { |f| relative_file_path(f) }
     relevant_lines = tsc_output.lines.select do |line|
