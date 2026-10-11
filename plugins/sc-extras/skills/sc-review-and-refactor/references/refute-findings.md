@@ -22,14 +22,17 @@ and tries to disprove it with a check it can run.
 6. Treat "I checked and it looks fine" with no evidence attached as UNVERIFIABLE.
 7. Keep only CONFIRMED findings. List REFUTED ones in one line each so the reader knows they were checked.
 
-Different model family: models from one family share blind spots. For a code change on a branch,
-also run a Codex review and treat its output as more claims to refute:
+Different model family: models from one family share blind spots. For a code change, also run a Codex review
+when the `codex` CLI is installed (`command -v codex`), and treat its output as more claims to refute.
+Use the real base branch: `gh pr view --json baseRefName -q .baseRefName` for a PR,
+otherwise the default branch (`gh repo view --json defaultBranchRef -q .defaultBranchRef.name`).
 
-    codex review --base main          # committed branch changes
+    codex review --base <base>        # committed branch changes
     codex review --uncommitted        # working tree changes
 
-Run Codex directly, or through a Codex delegation tool if you have one. Mark each finding that Claude and Codex
-both report as agreed. Look harder at findings only one of them reports, and at places where they disagree.
+Run Codex directly, or through a Codex delegation tool if you have one. No `codex` CLI: skip this step and say so
+in the report. Mark each finding that Claude and Codex both report as agreed. Look harder at findings only one
+of them reports, and at places where they disagree.
 
 Stop / report: one line per claim with its verdict and evidence, CONFIRMED first, then UNVERIFIABLE, then REFUTED.
 

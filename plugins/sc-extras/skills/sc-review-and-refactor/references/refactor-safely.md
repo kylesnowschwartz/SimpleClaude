@@ -24,7 +24,7 @@ The method is Fowler's: small named steps from the refactoring catalog, with the
 
 Large refactors that cannot finish green in one sitting: use the Mikado method. Write the goal as the root of a list.
 Try the change, write each failure as a prerequisite under it, revert everything, then do the leaf prerequisites
-one at a time, each in its own green commit.
+one at a time. Each prerequisite must reach a green check; commit it on its own only if the user asked for commits.
 
 Stop / report: after 5 failed attempts at one step, revert and report the blocker. Otherwise report each step
 by its catalog name, the files it touched, the check result after it, the metrics before and after, and the bug and smell lists.

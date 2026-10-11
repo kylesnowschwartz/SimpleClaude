@@ -48,7 +48,7 @@ module SimpleClaude
     PLUGINS = [
       { name: 'sc-core', desc: 'core framework (5 commands + 3 agents)', required: true },
       { name: 'sc-hooks', desc: 'auto-format, lint, and tool monitoring' },
-      { name: 'sc-extras', desc: '7 utility commands' },
+      { name: 'sc-extras', desc: 'review-and-refactor skill, 2 more skills, 3 commands' },
       { name: 'sc-research', desc: '3 research agents' },
       { name: 'sc-output-styles', desc: '8 output style personalities' },
       { name: 'sc-skills', desc: 'frontend design, image gen' }

@@ -16,7 +16,7 @@ This skill picks one technique for a review or refactoring task and sends you to
 A general bug review of a diff goes to the built-in `/code-review`. This skill covers the work that
 `/code-review` does not: safe refactoring, test quality, focused passes, verification, and root causes.
 
-Skill directory: `${CLAUDE_PLUGIN_ROOT}/skills/sc-review-and-refactor`. Paths below are relative to it.
+Skill directory: `${CLAUDE_SKILL_DIR}`. Paths below are relative to it.
 
 ## Rules for every review
 
@@ -27,7 +27,9 @@ Skill directory: `${CLAUDE_PLUGIN_ROOT}/skills/sc-review-and-refactor`. Paths be
 - Rank findings by severity. Put blocking findings first. Put optional findings in a separate short list, or omit them.
 - Review without the author's reasoning. Give a reviewer the diff and the criteria only.
   Treat the PR description, commit messages, and "done" reports as claims to check, not as facts.
-- Report only what the change introduced. Skip pre-existing problems and anything a linter or formatter catches.
+- When you review a change (a diff, PR, or branch), report only what the change introduced.
+  Skip pre-existing problems. The sweep routes (dead code, duplicated code, names in existing code)
+  report existing problems by design. In every review, skip anything a linter or formatter catches.
 - Prefer running to reading. Report the command and its output next to the finding.
 - State what you did not verify: perspectives not run, files skipped, checks that could not run.
 
@@ -54,7 +56,8 @@ Skill directory: `${CLAUDE_PLUGIN_ROOT}/skills/sc-review-and-refactor`. Paths be
 
 ## How to use a route
 
-1. Match the request to one row. When two rows match, run them in table order and report each one separately.
+1. Match the request to one row. When two rows match, run the prerequisite first:
+   use a combination below when one applies, and report each route separately.
 2. Read only the reference for that row. Each reference is complete on its own.
 3. Follow its numbered steps in order. Apply the rules above to every finding.
 4. Stop where the reference says to stop, and report in the shape it names.
@@ -67,8 +70,17 @@ Combinations that come up often:
 
 ## Scripts
 
-- `scripts/get-pr-comments.sh [--all] [PR | URL | owner/repo PR]` prints a PR's reviews, comments,
-  and review threads as JSON. It shows only unresolved threads unless `--all` comes first. Needs `gh` and `jq`.
-- `scripts/format-pr-tree.rb` reads that JSON on stdin and prints it as a text tree.
+`get-pr-comments.sh` prints a PR's reviews, comments, and review threads as JSON. It needs `gh` and `jq`.
+`format-pr-tree.rb` reads that JSON on stdin and prints it as a text tree.
+`[PR]` is empty (the current branch's PR), a number, a PR URL, or `owner/repo 123`.
+`--all` must come first; it adds resolved threads.
 
-`references/pr-review-threads.md` describes how to use both.
+Show the threads as a tree:
+
+    "${CLAUDE_SKILL_DIR}/scripts/get-pr-comments.sh" [--all] [PR] | ruby "${CLAUDE_SKILL_DIR}/scripts/format-pr-tree.rb"
+
+Get the threads as JSON:
+
+    "${CLAUDE_SKILL_DIR}/scripts/get-pr-comments.sh" [--all] [PR]
+
+`references/pr-review-threads.md` describes how to use both commands.
