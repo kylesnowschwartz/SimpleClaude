@@ -19,6 +19,8 @@ Run OpenAI Codex CLI or Google Gemini CLI for second opinions and external revie
 
 3. **Capture the final message and stderr.** Pass `-o <file>` for the final message and redirect stderr to a file (`2><file>`). The `session id:` line you need to resume a run is printed on stderr, not stdout. Check that the `-o` file exists before reading it.
 
+4. **Pair every read-only Codex call with `-c 'approval_policy="never"'`.** The sandbox alone does not block writes: when the user's `~/.codex/config.toml` sets `approval_policy = "on-request"`, Codex can ask to run a command outside the sandbox, and an approved request writes files. With the policy set to `never`, Codex cannot escalate and writes fail with "operation not permitted". `codex exec` and `codex exec resume` have no `-a` flag, so `-c` is the only way to set it.
+
 ## Prerequisites
 
 | Tool | Install | Config |
@@ -81,73 +83,75 @@ Set default in `~/.gemini/settings.json`:
 
 ### Code Review (most common use)
 
+`codex review` has no `-s` flag, so the examples set the sandbox and approval policy with `-c`.
+
 **Important**: `codex review` treats `--base`, `--uncommitted`, `--commit`, and `[PROMPT]` as mutually exclusive modes. You cannot combine a custom prompt with `--base` or `--uncommitted`. To review with custom instructions, pipe the diff into `codex exec`, or save it to a file and name the file in the prompt.
 
 ```bash
 # Review uncommitted changes (default instructions)
-codex review --uncommitted </dev/null
+codex review -c 'sandbox_mode="read-only"' -c 'approval_policy="never"' --uncommitted </dev/null
 
 # Review branch against main (default instructions)
-codex review --base main </dev/null
+codex review -c 'sandbox_mode="read-only"' -c 'approval_policy="never"' --base main </dev/null
 
 # Review specific commit (default instructions)
-codex review --commit <SHA> </dev/null
+codex review -c 'sandbox_mode="read-only"' -c 'approval_policy="never"' --commit <SHA> </dev/null
 
 # Review with title context
-codex review --uncommitted --title "Add user auth middleware" </dev/null
+codex review -c 'sandbox_mode="read-only"' -c 'approval_policy="never"' --uncommitted --title "Add user auth middleware" </dev/null
 
 # Review with custom instructions: pipe the diff in; codex appends it as a <stdin> block
-git diff main...HEAD | codex exec -s read-only -o /tmp/codex-review.md "Review the diff in the stdin block for error handling and security" 2>/tmp/codex-review.err
+git diff main...HEAD | codex exec -s read-only -c 'approval_policy="never"' -o /tmp/codex-review.md "Review the diff in the stdin block for error handling and security" 2>/tmp/codex-review.err
 
 # Or save the diff to a file and name it in the prompt
 git diff main...HEAD > /tmp/review-diff.txt
-codex exec -s read-only -o /tmp/codex-review.md "Read /tmp/review-diff.txt and review it for error handling and security" </dev/null 2>/tmp/codex-review.err
+codex exec -s read-only -c 'approval_policy="never"' -o /tmp/codex-review.md "Read /tmp/review-diff.txt and review it for error handling and security" </dev/null 2>/tmp/codex-review.err
 ```
 
 ### Non-Interactive Execution
 
-Use `-s read-only` for reviews, questions, and analysis. Use `-s workspace-write` only when Codex must change files in the repository.
+Use `-s read-only` together with `-c 'approval_policy="never"'` for reviews, questions, and analysis. Use `-s workspace-write` only when Codex must change files in the repository.
 
 ```bash
 # Read-only analysis
-codex exec -s read-only -o /tmp/codex-out.md "Analyze the auth module for security issues" </dev/null 2>/tmp/codex-err.txt
+codex exec -s read-only -c 'approval_policy="never"' -o /tmp/codex-out.md "Analyze the auth module for security issues" </dev/null 2>/tmp/codex-err.txt
 
 # A model the user named (otherwise omit -m)
-codex exec -s read-only -m <model> -o /tmp/codex-out.md "Review this codebase architecture" </dev/null 2>/tmp/codex-err.txt
+codex exec -s read-only -c 'approval_policy="never"' -m <model> -o /tmp/codex-out.md "Review this codebase architecture" </dev/null 2>/tmp/codex-err.txt
 
 # Changes that need writes inside the repository
 codex exec -s workspace-write -o /tmp/codex-out.md "Refactor the test helpers" </dev/null 2>/tmp/codex-err.txt
 
 # JSONL event output on stdout
-codex exec -s read-only --json "List all TODO comments" </dev/null >/tmp/codex-events.jsonl 2>/tmp/codex-err.txt
+codex exec -s read-only -c 'approval_policy="never"' --json "List all TODO comments" </dev/null >/tmp/codex-events.jsonl 2>/tmp/codex-err.txt
 
 # Outside a git repository
-codex exec --skip-git-repo-check -C /path/to/dir -s read-only -o /tmp/codex-out.md "Summarize the notes in this directory" </dev/null 2>/tmp/codex-err.txt
+codex exec --skip-git-repo-check -C /path/to/dir -s read-only -c 'approval_policy="never"' -o /tmp/codex-out.md "Summarize the notes in this directory" </dev/null 2>/tmp/codex-err.txt
 ```
 
 ### Follow-up questions
 
 Resume the same session by its id, so Codex keeps the context of the first run. Take the id from the `session id:` line in the stderr file. Use the explicit id rather than `--last` when several Codex runs may be active.
 
-A resumed session does not inherit the first run's sandbox or model: it falls back to `~/.codex/config.toml`, which may allow writes and network access. Pass the sandbox with `-c sandbox_mode=...` (resume has no `-s` flag), and pass `-m` again if the first run used it.
+A resumed session does not inherit the first run's sandbox or model: it falls back to `~/.codex/config.toml`, which may allow writes and network access. Pass the sandbox with `-c sandbox_mode=...` (resume has no `-s` flag), set `-c 'approval_policy="never"'` so the resumed run cannot escalate out of the sandbox, and pass `-m` again if the first run used it.
 
 ```bash
 SESSION_ID=$(sed -n 's/^session id: //p' /tmp/codex-err.txt)
-codex exec resume -c 'sandbox_mode="read-only"' -o /tmp/codex-followup.md "$SESSION_ID" "Expand on the second finding" </dev/null 2>/tmp/codex-followup.err
+codex exec resume -c 'sandbox_mode="read-only"' -c 'approval_policy="never"' -o /tmp/codex-followup.md "$SESSION_ID" "Expand on the second finding" </dev/null 2>/tmp/codex-followup.err
 
 # The first run used a model the user named
-codex exec resume -c 'sandbox_mode="read-only"' -m <model> -o /tmp/codex-followup.md "$SESSION_ID" "Expand on the second finding" </dev/null 2>/tmp/codex-followup.err
+codex exec resume -c 'sandbox_mode="read-only"' -c 'approval_policy="never"' -m <model> -o /tmp/codex-followup.md "$SESSION_ID" "Expand on the second finding" </dev/null 2>/tmp/codex-followup.err
 ```
 
-The `sandbox:` line in the stderr file shows the sandbox the resumed run used. `codex exec resume` accepts `-o` and `--json`. It has no `-C` flag. Outside a git repository, run it from the same directory as the first run and add `--skip-git-repo-check`.
+The `sandbox:` line in the stderr file shows the sandbox the resumed run used. A resumed run that was not given `approval_policy="never"` can write outside a read-only sandbox when the user's config allows approval requests. `codex exec resume` accepts `-o` and `--json`. It has no `-C` flag. Outside a git repository, run it from the same directory as the first run and add `--skip-git-repo-check`.
 
 ### Key Flags
 
 | Flag | Purpose |
 |------|---------|
 | `-m, --model <MODEL>` | Model selection; omit it to use the `config.toml` default |
-| `-c key=value` | Override config (TOML format) |
-| `-s, --sandbox <MODE>` | `read-only` (reviews and analysis), `workspace-write` (edits inside the repository), `danger-full-access` |
+| `-c key=value` | Override config (TOML format). Read-only calls set `-c 'approval_policy="never"'`; `exec resume` and `review` also set `-c 'sandbox_mode="read-only"'` |
+| `-s, --sandbox <MODE>` | `read-only` (reviews and analysis; pair with `approval_policy="never"`), `workspace-write` (edits inside the repository), `danger-full-access` |
 | `-C, --cd <DIR>` | Set the working root. Not needed when the shell is already in the repository. Outside a git repository, also pass `--skip-git-repo-check` |
 | `--skip-git-repo-check` | Allow running outside a git repository |
 | `--json` | JSONL event output (exec only) |
@@ -200,7 +204,7 @@ gemini --include-directories ../shared-lib "Review cross-repo dependencies"
 
 ```bash
 # Codex (git-aware, understands diffs natively)
-codex review --uncommitted </dev/null
+codex review -c 'sandbox_mode="read-only"' -c 'approval_policy="never"' --uncommitted </dev/null
 
 # Gemini (prompt-based)
 gemini -p "Review the uncommitted changes in this repo for bugs and security issues"
@@ -209,7 +213,7 @@ gemini -p "Review the uncommitted changes in this repo for bugs and security iss
 ### Review a Design Decision
 
 ```bash
-codex exec -s read-only -o /tmp/codex-out.md "Evaluate the architecture in src/auth/. Is the token refresh approach sound?" </dev/null 2>/tmp/codex-err.txt
+codex exec -s read-only -c 'approval_policy="never"' -o /tmp/codex-out.md "Evaluate the architecture in src/auth/. Is the token refresh approach sound?" </dev/null 2>/tmp/codex-err.txt
 
 gemini -p "Analyze src/auth/ and critique the token refresh strategy"
 ```
@@ -218,10 +222,10 @@ gemini -p "Analyze src/auth/ and critique the token refresh strategy"
 
 ```bash
 # Default review (no custom prompt needed)
-codex review --base main </dev/null
+codex review -c 'sandbox_mode="read-only"' -c 'approval_policy="never"' --base main </dev/null
 
 # Custom review instructions: pipe the diff in
-git diff main...HEAD | codex exec -s read-only -o /tmp/codex-review.md "Review the diff in the stdin block for correctness, test coverage, and maintainability" 2>/tmp/codex-review.err
+git diff main...HEAD | codex exec -s read-only -c 'approval_policy="never"' -o /tmp/codex-review.md "Review the diff in the stdin block for correctness, test coverage, and maintainability" 2>/tmp/codex-review.err
 ```
 
 ## Troubleshooting
@@ -253,6 +257,10 @@ If unset, tell the user and skip Gemini. Codex does not have this problem — it
 ### Codex: `unexpected argument '--full-auto'`
 
 Current Codex CLI releases have no `--full-auto` flag. Use `-s read-only` for reviews and analysis, or `-s workspace-write` when Codex must edit files.
+
+### Codex: read-only run still wrote a file
+
+`-s read-only` limits the sandbox, but Codex can request escalation when the user's `approval_policy` permits requests, and an approved request runs outside the sandbox. Add `-c 'approval_policy="never"'` to every read-only call.
 
 ### Codex: plan-confirmation instead of review
 
@@ -335,4 +343,4 @@ If the companion isn't found, fall back to raw `codex review` (unstructured text
 
 ## Core Principle
 
-Use the `codex-plugin-cc` companion script for structured JSON reviews when available. Fall back to `codex review` for git-aware code reviews. Use `codex exec -s read-only` for freeform analysis, with content piped in or named by file path, `</dev/null` when nothing is piped, and stderr captured for the session id. Use `gemini -p` with `< file` redirection for content analysis.
+Use the `codex-plugin-cc` companion script for structured JSON reviews when available. Fall back to `codex review` for git-aware code reviews. Use `codex exec -s read-only -c 'approval_policy="never"'` for freeform analysis, with content piped in or named by file path, `</dev/null` when nothing is piped, and stderr captured for the session id. Use `gemini -p` with `< file` redirection for content analysis.

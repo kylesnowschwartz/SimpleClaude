@@ -27,8 +27,8 @@ when the `codex` CLI is installed (`command -v codex`), and treat its output as 
 Use the real base branch: `gh pr view --json baseRefName -q .baseRefName` for a PR,
 otherwise the default branch (`gh repo view --json defaultBranchRef -q .defaultBranchRef.name`).
 
-    codex review --base <base> </dev/null     # committed branch changes
-    codex review --uncommitted </dev/null     # working tree changes
+    codex review -c 'sandbox_mode="read-only"' -c 'approval_policy="never"' --base <base> </dev/null     # committed branch changes
+    codex review -c 'sandbox_mode="read-only"' -c 'approval_policy="never"' --uncommitted </dev/null     # working tree changes
 
 Run Codex directly, or through a Codex delegation tool if you have one. No `codex` CLI: skip this step and say so
 in the report. Mark each finding that Claude and Codex both report as agreed. Look harder at findings only one
