@@ -46,13 +46,14 @@ module SimpleClaude
   # via Claude Code's native plugin CLI.
   class Installer
     PLUGINS = [
-      { name: 'sc-core', desc: 'core framework (5 commands + 3 agents)', required: true },
+      { name: 'sc-core', desc: 'core framework (5 commands + 3 agents)' },
       { name: 'sc-hooks', desc: 'auto-format, lint, and tool monitoring' },
       { name: 'sc-extras', desc: 'review-and-refactor skill, 2 more skills, 3 commands' },
       { name: 'sc-research', desc: '3 research agents' },
       { name: 'sc-output-styles', desc: '8 output style personalities' },
-      { name: 'sc-skills', desc: 'frontend design, image gen' },
-      { name: 'sc-docs', desc: 'writing and mermaid diagram skills' }
+      { name: 'sc-skills', desc: 'thinking, file querying, image generation, and rules skills' },
+      { name: 'sc-docs', desc: 'writing and mermaid diagram skills' },
+      { name: 'sc-mods', desc: 'mermaid diagrams in replies, prompt jumps, and reply copy' }
     ].freeze
 
     COLORS = { green: "\e[32m", yellow: "\e[33m", red: "\e[31m", blue: "\e[34m", reset: "\e[0m" }.freeze
@@ -122,7 +123,7 @@ module SimpleClaude
         puts "Updating #{name} (#{desc})..."
         run_cmd('claude', 'plugin', 'uninstall', name)
       else
-        return unless plugin[:required] || @force || confirm?("Install #{name} (#{desc})?")
+        return unless @force || confirm?("Install #{name} (#{desc})?")
 
         puts "Installing #{name} (#{desc})..."
       end

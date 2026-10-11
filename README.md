@@ -67,7 +67,6 @@ claude plugin install sc-mods@simpleclaude
 
 # Utilities
 /sc-docs:sc-mermaid flowchart auth        # Generate architecture diagrams
-/sc-skills:sc-worktrees                   # Manage git worktrees
 ```
 
 ## Architecture
