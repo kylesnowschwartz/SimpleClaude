@@ -28,7 +28,7 @@ also run a Codex review and treat its output as more claims to refute:
     codex review --base main          # committed branch changes
     codex review --uncommitted        # working tree changes
 
-Kyle runs Codex directly or through the TCM Codex delegation skill. Mark each finding that Claude and Codex
+Run Codex directly, or through a Codex delegation tool if you have one. Mark each finding that Claude and Codex
 both report as agreed. Look harder at findings only one of them reports, and at places where they disagree.
 
 Stop / report: one line per claim with its verdict and evidence, CONFIRMED first, then UNVERIFIABLE, then REFUTED.
