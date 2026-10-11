@@ -59,7 +59,7 @@ Parse $ARGUMENTS. The first argument is the target, anything after is a scope, f
 Use `AskUserQuestion`:
 
 - Source language and runtime
-- **Target language and runtime** (this is the defining input; if same as source, ask whether /sc-work is a better fit)
+- **Target language and runtime** (this is the defining input; if same as source, ask whether a direct implementation is a better fit)
 - Which parts to port (the whole thing, a subset, a single module)
 - Quality attributes that matter (performance parity, API compatibility, idiomatic target-language code)
 - What is explicitly out of scope

@@ -22,7 +22,7 @@ Based on the ADI reasoning cycle: **Abduction** (generate options) -> **Deductio
 - Quick fixes with obvious solutions (just do the work)
 - Easily reversible decisions (just try it)
 - Open-ended uncertainty without clear options (use `/sc-socratic` instead)
-- Pure implementation tasks (use `/sc-work`)
+- Pure implementation tasks (implement directly)
 
 ## Core Principle: Transformer Mandate
 
@@ -214,9 +214,9 @@ Create the directory at the start of Phase 1. Write each file as its phase compl
 
 ## Related Commands
 
-| Situation | Command |
-|-----------|---------|
+| Situation | Next step |
+|-----------|-----------|
 | Open-ended uncertainty, no clear options | `/sc-socratic` |
-| Quick implementation after deciding | `/sc-work` |
+| Quick implementation after deciding | Implement the chosen option directly |
 | Challenge a conclusion adversarially | `/sc-review-and-refactor` (refute-findings route) |
-| Full feature workflow with architecture | `/sc-workflow` |
+| Full feature workflow with architecture | Plan the architecture in plan mode, then implement it |

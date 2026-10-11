@@ -225,7 +225,7 @@ After generating the file, output:
 To use this context packet in your next agent session:
 
 1. Reference it in your prompt: @.agent-history/context-packet-[timestamp].md
-2. Or invoke a command with context: /sc-work @.agent-history/context-packet-[timestamp].md
+2. Or start the implementation with it: "Implement the plan in @.agent-history/context-packet-[timestamp].md"
 
 The context packet pins your objectives and installs success criteria before any coding starts.
 ```
