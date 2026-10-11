@@ -30,7 +30,7 @@ claude plugin install sc-mods
 - **sc-extras** _(optional)_: The `sc-review-and-refactor` skill, which routes review and refactoring work to a named technique (safe refactoring, test-quality review, verifying findings and claims, root-cause analysis, PR review threads); general diff review goes to the built-in `/code-review`. Also adversarial analysis, context wizards, and clean-room design
 - **sc-research** _(optional)_: Research agents for library source (via opensrc), GitHub search (via gh), and web research
 - **sc-skills** _(optional)_: Hypothesis testing, Socratic thinking, functional thinking, file querying, image generation, and coding rules
-- **sc-docs** _(optional)_: Writing and diagram skills: `human-writing` for plain prose in Slack messages, emails, PRs, issues, tickets, and docs; `cold-reader`, which checks that a persisted document makes sense to a reader with no project context; and `sc-mermaid` for flowchart and sequence diagrams. Both writing skills lint drafts with [Vale](https://vale.sh) (`brew install vale`)
+- **sc-docs** _(optional)_: Writing and diagram skills: `human-writing` for plain prose in Slack messages, emails, PRs, issues, tickets, and docs; `cold-reader`, which checks that a persisted document makes sense to a reader with no project context; and `sc-mermaid`, which picks among twelve mermaid diagram types and validates them with mmdc. Both writing skills lint drafts with [Vale](https://vale.sh) (`brew install vale`)
 - **sc-mods** _(optional)_: Claude Code mods. Draws mermaid diagrams in replies as Unicode text in the terminal, adds prompt-jump buttons above the prompt, and a copy button under each reply. See [`plugins/sc-mods/README.md`](plugins/sc-mods/README.md)
 
 ## Updating
@@ -66,7 +66,7 @@ claude plugin install sc-mods@simpleclaude
 /sc-extras:sc-review-and-refactor why does the login test fail?                     # Root-cause analysis
 
 # Utilities
-/sc-docs:sc-mermaid flowchart auth        # Generate architecture diagrams
+/sc-docs:sc-mermaid auth flow             # Pick a diagram type, draw it, validate it
 ```
 
 ## Architecture
