@@ -14,7 +14,7 @@ Use these sections, and leave out any that would be empty:
 
 Don't include steps, task breakdowns, file-by-file changes, PR order, or test sizes. A ticket that plans the work for a senior engineer reads as distrust, and the plan is usually wrong once they look at the code.
 
-Name every ticket with its title as well as its ID, inside the link text: `[PROJ-5412 - Fix Duplicate Cards](url)`.
+Name every ticket by its title first and its ID second, inside the link text: `[Fix Duplicate Cards (PROJ-5412)](url)`.
 
 Never change a ticket's scope while rewriting it. If the scope looks wrong, say so and ask before you change it.
 

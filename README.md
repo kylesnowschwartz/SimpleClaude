@@ -30,7 +30,7 @@ claude plugin install sc-mods
 - **sc-extras** _(optional)_: The `sc-review-and-refactor` skill, which routes review and refactoring work to a named technique (safe refactoring, test-quality review, verifying findings and claims, root-cause analysis, PR review threads); general diff review goes to the built-in `/code-review`. Also adversarial analysis, context wizards, and clean-room design
 - **sc-research** _(optional)_: Research agents for library source (via opensrc), GitHub search (via gh), and web research
 - **sc-skills** _(optional)_: Hypothesis testing, Socratic thinking, functional thinking, file querying, image generation, and coding rules
-- **sc-docs** _(optional)_: Writing and diagram skills: `human-writing` for plain prose in Slack messages, emails, PRs, issues, tickets, and docs; `cold-reader`, which checks that a persisted document makes sense to a reader with no project context; and `sc-mermaid`, which picks among twelve mermaid diagram types and validates them with mmdc. Both writing skills lint drafts with [Vale](https://vale.sh) (`brew install vale`)
+- **sc-docs** _(optional)_: Writing and diagram skills: `human-writing` for plain prose in Slack messages, emails, PRs, issues, tickets, and docs; `cold-reader`, which checks that a persisted document makes sense to a reader with no project context; and `sc-mermaid`, which picks the mermaid diagram type that fits (sequence, state, ER, gantt, and more) and validates it with mmdc. Both writing skills lint drafts with [Vale](https://vale.sh) (`brew install vale`)
 - **sc-mods** _(optional)_: Claude Code mods. Draws mermaid diagrams in replies as Unicode text in the terminal, adds prompt-jump buttons above the prompt, and a copy button under each reply. See [`plugins/sc-mods/README.md`](plugins/sc-mods/README.md)
 
 ## Updating
@@ -101,7 +101,7 @@ SimpleClaude/
 ├── plugins/
 │   ├── sc-core/        # Core plugin: commands & agents
 │   ├── sc-hooks/                 # Hooks plugin: auto-format, lint, tool monitoring
-│   ├── sc-output-styles/         # Output styles plugin: personality & structured formats
+│   ├── sc-output-styles/         # Output styles plugin: personality and tail-first reply styles
 │   ├── sc-extras/                # Extras plugin: review-and-refactor skill, utility commands
 │   ├── sc-research/              # Research plugin: library source, GitHub, and web agents
 │   ├── sc-skills/                # Skills plugin: patterns, design, querying

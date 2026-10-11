@@ -10,8 +10,8 @@ argument-hint: "<system, flow, or data to draw>"
 
 # Mermaid diagrams
 
-Mermaid can draw twelve kinds of diagram. The default pull is toward `flowchart` for
-everything, and most requests that arrive as "diagram this" are better served by something
+The table below covers twelve common kinds of mermaid diagram. The default pull is toward
+`flowchart` for everything, and most requests that arrive as "diagram this" are better served by something
 else. Pick the type first.
 
 ## 1. Pick the type
@@ -24,12 +24,17 @@ else. Pick the type first.
 | Tables and their relationships | `erDiagram` |
 | Types, fields, and inheritance | `classDiagram` |
 | Steps a person goes through, with how each one feels | `journey` |
-| Events on a calendar | `timeline` |
+| Dated events, with no durations or dependencies | `timeline` |
 | Options scored on two axes | `quadrantChart` |
 | Branches and merges | `gitGraph` |
 | Amounts splitting and flowing between stages | `sankey-beta` |
 | Loose ideas hanging off one topic | `mindmap` |
 | System context for a non-technical reader | `C4Context` |
+
+Mermaid has more types than the table lists. Use `gantt` for a schedule with durations or
+dependencies, and `pie` for shares of a whole. For anything else, check the type list in the
+Mermaid documentation (<https://mermaid.js.org/intro/>) rather than forcing the request into a
+table row.
 
 State the type you chose and the reason, in one line, before drawing. When two types fit,
 name both and say why you picked one. When the request is too vague to choose, ask rather

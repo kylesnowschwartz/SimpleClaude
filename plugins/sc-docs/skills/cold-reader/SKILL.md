@@ -15,11 +15,13 @@ Use it on project documentation: specs, RFCs, ADRs, design docs, discovery and s
 
 ## Stage 1: lint
 
-1. **Run the lint.** The config ships with this skill. Resolve `assets/.vale.ini` relative to this SKILL.md's directory to an absolute path, then run:
+1. **Run the lint.** The config ships with this skill. Run:
 
    ```bash
-   vale --config="<absolute path to assets/.vale.ini>" --output=JSON "<document.md>"
+   vale --config="${CLAUDE_SKILL_DIR}/assets/.vale.ini" --output=JSON "<document.md>"
    ```
+
+   The config lints `.md`, `.markdown`, and `.txt` files. Vale skips any other extension and reports `{}`, which looks like a clean pass, so copy a document in another format (a `.rst` or `.adoc` file, a ticket body pasted into the conversation) to a temporary `.md` file and lint the copy. If `${CLAUDE_SKILL_DIR}` is unset, resolve `assets/.vale.ini` relative to this SKILL.md's directory.
 
    If the `vale` binary is missing, stop and tell the user to install it with `brew install vale` (or see <https://vale.sh/docs/install>). Do not substitute a hand-rolled grep pass; the rule set only runs under Vale. JSON output maps each file to a list of alerts with `Check` (rule name), `Line`, `Span`, `Match`, `Message`, and `Severity`.
 
@@ -117,7 +119,6 @@ Use it on project documentation: specs, RFCs, ADRs, design docs, discovery and s
 
    ```text
    Document: path/to/reviewed-document.md
-   Skill version: 2.4.1
    Brief version: 2
    Vocabulary version: 1
    ```

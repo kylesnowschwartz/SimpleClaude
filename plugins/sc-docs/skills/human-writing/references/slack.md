@@ -13,7 +13,7 @@ One-line and two-line messages may omit *I* and *we*: "Checked the logs, nothing
 
 Use engineering shorthand where the audience expects it: fwiw, iirc, lgtm, afaik. Keep these terms lowercase. Do not spell them out solely to sound formal.
 
-Lists can mix phrases, sentences, and sub-points. Keep acknowledgments brief: "Thanks! Fix is in PR #432." Skip *Great question*, *Absolutely*, and *Hope that helps*. Use no more than one exclamation point per message.
+Lists can mix phrases, sentences, and sub-points. Keep acknowledgments brief: "Thanks! The login timeout fix is in [PR #432](url)." Skip *Great question*, *Absolutely*, and *Hope that helps*. Use no more than one exclamation point per message.
 
 Use a list when separate items need to be scanned. Use prose for a single point. Do not add formatting for decoration.
 

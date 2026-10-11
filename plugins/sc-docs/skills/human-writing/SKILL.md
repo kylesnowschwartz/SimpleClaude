@@ -1,6 +1,7 @@
 ---
 name: human-writing
 description: "MUST be used for any request to draft, write, compose, or reword text another person will read, including 'draft a message', 'draft a reply', 'draft a Slack message', 'write an email', 'draft a PR description', 'write a GitHub issue', 'write a Jira ticket', 'draft a card', 'draft an announcement', 'write release notes', 'draft an RFC', 'write a README'. Covers Slack, email, PR bodies, GitHub issues, Jira tickets, code review comments, bug reports, agendas, Reddit posts, and persisted project documents (READMEs, specs, RFCs, ADRs, design and planning docs, runbooks); for documents, use this skill for the drafting even when a documentation-writing skill also applies. Applies plain, literal writing with per-format conventions, then routes persisted project documents to the cold-reader review. Not for review-only requests on an existing document; use cold-reader alone for those."
+allowed-tools: Read(~/.config/human-writing/personal-voice.md)
 ---
 
 # Human Writing
@@ -63,7 +64,7 @@ Do not add:
 
 The user's voice file, loaded when this skill loads. Empty output means no voice file exists; skip this section.
 
-!`cat ~/.config/human-writing/personal-voice.md 2>/dev/null`
+!`cat ~/.config/human-writing/personal-voice.md 2>/dev/null || true`
 
 Apply the voice file to every draft. Where it and a format reference disagree, follow the voice file. If the line above shows an unexecuted command instead of file contents, shell execution is disabled for skills; read `~/.config/human-writing/personal-voice.md` with the Read tool before drafting, and skip this section if the file does not exist.
 

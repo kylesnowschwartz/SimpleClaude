@@ -143,7 +143,7 @@
     },
     {
       "name": "sc-docs",
-      "description": "Writing and mermaid diagram skills: plain prose for Slack, email, PRs, issues, tickets, and docs, a cold-reader review for persisted documents (both lint with vale), plus twelve mermaid diagram types, validated with mmdc",
+      "description": "Writing and mermaid diagram skills: plain prose for Slack, email, PRs, issues, tickets, and docs, a cold-reader review for persisted documents (both lint with vale), plus mermaid diagrams of the type that fits, validated with mmdc",
       "version": "8.0.0",
       "author": {
         "name": "Kyle Snow Schwartz"
