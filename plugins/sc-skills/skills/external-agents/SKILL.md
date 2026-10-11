@@ -13,9 +13,11 @@ Run OpenAI Codex CLI or Google Gemini CLI for second opinions and external revie
 
 ## Critical Rules
 
-1. **Run CLIs directly via Bash** (with `run_in_background: true` for async). Subagents cannot approve Bash permissions interactively — the command gets denied.
+1. **Run CLIs directly via Bash.** Subagents cannot approve Bash permissions interactively, so the command gets denied. `run_in_background: true` is fine for long runs.
 
-2. **Do NOT pipe stdin into `codex exec`** — codex ignores stdin entirely. Save content to a file (e.g., `/tmp/review-diff.txt`) and tell codex to read it in the prompt. Piping produces empty/plan-only output.
+2. **End every non-interactive `codex` call with `</dev/null` unless you pipe content in.** When stdin is not a terminal, `codex exec` reads it and waits for end of file before it starts, so an inherited pipe that never closes hangs it with no output. Piping content in on purpose works: when stdin is piped and a prompt is also given, codex appends stdin to the prompt as a `<stdin>` block.
+
+3. **Capture the final message and stderr.** Pass `-o <file>` for the final message and redirect stderr to a file (`2><file>`). The `session id:` line you need to resume a run is printed on stderr, not stdout. Check that the `-o` file exists before reading it.
 
 ## Prerequisites
 
@@ -33,19 +35,11 @@ Check availability: `codex --version` / `gemini --version`
 - Verification of an approach or architecture
 - User explicitly requests codex or gemini
 
-## Recommended Models
+## Models
 
-No "latest" alias exists for either CLI — you must pin specific model names.
+### Codex
 
-### Codex (SWE-optimized)
-
-| Model | Use Case |
-|-------|----------|
-| `gpt-5.4` | Best. Latest agentic coding model. |
-| `gpt-5.3-codex` | Previous generation. Still capable. |
-| `gpt-5.2-codex` | Older generation. |
-
-Set default in `~/.codex/config.toml`: `model = "gpt-5.4"`
+Use the default model from `~/.codex/config.toml` (`model = "..."`). Pass `-m <model>` only when the user names a model.
 
 Codex uses stored OAuth tokens (`~/.codex/auth.json`) from `codex login` — no env var needed.
 
@@ -80,64 +74,79 @@ Set default in `~/.gemini/settings.json`:
 | Command | Purpose |
 |---------|---------|
 | `codex review` | Git-aware code review (non-interactive) |
-| `codex exec` | Non-interactive prompt execution (always pass `-C "$PWD"` to set working directory) |
+| `codex exec` | Non-interactive prompt execution |
+| `codex exec resume <id>` | Send a follow-up prompt to an earlier `codex exec` session |
 | `codex resume` | Resume previous interactive session |
 | `codex apply` | Apply latest agent diff via `git apply` |
 
 ### Code Review (most common use)
 
-**Important**: `codex review` treats `--base`, `--uncommitted`, `--commit`, and `[PROMPT]` as mutually exclusive modes. You cannot combine a custom prompt with `--base` or `--uncommitted`. To review with custom instructions, save the diff to a file and tell `codex exec` to read it (codex ignores stdin).
+**Important**: `codex review` treats `--base`, `--uncommitted`, `--commit`, and `[PROMPT]` as mutually exclusive modes. You cannot combine a custom prompt with `--base` or `--uncommitted`. To review with custom instructions, pipe the diff into `codex exec`, or save it to a file and name the file in the prompt.
 
 ```bash
 # Review uncommitted changes (default instructions)
-codex review --uncommitted
+codex review --uncommitted </dev/null
 
 # Review branch against main (default instructions)
-codex review --base main
+codex review --base main </dev/null
 
 # Review specific commit (default instructions)
-codex review --commit <SHA>
-
-# Review with custom instructions — save diff to file, tell codex to read it
-# IMPORTANT: Do NOT pipe into codex exec — it ignores stdin. Save to a file instead.
-git diff main...HEAD > /tmp/review-diff.txt
-codex exec -C "$PWD" --full-auto "Read /tmp/review-diff.txt and review for error handling and security" -o /tmp/codex-review.txt
+codex review --commit <SHA> </dev/null
 
 # Review with title context
-codex review --uncommitted --title "Add user auth middleware"
+codex review --uncommitted --title "Add user auth middleware" </dev/null
+
+# Review with custom instructions: pipe the diff in; codex appends it as a <stdin> block
+git diff main...HEAD | codex exec -s read-only -o /tmp/codex-review.md "Review the diff in the stdin block for error handling and security" 2>/tmp/codex-review.err
+
+# Or save the diff to a file and name it in the prompt
+git diff main...HEAD > /tmp/review-diff.txt
+codex exec -s read-only -o /tmp/codex-review.md "Read /tmp/review-diff.txt and review it for error handling and security" </dev/null 2>/tmp/codex-review.err
 ```
 
 ### Non-Interactive Execution
 
+Use `-s read-only` for reviews, questions, and analysis. Use `-s workspace-write` only when Codex must change files in the repository.
+
 ```bash
-# Freeform analysis
-codex exec -C "$PWD" "Analyze the auth module for security issues"
+# Read-only analysis
+codex exec -s read-only -o /tmp/codex-out.md "Analyze the auth module for security issues" </dev/null 2>/tmp/codex-err.txt
 
-# Specify model (overrides config.toml default)
-codex exec -C "$PWD" -m gpt-5.4 "Review this codebase architecture"
+# A model the user named (otherwise omit -m)
+codex exec -s read-only -m <model> -o /tmp/codex-out.md "Review this codebase architecture" </dev/null 2>/tmp/codex-err.txt
 
-# Full-auto mode (sandboxed, auto-approves)
-codex exec -C "$PWD" --full-auto "Refactor the test helpers"
+# Changes that need writes inside the repository
+codex exec -s workspace-write -o /tmp/codex-out.md "Refactor the test helpers" </dev/null 2>/tmp/codex-err.txt
 
-# JSONL event output
-codex exec -C "$PWD" --json "List all TODO comments" -o /tmp/result.txt
+# JSONL event output on stdout
+codex exec -s read-only --json "List all TODO comments" </dev/null >/tmp/codex-events.jsonl 2>/tmp/codex-err.txt
 
-# Read-only analysis (use --full-auto for headless; -s read-only hangs waiting for plan approval)
-codex exec -C "$PWD" --full-auto "Audit dependencies for vulnerabilities"
+# Outside a git repository
+codex exec --skip-git-repo-check -C /path/to/dir -s read-only -o /tmp/codex-out.md "Summarize the notes in this directory" </dev/null 2>/tmp/codex-err.txt
 ```
+
+### Follow-up questions
+
+Resume the same session by its id, so Codex keeps the context of the first run. Take the id from the `session id:` line in the stderr file. Use the explicit id rather than `--last` when several Codex runs may be active.
+
+```bash
+SESSION_ID=$(sed -n 's/^session id: //p' /tmp/codex-err.txt)
+codex exec resume -o /tmp/codex-followup.md "$SESSION_ID" "Expand on the second finding" </dev/null 2>/tmp/codex-followup.err
+```
+
+`codex exec resume` accepts `-o` and `--json`. It has no `-s` or `-C` flag. Outside a git repository, run it from the same directory as the first run and add `--skip-git-repo-check`.
 
 ### Key Flags
 
 | Flag | Purpose |
 |------|---------|
-| `-m, --model <MODEL>` | Model selection (e.g., `gpt-5.4`) |
+| `-m, --model <MODEL>` | Model selection; omit it to use the `config.toml` default |
 | `-c key=value` | Override config (TOML format) |
-| `-s, --sandbox <MODE>` | `read-only`, `workspace-write`, `danger-full-access` (**avoid `read-only` in headless mode** — triggers plan-confirmation that hangs) |
-| `--full-auto` | Sandboxed auto-execution (preferred for headless/non-interactive use) |
-| `-C, --cd <DIR>` | Set working directory (use this instead of `--skip-git-repo-check`) |
-| `--search` | Enable web search tool |
+| `-s, --sandbox <MODE>` | `read-only` (reviews and analysis), `workspace-write` (edits inside the repository), `danger-full-access` |
+| `-C, --cd <DIR>` | Set the working root. Not needed when the shell is already in the repository. Outside a git repository, also pass `--skip-git-repo-check` |
+| `--skip-git-repo-check` | Allow running outside a git repository |
 | `--json` | JSONL event output (exec only) |
-| `-o, --output-last-message <FILE>` | Write last message to file (exec only) |
+| `-o, --output-last-message <FILE>` | Write last message to file (`exec` and `exec resume`) |
 
 ## Gemini CLI
 
@@ -186,7 +195,7 @@ gemini --include-directories ../shared-lib "Review cross-repo dependencies"
 
 ```bash
 # Codex (git-aware, understands diffs natively)
-codex review --uncommitted
+codex review --uncommitted </dev/null
 
 # Gemini (prompt-based)
 gemini -p "Review the uncommitted changes in this repo for bugs and security issues"
@@ -195,7 +204,7 @@ gemini -p "Review the uncommitted changes in this repo for bugs and security iss
 ### Review a Design Decision
 
 ```bash
-codex exec -C "$PWD" "Evaluate the architecture in src/auth/. Is the token refresh approach sound?"
+codex exec -s read-only -o /tmp/codex-out.md "Evaluate the architecture in src/auth/. Is the token refresh approach sound?" </dev/null 2>/tmp/codex-err.txt
 
 gemini -p "Analyze src/auth/ and critique the token refresh strategy"
 ```
@@ -204,11 +213,10 @@ gemini -p "Analyze src/auth/ and critique the token refresh strategy"
 
 ```bash
 # Default review (no custom prompt needed)
-codex review --base main
+codex review --base main </dev/null
 
-# Custom review instructions — save diff to file, tell codex to read it
-git diff main...HEAD > /tmp/review-diff.txt
-codex exec -C "$PWD" --full-auto "Read /tmp/review-diff.txt and review for correctness, test coverage, and maintainability" -o /tmp/codex-review.txt
+# Custom review instructions: pipe the diff in
+git diff main...HEAD | codex exec -s read-only -o /tmp/codex-review.md "Review the diff in the stdin block for correctness, test coverage, and maintainability" 2>/tmp/codex-review.err
 ```
 
 ## Troubleshooting
@@ -233,12 +241,17 @@ If unset, tell the user and skip Gemini. Codex does not have this problem — it
 
 [#18776](https://github.com/google-gemini/gemini-cli/issues/18776): Gemini in `-p` headless mode cannot reliably use filesystem tools — the folder trust check fails. Feed content via stdin rather than expecting Gemini to read files itself.
 
+### Codex: hangs with no output
+
+`codex exec` is waiting for end of file on an open stdin. Add `</dev/null` to the command, or pipe in content that ends.
+
+### Codex: `unexpected argument '--full-auto'`
+
+Current Codex CLI releases have no `--full-auto` flag. Use `-s read-only` for reviews and analysis, or `-s workspace-write` when Codex must edit files.
+
 ### Codex: plan-confirmation instead of review
 
-If codex output contains "Plan:" followed by "If you're happy with that approach" — codex didn't execute, it proposed a plan and waited for approval. Two causes:
-
-1. **`-s read-only` in headless mode** — triggers plan confirmation. Use `--full-auto` instead.
-2. **Piped stdin** — `codex exec` ignores stdin entirely. The prompt says "review this" but codex has nothing to review, so it proposes a plan to go find the content. Save to a file and reference it in the prompt instead.
+If codex output contains "Plan:" followed by "If you're happy with that approach", codex did not execute: it proposed a plan and waited for approval. This happens when the prompt says "review this" but names nothing codex can see. Pipe the content in, or save it to a file and name the file in the prompt.
 
 ### Codex: `-o` creates no file
 
@@ -246,7 +259,7 @@ If Codex exhausts its turns without producing a final summary, `-o` creates no o
 
 ### General
 
-- **Codex ignores stdin** — never use `| codex exec` or `echo ... | codex exec`. Save to a file and reference it in the prompt. Gemini reads stdin correctly via `< file` redirection (not `cat | gemini`).
+- **Codex reads piped stdin** and appends it to the prompt as a `<stdin>` block. Gemini reads stdin via `< file` redirection (not `cat | gemini`).
 - If a command fails with a syntax error, run `<tool> --help` to check current flags before retrying.
 - If an upgrade notice appears, inform the user. Do NOT auto-upgrade.
 - Codex config values use TOML format: `-c model_reasoning_effort="high"`
@@ -317,4 +330,4 @@ If the companion isn't found, fall back to raw `codex review` (unstructured text
 
 ## Core Principle
 
-Use the `codex-plugin-cc` companion script for structured JSON reviews when available. Fall back to `codex review` for git-aware code reviews. Use `codex exec` for freeform analysis (save content to files, reference in prompt — codex ignores stdin). Use `gemini -p` with `< file` redirection for content analysis.
+Use the `codex-plugin-cc` companion script for structured JSON reviews when available. Fall back to `codex review` for git-aware code reviews. Use `codex exec -s read-only` for freeform analysis, with content piped in or named by file path, `</dev/null` when nothing is piped, and stderr captured for the session id. Use `gemini -p` with `< file` redirection for content analysis.
