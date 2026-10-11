@@ -33,7 +33,7 @@ composes directly:
 
 ```bash
 rg "middleware" "$(opensrc path express)"
-find "$(opensrc path express)" -maxdepth 2 -type d -not -path '*/.git*'
+find "$(opensrc path express)" -maxdepth 2 -name .git -prune -o -type d -print
 ```
 
 For npm packages inside a project, `--cwd` resolves the version from the lockfile so you
@@ -75,7 +75,7 @@ Map the layout first:
 
 ```bash
 SRC="$(opensrc path LIBRARY)"
-find "$SRC" -maxdepth 2 -type d -not -path '*/.git*'
+find "$SRC" -maxdepth 2 -name .git -prune -o -type d -print
 ```
 
 Then search in priority order:
@@ -87,7 +87,7 @@ Then search in priority order:
 3. **Practical examples** — `examples/`, `samples/`, `demos/`, and the test suite. Tests
    show how the API is actually called.
 
-Use `rg` for text and `sg -p "pattern" -l language` when structure matters more than
+Use `rg` for text and `ast-grep -p "pattern" -l language` when structure matters more than
 formatting.
 
 ### Phase 3 — Report
@@ -118,7 +118,7 @@ package, and the package manifest inside the source confirms it.
 ## Anti-patterns
 
 - **Don't `git clone`** when `opensrc path` will do. It is slower and leaves clones behind.
-- **Don't read every file.** Search first with `rg` or `sg`, then read the hits.
+- **Don't read every file.** Search first with `rg` or `ast-grep`, then read the hits.
 - **Don't keep searching** once you can answer the question.
 - **Don't guess a package name.** Confirm with `gh search repos` when unsure.
 - **Don't report low-confidence results** without saying so.
