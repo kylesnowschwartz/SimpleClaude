@@ -12,7 +12,7 @@ SKILL.md's Scripts section shows both commands with the full script paths. Use t
    They print a warning on stderr naming each list GitHub cut short; pass any warning on to the user.
 2. To act on the threads, use the JSON command from SKILL.md's Scripts section. In its output,
    `threads[]` has `threadId`, `path`, `line`, `isOutdated`, and `comments[]` with `author` and `body`.
-3. Triage each open thread before any fix. Read the PR title, body, and linked ticket, then mark it
+3. Triage each open thread before any fix. Read the PR `title` and `body` from the JSON and the linked ticket, then mark it
    in scope, out of scope (valid, but about older code or other work), or unclear. For each fix request, ask:
    is it a real bug on a normal path; does another layer (validation, types, an earlier check) already
    guard it; does the fix cost more complexity than the risk it removes. A stream of edge-case findings

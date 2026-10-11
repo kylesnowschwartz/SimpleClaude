@@ -81,6 +81,7 @@ query($owner: String!, $name: String!, $pr: Int!) {
     pullRequest(number: $pr) {
       url
       title
+      body
       reviews(first: 100) {
         totalCount
         nodes {
@@ -142,6 +143,7 @@ jq -r '
     ),
     (
       .reviewThreads.nodes[]
+      '"$THREAD_FILTER"'
       | select(.comments.totalCount > (.comments.nodes | length))
       | "Warning: the thread on \(.path):\(.line // "outdated") has \(.comments.totalCount) comments; only the first \(.comments.nodes | length) are shown"
     )
@@ -154,6 +156,7 @@ jq '
     .data.repository.pullRequest | {
     url,
     title,
+    body,
     reviews: [
       .reviews.nodes[]
       | select(.body != null and (.body | length) > 0)

@@ -129,12 +129,17 @@ codex exec --skip-git-repo-check -C /path/to/dir -s read-only -o /tmp/codex-out.
 
 Resume the same session by its id, so Codex keeps the context of the first run. Take the id from the `session id:` line in the stderr file. Use the explicit id rather than `--last` when several Codex runs may be active.
 
+A resumed session does not inherit the first run's sandbox or model: it falls back to `~/.codex/config.toml`, which may allow writes and network access. Pass the sandbox with `-c sandbox_mode=...` (resume has no `-s` flag), and pass `-m` again if the first run used it.
+
 ```bash
 SESSION_ID=$(sed -n 's/^session id: //p' /tmp/codex-err.txt)
-codex exec resume -o /tmp/codex-followup.md "$SESSION_ID" "Expand on the second finding" </dev/null 2>/tmp/codex-followup.err
+codex exec resume -c 'sandbox_mode="read-only"' -o /tmp/codex-followup.md "$SESSION_ID" "Expand on the second finding" </dev/null 2>/tmp/codex-followup.err
+
+# The first run used a model the user named
+codex exec resume -c 'sandbox_mode="read-only"' -m <model> -o /tmp/codex-followup.md "$SESSION_ID" "Expand on the second finding" </dev/null 2>/tmp/codex-followup.err
 ```
 
-`codex exec resume` accepts `-o` and `--json`. It has no `-s` or `-C` flag. Outside a git repository, run it from the same directory as the first run and add `--skip-git-repo-check`.
+The `sandbox:` line in the stderr file shows the sandbox the resumed run used. `codex exec resume` accepts `-o` and `--json`. It has no `-C` flag. Outside a git repository, run it from the same directory as the first run and add `--skip-git-repo-check`.
 
 ### Key Flags
 
