@@ -1,6 +1,6 @@
 {
   "name": "sc-docs",
-  "version": "7.13.0",
+  "version": "8.0.0",
   "description": "Writing and mermaid diagram skills: plain prose for Slack, email, PRs, issues, and docs, plus flowchart and sequence diagrams",
   "author": {
     "name": "Kyle Snow Schwartz"
