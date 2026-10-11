@@ -1,7 +1,7 @@
 {
   "name": "simpleclaude",
   "metadata": {
-    "version": "8.0.0",
+    "version": "8.1.0",
     "description": "Practical minimalist AI assistant framework with specialized agents"
   },
   "owner": {
@@ -12,7 +12,7 @@
     {
       "name": "sc-core",
       "description": "Core SimpleClaude framework with intent-based commands and specialized agents for token-efficient execution",
-      "version": "8.0.0",
+      "version": "8.1.0",
       "author": {
         "name": "Kyle Snow Schwartz"
       },
@@ -37,7 +37,7 @@
     {
       "name": "sc-research",
       "description": "Research agents: library source via opensrc, GitHub search via gh, and web research",
-      "version": "8.0.0",
+      "version": "8.1.0",
       "author": {
         "name": "Kyle Snow Schwartz"
       },
@@ -59,7 +59,7 @@
     {
       "name": "sc-hooks",
       "description": "SimpleClaude hooks for auto-formatting, lint checks, and tool monitoring",
-      "version": "8.0.0",
+      "version": "8.1.0",
       "author": {
         "name": "Kyle Snow Schwartz"
       },
@@ -79,7 +79,7 @@
     {
       "name": "sc-extras",
       "description": "Optional SimpleClaude utilities: a review-and-refactor skill that routes to named techniques, adversarial analysis, context wizards, and clean-room design",
-      "version": "8.0.0",
+      "version": "8.1.0",
       "author": {
         "name": "Kyle Snow Schwartz"
       },
@@ -102,7 +102,7 @@
     {
       "name": "sc-output-styles",
       "description": "Curated output styles for Claude Code: personality-driven and tail-first reply styles",
-      "version": "8.0.0",
+      "version": "8.1.0",
       "author": {
         "name": "Kyle Snow Schwartz"
       },
@@ -122,7 +122,7 @@
     {
       "name": "sc-skills",
       "description": "Skills for thinking, file querying, image generation, and coding rules",
-      "version": "8.0.0",
+      "version": "8.1.0",
       "author": {
         "name": "Kyle Snow Schwartz"
       },
@@ -144,7 +144,7 @@
     {
       "name": "sc-docs",
       "description": "Writing and mermaid diagram skills: plain prose for Slack, email, PRs, issues, tickets, and docs, a cold-reader review for persisted documents (both lint with vale), plus mermaid diagrams of the type that fits, validated with mmdc",
-      "version": "8.0.0",
+      "version": "8.1.0",
       "author": {
         "name": "Kyle Snow Schwartz"
       },
@@ -164,7 +164,7 @@
     {
       "name": "sc-mods",
       "description": "Claude Code mods: draws mermaid diagrams in replies as Unicode text, jumps between prompts, and copies a reply's markdown",
-      "version": "8.0.0",
+      "version": "8.1.0",
       "author": {
         "name": "Kyle Snow Schwartz"
       },

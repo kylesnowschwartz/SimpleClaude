@@ -1,6 +1,6 @@
 {
   "name": "sc-core",
-  "version": "8.0.0",
+  "version": "8.1.0",
   "description": "Core SimpleClaude framework with intent-based commands and specialized agents",
   "author": {
     "name": "Kyle Snow Schwartz"
