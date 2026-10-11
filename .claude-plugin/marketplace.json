@@ -121,7 +121,7 @@
     },
     {
       "name": "sc-skills",
-      "description": "Skills and agents for codebase patterns, hypothesis testing, Socratic thinking, file querying, frontend design, image generation, and command creation",
+      "description": "Skills for thinking, file querying, image generation, and coding rules",
       "version": "7.13.0",
       "author": {
         "name": "Kyle Snow Schwartz"
@@ -133,12 +133,11 @@
       "category": "development",
       "keywords": [
         "skills",
-        "patterns",
-        "frontend",
-        "design",
-        "image-generation",
+        "thinking",
         "hypothesis-testing",
         "file-querying",
+        "image-generation",
+        "rules",
         "claude-code"
       ]
     },
