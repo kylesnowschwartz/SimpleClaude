@@ -1,5 +1,5 @@
 import { atom, read, update } from 'claude-code'
-import type { EngineInterface, On, ProcessRunResult, SessionAppendInput } from 'claude-code'
+import type { EngineInterface, On, ProcessRunResult, SessionAppendDoor, SessionAppendInput } from 'claude-code'
 
 /** A step through the person's prompts: back to the previous one, or on to the next. */
 export type Step = -1 | 1
@@ -219,6 +219,13 @@ function readStored($: EngineInterface, trail: PromptTrail): Promise<void> {
 // --- The band -----------------------------------------------------------
 
 /**
+ * The doors whose rows reach this plugin where managed settings are present.
+ * Rows through the other doors (attachment, hook-context, compaction,
+ * tool-message, note) do not.
+ */
+const REACHABLE_DOORS: SessionAppendDoor[] = ['prompt', 'delivery', 'response', 'tool-result', 'command', 'notice', 'queue']
+
+/**
  * The count the band shows. A jump does not change the band's props, so the
  * band reads the count from state, and a write draws the band again without
  * drawing the transcript's rows.
@@ -293,7 +300,7 @@ export function registerPromptJump(on: On) {
     return next(e)
   })
 
-  on('session.append', ($, e, next) => {
+  on('session.append', { door: REACHABLE_DOORS }, ($, e, next) => {
     if (e.agentId === undefined) trail.endRow = e.uuid
     const id = promptIdOf(e)
     if (id !== undefined) {
