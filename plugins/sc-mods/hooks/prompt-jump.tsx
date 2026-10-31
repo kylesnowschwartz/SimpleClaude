@@ -193,7 +193,7 @@ async function findTranscript($: EngineInterface): Promise<string | undefined> {
 function readStored($: EngineInterface, trail: PromptTrail): Promise<void> {
   if (trail.storedRead !== undefined) return trail.storedRead
 
-  const pending = (async () => {
+  const readOnce = async () => {
     try {
       const path = await findTranscript($)
       if (path === undefined) {
@@ -211,7 +211,8 @@ function readStored($: EngineInterface, trail: PromptTrail): Promise<void> {
       // The prompts stored before the plugin loaded go uncounted.
       $.ui.log(`sc-mods: could not read the transcript: ${error instanceof Error ? error.message : String(error)}`, { to: 'debug' })
     }
-  })()
+  }
+  const pending = readOnce()
   trail.storedRead = pending
   return pending
 }
