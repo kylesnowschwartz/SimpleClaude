@@ -19,6 +19,9 @@ export const SIZE_BOXES: Record<ImageSize, { columns: number; rows: number }> = 
 // The row's indent plus a margin column on each side.
 const GUTTER = 4
 const MIN_COLUMNS = 10
+// About how many pixels of a picture one cell shows, so a small picture is not blown up.
+const PIXELS_PER_COLUMN = 8
+const PIXELS_PER_ROW = 16
 
 /** The most bytes an Image's `png` source may decode to. */
 export const MAX_PNG_BYTES = 2 * 1024 * 1024
@@ -26,17 +29,26 @@ export const MAX_PNG_BYTES = 2 * 1024 * 1024
 export const SCALE_STEPS = [1600, 1200, 800, 512, 256]
 const KEEP_DAYS = 30
 
-const DOWNLOAD_TIMEOUT_MS = 25_000
 const CONVERT_TIMEOUT_MS = 30_000
 const SHORT_TIMEOUT_MS = 10_000
 
-const URL_PATTERN = /^https?:\/\//i
+// Enough for every picture on a screen or two of the conversation.
+const MAX_CACHED_PICTURES = 32
+
+const WEB_URL = /^https?:\/\//i
+const FILE_URL = /^file:\/\//i
+
+// A theme color the terminal draws in its accent blue.
+const LINK_COLOR = 'suggestion'
+
+const WEB_URL_ERROR =
+  'show_image shows local files only; save the picture to a file with your own tools (for example Bash) first, then pass the saved path'
 
 /** One picture of a call: where it came from, the PNG made for it and its pixel size, or why there is none. */
 export type ShownPicture = {
-  /** The path or URL as Claude gave it. */
+  /** The path as Claude gave it. */
   source: string
-  /** The absolute path of the file, or the URL. */
+  /** The file's absolute path. */
   original: string
   png?: string
   width?: number
@@ -50,9 +62,9 @@ export type ShownPictures = { caption?: string; size: ImageSize; pictures: Shown
 const IMAGE_VIEW = atom({ plugin: 'sc-mods', key: 'imageView' } as const, { isHidden: false, size: '' })
 
 const TOOL_DESCRIPTION = [
-  'Show pictures to the person inline in the conversation: screenshots, charts, diagrams, designs, generated images, or any other picture file or picture URL.',
+  'Show pictures to the person inline in the conversation: screenshots, charts, diagrams, designs, generated images, or any other picture file.',
   "The pictures are drawn in this tool's result row in the person's terminal. The pixels are not returned to you, so this tool does not let you see a picture; read the file for that.",
-  'paths: absolute paths, paths relative to the working directory, or http/https URLs, which are downloaded. Any format macOS sips reads works (PNG, JPEG, GIF, HEIC, TIFF, WebP and more); large pictures are scaled down.',
+  'paths: local files only, given as absolute paths. A relative path is read from the folder the session started in, and a file:// URL is read as its path. An http or https URL is refused: save the picture to a file with your own tools (for example Bash) first, then pass the saved path. Claude Code asks the person before it shows a file it would ask about for Read. Any format macOS sips reads works (PNG, JPEG, GIF, HEIC, TIFF, WebP and more); large pictures are scaled down.',
   'caption: one line shown under the pictures.',
   'size: "small" for icons, thumbnails, or a quick look at several pictures; "medium" (the default) for most screenshots and charts; "large" when detail matters, such as a full-page screenshot or a dense chart. The person can change the size and hide the pictures from the row.',
 ].join('\n\n')
@@ -64,7 +76,7 @@ const INPUT_SCHEMA = {
       type: 'array',
       items: { type: 'string' },
       minItems: 1,
-      description: 'Picture files (absolute or relative to the working directory) or http/https URLs, shown in this order.',
+      description: 'Absolute paths of local picture files, shown in this order.',
     },
     caption: { type: 'string', description: 'One line shown under the pictures.' },
     size: { type: 'string', enum: SIZES, description: 'How large the pictures are drawn; medium when not given.' },
@@ -81,20 +93,22 @@ export const nextSize = (size: ImageSize): ImageSize => SIZES[(SIZES.indexOf(siz
 
 /**
  * The cells a picture of `width` by `height` pixels takes at `size`, its
- * aspect ratio kept: as wide as the size and the row allow, narrower when
- * that would be taller than the size allows. Without pixel sizes, the whole box.
+ * aspect ratio kept: as wide as the size, the row and the picture's own
+ * pixels allow, narrower when that would be taller than they allow. Without
+ * pixel sizes, the whole box.
  */
 export function imageCells(picture: Pick<ShownPicture, 'width' | 'height'>, size: ImageSize, viewportColumns?: number) {
   const box = SIZE_BOXES[size]
   const room = viewportColumns === undefined ? box.columns : Math.max(MIN_COLUMNS, viewportColumns - GUTTER)
-  const columns = Math.min(box.columns, room)
   const { width, height } = picture
-  if (!width || !height) return { columns, rows: box.rows }
+  if (!width || !height) return { columns: Math.min(box.columns, room), rows: box.rows }
 
+  const columns = Math.min(box.columns, room, Math.ceil(width / PIXELS_PER_COLUMN))
+  const maxRows = Math.min(box.rows, Math.ceil(height / PIXELS_PER_ROW))
   // A cell is about twice as tall as it is wide.
   const rows = (columns * height) / width / 2
-  if (rows <= box.rows) return { columns, rows: Math.max(1, Math.round(rows)) }
-  return { columns: Math.max(1, Math.min(columns, Math.round((box.rows * 2 * width) / height))), rows: box.rows }
+  if (rows <= maxRows) return { columns, rows: Math.max(1, Math.round(rows)) }
+  return { columns: Math.max(1, Math.min(columns, Math.round((maxRows * 2 * width) / height))), rows: maxRows }
 }
 
 // --- Files --------------------------------------------------------------------
@@ -131,11 +145,57 @@ const lastLine = (text: string) => text.trim().split('\n').pop()?.trim() || unde
 
 const messageOf = (error: unknown) => (error instanceof Error ? error.message : String(error))
 
-/** A path Claude gave, made absolute: `~/` from HOME, anything else not absolute from the working directory. */
-function absolutePath(path: string, cwd: string, home: string | undefined): string {
+/**
+ * A path Claude gave, made absolute: a `file://` URL's path, `~/` from HOME,
+ * and anything else not absolute from the folder the session started in.
+ */
+export function absolutePath(path: string, root: string, home: string | undefined): string {
+  if (FILE_URL.test(path)) return decodeURIComponent(new URL(path).pathname)
   if (path.startsWith('/')) return path
   if (home && (path === '~' || path.startsWith('~/'))) return home + path.slice(1)
-  return `${cwd.replace(/\/+$/, '')}/${path.replace(/^\.\//, '')}`
+  return `${root.replace(/\/+$/, '')}/${path.replace(/^\.\//, '')}`
+}
+
+/** A `file://` URL of an absolute path, each segment encoded so `#`, `?` and spaces stay part of the name. */
+export const fileUrl = (path: string) => `file://${path.split('/').map(encodeURIComponent).join('/')}`
+
+// --- Permission -------------------------------------------------------------------
+
+/**
+ * Asks Claude Code's permission rules about reading each file, as they
+ * would judge a Read of it, and the person about every file the rules ask
+ * about, in one question. Returns, per file, undefined where it may be
+ * read, else why not. Where nobody can be asked (a `-p` run), an ask is a
+ * refusal.
+ */
+async function readPermissions($: EngineInterface, files: readonly string[]): Promise<Array<string | undefined>> {
+  const verdicts = await Promise.all(
+    files.map(file =>
+      $.tool.check({ tool: 'Read', input: { file_path: file } }).catch(error => ({ decision: 'deny' as const, reason: messageOf(error) })),
+    ),
+  )
+  const asked = files.filter((_file, index) => verdicts[index]?.decision === 'ask')
+  const answer = asked.length === 0 ? undefined : await askToShow($, asked)
+
+  return verdicts.map(verdict => {
+    if (verdict.decision === 'allow') return undefined
+    if (verdict.decision === 'ask') return answer
+    return `Claude Code's permission rules do not allow reading it${verdict.reason ? ` (${verdict.reason})` : ''}`
+  })
+}
+
+/** Undefined when the person lets Claude show the files, else why not. */
+async function askToShow($: EngineInterface, files: readonly string[]): Promise<string | undefined> {
+  const names = files.map(fileName).join(', ')
+  try {
+    const answer = await $.ui.ask(`Let Claude show you ${names}? Claude Code asks before reading ${files.length === 1 ? 'this file' : 'these files'}.`, {
+      header: 'Pictures',
+      options: ['Yes', 'No'],
+    })
+    return answer === 'Yes' ? undefined : 'the person did not allow reading it'
+  } catch {
+    return 'Claude Code asks before reading it, and no one answered'
+  }
 }
 
 // --- Preparing a picture ----------------------------------------------------------
@@ -152,11 +212,6 @@ async function fileSize($: EngineInterface, path: string): Promise<number> {
   if (stat === undefined) throw new Error('file not found')
   if (stat.kind !== 'file') throw new Error('not a file')
   return stat.size
-}
-
-async function download(run: Run, url: string, path: string) {
-  const { exitCode, stderr } = await run(['curl', '-fsSL', '--max-time', '20', '-o', path, url], DOWNLOAD_TIMEOUT_MS)
-  if (exitCode !== 0) throw new Error(`download failed: ${lastLine(stderr) ?? `curl exited ${exitCode}`}`)
 }
 
 type Probe = { format: string; width: number; height: number }
@@ -200,24 +255,10 @@ async function makePng($: EngineInterface, run: Run, input: string, inputBytes: 
   throw new Error(`too large to show, even at ${SCALE_STEPS.at(-1)} px`)
 }
 
-type Preparation = { folder: string; stem: string; cwd: string; home: string | undefined }
-
-async function preparePicture($: EngineInterface, run: Run, source: string, index: number, at: Preparation): Promise<ShownPicture> {
-  const isUrl = URL_PATTERN.test(source)
-  const original = isUrl ? source : absolutePath(source, at.cwd, at.home)
-  const downloaded = `${at.folder}/${at.stem}-${index}.download`
-  const png = `${at.folder}/${at.stem}-${index}.png`
-  try {
-    if (isUrl) await download(run, source, downloaded)
-    const input = isUrl ? downloaded : original
-    const inputBytes = await fileSize($, input)
-    await makePng($, run, input, inputBytes, await probe(run, input), png)
-    return { source, original, png, ...pngSize(await $.fs.read(png, { as: 'bytes' })) }
-  } catch (error) {
-    return { source, original, error: messageOf(error) }
-  } finally {
-    if (isUrl) await run(['rm', '-f', downloaded]).catch(() => undefined)
-  }
+async function preparePicture($: EngineInterface, run: Run, original: string, png: string) {
+  const inputBytes = await fileSize($, original)
+  await makePng($, run, original, inputBytes, await probe(run, original), png)
+  return { png, ...pngSize(await $.fs.read(png, { as: 'bytes' })) }
 }
 
 type ShowRequest = { paths: string[]; caption: string | undefined; size: ImageSize }
@@ -226,14 +267,14 @@ type ShowRequest = { paths: string[]; caption: string | undefined; size: ImageSi
 function requestOf(e: Record<string, unknown>): ShowRequest | string {
   const { paths, caption, size } = e
   if (!Array.isArray(paths) || paths.length === 0 || !paths.every(path => typeof path === 'string' && path.trim() !== '')) {
-    return 'paths must be a non-empty array of file paths or URLs'
+    return 'paths must be a non-empty array of file paths'
   }
   if (caption !== undefined && typeof caption !== 'string') return 'caption must be a string'
   if (size !== undefined && !isSize(size)) return `size must be one of ${SIZES.join(', ')}`
   return { paths: paths.map(path => path.trim()), caption: caption?.trim() || undefined, size: size ?? DEFAULT_SIZE }
 }
 
-const pictureName = ({ source }: ShownPicture) => (URL_PATTERN.test(source) ? source : fileName(source))
+const pictureName = ({ source, original }: ShownPicture) => (WEB_URL.test(source) ? source : fileName(original))
 
 /** The line the model reads: what was shown, and why any picture was not. */
 function summaryOf({ pictures }: ShownPictures): string {
@@ -254,8 +295,26 @@ async function show($: EngineInterface, toolUseId: string, request: ShowRequest)
   const made = await run(['mkdir', '-p', folder])
   if (made.exitCode !== 0) throw new Error(`could not make ${folder}: ${lastLine(made.stderr) ?? `exit ${made.exitCode}`}`)
 
-  const at: Preparation = { folder, stem: stemOf(toolUseId), cwd: await $.session.cwd(), home: await $.env.get('HOME') }
-  const pictures = await Promise.all(request.paths.map((source, index) => preparePicture($, run, source, index, at)))
+  const [root, home] = [await $.session.root(), await $.env.get('HOME')]
+  const local = request.paths.filter(source => !WEB_URL.test(source))
+  const originals = local.map(source => absolutePath(source, root, home))
+  const refusals = await readPermissions($, originals)
+  const refusalOf = new Map(originals.map((original, index) => [original, refusals[index]]))
+
+  const stem = stemOf(toolUseId)
+  const pictures = await Promise.all(
+    request.paths.map(async (source, index): Promise<ShownPicture> => {
+      if (WEB_URL.test(source)) return { source, original: source, error: WEB_URL_ERROR }
+      const original = absolutePath(source, root, home)
+      const refusal = refusalOf.get(original)
+      if (refusal !== undefined) return { source, original, error: refusal }
+      try {
+        return { source, original, ...(await preparePicture($, run, original, `${folder}/${stem}-${index}.png`)) }
+      } catch (error) {
+        return { source, original, error: messageOf(error) }
+      }
+    }),
+  )
   const shown: ShownPictures = { ...(request.caption ? { caption: request.caption } : {}), size: request.size, pictures }
   await $.fs.write(recordPath(folder, toolUseId), JSON.stringify(shown, null, 2))
   return shown
@@ -268,6 +327,15 @@ async function pruneCache($: EngineInterface) {
     await $.process.run(['find', folder, '-type', 'f', '-mtime', `+${KEEP_DAYS}`, '-delete'], { timeoutMs: SHORT_TIMEOUT_MS })
   } catch (error) {
     $.ui.log(`sc-mods: could not prune the picture cache: ${messageOf(error)}`, { to: 'debug' })
+  }
+}
+
+/** Whether sips runs here; the tool needs it to read and convert pictures, and only macOS has it. */
+async function hasSips($: EngineInterface): Promise<boolean> {
+  try {
+    return (await $.process.run(['sips', '-v'], { timeoutMs: SHORT_TIMEOUT_MS })).exitCode === 0
+  } catch {
+    return false
   }
 }
 
@@ -287,23 +355,35 @@ async function readShown($: EngineInterface, toolUseId: string): Promise<ShownPi
   }
 }
 
+/**
+ * The PNGs read lately, base64 by path, so a redraw does not read them
+ * again. A prepared PNG never changes under its path. Past
+ * MAX_CACHED_PICTURES the least recently used goes.
+ */
+const pngCache = new Map<string, string>()
+
+async function pngOf($: EngineInterface, path: string): Promise<string | undefined> {
+  const cached = pngCache.get(path)
+  if (cached !== undefined) {
+    pngCache.delete(path)
+    pngCache.set(path, cached)
+    return cached
+  }
+  try {
+    const { base64 } = await $.fs.read(path, { as: 'bytes' })
+    pngCache.set(path, base64)
+    // A Map iterates in insertion order, so its first key is the least recently used.
+    const [oldest] = pngCache.keys()
+    if (pngCache.size > MAX_CACHED_PICTURES && oldest !== undefined) pngCache.delete(oldest)
+    return base64
+  } catch {
+    return undefined
+  }
+}
+
 /** Each picture's PNG as base64, or undefined where it failed or its file is gone. */
 const pixelsOf = ($: EngineInterface, pictures: ShownPicture[]) =>
-  Promise.all(
-    pictures.map(picture =>
-      picture.png === undefined
-        ? undefined
-        : $.fs.read(picture.png, { as: 'bytes' }).then(
-            ({ base64 }) => base64,
-            () => undefined,
-          ),
-    ),
-  )
-
-/** The file a picture's link opens: the original file, or for a URL the PNG made from it. */
-const linkTarget = (picture: ShownPicture) => (URL_PATTERN.test(picture.source) ? picture.png : picture.original)
-
-const fileUrl = (path: string) => `file://${encodeURI(path)}`
+  Promise.all(pictures.map(picture => (picture.png === undefined ? undefined : pngOf($, picture.png))))
 
 type ViewInput = Pick<RenderInput, 'requestId'>
 
@@ -312,14 +392,15 @@ const viewOf = ($: EngineInterface, e: ViewInput) => read($, memberOf(IMAGE_VIEW
 const changeView = ($: EngineInterface, e: ViewInput, change: (view: ImageView) => ImageView) => update($, memberOf(IMAGE_VIEW, e), change)
 
 /**
- * A `show_image` tool Claude calls to show pictures to the person, drawn in
- * the tool's own result row.
+ * A `show_image` tool Claude calls to show local picture files to the
+ * person, drawn in the tool's own result row.
  *
- * The call turns each picture into a PNG that fits an Image's byte limit and
- * keeps it, with a record of the call, in the cache folder under the call's
+ * The call asks Claude Code's permission rules about each file as a Read,
+ * turns each picture into a PNG that fits an Image's byte limit and keeps
+ * it, with a record of the call, in the cache folder under the call's
  * tool_use_id; the row draws from those files, so it draws again after a
- * resume. The row's buttons hide the pictures and step through the sizes,
- * kept per row in `imageView`.
+ * resume. Each picture has a label line under it; the row's buttons hide
+ * the pictures and step through the sizes, kept per row in `imageView`.
  *
  * `startShowImage` runs once the session has started.
  */
@@ -377,27 +458,39 @@ export function registerShowImage(on: On) {
 
     const size = isSize(view.size) ? view.size : shown.size
     const pixels = await pixelsOf($, shown.pictures)
+    const isNumbered = shown.pictures.length > 1
     return (
       <Box flexDirection="column">
         {shown.pictures.map((picture, index) => {
           const base64 = pixels[index]
+          const number = isNumbered ? <Text dimColor>{`${index + 1} `}</Text> : null
           if (base64 === undefined) {
             return (
-              <Text key={`show-image:error:${index}`} color="red">
-                {pictureName(picture)}: {picture.error ?? 'the prepared picture is gone from the cache'}
-              </Text>
+              <Box key={`show-image:picture:${index}`} flexDirection="row">
+                {number}
+                <Text color="red">
+                  {pictureName(picture)}: {picture.error ?? 'the prepared picture is gone from the cache'}
+                </Text>
+              </Box>
             )
           }
           const { columns, rows } = imageCells(picture, size, e.viewport?.columns)
-          return <Image key={`show-image:${id}:${index}`} source={{ png: base64 }} columns={columns} rows={rows} alt={picture.source} />
+          return (
+            <Box key={`show-image:picture:${index}`} flexDirection="column">
+              <Image key={`show-image:${id}:${index}`} source={{ png: base64 }} columns={columns} rows={rows} alt={picture.original} />
+              <Box flexDirection="row">
+                {number}
+                <Link href={fileUrl(picture.original)}>
+                  <Text underline color={LINK_COLOR}>
+                    {fileName(picture.original)}
+                  </Text>
+                  <Text color={LINK_COLOR}> ↗</Text>
+                </Link>
+              </Box>
+            </Box>
+          )
         })}
         {shown.caption ? <Text>{shown.caption}</Text> : null}
-        <Box flexDirection="row" columnGap={2} flexWrap="wrap">
-          {shown.pictures.map((picture, index) => {
-            const target = picture.error === undefined ? linkTarget(picture) : undefined
-            return target === undefined ? null : <Link key={`show-image:link:${index}`} href={fileUrl(target)} label={fileName(target)} />
-          })}
-        </Box>
         <Box flexDirection="row" columnGap={1}>
           {visibility}
           <Button
@@ -411,10 +504,19 @@ export function registerShowImage(on: On) {
   })
 }
 
-/** Registers the tool and prunes the cache, once the session has started. */
+/** Registers the tool where sips runs, and prunes the cache, once the session has started. */
 export async function startShowImage($: EngineInterface) {
-  const registering = $.tool
-    .register({ name: 'show_image', description: TOOL_DESCRIPTION, inputSchema: INPUT_SCHEMA, isDeferred: false })
-    .catch(error => $.ui.log(`sc-mods: could not register show_image: ${messageOf(error)}`, { to: 'debug' }))
-  await Promise.all([registering, pruneCache($)])
+  await Promise.all([registerTool($), pruneCache($)])
+}
+
+async function registerTool($: EngineInterface) {
+  if (!(await hasSips($))) {
+    $.ui.log('sc-mods: sips is not on this machine, so show_image is not registered', { to: 'debug' })
+    return
+  }
+  try {
+    await $.tool.register({ name: 'show_image', description: TOOL_DESCRIPTION, inputSchema: INPUT_SCHEMA, isDeferred: false })
+  } catch (error) {
+    $.ui.log(`sc-mods: could not register show_image: ${messageOf(error)}`, { to: 'debug' })
+  }
 }

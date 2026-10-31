@@ -1,7 +1,7 @@
 import type { On, ToolSpec } from 'claude-code'
 import type { Engine } from 'claude-code/testing'
 import { expect, mock, test } from 'claude-code/testing'
-import { MAX_PNG_BYTES, SHOW_IMAGE_TOOL, imageCells, nextSize, pngSize } from '../hooks/show-image'
+import { MAX_PNG_BYTES, SHOW_IMAGE_TOOL, absolutePath, fileUrl, imageCells, nextSize, pngSize } from '../hooks/show-image'
 import { failed, ok } from './support'
 
 const HOME = '/home/person'
@@ -31,18 +31,44 @@ function scaled({ width, height }: Picture, side: number | undefined): { width: 
   return { width: Math.round(width * ratio), height: Math.round(height * ratio) }
 }
 
+type Decision = 'allow' | 'ask' | 'deny'
+
+type MachineOptions = {
+  /** What Claude Code's permission rules answer for a Read of each path; allow when not listed. */
+  reads?: Record<string, Decision>
+  /** What the person answers the question; undefined for a session with nobody to ask. */
+  answer?: string
+  canFind?: boolean
+  hasSips?: boolean
+}
+
 /**
- * Stands for the machine beneath the plugin: a disk of `files`, the web's
- * `remote` files, and the mkdir, curl, sips, cp, rm and find it runs;
- * without `canFind`, find cannot start.
- * Returns the disk and every command run, in order.
+ * Stands for the machine beneath the plugin: a disk of `files`, the
+ * permission rules and the person, and the mkdir, sips, cp and find it
+ * runs. Returns the disk, every command run, the tools registered, the
+ * paths whose Read was judged and the questions asked, in order.
  */
-function machine(on: On, files: Record<string, DiskFile>, remote: Record<string, DiskFile> = {}, { canFind = true } = {}) {
+function machine(on: On, files: Record<string, DiskFile>, { reads = {}, answer, canFind = true, hasSips = true }: MachineOptions = {}) {
   const disk = new Map(Object.entries(files))
   const commands: string[][] = []
   const registered: ToolSpec[] = []
+  const judged: string[] = []
+  const byteReads: string[] = []
+  const questions: string[] = []
   mock.env(on, { HOME })
-  on('session.cwd', async () => ({ value: CWD }))
+  on('session.root', async () => ({ value: CWD }))
+  on('tool.check', async (_$, e) => {
+    const path = (e.input as { file_path: string }).file_path
+    judged.push(`${e.tool}(${path})`)
+    const decision = reads[path] ?? 'allow'
+    return decision === 'deny' ? { decision, reason: 'Read(/secret/**)' } : { decision }
+  })
+  on('tool.call', { tool: 'AskUserQuestion' }, async (_$, e) => {
+    const [question] = e.questions
+    questions.push(question?.question ?? '')
+    if (answer === undefined) return { deny: 'no one to ask' }
+    return { result: { questions: e.questions, answers: { [question?.question ?? '']: answer } } } as never
+  })
   on('ui.log', async () => ({ value: undefined }))
   on('tool.register', async (_$, e) => {
     registered.push(e)
@@ -55,6 +81,7 @@ function machine(on: On, files: Record<string, DiskFile>, remote: Record<string,
   on('fs.read', async (_$, e) => {
     const file = disk.get(e.path)
     if (file === undefined) return { deny: 'ENOENT' }
+    if (e.as === 'bytes') byteReads.push(e.path)
     if (e.as === 'bytes') return { value: { base64: file.picture ? pngHead(file.picture.width, file.picture.height) : '' } }
     return { value: file.text ?? '' }
   })
@@ -66,13 +93,7 @@ function machine(on: On, files: Record<string, DiskFile>, remote: Record<string,
     const argv = [...e.argv]
     commands.push(argv)
     const [command] = argv
-    if (command === 'curl') {
-      const [out, url] = [argv[argv.indexOf('-o') + 1] ?? '', argv.at(-1) ?? '']
-      const file = remote[url]
-      if (file === undefined) return { value: { ...failed('curl: (22) The requested URL returned error: 404'), exitCode: 22 } }
-      disk.set(out, file)
-      return { value: ok('') }
-    }
+    if (command === 'sips' && argv[1] === '-v') return hasSips ? { value: ok('sips-316\n') } : { deny: 'sips: command not found' }
     if (command === 'sips' && argv[1] === '-g') {
       const picture = disk.get(argv.at(-1) ?? '')?.picture
       if (picture === undefined) return { value: ok(`${argv.at(-1)}\n  format: txt\n  pixelWidth: <nil>\n  pixelHeight: <nil>\n`) }
@@ -94,10 +115,9 @@ function machine(on: On, files: Record<string, DiskFile>, remote: Record<string,
       return { value: ok('') }
     }
     if (command === 'find' && !canFind) return { deny: 'find: command not found' }
-    if (command === 'rm') disk.delete(argv.at(-1) ?? '')
     return { value: ok('') }
   })
-  return { disk, commands, registered }
+  return { disk, commands, registered, judged, questions, byteReads }
 }
 
 const callShow = ($: Engine, args: Record<string, unknown>, tool_use_id = CALL_ID) =>
@@ -152,17 +172,70 @@ test('a PNG over the limit is scaled down until it fits', async ($, on) => {
   expect(recordOf(disk).pictures[0]).toMatchObject({ width: 1200, height: 800 })
 })
 
-test('a URL is downloaded, converted, and its download removed', async ($, on) => {
-  const url = 'https://example.com/design.jpg'
-  const { disk, commands } = machine(on, {}, { [url]: { size: 300_000, picture: { format: 'jpeg', width: 1024, height: 768 } } })
-  const answer = await callShow($, { paths: [url] })
+test('a web URL is refused without a request, and the model is told to save it first', async ($, on) => {
+  const { commands, judged } = machine(on, { '/work/ok.png': { size: 10_000, picture: { format: 'png', width: 100, height: 100 } } })
+  const answer = await callShow($, { paths: ['/work/ok.png', 'https://example.com/logo.png'] })
 
-  const downloaded = `${CACHE}/${CALL_ID}-0.download`
-  expect(answer.result).toBe(`Showed 1 picture inline: ${url}.`)
-  expect(commands).toContainEqual(['curl', '-fsSL', '--max-time', '20', '-o', downloaded, url])
-  expect(commands).toContainEqual(['rm', '-f', downloaded])
-  expect(disk.has(downloaded)).toBe(false)
-  expect(recordOf(disk).pictures[0]).toMatchObject({ original: url, png: `${CACHE}/${CALL_ID}-0.png`, width: 1024, height: 768 })
+  expect(answer.result).toBe(
+    [
+      'Showed 1 picture inline: ok.png.',
+      'Could not show https://example.com/logo.png: show_image shows local files only; save the picture to a file with your own tools (for example Bash) first, then pass the saved path.',
+    ].join('\n'),
+  )
+  expect(commands.some(argv => argv.includes('https://example.com/logo.png'))).toBe(false)
+  expect(judged).toEqual(['Read(/work/ok.png)'])
+})
+
+test('a file:// URL is read as its path', async ($, on) => {
+  const { commands } = machine(on, { '/shots/my shot.png': { size: 10_000, picture: { format: 'png', width: 100, height: 100 } } })
+  const answer = await callShow($, { paths: ['file:///shots/my%20shot.png'] })
+  expect(answer.result).toBe('Showed 1 picture inline: my shot.png.')
+  expect(commands).toContainEqual(['cp', '/shots/my shot.png', `${CACHE}/${CALL_ID}-0.png`])
+})
+
+// --- Permission --------------------------------------------------------------------
+
+test('each file is judged as a Read, and a file the rules deny is not read', async ($, on) => {
+  const { commands, judged, questions } = machine(
+    on,
+    { '/work/ok.png': { size: 10_000, picture: { format: 'png', width: 100, height: 100 } }, '/secret/key.png': { size: 10_000, picture: { format: 'png', width: 1, height: 1 } } },
+    { reads: { '/secret/key.png': 'deny' } },
+  )
+  const answer = await callShow($, { paths: ['ok.png', '/secret/key.png'] })
+
+  expect(judged).toEqual(['Read(/work/ok.png)', 'Read(/secret/key.png)'])
+  expect(answer.result).toContain("Could not show key.png: Claude Code's permission rules do not allow reading it (Read(/secret/**)).")
+  expect(commands.some(argv => argv.includes('/secret/key.png'))).toBe(false)
+  expect(questions).toEqual([])
+})
+
+test('files the rules ask about are put to the person in one question', async ($, on) => {
+  const files = {
+    '/tmp/a.png': { size: 10_000, picture: { format: 'png', width: 100, height: 100 } },
+    '/tmp/b.png': { size: 10_000, picture: { format: 'png', width: 100, height: 100 } },
+  }
+  const { commands, questions } = machine(on, files, { reads: { '/tmp/a.png': 'ask', '/tmp/b.png': 'ask' }, answer: 'Yes' })
+  const answer = await callShow($, { paths: ['/tmp/a.png', '/tmp/b.png'] })
+
+  expect(questions).toEqual(['Let Claude show you a.png, b.png? Claude Code asks before reading these files.'])
+  expect(answer.result).toBe('Showed 2 pictures inline: a.png, b.png.')
+  expect(commands.filter(argv => argv[0] === 'cp')).toHaveLength(2)
+})
+
+test('a file the person does not allow is not read', async ($, on) => {
+  const { commands } = machine(on, { '/tmp/a.png': { size: 10_000, picture: { format: 'png', width: 100, height: 100 } } }, { reads: { '/tmp/a.png': 'ask' }, answer: 'No' })
+  const answer = await callShow($, { paths: ['/tmp/a.png'] })
+
+  expect(answer.deny).toBe('Could not show a.png: the person did not allow reading it.')
+  expect(commands.some(argv => argv.includes('/tmp/a.png'))).toBe(false)
+})
+
+test('where nobody can be asked, a file the rules ask about is refused', async ($, on) => {
+  const { commands } = machine(on, { '/tmp/a.png': { size: 10_000, picture: { format: 'png', width: 100, height: 100 } } }, { reads: { '/tmp/a.png': 'ask' } })
+  const answer = await callShow($, { paths: ['/tmp/a.png'] })
+
+  expect(answer.deny).toBe('Could not show a.png: Claude Code asks before reading it, and no one answered.')
+  expect(commands.some(argv => argv.includes('/tmp/a.png'))).toBe(false)
 })
 
 test('a missing file and a file that is no picture fail alone, each with its reason', async ($, on) => {
@@ -183,11 +256,10 @@ test('a missing file and a file that is no picture fail alone, each with its rea
 })
 
 test('a call where every picture fails is an error the model reads', async ($, on) => {
-  machine(on, {})
-  const answer = await callShow($, { paths: ['gone.png', 'https://example.com/missing.png'] })
+  machine(on, { '/work/notes.txt': { size: 10 } })
+  const answer = await callShow($, { paths: ['gone.png', 'notes.txt'] })
 
-  expect(answer.deny).toContain('Could not show gone.png: file not found.')
-  expect(answer.deny).toContain('Could not show https://example.com/missing.png: download failed: curl: (22) The requested URL returned error: 404.')
+  expect(answer.deny).toBe(['Could not show gone.png: file not found.', 'Could not show notes.txt: not a picture sips can read.'].join('\n'))
 })
 
 test('a call without paths is refused', async ($, on) => {
@@ -208,24 +280,32 @@ test('session start registers the tool and prunes pictures older than 30 days', 
   expect(commands).toContainEqual(['find', CACHE, '-type', 'f', '-mtime', '+30', '-delete'])
 })
 
+test('without sips the tool is not registered', async ($, on) => {
+  const { registered } = machine(on, {}, { hasSips: false })
+  on('session.start', async (_$, e) => ({ cwd: e.cwd }))
+  await $.session.start({ cwd: CWD, surface: 'terminal', isInteractive: true })
+  expect(registered).toEqual([])
+})
+
 test('a failed prune does not fail the session start', async ($, on) => {
-  machine(on, {}, {}, { canFind: false })
+  machine(on, {}, { canFind: false })
   on('session.start', async (_$, e) => ({ cwd: e.cwd }))
   expect(await $.session.start({ cwd: CWD, surface: 'terminal', isInteractive: true })).toEqual({ cwd: CWD })
 })
 
 // --- The row ---------------------------------------------------------------------
 
-async function showWide($: Engine, on: On) {
-  machine(on, {
-    '/work/wide.png': { size: 10_000, picture: { format: 'png', width: 800, height: 200 } },
-    '/work/tall.png': { size: 10_000, picture: { format: 'png', width: 200, height: 400 } },
-  })
-  await callShow($, { paths: ['wide.png', 'tall.png'], caption: 'before and after' })
+const WIDE = { size: 10_000, picture: { format: 'png', width: 1600, height: 400 } }
+const TALL = { size: 10_000, picture: { format: 'png', width: 200, height: 400 } }
+
+async function showPictures($: Engine, on: On, paths: string[] = ['wide.png', 'tall.png']) {
+  const world = machine(on, { '/work/wide.png': WIDE, '/work/tall.png': TALL, '/work/odd #1?.png': TALL })
+  await callShow($, { paths, caption: 'before and after' })
+  return world
 }
 
-test('the row draws each picture with its aspect kept, the caption, links and buttons', async ($, on) => {
-  await showWide($, on)
+test('the row draws each picture with its aspect kept and a numbered label under it', async ($, on) => {
+  await showPictures($, on)
   const row = await mountRow($)
 
   const images = await row.findAll({ type: 'Image' })
@@ -233,22 +313,54 @@ test('the row draws each picture with its aspect kept, the caption, links and bu
     [100, 13],
     [22, 22],
   ])
-  expect(images.map(image => image.props.alt)).toEqual(['wide.png', 'tall.png'])
-  expect(images[0]?.props.source).toEqual({ png: pngHead(800, 200) })
-  expect(await row.find({ type: 'Text', text: 'before and after' })).toBeDefined()
-  expect((await row.findAll({ type: 'Link' })).map(link => [link.props.href, link.props.label])).toEqual([
-    ['file:///work/wide.png', 'wide.png'],
-    ['file:///work/tall.png', 'tall.png'],
+  expect(images.map(image => image.props.alt)).toEqual(['/work/wide.png', '/work/tall.png'])
+  expect(images[0]?.props.source).toEqual({ png: pngHead(1600, 400) })
+
+  const links = await row.findAll({ type: 'Link' })
+  // A Link's text leads with its href, then what it draws.
+  expect(links.map(link => [link.props.href, link.text.slice(String(link.props.href).length)])).toEqual([
+    ['file:///work/wide.png', 'wide.png ↗'],
+    ['file:///work/tall.png', 'tall.png ↗'],
   ])
+  const names = await row.findAll({ type: 'Text', text: /\.png$/ })
+  expect(names.map(name => name.props)).toEqual([
+    { underline: true, color: 'suggestion' },
+    { underline: true, color: 'suggestion' },
+  ])
+  const numbers = await row.findAll({ type: 'Text', text: /^\d $/ })
+  expect(numbers.map(number => [number.text, number.props.dimColor])).toEqual([
+    ['1 ', true],
+    ['2 ', true],
+  ])
+  expect(await row.find({ type: 'Text', text: 'before and after' })).toBeDefined()
   expect((await row.findAll({ type: 'Button' })).map(button => button.props.label)).toEqual(['Hide', 'size: medium'])
 })
 
+test('a single picture has no number, and its link encodes the file name', async ($, on) => {
+  await showPictures($, on, ['odd #1?.png'])
+  const row = await mountRow($)
+
+  expect(await row.findAll({ type: 'Text', text: /^\d $/ })).toEqual([])
+  expect((await row.findAll({ type: 'Link' })).map(link => link.props.href)).toEqual(['file:///work/odd%20%231%3F.png'])
+})
+
+test('a failed picture keeps its place and number as a red line', async ($, on) => {
+  await showPictures($, on, ['wide.png', 'gone.png'])
+  const row = await mountRow($)
+
+  expect(await row.findAll({ type: 'Image' })).toHaveLength(1)
+  const failure = await row.find({ type: 'Text', text: 'gone.png: file not found' })
+  expect(failure?.props.color).toBe('red')
+  expect((await row.findAll({ type: 'Text', text: /^\d $/ })).map(number => number.text)).toEqual(['1 ', '2 '])
+})
+
 test('Hide collapses the row to one line, and Show brings the pictures back', async ($, on) => {
-  await showWide($, on)
+  await showPictures($, on)
   const row = await mountRow($)
 
   await row.press({ key: `show-image:visibility:${CALL_ID}` })
   expect(await row.findAll({ type: 'Image' })).toEqual([])
+  expect(await row.findAll({ type: 'Link' })).toEqual([])
   expect(await row.find({ type: 'Text', text: '2 pictures hidden' })).toBeDefined()
   expect((await row.findAll({ type: 'Button' })).map(button => button.props.label)).toEqual(['Show'])
 
@@ -257,22 +369,34 @@ test('Hide collapses the row to one line, and Show brings the pictures back', as
 })
 
 test('the size button cycles medium, large, small, medium', async ($, on) => {
-  await showWide($, on)
+  await showPictures($, on)
   const row = await mountRow($)
   const sizeKey = `show-image:size:${CALL_ID}`
-  const firstColumns = async () => (await row.findAll({ type: 'Image' }))[0]?.props.columns
+  const firstCells = async () => {
+    const [image] = await row.findAll({ type: 'Image' })
+    return [image?.props.columns, image?.props.rows]
+  }
 
   const seen: unknown[] = []
   for (let press = 0; press < 3; press += 1) {
     await row.press({ key: sizeKey })
-    seen.push([(await row.find({ key: sizeKey }))?.props.label, await firstColumns()])
+    seen.push([(await row.find({ key: sizeKey }))?.props.label, ...(await firstCells())])
   }
   // Large is 120 columns at most, held to the 120-column view less 4.
   expect(seen).toEqual([
-    ['size: large', 116],
-    ['size: small', 60],
-    ['size: medium', 100],
+    ['size: large', 116, 15],
+    ['size: small', 60, 8],
+    ['size: medium', 100, 13],
   ])
+})
+
+test('a redraw reads no PNG again', async ($, on) => {
+  const { byteReads } = await showPictures($, on)
+  const row = await mountRow($)
+  const readsBefore = byteReads.length
+  await row.press({ key: `show-image:size:${CALL_ID}` })
+  expect(await row.findAll({ type: 'Image' })).toHaveLength(2)
+  expect(byteReads.length).toBe(readsBefore)
 })
 
 test('a row whose call left no record draws as the engine does', async ($, on) => {
@@ -284,20 +408,29 @@ test('a row whose call left no record draws as the engine does', async ($, on) =
 })
 
 test('on the desktop the row lists the caption and paths as text', async ($, on) => {
-  await showWide($, on)
+  await showPictures($, on)
   const row = await mountRow($, 'desktop')
   const texts = (await row.findAll({ type: 'Text' })).map(text => text.text)
   expect(texts).toEqual(['before and after', '/work/wide.png', '/work/tall.png'])
 })
 
-// --- Sizes and PNG headers -----------------------------------------------------------
+// --- Sizes, paths and PNG headers -----------------------------------------------------
 
-test('a picture keeps its aspect inside each size and the view', () => {
+test('a picture keeps its aspect inside each size, the view and its own pixels', () => {
   expect(imageCells({ width: 1600, height: 900 }, 'small')).toEqual({ columns: 43, rows: 12 })
   expect(imageCells({ width: 1600, height: 400 }, 'large', 80)).toEqual({ columns: 76, rows: 10 })
   expect(imageCells({ width: 1600, height: 400 }, 'medium', 8)).toEqual({ columns: 10, rows: 1 })
+  // A 32-pixel icon takes about 4 columns by 2 rows, not the whole box.
+  expect(imageCells({ width: 32, height: 32 }, 'large')).toEqual({ columns: 4, rows: 2 })
   expect(imageCells({}, 'medium')).toEqual({ columns: 100, rows: 22 })
   expect([nextSize('small'), nextSize('medium'), nextSize('large')]).toEqual(['medium', 'large', 'small'])
+})
+
+test('paths are made absolute and file links encode each segment', () => {
+  expect(absolutePath('shots/a.png', '/work/', HOME)).toBe('/work/shots/a.png')
+  expect(absolutePath('~/a.png', CWD, HOME)).toBe(`${HOME}/a.png`)
+  expect(absolutePath('file:///tmp/a%20b.png', CWD, HOME)).toBe('/tmp/a b.png')
+  expect(fileUrl('/tmp/a #1?.png')).toBe('file:///tmp/a%20%231%3F.png')
 })
 
 test('the pixel size is read from the PNG header', () => {
