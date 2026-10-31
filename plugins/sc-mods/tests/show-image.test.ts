@@ -133,6 +133,9 @@ const mountRow = ($: Engine, surface: 'terminal' | 'desktop' = 'terminal', colum
     props: { tool_use_id: CALL_ID, tool: SHOW_IMAGE_TOOL, output: 'Showed', isErrored: false },
   })
 
+const hideKey = (index: number) => `show-image:hide:${CALL_ID}:${index}`
+const sizeKey = (index: number) => `show-image:size:${CALL_ID}:${index}`
+
 const sipsCalls = (commands: string[][]) => commands.filter(argv => argv[0] === 'sips' && argv[1] === '-s')
 
 const recordOf = (disk: Map<string, DiskFile>) => JSON.parse(disk.get(`${CACHE}/${CALL_ID}.json`)?.text ?? 'null')
@@ -335,7 +338,13 @@ test('the row draws each picture with its aspect kept and a numbered label under
   expect(await row.find({ type: 'Text', text: 'before and after' })).toBeDefined()
   // The caption heads the row, above the first picture.
   expect((await row.findAll({ type: 'Text' }))[0]?.text).toBe('before and after')
-  expect((await row.findAll({ type: 'Button' })).map(button => button.props.label)).toEqual(['Hide', 'size: medium'])
+  // Each picture's label line ends with its own Hide and size buttons.
+  expect((await row.findAll({ type: 'Button' })).map(button => [button.key, button.props.label])).toEqual([
+    [hideKey(0), 'Hide'],
+    [sizeKey(0), 'medium'],
+    [hideKey(1), 'Hide'],
+    [sizeKey(1), 'medium'],
+  ])
 })
 
 test('a call with no caption draws no caption line', async ($, on) => {
@@ -362,49 +371,62 @@ test('a failed picture keeps its place and number as a red line', async ($, on) 
   const failure = await row.find({ type: 'Text', text: 'gone.png: file not found' })
   expect(failure?.props.color).toBe('red')
   expect((await row.findAll({ type: 'Text', text: /^\d $/ })).map(number => number.text)).toEqual(['1 ', '2 '])
+  // Only the picture drawn has buttons.
+  expect((await row.findAll({ type: 'Button' })).map(button => button.key)).toEqual([hideKey(0), sizeKey(0)])
 })
 
-test('Hide collapses the row to one line, and Show brings the pictures back', async ($, on) => {
+test('hiding picture 1 leaves picture 2 drawn, and its label keeps a Show button', async ($, on) => {
   await showPictures($, on)
   const row = await mountRow($)
 
-  await row.press({ key: `show-image:visibility:${CALL_ID}` })
-  expect(await row.findAll({ type: 'Image' })).toEqual([])
-  expect(await row.findAll({ type: 'Link' })).toEqual([])
-  expect(await row.find({ type: 'Text', text: '2 pictures hidden' })).toBeDefined()
-  expect((await row.findAll({ type: 'Button' })).map(button => button.props.label)).toEqual(['Show'])
+  await row.press({ key: hideKey(0) })
+  expect((await row.findAll({ type: 'Image' })).map(image => image.props.alt)).toEqual(['/work/tall.png'])
+  expect(await row.findAll({ type: 'Link' })).toHaveLength(2)
+  expect((await row.findAll({ type: 'Button' })).map(button => button.props.label)).toEqual(['Show', 'medium', 'Hide', 'medium'])
 
-  await row.press({ key: `show-image:visibility:${CALL_ID}` })
+  await row.press({ key: hideKey(0) })
   expect(await row.findAll({ type: 'Image' })).toHaveLength(2)
 })
 
-test('the size button cycles medium, large, small, medium', async ($, on) => {
+test('a single picture hides and resizes from its own label line', async ($, on) => {
+  await showPictures($, on, ['wide.png'])
+  const row = await mountRow($)
+
+  await row.press({ key: sizeKey(0) })
+  await row.press({ key: hideKey(0) })
+  expect(await row.findAll({ type: 'Image' })).toEqual([])
+  expect((await row.findAll({ type: 'Button' })).map(button => button.props.label)).toEqual(['Show', 'large'])
+})
+
+test("each size button cycles medium, large, small, medium, and leaves the other picture's size alone", async ($, on) => {
   await showPictures($, on)
   const row = await mountRow($)
-  const sizeKey = `show-image:size:${CALL_ID}`
-  const firstCells = async () => {
-    const [image] = await row.findAll({ type: 'Image' })
-    return [image?.props.columns, image?.props.rows]
-  }
+  const cells = async () => (await row.findAll({ type: 'Image' })).map(image => [image.props.columns, image.props.rows])
+  const [, tallAtMedium] = await cells()
 
   const seen: unknown[] = []
   for (let press = 0; press < 3; press += 1) {
-    await row.press({ key: sizeKey })
-    seen.push([(await row.find({ key: sizeKey }))?.props.label, ...(await firstCells())])
+    await row.press({ key: sizeKey(0) })
+    const [wide, tall] = await cells()
+    seen.push([(await row.find({ key: sizeKey(0) }))?.props.label, ...(wide ?? []), (await row.find({ key: sizeKey(1) }))?.props.label, tall])
   }
   // Each size takes its share of the 120-column view less 4: all, 40% and 70%.
   expect(seen).toEqual([
-    ['size: large', 116, 15],
-    ['size: small', 46, 6],
-    ['size: medium', 81, 10],
+    ['large', 116, 15, 'medium', tallAtMedium],
+    ['small', 46, 6, 'medium', tallAtMedium],
+    ['medium', 81, 10, 'medium', tallAtMedium],
   ])
+
+  await row.press({ key: sizeKey(1) })
+  expect((await row.findAll({ type: 'Button' })).map(button => button.props.label)).toEqual(['Hide', 'medium', 'Hide', 'large'])
+  expect((await cells())[0]).toEqual([81, 10])
 })
 
 test('a redraw reads no PNG again', async ($, on) => {
   const { byteReads } = await showPictures($, on)
   const row = await mountRow($)
   const readsBefore = byteReads.length
-  await row.press({ key: `show-image:size:${CALL_ID}` })
+  await row.press({ key: sizeKey(0) })
   expect(await row.findAll({ type: 'Image' })).toHaveLength(2)
   expect(byteReads.length).toBe(readsBefore)
 })

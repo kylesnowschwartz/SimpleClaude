@@ -4,15 +4,14 @@ export type PromptPosition = string
 /** How large a `show_image` row draws its pictures. */
 export type ImageSize = 'small' | 'medium' | 'large'
 
-/**
- * How one `show_image` row is drawn, keyed by its tool_use_id: whether its
- * pictures are hidden, and the size picked with its size button, or '' for
- * the size Claude asked for.
- */
-export type ImageView = { isHidden: boolean; size: ImageSize | '' }
+/** How one picture of a `show_image` row is drawn: hidden, and the size picked with its size button, or '' for the call's size. */
+export type PictureView = { isHidden: boolean; size: ImageSize | '' }
+
+/** Each picture's view in one `show_image` row, keyed by its tool_use_id, by the picture's index; a picture not in it is shown at the call's size. */
+export type PictureViews = Record<string, PictureView>
 
 declare module 'claude-code' {
   interface PluginState {
-    'sc-mods': { promptPosition: PromptPosition; imageView: StateFamily<ImageView> }
+    'sc-mods': { promptPosition: PromptPosition; pictureViews: StateFamily<PictureViews> }
   }
 }

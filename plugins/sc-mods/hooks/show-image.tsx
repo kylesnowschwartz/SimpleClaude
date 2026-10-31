@@ -1,6 +1,6 @@
 import { atom, memberOf, read, update } from 'claude-code'
 import type { EngineInterface, FsBytes, On, ProcessRunResult, RenderInput } from 'claude-code'
-import type { ImageSize, ImageView } from '../types'
+import type { ImageSize, PictureView, PictureViews } from '../types'
 
 export const SHOW_IMAGE_TOOL = 'mcp__sc-mods__show_image'
 // A string literal names only the tools the types know, and plugin tools are not among them.
@@ -64,14 +64,16 @@ export type ShownPicture = {
 /** What one call showed, kept beside its PNGs so the row draws again after a resume. */
 export type ShownPictures = { caption?: string; size: ImageSize; pictures: ShownPicture[] }
 
-const IMAGE_VIEW = atom({ plugin: 'sc-mods', key: 'imageView' } as const, { isHidden: false, size: '' })
+const PICTURE_VIEWS = atom({ plugin: 'sc-mods', key: 'pictureViews' } as const, {} as PictureViews)
+
+const UNCHANGED_VIEW: PictureView = { isHidden: false, size: '' }
 
 const TOOL_DESCRIPTION = [
   'Show pictures to the person inline in the conversation: screenshots, charts, diagrams, designs, generated images, or any other picture file.',
   "The pictures are drawn in this tool's result row in the person's terminal. The pixels are not returned to you, so this tool does not let you see a picture; read the file for that.",
   'paths: local files only, given as absolute paths. A relative path is read from the folder the session started in, and a file:// URL is read as its path. An http or https URL is refused: save the picture to a file with your own tools (for example Bash) first, then pass the saved path. Claude Code asks the person before it shows a file it would ask about for Read. Any format macOS sips reads works (PNG, JPEG, GIF, HEIC, TIFF, WebP and more); large pictures are scaled down.',
   'caption: optional; one line shown above the pictures. Leave it out unless it tells the person something the file names do not.',
-  'size: "small" for icons, thumbnails, or a quick look at several pictures; "medium" (the default) for most screenshots and charts; "large" when detail matters, such as a full-page screenshot or a dense chart. The person can change the size and hide the pictures from the row.',
+  'size: "small" for icons, thumbnails, or a quick look at several pictures; "medium" (the default) for most screenshots and charts; "large" when detail matters, such as a full-page screenshot or a dense chart. The person can hide each picture and change its size from the row.',
 ].join('\n\n')
 
 const INPUT_SCHEMA = {
@@ -393,9 +395,11 @@ const pixelsOf = ($: EngineInterface, pictures: ShownPicture[]) =>
 
 type ViewInput = Pick<RenderInput, 'requestId'>
 
-const viewOf = ($: EngineInterface, e: ViewInput) => read($, memberOf(IMAGE_VIEW, e))
+const viewsOf = ($: EngineInterface, e: ViewInput) => read($, memberOf(PICTURE_VIEWS, e))
 
-const changeView = ($: EngineInterface, e: ViewInput, change: (view: ImageView) => ImageView) => update($, memberOf(IMAGE_VIEW, e), change)
+/** Changes the view of the row's picture at `index`. */
+const changeView = ($: EngineInterface, e: ViewInput, index: number, change: (view: PictureView) => PictureView) =>
+  update($, memberOf(PICTURE_VIEWS, e), views => ({ ...views, [index]: change(views[index] ?? UNCHANGED_VIEW) }))
 
 /**
  * A `show_image` tool Claude calls to show local picture files to the
@@ -405,8 +409,8 @@ const changeView = ($: EngineInterface, e: ViewInput, change: (view: ImageView) 
  * turns each picture into a PNG that fits an Image's byte limit and keeps
  * it, with a record of the call, in the cache folder under the call's
  * tool_use_id; the row draws from those files, so it draws again after a
- * resume. Each picture has a label line under it; the row's buttons hide
- * the pictures and step through the sizes, kept per row in `imageView`.
+ * resume. Each picture has a label line under it, whose buttons hide the
+ * picture and step through its sizes, kept per row in `pictureViews`.
  *
  * `startShowImage` runs once the session has started.
  */
@@ -441,28 +445,7 @@ export function registerShowImage(on: On) {
 
     const { Button, Image, Link } = $.ui.resolve(e)
     const id = e.props.tool_use_id
-    const view = await viewOf($, e)
-    const visibility = (
-      <Button
-        key={`show-image:visibility:${id}`}
-        label={view.isHidden ? 'Show' : 'Hide'}
-        onPress={() => changeView($, e, current => ({ ...current, isHidden: !current.isHidden }))}
-      />
-    )
-
-    if (view.isHidden) {
-      const noun = shown.pictures.length === 1 ? 'picture' : 'pictures'
-      return (
-        <Box flexDirection="row" columnGap={1}>
-          <Text dimColor>
-            {shown.pictures.length} {noun} hidden
-          </Text>
-          {visibility}
-        </Box>
-      )
-    }
-
-    const size = isSize(view.size) ? view.size : shown.size
+    const views = await viewsOf($, e)
     const pixels = await pixelsOf($, shown.pictures)
     const isNumbered = shown.pictures.length > 1
     return (
@@ -481,10 +464,14 @@ export function registerShowImage(on: On) {
               </Box>
             )
           }
+          const view = views[index] ?? UNCHANGED_VIEW
+          const size = isSize(view.size) ? view.size : shown.size
           const { columns, rows } = imageCells(picture, size, e.viewport?.columns)
           return (
             <Box key={`show-image:picture:${index}`} flexDirection="column">
-              <Image key={`show-image:${id}:${index}`} source={{ png: base64 }} columns={columns} rows={rows} alt={picture.original} />
+              {view.isHidden ? null : (
+                <Image key={`show-image:${id}:${index}`} source={{ png: base64 }} columns={columns} rows={rows} alt={picture.original} />
+              )}
               <Box flexDirection="row">
                 {number}
                 <Link href={fileUrl(picture.original)}>
@@ -493,18 +480,22 @@ export function registerShowImage(on: On) {
                   </Text>
                   <Text color={LINK_COLOR}> ↗</Text>
                 </Link>
+                <Box flexDirection="row" columnGap={1} marginLeft={2}>
+                  <Button
+                    key={`show-image:hide:${id}:${index}`}
+                    label={view.isHidden ? 'Show' : 'Hide'}
+                    onPress={() => changeView($, e, index, current => ({ ...current, isHidden: !current.isHidden }))}
+                  />
+                  <Button
+                    key={`show-image:size:${id}:${index}`}
+                    label={size}
+                    onPress={() => changeView($, e, index, current => ({ ...current, size: nextSize(isSize(current.size) ? current.size : shown.size) }))}
+                  />
+                </Box>
               </Box>
             </Box>
           )
         })}
-        <Box flexDirection="row" columnGap={1}>
-          {visibility}
-          <Button
-            key={`show-image:size:${id}`}
-            label={`size: ${size}`}
-            onPress={() => changeView($, e, current => ({ ...current, size: nextSize(isSize(current.size) ? current.size : shown.size) }))}
-          />
-        </Box>
       </Box>
     )
   })
