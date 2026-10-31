@@ -9,19 +9,24 @@ const SHOW_IMAGE_PATTERN = /^mcp__sc-mods__show_image$/
 export const SIZES: readonly ImageSize[] = ['small', 'medium', 'large']
 const DEFAULT_SIZE: ImageSize = 'medium'
 
-/** The most cells a picture takes at each size; a cell is about twice as tall as it is wide. */
-export const SIZE_BOXES: Record<ImageSize, { columns: number; rows: number }> = {
-  small: { columns: 60, rows: 12 },
-  medium: { columns: 100, rows: 22 },
-  large: { columns: 120, rows: 36 },
+/**
+ * The room a picture takes at each size: a share of the row's width, and at
+ * most this many rows. A share keeps the three sizes apart at any width.
+ */
+export const SIZE_BOXES: Record<ImageSize, { share: number; rows: number }> = {
+  small: { share: 0.4, rows: 12 },
+  medium: { share: 0.7, rows: 24 },
+  large: { share: 1, rows: 40 },
 }
 
 // The row's indent plus a margin column on each side.
 const GUTTER = 4
 const MIN_COLUMNS = 10
-// About how many pixels of a picture one cell shows, so a small picture is not blown up.
-const PIXELS_PER_COLUMN = 8
-const PIXELS_PER_ROW = 16
+// The row's width where the surface does not say.
+const DEFAULT_ROOM = 100
+// The fewest pixels of a picture one cell shows, so a small icon is enlarged at most about fourfold.
+const PIXELS_PER_COLUMN = 2
+const PIXELS_PER_ROW = 4
 
 /** The most bytes an Image's `png` source may decode to. */
 export const MAX_PNG_BYTES = 2 * 1024 * 1024
@@ -93,17 +98,18 @@ export const nextSize = (size: ImageSize): ImageSize => SIZES[(SIZES.indexOf(siz
 
 /**
  * The cells a picture of `width` by `height` pixels takes at `size`, its
- * aspect ratio kept: as wide as the size, the row and the picture's own
- * pixels allow, narrower when that would be taller than they allow. Without
- * pixel sizes, the whole box.
+ * aspect ratio kept: the size's share of the row's width, narrower when that
+ * would be taller than the size's rows or would enlarge the picture past
+ * PIXELS_PER_COLUMN and PIXELS_PER_ROW. Without pixel sizes, the whole box.
  */
 export function imageCells(picture: Pick<ShownPicture, 'width' | 'height'>, size: ImageSize, viewportColumns?: number) {
   const box = SIZE_BOXES[size]
-  const room = viewportColumns === undefined ? box.columns : Math.max(MIN_COLUMNS, viewportColumns - GUTTER)
+  const room = viewportColumns === undefined ? DEFAULT_ROOM : Math.max(MIN_COLUMNS, viewportColumns - GUTTER)
+  const wide = Math.min(255, Math.max(1, Math.round(room * box.share)))
   const { width, height } = picture
-  if (!width || !height) return { columns: Math.min(box.columns, room), rows: box.rows }
+  if (!width || !height) return { columns: wide, rows: box.rows }
 
-  const columns = Math.min(box.columns, room, Math.ceil(width / PIXELS_PER_COLUMN))
+  const columns = Math.min(wide, Math.ceil(width / PIXELS_PER_COLUMN))
   const maxRows = Math.min(box.rows, Math.ceil(height / PIXELS_PER_ROW))
   // A cell is about twice as tall as it is wide.
   const rows = (columns * height) / width / 2

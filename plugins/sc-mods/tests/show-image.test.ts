@@ -310,8 +310,8 @@ test('the row draws each picture with its aspect kept and a numbered label under
 
   const images = await row.findAll({ type: 'Image' })
   expect(images.map(image => [image.props.columns, image.props.rows])).toEqual([
-    [100, 13],
-    [22, 22],
+    [81, 10],
+    [24, 24],
   ])
   expect(images.map(image => image.props.alt)).toEqual(['/work/wide.png', '/work/tall.png'])
   expect(images[0]?.props.source).toEqual({ png: pngHead(1600, 400) })
@@ -392,11 +392,11 @@ test('the size button cycles medium, large, small, medium', async ($, on) => {
     await row.press({ key: sizeKey })
     seen.push([(await row.find({ key: sizeKey }))?.props.label, ...(await firstCells())])
   }
-  // Large is 120 columns at most, held to the 120-column view less 4.
+  // Each size takes its share of the 120-column view less 4: all, 40% and 70%.
   expect(seen).toEqual([
     ['size: large', 116, 15],
-    ['size: small', 60, 8],
-    ['size: medium', 100, 13],
+    ['size: small', 46, 6],
+    ['size: medium', 81, 10],
   ])
 })
 
@@ -427,12 +427,15 @@ test('on the desktop the row lists the caption and paths as text', async ($, on)
 // --- Sizes, paths and PNG headers -----------------------------------------------------
 
 test('a picture keeps its aspect inside each size, the view and its own pixels', () => {
-  expect(imageCells({ width: 1600, height: 900 }, 'small')).toEqual({ columns: 43, rows: 12 })
+  expect(imageCells({ width: 1600, height: 900 }, 'small')).toEqual({ columns: 40, rows: 11 })
   expect(imageCells({ width: 1600, height: 400 }, 'large', 80)).toEqual({ columns: 76, rows: 10 })
-  expect(imageCells({ width: 1600, height: 400 }, 'medium', 8)).toEqual({ columns: 10, rows: 1 })
-  // A 32-pixel icon takes about 4 columns by 2 rows, not the whole box.
-  expect(imageCells({ width: 32, height: 32 }, 'large')).toEqual({ columns: 4, rows: 2 })
-  expect(imageCells({}, 'medium')).toEqual({ columns: 100, rows: 22 })
+  expect(imageCells({ width: 1600, height: 400 }, 'medium', 8)).toEqual({ columns: 7, rows: 1 })
+  // A 256-pixel picture still grows from size to size.
+  const sizes = (['small', 'medium', 'large'] as const).map(size => imageCells({ width: 256, height: 128 }, size, 104).columns)
+  expect(sizes).toEqual([40, 70, 100])
+  // A 32-pixel icon is enlarged at most about fourfold, not to the whole box.
+  expect(imageCells({ width: 32, height: 32 }, 'large')).toEqual({ columns: 16, rows: 8 })
+  expect(imageCells({}, 'medium')).toEqual({ columns: 70, rows: 24 })
   expect([nextSize('small'), nextSize('medium'), nextSize('large')]).toEqual(['medium', 'large', 'small'])
 })
 
