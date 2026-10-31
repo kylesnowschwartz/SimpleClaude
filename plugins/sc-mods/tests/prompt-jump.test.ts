@@ -66,6 +66,8 @@ function storedSession(on: On, fields: string | undefined): StoredFile {
   on('session.start', async (_$, e) => ({ cwd: e.cwd }))
   on('session.end', async (_$, e) => ({ sessionId: e.sessionId }))
   on('process.run', async (_$, e) => {
+    // The picture cache's pruning runs find too; only the transcript's search is a read.
+    if (e.argv[0] === 'find' && e.argv[1] !== `${HOME}/.claude/projects`) return { value: ok('') }
     if (e.argv[0] === 'find') {
       file.reads += 1
       return { value: ok(file.fields === undefined ? '' : `${TRANSCRIPT}\n`) }

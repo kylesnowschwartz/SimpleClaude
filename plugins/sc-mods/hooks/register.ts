@@ -3,6 +3,7 @@ import { findMermaidFences, replaceFences, type FenceReplacement, type MermaidFe
 import { drawDiagram, type Runner } from './merman'
 import { newTrail, registerPromptJump, startPromptJump } from './prompt-jump'
 import { registerReplyCopy } from './reply-copy'
+import { registerShowImage, startShowImage } from './show-image'
 
 // The reply's indent plus a margin column on each side.
 const GUTTER = 4
@@ -125,11 +126,13 @@ export const register: Register = (on, options) => {
   registerReplyCopy(on)
   const trail = newTrail()
   registerPromptJump(on, trail)
+  registerShowImage(on)
 
   // A plugin hooks session.start once, so it starts each slice here.
   on('session.start', async ($, e, next) => {
     const started = await next(e)
     startPromptJump($, trail)
+    await startShowImage($)
     return started
   })
 
