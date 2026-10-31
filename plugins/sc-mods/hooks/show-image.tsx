@@ -65,7 +65,7 @@ const TOOL_DESCRIPTION = [
   'Show pictures to the person inline in the conversation: screenshots, charts, diagrams, designs, generated images, or any other picture file.',
   "The pictures are drawn in this tool's result row in the person's terminal. The pixels are not returned to you, so this tool does not let you see a picture; read the file for that.",
   'paths: local files only, given as absolute paths. A relative path is read from the folder the session started in, and a file:// URL is read as its path. An http or https URL is refused: save the picture to a file with your own tools (for example Bash) first, then pass the saved path. Claude Code asks the person before it shows a file it would ask about for Read. Any format macOS sips reads works (PNG, JPEG, GIF, HEIC, TIFF, WebP and more); large pictures are scaled down.',
-  'caption: one line shown under the pictures.',
+  'caption: optional; one line shown above the pictures. Leave it out unless it tells the person something the file names do not.',
   'size: "small" for icons, thumbnails, or a quick look at several pictures; "medium" (the default) for most screenshots and charts; "large" when detail matters, such as a full-page screenshot or a dense chart. The person can change the size and hide the pictures from the row.',
 ].join('\n\n')
 
@@ -78,7 +78,7 @@ const INPUT_SCHEMA = {
       minItems: 1,
       description: 'Absolute paths of local picture files, shown in this order.',
     },
-    caption: { type: 'string', description: 'One line shown under the pictures.' },
+    caption: { type: 'string', description: 'Optional line shown above the pictures.' },
     size: { type: 'string', enum: SIZES, description: 'How large the pictures are drawn; medium when not given.' },
   },
   required: ['paths'],
@@ -461,6 +461,7 @@ export function registerShowImage(on: On) {
     const isNumbered = shown.pictures.length > 1
     return (
       <Box flexDirection="column">
+        {shown.caption ? <Text>{shown.caption}</Text> : null}
         {shown.pictures.map((picture, index) => {
           const base64 = pixels[index]
           const number = isNumbered ? <Text dimColor>{`${index + 1} `}</Text> : null
@@ -490,7 +491,6 @@ export function registerShowImage(on: On) {
             </Box>
           )
         })}
-        {shown.caption ? <Text>{shown.caption}</Text> : null}
         <Box flexDirection="row" columnGap={1}>
           {visibility}
           <Button

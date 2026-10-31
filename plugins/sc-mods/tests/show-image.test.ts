@@ -333,7 +333,17 @@ test('the row draws each picture with its aspect kept and a numbered label under
     ['2 ', true],
   ])
   expect(await row.find({ type: 'Text', text: 'before and after' })).toBeDefined()
+  // The caption heads the row, above the first picture.
+  expect((await row.findAll({ type: 'Text' }))[0]?.text).toBe('before and after')
   expect((await row.findAll({ type: 'Button' })).map(button => button.props.label)).toEqual(['Hide', 'size: medium'])
+})
+
+test('a call with no caption draws no caption line', async ($, on) => {
+  machine(on, { '/work/wide.png': WIDE })
+  await callShow($, { paths: ['wide.png'] })
+  const row = await mountRow($)
+
+  expect((await row.findAll({ type: 'Text' }))[0]?.text).toBe('wide.png')
 })
 
 test('a single picture has no number, and its link encodes the file name', async ($, on) => {

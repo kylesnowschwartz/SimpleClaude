@@ -57,7 +57,7 @@ Claude calls the `show_image` tool (`mcp__sc-mods__show_image`) to show you a pi
 | Argument | What it is |
 |---|---|
 | `paths` | Picture files on this machine, as absolute paths. Required. A relative path is read from the folder the session started in, and a `file://` URL is read as its path. |
-| `caption` | One line shown under the pictures. |
+| `caption` | Optional. One line shown above the pictures. |
 | `size` | `small`, `medium` (the default) or `large`. |
 
 The tool shows local files only and makes no network request. An `http://` or `https://` URL fails with a message that tells Claude to save the picture to a file with its own tools first, for example with `curl` in Bash, and then pass the saved path.
