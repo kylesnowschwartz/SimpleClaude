@@ -283,16 +283,11 @@ async function scrollRefusal($: EngineInterface, requestId: string): Promise<str
  * stored since. The arrows step from the prompt last jumped to, so a press
  * moves them on even where the window could not move; the person's own
  * scrolling does not move them.
+ *
+ * `trail` is the prompts it counts; `startPromptJump` with the same trail
+ * runs once the session has started.
  */
-export function registerPromptJump(on: On) {
-  const trail = newTrail()
-
-  on('session.start', async ($, e, next) => {
-    const started = await next(e)
-    void readStored($, trail)
-    return started
-  })
-
+export function registerPromptJump(on: On, trail: PromptTrail) {
   on('session.end', ($, e, next) => {
     if (e.reason === 'clear' || e.reason === 'resume') {
       startOver(trail)
@@ -330,4 +325,9 @@ export function registerPromptJump(on: On) {
       </Box>
     )
   })
+}
+
+/** Starts the read of the transcript file, once the session has started. */
+export function startPromptJump($: EngineInterface, trail: PromptTrail) {
+  void readStored($, trail)
 }

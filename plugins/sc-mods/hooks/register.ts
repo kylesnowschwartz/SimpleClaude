@@ -1,7 +1,7 @@
 import type { EngineInterface, Register } from 'claude-code'
 import { findMermaidFences, replaceFences, type FenceReplacement, type MermaidFence } from './fences'
 import { drawDiagram, type Runner } from './merman'
-import { registerPromptJump } from './prompt-jump'
+import { newTrail, registerPromptJump, startPromptJump } from './prompt-jump'
 import { registerReplyCopy } from './reply-copy'
 
 // The reply's indent plus a margin column on each side.
@@ -123,7 +123,15 @@ export const register: Register = (on, options) => {
   // Registered first so it sits outermost: it copies the reply's text as
   // Claude wrote it and puts its button under the diagrams drawn beneath it.
   registerReplyCopy(on)
-  registerPromptJump(on)
+  const trail = newTrail()
+  registerPromptJump(on, trail)
+
+  // A plugin hooks session.start once, so it starts each slice here.
+  on('session.start', async ($, e, next) => {
+    const started = await next(e)
+    startPromptJump($, trail)
+    return started
+  })
 
   const configuredPath = typeof options.MERMAN_PATH === 'string' ? options.MERMAN_PATH.trim() : ''
 
