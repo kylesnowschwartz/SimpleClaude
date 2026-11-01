@@ -71,7 +71,7 @@ const UNCHANGED_VIEW: PictureView = { isHidden: false, size: '' }
 const TOOL_DESCRIPTION = [
   'Show pictures to the person inline in the conversation: screenshots, charts, diagrams, designs, generated images, or any other picture file.',
   "The pictures are drawn in this tool's result row in the person's terminal. The pixels are not returned to you, so this tool does not let you see a picture; read the file for that.",
-  'paths: local files only, given as absolute paths. A relative path is read from the folder the session started in, and a file:// URL is read as its path. An http or https URL is refused: save the picture to a file with your own tools (for example Bash) first, then pass the saved path. Claude Code asks the person before it shows a file it would ask about for Read. Any format macOS sips reads works (PNG, JPEG, GIF, HEIC, TIFF, WebP and more); large pictures are scaled down.',
+  'paths: local files only, given as absolute paths. A relative path is read from the folder the session started in, and a file:// URL is read as its path. An http or https URL is refused: save the picture to a file with your own tools (for example Bash) first, then pass the saved path. A file shows only where you may Read it; where Claude Code would ask about that Read, it decides as it does for your own Read. Any format macOS sips reads works (PNG, JPEG, GIF, HEIC, TIFF, WebP and more); large pictures are scaled down.',
   'caption: optional; one line shown above the pictures. Leave it out unless it tells the person something the file names do not.',
   'size: "small" for icons, thumbnails, or a quick look at several pictures; "medium" (the default) for most screenshots and charts; "large" when detail matters, such as a full-page screenshot or a dense chart. The person can hide each picture and change its size from the row.',
 ].join('\n\n')
@@ -169,12 +169,19 @@ export const fileUrl = (path: string) => `file://${path.split('/').map(encodeURI
 
 // --- Permission -------------------------------------------------------------------
 
+/** The picture formats Claude Code's Read takes as images, by file extension. */
+const READ_IMAGE = /\.(png|jpe?g|gif|webp)$/i
+
 /**
  * Asks Claude Code's permission rules about reading each file, as they
- * would judge a Read of it, and the person about every file the rules ask
- * about, in one question. Returns, per file, undefined where it may be
- * read, else why not. Where nobody can be asked (a `-p` run), an ask is a
- * refusal.
+ * would judge a Read of it. A file the rules ask about in a format Read
+ * takes goes through a real Read call, one file at a time, so the
+ * permission mode settles the ask as it settles Claude's own Read: the
+ * dialog, the auto-mode classifier, or a headless host. The Read's content
+ * is not used. A file the rules ask about in another format (HEIC, TIFF)
+ * is put to the person, with any others like it, in one question; where
+ * nobody can be asked (a `-p` run), that ask is a refusal. Returns, per
+ * file, undefined where it may be read, else why not.
  */
 async function readPermissions($: EngineInterface, files: readonly string[]): Promise<Array<string | undefined>> {
   const verdicts = await Promise.all(
@@ -183,14 +190,38 @@ async function readPermissions($: EngineInterface, files: readonly string[]): Pr
     ),
   )
   const asked = files.filter((_file, index) => verdicts[index]?.decision === 'ask')
-  const answer = asked.length === 0 ? undefined : await askToShow($, asked)
+  const refusals = new Map<string, string | undefined>()
+  for (const file of asked.filter(file => READ_IMAGE.test(file))) refusals.set(file, await readRefusal($, file))
+  const toPerson = asked.filter(file => !READ_IMAGE.test(file))
+  const answer = toPerson.length === 0 ? undefined : await askToShow($, toPerson)
+  for (const file of toPerson) refusals.set(file, answer)
 
-  return verdicts.map(verdict => {
+  return verdicts.map((verdict, index) => {
     if (verdict.decision === 'allow') return undefined
-    if (verdict.decision === 'ask') return answer
+    if (verdict.decision === 'ask') return refusals.get(files[index] ?? '')
     return `Claude Code's permission rules do not allow reading it${verdict.reason ? ` (${verdict.reason})` : ''}`
   })
 }
+
+/**
+ * Reads `file` with Claude Code's Read tool, through its permission check
+ * and the mode's decider. Undefined when the Read ran, else why not: a
+ * refused permission and a failed Read both come back as an error result,
+ * whose first sentence is the reason.
+ */
+async function readRefusal($: EngineInterface, file: string): Promise<string | undefined> {
+  try {
+    const read = await $.tool.call({ tool: 'Read', file_path: file })
+    if (read.deny !== undefined) return `Claude Code did not allow reading it (${firstSentence(read.deny)})`
+    if (!read.isError) return undefined
+    return `Claude Code's Read did not read it (${firstSentence(read.text ?? String(read.result))})`
+  } catch (error) {
+    return messageOf(error)
+  }
+}
+
+/** The first sentence of a tool's error text, without a leading `Error: ` or the closing period. */
+const firstSentence = (text: string) => (text.replace(/^Error:\s*/, '').split(/(?<=\.)\s|\n/)[0] ?? text).trim().replace(/\.$/, '')
 
 /** Undefined when the person lets Claude show the files, else why not. */
 async function askToShow($: EngineInterface, files: readonly string[]): Promise<string | undefined> {
@@ -405,8 +436,10 @@ const changeView = ($: EngineInterface, e: ViewInput, index: number, change: (vi
  * A `show_image` tool Claude calls to show local picture files to the
  * person, drawn in the tool's own result row.
  *
- * The call asks Claude Code's permission rules about each file as a Read,
- * turns each picture into a PNG that fits an Image's byte limit and keeps
+ * The call shows a file only where Claude Code lets Claude Read it: the
+ * permission rules decide, and where they ask, a real Read call takes the
+ * ask to the permission mode (a format Read does not take is put to the
+ * person). It turns each picture into a PNG that fits an Image's byte limit and keeps
  * it, with a record of the call, in the cache folder under the call's
  * tool_use_id; the row draws from those files, so it draws again after a
  * resume. Each picture has a label line under it, whose buttons hide the

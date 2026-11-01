@@ -33,9 +33,13 @@ function scaled({ width, height }: Picture, side: number | undefined): { width: 
 
 type Decision = 'allow' | 'ask' | 'deny'
 
+type ReadCall = 'allow' | 'deny' | 'error'
+
 type MachineOptions = {
   /** What Claude Code's permission rules answer for a Read of each path; allow when not listed. */
   reads?: Record<string, Decision>
+  /** How a Read call of each path ends: allowed and run, refused at its permission request, or failed as a tool; allowed when not listed. */
+  readCalls?: Record<string, ReadCall>
   /** What the person answers the question; undefined for a session with nobody to ask. */
   answer?: string
   canFind?: boolean
@@ -46,13 +50,15 @@ type MachineOptions = {
  * Stands for the machine beneath the plugin: a disk of `files`, the
  * permission rules and the person, and the mkdir, sips, cp and find it
  * runs. Returns the disk, every command run, the tools registered, the
- * paths whose Read was judged and the questions asked, in order.
+ * paths whose Read was judged, the paths Read was called on (each call's
+ * start and end) and the questions asked, in order.
  */
-function machine(on: On, files: Record<string, DiskFile>, { reads = {}, answer, canFind = true, hasSips = true }: MachineOptions = {}) {
+function machine(on: On, files: Record<string, DiskFile>, { reads = {}, readCalls = {}, answer, canFind = true, hasSips = true }: MachineOptions = {}) {
   const disk = new Map(Object.entries(files))
   const commands: string[][] = []
   const registered: ToolSpec[] = []
   const judged: string[] = []
+  const readLog: string[] = []
   const byteReads: string[] = []
   const questions: string[] = []
   mock.env(on, { HOME })
@@ -62,6 +68,18 @@ function machine(on: On, files: Record<string, DiskFile>, { reads = {}, answer, 
     judged.push(`${e.tool}(${path})`)
     const decision = reads[path] ?? 'allow'
     return decision === 'deny' ? { decision, reason: 'Read(/secret/**)' } : { decision }
+  })
+  on('classic.PermissionRequest', async (_$, e) => {
+    const path = (e.tool_input as { file_path: string }).file_path
+    readLog.push(`ask ${path}`)
+    return readCalls[path] === 'deny' ? { decision: { behavior: 'deny', message: 'The user denied reading it.' } } : { decision: { behavior: 'allow' } }
+  })
+  on('tool.call', { tool: 'Read' }, async (_$, e) => {
+    readLog.push(`start ${e.file_path}`)
+    await Promise.resolve()
+    readLog.push(`end ${e.file_path}`)
+    if (readCalls[e.file_path] === 'error') return { result: 'This tool cannot read binary files.', isError: true } as never
+    return { result: { type: 'image' } } as never
   })
   on('tool.call', { tool: 'AskUserQuestion' }, async (_$, e) => {
     const [question] = e.questions
@@ -117,7 +135,7 @@ function machine(on: On, files: Record<string, DiskFile>, { reads = {}, answer, 
     if (command === 'find' && !canFind) return { deny: 'find: command not found' }
     return { value: ok('') }
   })
-  return { disk, commands, registered, judged, questions, byteReads }
+  return { disk, commands, registered, judged, readLog, questions, byteReads }
 }
 
 const callShow = ($: Engine, args: Record<string, unknown>, tool_use_id = CALL_ID) =>
@@ -212,33 +230,82 @@ test('each file is judged as a Read, and a file the rules deny is not read', asy
   expect(questions).toEqual([])
 })
 
-test('files the rules ask about are put to the person in one question', async ($, on) => {
-  const files = {
-    '/tmp/a.png': { size: 10_000, picture: { format: 'png', width: 100, height: 100 } },
-    '/tmp/b.png': { size: 10_000, picture: { format: 'png', width: 100, height: 100 } },
-  }
-  const { commands, questions } = machine(on, files, { reads: { '/tmp/a.png': 'ask', '/tmp/b.png': 'ask' }, answer: 'Yes' })
-  const answer = await callShow($, { paths: ['/tmp/a.png', '/tmp/b.png'] })
+const smallPng = { size: 10_000, picture: { format: 'png', width: 100, height: 100 } }
 
-  expect(questions).toEqual(['Let Claude show you a.png, b.png? Claude Code asks before reading these files.'])
-  expect(answer.result).toBe('Showed 2 pictures inline: a.png, b.png.')
-  expect(commands.filter(argv => argv[0] === 'cp')).toHaveLength(2)
+test('a file the rules allow is shown with no Read call and no question', async ($, on) => {
+  const { readLog, questions } = machine(on, { '/work/ok.png': smallPng })
+  const answer = await callShow($, { paths: ['ok.png'] })
+
+  expect(answer.result).toBe('Showed 1 picture inline: ok.png.')
+  expect(readLog).toEqual([])
+  expect(questions).toEqual([])
 })
 
-test('a file the person does not allow is not read', async ($, on) => {
-  const { commands } = machine(on, { '/tmp/a.png': { size: 10_000, picture: { format: 'png', width: 100, height: 100 } } }, { reads: { '/tmp/a.png': 'ask' }, answer: 'No' })
+test('a file the rules ask about goes through a Read call, and is shown when the Read runs', async ($, on) => {
+  const { commands, readLog, questions } = machine(on, { '/tmp/a.png': smallPng }, { reads: { '/tmp/a.png': 'ask' } })
   const answer = await callShow($, { paths: ['/tmp/a.png'] })
 
-  expect(answer.deny).toBe('Could not show a.png: the person did not allow reading it.')
+  expect(readLog).toEqual(['ask /tmp/a.png', 'start /tmp/a.png', 'end /tmp/a.png'])
+  expect(answer.result).toBe('Showed 1 picture inline: a.png.')
+  expect(commands).toContainEqual(['cp', '/tmp/a.png', `${CACHE}/${CALL_ID}-0.png`])
+  expect(questions).toEqual([])
+})
+
+test('a file whose Read call is refused is not shown, with the refusal', async ($, on) => {
+  const { commands, readLog, questions } = machine(on, { '/tmp/a.png': smallPng }, { reads: { '/tmp/a.png': 'ask' }, readCalls: { '/tmp/a.png': 'deny' } })
+  const answer = await callShow($, { paths: ['/tmp/a.png'] })
+
+  expect(answer.deny).toBe('Could not show a.png: Claude Code did not allow reading it (The user denied reading it).')
+  expect(readLog).toEqual(['ask /tmp/a.png'])
+  expect(commands.some(argv => argv.includes('/tmp/a.png'))).toBe(false)
+  expect(questions).toEqual([])
+})
+
+test('a file whose Read call fails as a tool is not shown, with the first sentence of the error', async ($, on) => {
+  const { commands } = machine(on, { '/tmp/a.png': smallPng }, { reads: { '/tmp/a.png': 'ask' }, readCalls: { '/tmp/a.png': 'error' } })
+  const answer = await callShow($, { paths: ['/tmp/a.png'] })
+
+  expect(answer.deny).toBe("Could not show a.png: Claude Code's Read did not read it (This tool cannot read binary files).")
   expect(commands.some(argv => argv.includes('/tmp/a.png'))).toBe(false)
 })
 
-test('where nobody can be asked, a file the rules ask about is refused', async ($, on) => {
-  const { commands } = machine(on, { '/tmp/a.png': { size: 10_000, picture: { format: 'png', width: 100, height: 100 } } }, { reads: { '/tmp/a.png': 'ask' } })
-  const answer = await callShow($, { paths: ['/tmp/a.png'] })
+test('files the rules ask about are read one at a time', async ($, on) => {
+  const { readLog } = machine(on, { '/tmp/a.png': smallPng, '/tmp/b.jpg': smallPng }, { reads: { '/tmp/a.png': 'ask', '/tmp/b.jpg': 'ask' } })
+  const answer = await callShow($, { paths: ['/tmp/a.png', '/tmp/b.jpg'] })
 
-  expect(answer.deny).toBe('Could not show a.png: Claude Code asks before reading it, and no one answered.')
-  expect(commands.some(argv => argv.includes('/tmp/a.png'))).toBe(false)
+  expect(readLog).toEqual(['ask /tmp/a.png', 'start /tmp/a.png', 'end /tmp/a.png', 'ask /tmp/b.jpg', 'start /tmp/b.jpg', 'end /tmp/b.jpg'])
+  expect(answer.result).toBe('Showed 2 pictures inline: a.png, b.jpg.')
+})
+
+const heic = { size: 10_000, picture: { format: 'heic', width: 100, height: 100 } }
+
+test('files the rules ask about in a format Read does not take are put to the person in one question, with no Read call', async ($, on) => {
+  const { readLog, questions } = machine(
+    on,
+    { '/tmp/a.heic': heic, '/tmp/b.tiff': heic, '/tmp/c.png': smallPng },
+    { reads: { '/tmp/a.heic': 'ask', '/tmp/b.tiff': 'ask', '/tmp/c.png': 'ask' }, answer: 'Yes' },
+  )
+  const answer = await callShow($, { paths: ['/tmp/a.heic', '/tmp/b.tiff', '/tmp/c.png'] })
+
+  expect(questions).toEqual(['Let Claude show you a.heic, b.tiff? Claude Code asks before reading these files.'])
+  expect(readLog).toEqual(['ask /tmp/c.png', 'start /tmp/c.png', 'end /tmp/c.png'])
+  expect(answer.result).toBe('Showed 3 pictures inline: a.heic, b.tiff, c.png.')
+})
+
+test('a file in a format Read does not take is not read when the person does not allow it', async ($, on) => {
+  const { commands } = machine(on, { '/tmp/a.heic': heic }, { reads: { '/tmp/a.heic': 'ask' }, answer: 'No' })
+  const answer = await callShow($, { paths: ['/tmp/a.heic'] })
+
+  expect(answer.deny).toBe('Could not show a.heic: the person did not allow reading it.')
+  expect(commands.some(argv => argv.includes('/tmp/a.heic'))).toBe(false)
+})
+
+test('where nobody can be asked, a file in a format Read does not take is refused', async ($, on) => {
+  const { commands } = machine(on, { '/tmp/a.heic': heic }, { reads: { '/tmp/a.heic': 'ask' } })
+  const answer = await callShow($, { paths: ['/tmp/a.heic'] })
+
+  expect(answer.deny).toBe('Could not show a.heic: Claude Code asks before reading it, and no one answered.')
+  expect(commands.some(argv => argv.includes('/tmp/a.heic'))).toBe(false)
 })
 
 test('a missing file and a file that is no picture fail alone, each with its reason', async ($, on) => {
