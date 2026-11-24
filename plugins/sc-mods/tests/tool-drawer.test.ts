@@ -18,6 +18,7 @@ import {
   openedOnFailure,
   toggleExpanded,
   ARROWS_ROWS,
+  FRAME_ROWS,
   drawerRoom,
   otherRowsOf,
   scopeText,
@@ -489,6 +490,7 @@ test('switched turns the drawer on and off and reports its state', () => {
 
 const layoutRows = (layout: ReturnType<typeof drawerLayout>) =>
   1 +
+  (layout.cards.length > 0 ? FRAME_ROWS : 0) +
   (layout.earlierCalls > 0 ? 1 : 0) +
   layout.cards.reduce((rows, { call: one, bodyLines }) => {
     if (bodyLines === undefined) return rows + 1
@@ -502,29 +504,30 @@ test('a 30-line body in a 12-row band leaves the rows beneath the drawer clear',
   const room = drawerRoom(12, 1)
   const layout = drawerLayout([longCall('a')], ['a'], room)
   expect(layoutRows(layout)).toBeLessThanOrEqual(room)
-  // Bar, card, command row, note, then the last lines.
-  expect(layout.cards[0]?.bodyLines).toBe(room - 4)
-  expect(cardBody(longCall('a'), 80, room - 4).earlierNote).toBe(`┃ … ${30 - (room - 4)} earlier lines`)
+  // Frame, bar, card, command row, note, then the last lines.
+  expect(layout.cards[0]?.bodyLines).toBe(room - 6)
+  expect(cardBody(longCall('a'), 80, room - 6).earlierNote).toBe(`┃ … ${30 - (room - 6)} earlier lines`)
 })
 
 test('many cards in a small band show the newest under a note of the earlier ones', () => {
   const calls = Array.from({ length: 10 }, (_, n) => call({ id: `c${n}` }))
-  const layout = drawerLayout(calls, [], 5)
+  const layout = drawerLayout(calls, [], 7)
   expect(layout.cards.map(one => one.call.id)).toEqual(['c7', 'c8', 'c9'])
   expect(layout.earlierCalls).toBe(7)
-  expect(layoutRows(layout)).toBe(5)
+  expect(layoutRows(layout)).toBe(7)
   expect(earlierCallsText(7, 80)).toBe('… 7 earlier calls')
 })
 
 test('the newest expanded card gets the room first', () => {
-  const layout = drawerLayout([longCall('a'), longCall('b')], ['a', 'b'], 10)
+  const layout = drawerLayout([longCall('a'), longCall('b')], ['a', 'b'], 12)
   expect(layout.cards.map(one => one.bodyLines)).toEqual([undefined, 5])
-  expect(layoutRows(layout)).toBeLessThanOrEqual(10)
+  expect(layoutRows(layout)).toBeLessThanOrEqual(12)
 })
 
 test('a roomy band shows a body’s 30 lines; a tiny one shows the bar alone', () => {
   expect(drawerLayout([longCall('a', 50)], ['a'], 60).cards[0]?.bodyLines).toBe(SHOWN_LINES)
-  expect(drawerLayout([longCall('a')], ['a'], 1)).toEqual({ cards: [], earlierCalls: 0 })
+  expect(drawerLayout([longCall('a')], ['a'], 3)).toEqual({ cards: [], earlierCalls: 0 })
+  expect(drawerLayout([longCall('a')], [], 4).cards).toHaveLength(1)
 })
 
 test('in a 12-row band the arrows stay under an expanded 30-line card', async ($, on) => {
@@ -538,7 +541,7 @@ test('in a 12-row band the arrows stay under an expanded 30-line card', async ($
   const drawerRows = (await band.findAll({}))
     .filter(found => found.type === 'Text' || found.type === 'Button')
     .filter(found => found.key !== 'tool-drawer:scope' && !String(found.key ?? '').startsWith('prompt-jump') && found.text !== 'Turn 1/1' && found.text !== 'engine' && !MARKS.includes(found.text))
-  expect(drawerRows.length).toBeLessThanOrEqual(drawerRoom(12, 0))
+  expect(drawerRows.length + FRAME_ROWS).toBeLessThanOrEqual(drawerRoom(12, 0))
   expect(await band.find({ type: 'Text', text: '┃ line 29' })).toBeDefined()
   expect(await band.find({ type: 'Text', text: '┃ line 0' })).toBeUndefined()
 })
@@ -592,7 +595,7 @@ test('with another plugin’s 3-row row in the band, the drawer and the arrows f
   const drawerRows = (await band.findAll({}))
     .filter(found => found.type === 'Text' || found.type === 'Button')
     .filter(found => found.key !== 'tool-drawer:scope' && !String(found.key ?? '').startsWith('prompt-jump') && found.text !== 'Turn 1/1' && found.text !== 'engine' && !MARKS.includes(found.text))
-  expect(drawerRows.length + ARROWS_ROWS + 3).toBeLessThanOrEqual(12)
+  expect(drawerRows.length + FRAME_ROWS + ARROWS_ROWS + 3).toBeLessThanOrEqual(12)
   expect(await band.find({ type: 'Text', text: '┃ line 29' })).toBeDefined()
 })
 
@@ -622,4 +625,19 @@ test('the bar shows the running command after the dot', async ($, on) => {
   expect(await band.find({ type: 'Text', text: 'npm test 12s' })).toBeDefined()
   await finishCall(world, running, 'c1')
   expect(await band.find({ type: 'Text', text: 'npm test 12s' })).toBeUndefined()
+})
+
+// --- The frame --------------------------------------------------------------
+
+test('the open drawer is framed, in the running colour while a call runs and dim after', async ($, on) => {
+  const world = session(on)
+  await prompt($, 'p1')
+  const running = await startCall($, world, 'c1')
+  const band = await mountBand($)
+  const frameOf = async () => JSON.stringify(await band.drawn()).match(/"borderStyle":"round"[^}]*/)?.[0]
+  expect(await frameOf()).toContain('"borderColor":"warning"')
+  await finishCall(world, running, 'c1')
+  expect(await frameOf()).toContain('"borderDimColor":true')
+  await band.press({ key: 'tool-drawer:toggle' })
+  expect(await frameOf()).toBeUndefined()
 })

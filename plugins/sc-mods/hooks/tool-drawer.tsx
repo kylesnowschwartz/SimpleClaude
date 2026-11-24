@@ -22,6 +22,8 @@ export const SHOWN_LINES = 30
 const TICK_MS = 1000
 /** The theme colour of a running call's dot. */
 const RUNNING_COLOR = 'warning'
+/** The cells between the drawer's border and its text on each side. */
+const FRAME_PADDING = 1
 const ELLIPSIS = '…'
 
 // Change a tag when its value's fields change: it declines what an earlier version stored.
@@ -203,14 +205,18 @@ function bodyLinesIn(call: HeldCall, rows: number): number | undefined {
   return undefined
 }
 
+/** The rows the open drawer's rounded border takes: its top and bottom lines. */
+export const FRAME_ROWS = 2
+
 /**
- * Fits the open drawer into `rows` rows, the bar's included. The room goes to
- * the bar, then a row per card (the newest when not all fit, under a dim
- * `… N earlier calls` row), then the expanded cards' bodies, the newest first.
- * Under two rows the bar shows alone.
+ * Fits the open drawer into `rows` rows, its frame and bar included. The room
+ * goes to the frame and the bar, then a row per card (the newest when not all
+ * fit, under a dim `… N earlier calls` row), then the expanded cards' bodies,
+ * the newest first. Without room for the frame, the bar and one card, the bar
+ * shows alone, unframed.
  */
 export function drawerLayout(calls: readonly HeldCall[], expanded: readonly string[], rows: number): DrawerLayout {
-  const cardRows = rows - 1
+  const cardRows = rows - FRAME_ROWS - 1
   if (cardRows < 1 || calls.length === 0) return { cards: [], earlierCalls: 0 }
 
   const fitsAll = calls.length <= cardRows
@@ -425,61 +431,68 @@ export function registerToolDrawer(on: On, trail: PromptTrail) {
 
     const now = await read($, DRAWER_CLOCK)
     const beneath = await next(e)
-    const width = e.props.bodyColumns
     const isRunning = shown.some(call => call.status === 'running')
     const scope = scopeText(view.scope, turn)
     const layout = view.isOpen ? drawerLayout(shown, view.expanded, drawerRoom(e.props.maxRows, await read($, OTHER_BAND_ROWS))) : { cards: [], earlierCalls: 0 }
+    const isFramed = layout.cards.length > 0
+    // Inside the frame, the border and its padding take two cells a side.
+    const width = isFramed ? e.props.bodyColumns - 2 - 2 * FRAME_PADDING : e.props.bodyColumns
     const bar = barTexts(`${view.isOpen ? '▾' : '▸'} ${summaryText(shown)}`, runningText(shown, now), scope, width)
     const { Box, Button, Text } = $.ui.resolve(e)
     return (
       <Box flexDirection="column">
         {beneath}
-        <Box flexDirection="row" columnGap={1}>
-          <Button
-            key="tool-drawer:toggle"
-            plain
-            label={bar.summary}
-            onPress={() => press($, current => ({ ...current, isOpen: !current.isOpen, isSetByHand: true }))}
-          />
-          {isRunning ? <Text color={RUNNING_COLOR}>●</Text> : null}
-          {bar.running === undefined ? null : <Text>{bar.running}</Text>}
-          <Button
-            key="tool-drawer:scope"
-            dimColor
-            label={scope}
-            onPress={() => press($, current => ({ ...current, scope: current.scope === 'all' ? 'turn' : 'all' }))}
-          />
+        <Box
+          flexDirection="column"
+          {...(isFramed ? { borderStyle: 'round', paddingX: FRAME_PADDING, ...(isRunning ? { borderColor: RUNNING_COLOR } : { borderDimColor: true }) } : {})}
+        >
+          <Box flexDirection="row" columnGap={1}>
+            <Button
+              key="tool-drawer:toggle"
+              plain
+              label={bar.summary}
+              onPress={() => press($, current => ({ ...current, isOpen: !current.isOpen, isSetByHand: true }))}
+            />
+            {isRunning ? <Text color={RUNNING_COLOR}>●</Text> : null}
+            {bar.running === undefined ? null : <Text>{bar.running}</Text>}
+            <Button
+              key="tool-drawer:scope"
+              dimColor
+              label={scope}
+              onPress={() => press($, current => ({ ...current, scope: current.scope === 'all' ? 'turn' : 'all' }))}
+            />
+          </Box>
+          {layout.earlierCalls > 0 ? <Text dimColor>{earlierCallsText(layout.earlierCalls, width)}</Text> : null}
+          {layout.cards.map(({ call, bodyLines }) => {
+            const isExpanded = view.expanded.includes(call.id)
+            const body = bodyLines === undefined ? undefined : cardBody(call, width, bodyLines)
+            const label = cardText(call, isExpanded, now, width)
+            return (
+              <Box key={`tool-drawer:call:${call.id}`} flexDirection="column">
+                <Button
+                  key={`tool-drawer:card:${call.id}`}
+                  plain
+                  dimColor={call.status === 'done'}
+                  label={label}
+                  onPress={() => press($, current => toggleExpanded(current, call.id))}
+                >
+                  {label.slice(0, 2)}
+                  <Text {...markStyle(call.status)}>{label.slice(2, 3)}</Text>
+                  {label.slice(3)}
+                </Button>
+                {body === undefined ? null : (
+                  <Box flexDirection="column">
+                    <Text>{body.command}</Text>
+                    {body.earlierNote === undefined ? null : <Text dimColor>{body.earlierNote}</Text>}
+                    {body.lines.map(line => (
+                      <Text>{line}</Text>
+                    ))}
+                  </Box>
+                )}
+              </Box>
+            )
+          })}
         </Box>
-        {layout.earlierCalls > 0 ? <Text dimColor>{earlierCallsText(layout.earlierCalls, width)}</Text> : null}
-        {layout.cards.map(({ call, bodyLines }) => {
-          const isExpanded = view.expanded.includes(call.id)
-          const body = bodyLines === undefined ? undefined : cardBody(call, width, bodyLines)
-          const label = cardText(call, isExpanded, now, width)
-          return (
-            <Box key={`tool-drawer:call:${call.id}`} flexDirection="column">
-              <Button
-                key={`tool-drawer:card:${call.id}`}
-                plain
-                dimColor={call.status === 'done'}
-                label={label}
-                onPress={() => press($, current => toggleExpanded(current, call.id))}
-              >
-                {label.slice(0, 2)}
-                <Text {...markStyle(call.status)}>{label.slice(2, 3)}</Text>
-                {label.slice(3)}
-              </Button>
-              {body === undefined ? null : (
-                <Box flexDirection="column">
-                  <Text>{body.command}</Text>
-                  {body.earlierNote === undefined ? null : <Text dimColor>{body.earlierNote}</Text>}
-                  {body.lines.map(line => (
-                    <Text>{line}</Text>
-                  ))}
-                </Box>
-              )}
-            </Box>
-          )
-        })}
       </Box>
     )
   })
