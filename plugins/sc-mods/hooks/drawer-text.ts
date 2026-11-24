@@ -63,18 +63,23 @@ export function cells(text: string): number {
   return pieces(text).reduce((sum, piece) => sum + piece.cells, 0)
 }
 
+/** The text's start that fits in `width` cells, with no mark of the cut. */
+export function headOf(text: string, width: number): string {
+  let kept = ''
+  let used = 0
+  for (const piece of pieces(text)) {
+    if (used + piece.cells > width) break
+    kept += piece.text
+    used += piece.cells
+  }
+  return kept
+}
+
 /** The text cut to `width` cells, its last cell `…` when cut. */
 export function fit(text: string, width: number): string {
   if (width <= 0) return ''
   if (cells(text) <= width) return text
-  let kept = ''
-  let used = 0
-  for (const piece of pieces(text)) {
-    if (used + piece.cells > width - 1) break
-    kept += piece.text
-    used += piece.cells
-  }
-  return kept + ELLIPSIS
+  return headOf(text, width - 1) + ELLIPSIS
 }
 
 /** Tabs out to the next stop of eight cells. */

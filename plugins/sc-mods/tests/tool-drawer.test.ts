@@ -25,7 +25,9 @@ import {
   scopeText,
   backgroundNoteText,
   restoredCalls,
-  commandSegments,
+  commandRow,
+  cardParts,
+  TOOL_ICON,
   copyText,
   runningText,
   barTexts,
@@ -194,12 +196,13 @@ test('a call is kept running, then done with its output and duration', async ($,
   await finishCall(world, running, 'c1', { stdout: 'a\nb\n', stderr: 'warn\n' })
   expect((await band.find({ key: 'tool-drawer:toggle' }))?.props.label).toBe('▾ Tool Usage (1 done · bash)')
   expect(await band.find({ type: 'Text', text: '●' })).toBeUndefined()
-  expect((await band.find({ key: 'tool-drawer:card:c1' }))?.props.label).toBe('▸ ✓ bash 0.4s  ls')
+  expect((await band.find({ key: 'tool-drawer:card:c1' }))?.props.label).toBe('▸ ✓ 󰯠 0.4s  ls')
 
   await band.press({ key: 'tool-drawer:card:c1' })
-  const texts = (await band.findAll({ type: 'Text' })).map(found => found.text)
-  expect(texts.filter(text => text.startsWith('┃'))).toEqual(['┃ ', '┃ a', '┃ b', '┃ warn'])
-  expect(await band.find({ type: 'Text', text: '$ ls' })).toMatchObject({ props: { color: 'suggestion' } })
+  const rows = (await band.findAll({ type: 'Button' })).map(found => String(found.props.label)).filter(text => text.startsWith('┃'))
+  expect(rows).toEqual(['┃ $ ls', '┃ a', '┃ b', '┃ warn'])
+  expect(await band.find({ type: 'Text', text: '$ ' })).toMatchObject({ props: { color: 'suggestion' } })
+  expect(await band.find({ type: 'Text', text: 'ls' })).toMatchObject({ props: { color: 'suggestion' } })
 })
 
 test('a failed call opens its own card; a refused one is declined', async ($, on) => {
@@ -211,13 +214,13 @@ test('a failed call opens its own card; a refused one is declined', async ($, on
   await (await startCall($, world, 'c2')).running
   const band = await mountBand($)
   expect((await band.find({ key: 'tool-drawer:toggle' }))?.props.label).toBe('▾ Tool Usage (1 failed · 1 declined · bash)')
-  expect(String((await band.find({ key: 'tool-drawer:card:c1' }))?.props.label)).toMatch(/^▾ ✗ bash/)
-  expect(await band.find({ type: 'Text', text: '┃ boom' })).toBeDefined()
+  expect(String((await band.find({ key: 'tool-drawer:card:c1' }))?.props.label)).toMatch(/^▾ ✗ 󰯠/u)
+  expect(await band.find({ type: 'Button', label: '┃ boom' })).toBeDefined()
   expect(await band.find({ type: 'Text', text: '✗' })).toMatchObject({ props: { color: 'error' } })
-  expect(String((await band.find({ key: 'tool-drawer:card:c2' }))?.props.label)).toMatch(/^▸ ⊘ bash/)
+  expect(String((await band.find({ key: 'tool-drawer:card:c2' }))?.props.label)).toMatch(/^▸ ⊘ 󰯠/u)
   expect(await band.find({ type: 'Text', text: '⊘' })).toMatchObject({ props: { dimColor: true } })
   await band.press({ key: 'tool-drawer:card:c2' })
-  expect(await band.find({ type: 'Text', text: /┃ .*declined/ })).toBeDefined()
+  expect(await band.find({ type: 'Text', text: / .*declined/ })).toBeDefined()
 })
 
 test('a failed card the person closed stays closed', async ($, on) => {
@@ -233,7 +236,7 @@ test('a call cut short by an abort, or stopped with Esc, is interrupted', async 
   const stopped = await startCall($, world, 'c1')
   await finishCall(world, stopped, 'c1', { error: '[Request interrupted by user for tool use]' })
   const band = await mountBand($)
-  expect(String((await band.find({ key: 'tool-drawer:card:c1' }))?.props.label)).toMatch(/^▸ ■ bash/)
+  expect(String((await band.find({ key: 'tool-drawer:card:c1' }))?.props.label)).toMatch(/^▸ ■ 󰯠/u)
   expect((await band.find({ key: 'tool-drawer:toggle' }))?.props.label).toBe('▾ Tool Usage (1 interrupted · bash)')
 })
 
@@ -251,7 +254,7 @@ test('a row an abort ended marks its call interrupted', async ($, on) => {
   })
   await world.clock.advance(0)
   await row.unmount()
-  expect(String((await (await mountBand($)).find({ key: 'tool-drawer:card:c1' }))?.props.label)).toMatch(/^▾ ■ bash/)
+  expect(String((await (await mountBand($)).find({ key: 'tool-drawer:card:c1' }))?.props.label)).toMatch(/^▾ ■ 󰯠/u)
 })
 
 test('a running card counts its seconds up while the call runs', async ($, on) => {
@@ -260,7 +263,7 @@ test('a running card counts its seconds up while the call runs', async ($, on) =
   const running = await startCall($, world, 'c1', 'sleep 5')
   const band = await mountBand($)
   await world.clock.advance(3000)
-  expect((await band.find({ key: 'tool-drawer:card:c1' }))?.props.label).toBe('▸ … bash 3s  sleep 5')
+  expect((await band.find({ key: 'tool-drawer:card:c1' }))?.props.label).toBe('▸ … 󰯠 3s  sleep 5')
   await finishCall(world, running, 'c1')
 })
 
@@ -364,9 +367,9 @@ test('a card opens and closes on a press', async ($, on) => {
   const band = await mountBand($)
   await band.press({ key: 'tool-drawer:card:c1' })
   expect((await band.find({ key: 'tool-drawer:card:c1' }))?.props.label).toMatch(/^▾/)
-  expect(await band.find({ type: 'Text', text: '$ ls' })).toBeDefined()
+  expect(await band.find({ key: 'tool-drawer:body:c1:command' })).toBeDefined()
   await band.press({ key: 'tool-drawer:card:c1' })
-  expect(await band.find({ type: 'Text', text: '$ ls' })).toBeUndefined()
+  expect(await band.find({ key: 'tool-drawer:body:c1:command' })).toBeUndefined()
 })
 
 test('the drawer opens on a new turn’s first call until the person opens or closes it by hand', async ($, on) => {
@@ -491,8 +494,9 @@ test('durationText and cardText', () => {
   expect(durationText(12_300)).toBe('12s')
   expect(durationText(65_000)).toBe('1m05s')
   const done = call({ status: 'done', durationMs: 400, command: 'git status\nmore' })
-  expect(cardText(done, false, 0, 80)).toBe('▸ ✓ bash 0.4s  git status')
-  expect(cardText(done, true, 0, 12)).toBe('▾ ✓ bash 0.…')
+  expect(cardText(done, false, 0, 80)).toBe('▸ ✓ 󰯠 0.4s  git status')
+  expect(cardText(done, true, 0, 8)).toBe('▾ ✓ 󰯠 0…')
+  expect(cardText(done, false, 0, 14)).toBe('▸ ✓ 󰯠 0.4s  g…')
 })
 
 test('cardBody shows the last lines with a note of the earlier ones', () => {
@@ -573,8 +577,8 @@ test('in a 12-row band the arrows stay under an expanded 30-line card', async ($
   const frame = frameIn(await band.drawn())
   expect(rowsOf(frame)).toBeGreaterThan(FRAME_ROWS)
   expect(rowsOf(frame)).toBeLessThanOrEqual(drawerRoom(12, 0))
-  expect(await band.find({ type: 'Text', text: '┃ line 29' })).toBeDefined()
-  expect(await band.find({ type: 'Text', text: '┃ line 0' })).toBeUndefined()
+  expect(await band.find({ type: 'Text', text: ' line 29' })).toBeDefined()
+  expect(await band.find({ type: 'Text', text: ' line 0' })).toBeUndefined()
 })
 
 // --- Room left by other plugins' band rows --------------------------------
@@ -626,7 +630,7 @@ test('with another plugin’s 3-row row in the band, the drawer and the arrows f
   const frame = frameIn(await band.drawn())
   expect(rowsOf(frame)).toBeGreaterThan(FRAME_ROWS)
   expect(rowsOf(frame) + ARROWS_ROWS + 3).toBeLessThanOrEqual(12)
-  expect(await band.find({ type: 'Text', text: '┃ line 29' })).toBeDefined()
+  expect(await band.find({ type: 'Text', text: ' line 29' })).toBeDefined()
 })
 
 // --- The running command on the bar ---------------------------------------
@@ -674,16 +678,44 @@ test('the open drawer is framed, in the running colour while a call runs and dim
 
 // --- Colour and copy --------------------------------------------------------
 
-test('commandSegments splits a command row for its accent colour', () => {
-  expect(commandSegments('┃ $ git status --short')).toEqual({ gutter: '┃ ', program: '$ git', rest: ' status --short' })
-  expect(commandSegments('┃ $ ')).toEqual({ gutter: '┃ ', program: '$ ', rest: '' })
+test('commandRow colours the whole command on one line, cut with the bar and prompt', () => {
+  const row = commandRow(call({ command: 'git status --short\n| wc -l' }), 80)
+  expect(row.bar + row.prompt).toBe('┃ $ ')
+  expect(row.command.map(token => token.text).join('')).toBe('git status --short | wc -l')
+  expect(row.command.find(token => token.text === '--short')?.role).toBe('flag')
+  expect(row.command.find(token => token.text === 'wc')?.role).toBe('command')
+  const cut = commandRow(call({ command: 'git status --short' }), 10)
+  expect(cut.command.map(token => token.text).join('')).toBe('git s…')
+})
+
+test('a card shows the shell icon in place of the tool name, one cell wide, its command coloured', () => {
+  expect(TOOL_ICON.codePointAt(0)).toBe(0xf0be0)
+  const parts = cardParts(call({ status: 'done', durationMs: 0, command: 'pwd && ls' }), false, 0, 40)
+  expect(parts.head).toBe(` ${TOOL_ICON} 0.0s  `)
+  expect(parts.command.map(token => [token.text, token.role])).toEqual([['pwd', 'command'], [' ', 'plain'], ['&&', 'operator'], [' ', 'plain'], ['ls', 'command']])
+  expect(cardText(call({ status: 'done', durationMs: 0, command: 'pwd && ls' }), false, 0, 40)).toBe(`▸ ✓ ${TOOL_ICON} 0.0s  pwd && ls`)
+})
+
+test('a click on an open card\'s body collapses it, the copy button still copies', async ($, on) => {
+  const world = session(on)
+  await prompt($, 'p1')
+  await finishCall(world, await startCall($, world, 'c1', 'ls'), 'c1', { stdout: 'a\nb\n' })
+  const band = await mountBand($)
+  await band.press({ key: 'tool-drawer:card:c1' })
+  expect(await band.find({ key: 'tool-drawer:body:c1:line:1' })).toBeDefined()
+  await band.press({ key: 'tool-drawer:body:c1:line:1' })
+  expect(await band.find({ key: 'tool-drawer:body:c1:line:1' })).toBeUndefined()
+  expect(await band.find({ key: 'tool-drawer:copy:c1' })).toBeUndefined()
+  await band.press({ key: 'tool-drawer:card:c1' })
+  await band.press({ key: 'tool-drawer:body:c1:command' })
+  expect(await band.find({ key: 'tool-drawer:body:c1:command' })).toBeUndefined()
 })
 
 test('a failed card draws its error text in the error colour', async ($, on) => {
   const world = session(on)
   await prompt($, 'p1')
   await finishCall(world, await startCall($, world, 'c1'), 'c1', { error: 'boom' })
-  expect(await (await mountBand($)).find({ type: 'Text', text: '┃ boom' })).toMatchObject({ props: { color: 'error' } })
+  expect(await (await mountBand($)).find({ type: 'Text', text: ' boom' })).toMatchObject({ props: { color: 'error' } })
 })
 
 test('an open card’s copy button copies the command and its output', async ($, on) => {
@@ -755,7 +787,7 @@ test('restoredCalls takes the finished shell commands under their prompts', () =
   ])
   expect(calls[0]?.output).toEqual(['a'])
   expect(restoredCalls(PAST, new Set(['p1', 'p2']), new Set(['old1'])).map(one => one.id)).toEqual(['old2'])
-  expect(cardText(calls[0] as HeldCall, false, 0, 80)).toBe('▸ ✓ bash  ls')
+  expect(cardText(calls[0] as HeldCall, false, 0, 80)).toBe('▸ ✓ 󰯠  ls')
 })
 
 test('at session start the past shell commands join the drawer and their rows leave', async ($, on) => {
@@ -834,8 +866,8 @@ test('a command that ran and failed is failed however quickly it ended, and open
   await finishCall(world, await startCall($, world, 'c1', 'ls /nonexistent'), 'c1', { error: 'Exit code 1\nls: /nonexistent: No such file or directory' })
   const band = await mountBand($)
   expect((await band.find({ key: 'tool-drawer:toggle' }))?.props.label).toBe('▾ Tool Usage (1 failed · bash)')
-  expect(String((await band.find({ key: 'tool-drawer:card:c1' }))?.props.label)).toMatch(/^▾ ✗ bash/)
-  expect(await band.find({ type: 'Text', text: '┃ ls: /nonexistent: No such file or directory' })).toMatchObject({ props: { color: 'error' } })
+  expect(String((await band.find({ key: 'tool-drawer:card:c1' }))?.props.label)).toMatch(/^▾ ✗ 󰯠/u)
+  expect(await band.find({ type: 'Text', text: ' ls: /nonexistent: No such file or directory' })).toMatchObject({ props: { color: 'error' } })
 })
 
 test('a command declined at the dialog never ran and is declined', async ($, on) => {
@@ -844,7 +876,7 @@ test('a command declined at the dialog never ran and is declined', async ($, on)
   world.declines.add('c1')
   await (await startCall($, world, 'c1', 'rm -rf x')).running
   const band = await mountBand($)
-  expect(String((await band.find({ key: 'tool-drawer:card:c1' }))?.props.label)).toMatch(/^▸ ⊘ bash/)
+  expect(String((await band.find({ key: 'tool-drawer:card:c1' }))?.props.label)).toMatch(/^▸ ⊘ 󰯠/u)
 })
 
 
@@ -865,7 +897,7 @@ test('a call that fails after its conversation was cleared leaves the new one al
   // The same id in the new conversation starts with its card closed.
   await finishCall(world, await startCall($, world, 'c1', 'ls'), 'c1')
   const band = await mountBand($)
-  expect(String((await band.find({ key: 'tool-drawer:card:c1' }))?.props.label)).toMatch(/^▸ ✓ bash/)
+  expect(String((await band.find({ key: 'tool-drawer:card:c1' }))?.props.label)).toMatch(/^▸ ✓ 󰯠/u)
 })
 
 // --- No room for cards -----------------------------------------------------
@@ -904,11 +936,11 @@ test('a command moved to the background shows ↗, counts apart and says where i
   expect((await band.find({ key: 'tool-drawer:toggle' }))?.props.label).toBe('▾ Tool Usage (1 in background · bash)')
   expect(await band.find({ type: 'Text', text: '●' })).toBeUndefined()
   // It does not open by itself and claims no finished time.
-  expect((await band.find({ key: 'tool-drawer:card:c1' }))?.props.label).toBe('▸ ↗ bash  npm run dev')
+  expect((await band.find({ key: 'tool-drawer:card:c1' }))?.props.label).toBe('▸ ↗ 󰯠  npm run dev')
   expect(await band.find({ type: 'Text', text: '↗' })).toMatchObject({ props: { dimColor: true } })
   await band.press({ key: 'tool-drawer:card:c1' })
-  expect(await band.find({ type: 'Text', text: `┃ ${backgroundNoteText('b7')}` })).toMatchObject({ props: { dimColor: true } })
-  expect(await band.find({ type: 'Text', text: '┃ starting' })).toBeDefined()
+  expect(await band.find({ type: 'Text', text: ` ${backgroundNoteText('b7')}` })).toMatchObject({ props: { dimColor: true } })
+  expect(await band.find({ type: 'Text', text: ' starting' })).toBeDefined()
 })
 
 test('endingOf reads a background task id; a read-back call with one is in the background too', () => {

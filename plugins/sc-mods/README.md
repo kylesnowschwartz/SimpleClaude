@@ -53,19 +53,19 @@ Claude's shell commands (the Bash tool) do not show in the conversation. They sh
 ```text
 ╭─────────────────────────────────────────────────────────────────────────────────╮
 │ ▾ Tool Usage (2 done · 1 failed · 1 running · bash) ● just test 3s [ Turn 3/8 ] │
-│ ▸ ✓ bash 0.4s  git status                                                       │
-│ ▾ ✗ bash 1.2s  ls missing ⧉ copy                                                │
+│ ▸ ✓ 󰯠 0.4s  git status                                                        │
+│ ▾ ✗ 󰯠 1.2s  ls missing ⧉ copy                                                 │
 │ ┃ $ ls missing                                                                  │
 │ ┃ ls: missing: No such file or directory                                        │
-│ ▸ … bash 3s  just test                                                          │
+│ ▸ … 󰯠 3s  just test                                                           │
 ╰─────────────────────────────────────────────────────────────────────────────────╯
 [ ◀ ] Turn 3/8 [ ▶ ]
 ```
 
 - Click the `Tool Usage` line to open or close the drawer. While a command runs, a `●` follows the counts, with the newest running command and its seconds so far, and the open drawer's border takes the running colour.
 - The drawer lists the commands of the prompt the arrows are on. Press `◀` or `▶` to see another prompt's commands. Click `Turn 3/8` to list the commands of every prompt (`All`), and click it again to go back.
-- Each command has one line: a mark, how long it took, and its first line. The marks are `✓` done, `✗` failed (in the error colour), `⊘` declined (refused before it ran, at the permission dialog or by a hook), `■` stopped with Esc, `↗` moved to the background (ctrl+b, a command started in the background, or one that passed its timeout), and `…` still running, with its seconds so far. The counts on the bar name each kind: `1 failed · 1 declined · 1 interrupted · 1 in background`. A command in the background shows no time, does not open by itself, and its open line says its task id: it runs on, and its output arrives in the conversation, not in the drawer.
-- Click a command's line to show the full command and its output: stdout, then stderr, or the error. The `$` and the program's name are drawn in the accent colour, and a failed command's error in the error colour. A long output shows its last 30 lines, fewer when the band has less room, under a dim `… N earlier lines` note. `⧉ copy` on an open command's line copies the command and its output.
+- Each command has one line: a mark, a wrench icon (`󰯠`, U+F0BE0, which needs a Nerd Font), how long it took, and its first line, cut to one row with `…`. The command is coloured by what each word does: command names, operators such as `&&` and `|`, flags, quoted strings, variables, redirects, paths and comments each take their own theme colour. The marks are `✓` done, `✗` failed (in the error colour), `⊘` declined (refused before it ran, at the permission dialog or by a hook), `■` stopped with Esc, `↗` moved to the background (ctrl+b, a command started in the background, or one that passed its timeout), and `…` still running, with its seconds so far. The counts on the bar name each kind: `1 failed · 1 declined · 1 interrupted · 1 in background`. A command in the background shows no time, does not open by itself, and its open line says its task id: it runs on, and its output arrives in the conversation, not in the drawer.
+- Click a command's line to show the full command and its output: stdout, then stderr, or the error. The open command shows the whole command on one coloured `$` line, cut with `…` when it is wider than the drawer, and a green `┃` bar runs down its left side; a failed command's error is in the error colour. A click anywhere on an open command's body, the bar or the text, closes it again, the same as a click on its line. A long output shows its last 30 lines, fewer when the band has less room, under a dim `… N earlier lines` note. `⧉ copy` on an open command's line copies the command and its output.
 - A command that fails opens its own line, so its error shows without a click, unless you have closed that line yourself.
 - The drawer fits the band with the prompt arrows and any other mod's rows in it: when its commands do not fit, it shows the newest under a dim `… N earlier calls` line. When the band has no room for even one command, the bar says `no room for cards`.
 - The drawer opens by itself at the first command of each new prompt, until you open or close it yourself. After that it stays as you left it for the rest of the session.

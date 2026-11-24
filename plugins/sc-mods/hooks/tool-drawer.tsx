@@ -1,13 +1,16 @@
 import { atom, read, update } from 'claude-code'
-import type { EngineInterface, On, RenderSurface, Timer, ToolCallResult } from 'claude-code'
+import type { ElementConstructor, EngineInterface, On, TextProps, RenderSurface, Timer, ToolCallResult } from 'claude-code'
 import type { DrawerScope, DrawerView, HeldCall, HeldCallStatus } from '../types'
 import { rowsOf } from './band-rows'
 import { cells, cleanLine, cleanText, fit } from './drawer-text'
+import { fitTokens, isDimRole, SHELL_ROLE_COLOR, shellTokens, tokenCells, type ShellToken } from './shell-colors'
 import { newestPromptId, readStoredPrompts, readTurnOn, type PromptTrail, type TurnOn } from './prompt-jump'
 
 /** The one tool whose calls the drawer holds. */
 export const DRAWER_TOOL = 'Bash'
 const TOOL_LABEL = 'bash'
+/** The Nerd Font wrench (nf-md-wrench_outline, U+F0BE0) a card shows for the shell tool; one cell wide. */
+export const TOOL_ICON = '\u{F0BE0}'
 const COMMAND_NAME = 'tool-drawer'
 /** The `$.store` key that keeps `/tool-drawer on|off` across sessions. */
 const SWITCH_KEY = 'toolDrawerOn'
@@ -27,6 +30,8 @@ const RUNNING_COLOR = 'warning'
 /** The theme colours of a command's program name and of a failed call's error text. */
 const ACCENT_COLOR = 'suggestion'
 const ERROR_COLOR = 'error'
+/** The theme colour of an open card's `┃` bar. */
+const BAR_COLOR = 'success'
 const COPY_LABEL = '⧉ copy'
 /** The cells between the drawer's border and its text on each side. */
 const FRAME_PADDING = 1
@@ -181,12 +186,31 @@ const STATUS_MARK: Record<HeldCallStatus, string> = { running: ELLIPSIS, done: '
 export const markStyle = (status: HeldCallStatus): { color?: string; dimColor?: boolean } =>
   status === 'error' ? { color: ERROR_COLOR } : status === 'declined' || status === 'interrupted' || status === 'background' ? { dimColor: true } : {}
 
-/** A card's line: `▸ ✓ bash 0.4s  <first line of the command>`, cut to `width`; a running call shows its seconds so far. */
-export function cardText(call: HeldCall, isExpanded: boolean, now: number, width: number): string {
+/** A card's line in its drawn parts: the caret and a space, the status mark, the icon and time, and the command's coloured first line. */
+export type CardParts = { caret: string; mark: string; head: string; command: ShellToken[] }
+
+/**
+ * A card's line, `▸ ✓ 󰯠 0.4s  <first line of the command>`, in parts cut to
+ * `width` cells together; a running call shows its seconds so far.
+ */
+export function cardParts(call: HeldCall, isExpanded: boolean, now: number, width: number): CardParts {
   // A call in the background runs on, so it shows no time that reads as finished.
-  const elapsed = call.status === 'running' ? secondsSince(call.startedAt, now) : call.durationMs < 0 || call.status === 'background' ? '' : ` ${durationText(call.durationMs)}`
-  const firstLine = call.command.split('\n')[0] ?? ''
-  return fit(`${isExpanded ? '▾' : '▸'} ${STATUS_MARK[call.status]} ${TOOL_LABEL}${call.status === 'running' ? ` ${elapsed}` : elapsed}  ${firstLine}`, width)
+  const elapsed = call.status === 'running' ? ` ${secondsSince(call.startedAt, now)}` : call.durationMs < 0 || call.status === 'background' ? '' : ` ${durationText(call.durationMs)}`
+  const caret = `${isExpanded ? '▾' : '▸'} `
+  const mark = STATUS_MARK[call.status]
+  const head = ` ${TOOL_ICON}${elapsed}  `
+  const prefix = caret + mark + head
+  const command = shellTokens(call.command.split('\n')[0] ?? '')
+  if (cells(prefix) + tokenCells(command) <= width) return { caret, mark, head, command }
+  if (cells(prefix) < width) return { caret, mark, head, command: fitTokens(command, width - cells(prefix)) }
+  const cut = fit(prefix, width)
+  return { caret: cut.slice(0, caret.length), mark: cut.slice(caret.length, caret.length + mark.length), head: cut.slice(caret.length + mark.length), command: [] }
+}
+
+/** A card's line as plain text: its parts joined. */
+export function cardText(call: HeldCall, isExpanded: boolean, now: number, width: number): string {
+  const parts = cardParts(call, isExpanded, now, width)
+  return parts.caret + parts.mark + parts.head + parts.command.map(token => token.text).join('')
 }
 
 /**
@@ -276,15 +300,9 @@ export function drawerLayout(calls: readonly HeldCall[], expanded: readonly stri
 /** `… 3 earlier calls`, cut to `width`. */
 export const earlierCallsText = (count: number, width: number) => fit(`${ELLIPSIS} ${count} earlier call${count === 1 ? '' : 's'}`, width)
 
-/**
- * A body's command row in its three drawn parts: the `┃ ` gutter, the `$` and
- * the program's name (drawn in the accent colour), and the rest.
- */
-export function commandSegments(row: string): { gutter: string; program: string; rest: string } {
-  const gutter = row.startsWith('┃ ') ? '┃ ' : ''
-  const after = row.slice(gutter.length)
-  const program = /^\$ \S*/.exec(after)?.[0] ?? ''
-  return { gutter, program, rest: after.slice(program.length) }
+/** A body's command row in its drawn parts: the `┃ ` bar, the `$ ` prompt, and the whole command on one line, coloured and cut to `width` cells with them. */
+export function commandRow(call: HeldCall, width: number): { bar: string; prompt: string; command: ShellToken[] } {
+  return { bar: '┃ ', prompt: '$ ', command: fitTokens(shellTokens(call.command.replace(/\n/g, ' ')), width - 4) }
 }
 
 /** What a card's copy button puts on the clipboard: `$ <command>`, then the output it kept. */
@@ -636,8 +654,17 @@ export function registerToolDrawer(on: On, trail: PromptTrail) {
             const isExpanded = view.expanded.includes(call.id)
             const body = bodyLines === undefined ? undefined : cardBody(call, width, bodyLines)
             // An open card's copy button sits on its row, after a gap.
-            const label = cardText(call, isExpanded, now, body === undefined ? width : width - cells(COPY_LABEL) - 1)
-            const command = body === undefined ? undefined : commandSegments(body.command)
+            const parts = cardParts(call, isExpanded, now, body === undefined ? width : width - cells(COPY_LABEL) - 1)
+            const label = parts.caret + parts.mark + parts.head + parts.command.map(token => token.text).join('')
+            const command = body === undefined ? undefined : commandRow(call, width)
+            const collapse = () => toggleCard($, call.id)
+            const bar = <Text color={BAR_COLOR}>┃</Text>
+            const bodyRow = (key: string, text: string, style: { color?: string; dimColor?: boolean }) => (
+              <Button key={`tool-drawer:body:${call.id}:${key}`} plain label={text} onPress={collapse}>
+                {bar}
+                <Text {...style}>{text.slice(1)}</Text>
+              </Button>
+            )
             return (
               <Box key={`tool-drawer:call:${call.id}`} flexDirection="column">
                 <Box flexDirection="row" columnGap={1}>
@@ -646,11 +673,12 @@ export function registerToolDrawer(on: On, trail: PromptTrail) {
                     plain
                     dimColor={call.status === 'done'}
                     label={label}
-                    onPress={() => toggleCard($, call.id)}
+                    onPress={collapse}
                   >
-                    {label.slice(0, 2)}
-                    <Text {...markStyle(call.status)}>{label.slice(2, 3)}</Text>
-                    {label.slice(3)}
+                    {parts.caret}
+                    <Text {...markStyle(call.status)}>{parts.mark}</Text>
+                    {parts.head}
+                    {tokenSpans(Text, parts.command)}
                   </Button>
                   {body === undefined ? null : (
                     <Button key={`tool-drawer:copy:${call.id}`} plain dimColor label={COPY_LABEL} onPress={press => copyCall($, call, press.surface)} />
@@ -658,16 +686,15 @@ export function registerToolDrawer(on: On, trail: PromptTrail) {
                 </Box>
                 {body === undefined || command === undefined ? null : (
                   <Box flexDirection="column">
-                    <Box flexDirection="row">
-                      <Text>{command.gutter}</Text>
-                      <Text color={ACCENT_COLOR}>{command.program}</Text>
-                      <Text>{command.rest}</Text>
-                    </Box>
-                    {body.backgroundNote === undefined ? null : <Text dimColor>{body.backgroundNote}</Text>}
-                    {body.earlierNote === undefined ? null : <Text dimColor>{body.earlierNote}</Text>}
-                    {body.lines.map(line => (
-                      <Text {...(call.status === 'error' ? { color: ERROR_COLOR } : {})}>{line}</Text>
-                    ))}
+                    <Button key={`tool-drawer:body:${call.id}:command`} plain label={body.command} onPress={collapse}>
+                      {bar}
+                      {' '}
+                      <Text color={ACCENT_COLOR}>{command.prompt}</Text>
+                      {tokenSpans(Text, command.command)}
+                    </Button>
+                    {body.backgroundNote === undefined ? null : bodyRow('background', body.backgroundNote, { dimColor: true })}
+                    {body.earlierNote === undefined ? null : bodyRow('earlier', body.earlierNote, { dimColor: true })}
+                    {body.lines.map((line, index) => bodyRow(`line:${index}`, line, call.status === 'error' ? { color: ERROR_COLOR } : {}))}
                   </Box>
                 )}
               </Box>
@@ -676,6 +703,16 @@ export function registerToolDrawer(on: On, trail: PromptTrail) {
         </Box>
       </Box>
     )
+  })
+}
+
+/** A command's parts as coloured Text spans. */
+function tokenSpans(Text: ElementConstructor<TextProps>, tokens: readonly ShellToken[]) {
+  return tokens.map(token => {
+    const color = SHELL_ROLE_COLOR[token.role]
+    if (color !== undefined) return <Text color={color}>{token.text}</Text>
+    if (isDimRole(token.role)) return <Text dimColor>{token.text}</Text>
+    return token.text
   })
 }
 
