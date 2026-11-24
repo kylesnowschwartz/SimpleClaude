@@ -2,7 +2,7 @@ import { atom, read, update } from 'claude-code'
 import type { EngineInterface, On, Timer, ToolCallResult } from 'claude-code'
 import type { DrawerScope, DrawerView, HeldCall, HeldCallStatus } from '../types'
 import { rowsOf } from './band-rows'
-import { cleanLine, cleanText, fit } from './drawer-text'
+import { cells, cleanLine, cleanText, fit } from './drawer-text'
 import { newestPromptId, readTurnOn, type PromptTrail, type TurnOn } from './prompt-jump'
 
 /** The one tool whose calls the drawer holds. */
@@ -20,6 +20,8 @@ export const MAX_COMMAND_CHARS = 2000
 /** The most output lines an expanded card shows: the last ones. */
 export const SHOWN_LINES = 30
 const TICK_MS = 1000
+/** The theme colour of a running call's dot. */
+const RUNNING_COLOR = 'warning'
 const ELLIPSIS = '…'
 
 // Change a tag when its value's fields change: it declines what an earlier version stored.
@@ -111,6 +113,29 @@ export function summaryText(calls: readonly HeldCall[]): string {
   return `Tool Usage (${[...parts, TOOL_LABEL].join(' · ')})`
 }
 
+/** The newest running call's first line and its seconds so far, `npm test 12s`; undefined while none runs. */
+export function runningText(calls: readonly HeldCall[], now: number): string | undefined {
+  const call = calls.findLast(one => one.status === 'running')
+  if (call === undefined) return undefined
+  return `${call.command.split('\n')[0] ?? ''} ${secondsSince(call.startedAt, now)}`
+}
+
+const secondsSince = (startedAt: number, now: number) => `${Math.max(0, Math.floor((now - startedAt) / 1000))}s`
+
+/**
+ * The bar's two texts cut to `width` cells together with the scope button
+ * (`[ Turn 3/8 ]`), the `●` and the gaps: the summary first, then the running
+ * command in what is left, dropped when nothing is.
+ */
+export function barTexts(summary: string, running: string | undefined, scope: string, width: number): { summary: string; running: string | undefined } {
+  const scopeCells = cells(scope) + 4 + 1
+  const dotCells = running === undefined ? 0 : 2
+  const fittedSummary = fit(summary, width - scopeCells - dotCells)
+  if (running === undefined) return { summary: fittedSummary, running }
+  const left = width - scopeCells - dotCells - cells(fittedSummary) - 1
+  return { summary: fittedSummary, running: left >= 4 ? fit(running, left) : undefined }
+}
+
 /** `Turn 3/8` for the prompt the arrows are on, or `All`. */
 export const scopeText = (scope: DrawerScope, turn: TurnOn | undefined) =>
   scope === 'all' || turn === undefined ? 'All' : `Turn ${turn.number}/${turn.count}`
@@ -131,7 +156,7 @@ export const markStyle = (status: HeldCallStatus): { color?: string; dimColor?: 
 
 /** A card's line: `▸ ✓ bash 0.4s  <first line of the command>`, cut to `width`; a running call shows its seconds so far. */
 export function cardText(call: HeldCall, isExpanded: boolean, now: number, width: number): string {
-  const elapsed = call.status === 'running' ? `${Math.max(0, Math.floor((now - call.startedAt) / 1000))}s` : durationText(call.durationMs)
+  const elapsed = call.status === 'running' ? secondsSince(call.startedAt, now) : durationText(call.durationMs)
   const firstLine = call.command.split('\n')[0] ?? ''
   return fit(`${isExpanded ? '▾' : '▸'} ${STATUS_MARK[call.status]} ${TOOL_LABEL} ${elapsed}  ${firstLine}`, width)
 }
@@ -403,9 +428,8 @@ export function registerToolDrawer(on: On, trail: PromptTrail) {
     const width = e.props.bodyColumns
     const isRunning = shown.some(call => call.status === 'running')
     const scope = scopeText(view.scope, turn)
-    // The bar's other parts: the dot, the scope button's brackets and the gaps.
     const layout = view.isOpen ? drawerLayout(shown, view.expanded, drawerRoom(e.props.maxRows, await read($, OTHER_BAND_ROWS))) : { cards: [], earlierCalls: 0 }
-    const summaryWidth = width - scope.length - (isRunning ? 2 : 0) - 6
+    const bar = barTexts(`${view.isOpen ? '▾' : '▸'} ${summaryText(shown)}`, runningText(shown, now), scope, width)
     const { Box, Button, Text } = $.ui.resolve(e)
     return (
       <Box flexDirection="column">
@@ -414,10 +438,11 @@ export function registerToolDrawer(on: On, trail: PromptTrail) {
           <Button
             key="tool-drawer:toggle"
             plain
-            label={fit(`${view.isOpen ? '▾' : '▸'} ${summaryText(shown)}`, summaryWidth)}
+            label={bar.summary}
             onPress={() => press($, current => ({ ...current, isOpen: !current.isOpen, isSetByHand: true }))}
           />
-          {isRunning ? <Text color="yellow">●</Text> : null}
+          {isRunning ? <Text color={RUNNING_COLOR}>●</Text> : null}
+          {bar.running === undefined ? null : <Text>{bar.running}</Text>}
           <Button
             key="tool-drawer:scope"
             dimColor

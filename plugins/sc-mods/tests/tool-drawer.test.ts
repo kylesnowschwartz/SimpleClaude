@@ -21,6 +21,8 @@ import {
   drawerRoom,
   otherRowsOf,
   scopeText,
+  runningText,
+  barTexts,
   SHOWN_LINES,
   startedCall,
   summaryText,
@@ -592,4 +594,32 @@ test('with another plugin’s 3-row row in the band, the drawer and the arrows f
     .filter(found => found.key !== 'tool-drawer:scope' && !String(found.key ?? '').startsWith('prompt-jump') && found.text !== 'Turn 1/1' && found.text !== 'engine' && !MARKS.includes(found.text))
   expect(drawerRows.length + ARROWS_ROWS + 3).toBeLessThanOrEqual(12)
   expect(await band.find({ type: 'Text', text: '┃ line 29' })).toBeDefined()
+})
+
+// --- The running command on the bar ---------------------------------------
+
+test('runningText names the newest running command and its seconds', () => {
+  const calls = [call({ id: 'a', command: 'ls', status: 'running', startedAt: 0 }), call({ id: 'b', command: 'npm test\n--watch', status: 'running', startedAt: 1000 }), call({ id: 'c', status: 'done' })]
+  expect(runningText(calls, 13_500)).toBe('npm test 12s')
+  expect(runningText([call({ status: 'done' })], 0)).toBeUndefined()
+})
+
+test('barTexts gives the summary room first and cuts the running command', () => {
+  const summary = '▸ Tool Usage (2 done · 1 running · bash)'
+  expect(barTexts(summary, 'npm test 12s', 'Turn 3/8', 80)).toEqual({ summary, running: 'npm test 12s' })
+  const tight = barTexts(summary, 'npm test --coverage 12s', 'Turn 3/8', 62)
+  expect(tight.summary).toBe(summary)
+  expect(tight.running).toBe('npm t…')
+  expect(barTexts(summary, 'npm test 12s', 'Turn 3/8', 50).running).toBeUndefined()
+})
+
+test('the bar shows the running command after the dot', async ($, on) => {
+  const world = session(on)
+  await prompt($, 'p1')
+  const running = await startCall($, world, 'c1', 'npm test')
+  await world.clock.advance(12_000)
+  const band = await mountBand($, { bodyColumns: 80 })
+  expect(await band.find({ type: 'Text', text: 'npm test 12s' })).toBeDefined()
+  await finishCall(world, running, 'c1')
+  expect(await band.find({ type: 'Text', text: 'npm test 12s' })).toBeUndefined()
 })
