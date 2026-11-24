@@ -1,0 +1,438 @@
+import type { On, PromptOrigin, RenderElement } from 'claude-code'
+import type { Engine, MockClock } from 'claude-code/testing'
+import { expect, mock, test } from 'claude-code/testing'
+import type { HeldCall } from '../types'
+import {
+  callsInScope,
+  cardBody,
+  cardText,
+  durationText,
+  endingOf,
+  fit,
+  isHeld,
+  keptOutput,
+  MAX_HELD_CALLS,
+  MAX_KEPT_LINES,
+  NEW_VIEW,
+  scopeText,
+  startedCall,
+  summaryText,
+  switched,
+  withCall,
+} from '../hooks/tool-drawer'
+import { turnRuleText } from '../hooks/turn-rule'
+
+const BAND = {
+  hasSurvey: false,
+  isCollapsed: false,
+  isWorking: false,
+  maxRows: 40,
+  bodyColumns: 60,
+  scroll: { offset: 0, bodyRows: 40 },
+  view: {},
+}
+
+const COMPOSER: PromptOrigin = { kind: 'composer' }
+const ENGINE = { type: 'Text', text: 'engine' }
+
+// --- The session beneath the plugin ---------------------------------------
+
+/** A Bash call the session runs; `finish` ends it with what it printed or an error. */
+type Pending = { finish: (answer: { stdout?: string; stderr?: string; error?: string; deny?: string }) => void }
+
+/**
+ * Stands for the engine: each component drawn as a Text `engine`, the clock,
+ * and Bash calls that run until the test finishes them.
+ */
+function session(on: On): { clock: MockClock; calls: Map<string, Pending> } {
+  on('ui.render', async () => ({ type: 'Text', props: {}, children: ['engine'] }) as unknown as RenderElement)
+  on('session.start', async (_$, e) => ({ cwd: e.cwd }))
+  on('session.end', async (_$, e) => ({ sessionId: e.sessionId }))
+  on('command.register', () => ({ value: { command: 'tool-drawer' } }))
+  const clock = mock.clock(on, { now: 1_000_000 })
+  const calls = new Map<string, Pending>()
+  on('tool.call', (_$, e) =>
+    new Promise(resolve => {
+      calls.set(e.tool_use_id, {
+        finish: ({ stdout = '', stderr = '', error, deny }) => {
+          if (deny !== undefined) resolve({ deny })
+          else if (error !== undefined) resolve({ isError: true, result: undefined, text: error })
+          else resolve({ result: { stdout, stderr, interrupted: false } })
+        },
+      })
+    }),
+  )
+  return { clock, calls }
+}
+
+const prompt = ($: Engine, uuid: string) =>
+  $.session.append({ message: { type: 'user', role: 'user', content: [{ type: 'text', text: uuid }] }, door: 'prompt', origin: COMPOSER, uuid })
+
+/** Starts a Bash call and lets it reach the session; resolves `{ running }`, the call under way. */
+async function startCall($: Engine, world: { calls: Map<string, Pending>; clock: MockClock }, id: string, command = `echo ${id}`) {
+  const running = $.tool.call({ tool: 'Bash', tool_use_id: id, command })
+  await world.clock.advance(0)
+  return { running }
+}
+
+async function finishCall(world: { calls: Map<string, Pending>; clock: MockClock }, { running }: { running: Promise<unknown> }, id: string, answer: Parameters<Pending['finish']>[0] = { stdout: 'ok\n' }) {
+  world.calls.get(id)?.finish(answer)
+  await running
+}
+
+const mountBand = ($: Engine, props: Partial<typeof BAND> = {}) =>
+  $.ui.mount({ plugin: 'sc-mods', surface: 'terminal', component: 'AbovePrompt', props: { ...BAND, ...props } })
+
+const mountToolUse = ($: Engine, id: string, tool = 'Bash') =>
+  $.ui.mount({
+    plugin: 'sc-mods',
+    surface: 'terminal',
+    component: 'ToolUse',
+    requestId: id,
+    props: { tool_use_id: id, tool, input: { command: 'x' }, isRunning: false, isErrored: false, isInterrupted: false, isExpanded: true },
+  })
+
+const mountToolResult = ($: Engine, id: string) =>
+  $.ui.mount({
+    plugin: 'sc-mods',
+    surface: 'terminal',
+    component: 'ToolResult',
+    requestId: id,
+    props: { tool_use_id: id, tool: 'Bash', output: { stdout: 'ok', stderr: '' }, isErrored: false, isExpanded: true },
+  })
+
+const mountProgress = ($: Engine, id: string) =>
+  $.ui.mount({
+    plugin: 'sc-mods',
+    surface: 'terminal',
+    component: 'ToolProgress',
+    requestId: id,
+    props: { tool_use_id: id, kind: 'background_hint', hint: '(ctrl+b to run in background)' },
+  })
+
+const mountGroup = ($: Engine, ids: Array<[string, string]>) =>
+  $.ui.mount({
+    plugin: 'sc-mods',
+    surface: 'terminal',
+    component: 'ToolGroup',
+    requestId: 'group',
+    props: {
+      calls: ids.map(([id, tool]) => ({ tool_use_id: id, tool, input: {}, isRunning: false, isErrored: false, isInterrupted: false })),
+      isActive: false,
+      isExpanded: true,
+    },
+  })
+
+const command = ($: Engine, args: string) =>
+  $.command.run({ command: 'tool-drawer', args, origin: COMPOSER, presentation: { layout: 'main', columns: 100 } } as never)
+
+/** Whether the row draws as the engine draws it; the drawing is unmounted after. */
+async function shows(mounting: Promise<{ find: (q: object) => Promise<unknown>; unmount: () => Promise<unknown> }>) {
+  const ui = await mounting
+  const isShown = (await ui.find(ENGINE)) !== undefined
+  await ui.unmount()
+  return isShown
+}
+
+const call = (fields: Partial<HeldCall> = {}): HeldCall => ({ ...startedCall('c1', 'ls -la', 'p1', 0), ...fields })
+
+// --- Recording ------------------------------------------------------------
+
+test('a call is kept running, then done with its output and duration', async ($, on) => {
+  const world = session(on)
+  await prompt($, 'p1')
+  const running = await startCall($, world, 'c1', 'ls')
+  const band = await mountBand($)
+  expect((await band.find({ key: 'tool-drawer:toggle' }))?.props.label).toBe('▾ Tool Usage (1 running · bash)')
+  expect(await band.find({ type: 'Text', text: '●' })).toBeDefined()
+
+  await world.clock.advance(400)
+  await finishCall(world, running, 'c1', { stdout: 'a\nb\n', stderr: 'warn\n' })
+  expect((await band.find({ key: 'tool-drawer:toggle' }))?.props.label).toBe('▾ Tool Usage (1 done · bash)')
+  expect(await band.find({ type: 'Text', text: '●' })).toBeUndefined()
+  expect((await band.find({ key: 'tool-drawer:card:c1' }))?.props.label).toBe('▸ ✓ bash 0.4s  ls')
+
+  await band.press({ key: 'tool-drawer:card:c1' })
+  const texts = (await band.findAll({ type: 'Text' })).map(found => found.text)
+  expect(texts.filter(text => text.startsWith('┃'))).toEqual(['┃ $ ls', '┃ a', '┃ b', '┃ warn'])
+})
+
+test('a call that errs or is refused is kept as an error with the error text', async ($, on) => {
+  const world = session(on)
+  await prompt($, 'p1')
+  const failing = await startCall($, world, 'c1')
+  await finishCall(world, failing, 'c1', { error: 'Exit code 2\nboom' })
+  const refused = await startCall($, world, 'c2')
+  await finishCall(world, refused, 'c2', { deny: 'Permission denied' })
+  const band = await mountBand($)
+  expect((await band.find({ key: 'tool-drawer:toggle' }))?.props.label).toBe('▾ Tool Usage (2 failed · bash)')
+  expect(String((await band.find({ key: 'tool-drawer:card:c1' }))?.props.label)).toMatch(/^▸ ✗ bash/)
+  await band.press({ key: 'tool-drawer:card:c2' })
+  expect(await band.find({ type: 'Text', text: '┃ Permission denied' })).toBeDefined()
+})
+
+test('a running card counts its seconds up while the call runs', async ($, on) => {
+  const world = session(on)
+  await prompt($, 'p1')
+  const running = await startCall($, world, 'c1', 'sleep 5')
+  const band = await mountBand($)
+  await world.clock.advance(3000)
+  expect((await band.find({ key: 'tool-drawer:card:c1' }))?.props.label).toBe('▸ … bash 3s  sleep 5')
+  await finishCall(world, running, 'c1')
+})
+
+// --- Hiding rows ----------------------------------------------------------
+
+test('rows of a held call draw nothing; other calls and tools keep theirs', async ($, on) => {
+  const world = session(on)
+  await prompt($, 'p1')
+  const running = await startCall($, world, 'c1')
+  expect(await shows(mountToolUse($, 'c1'))).toBe(false)
+  expect(await shows(mountProgress($, 'c1'))).toBe(false)
+  await finishCall(world, running, 'c1')
+  expect(await shows(mountToolResult($, 'c1'))).toBe(false)
+
+  expect(await shows(mountToolUse($, 'from-before'))).toBe(true)
+  expect(await shows(mountProgress($, 'from-before'))).toBe(true)
+  expect(await shows(mountToolUse($, 'c1', 'Read'))).toBe(true)
+})
+
+test('a group draws nothing only when every call in it is held', async ($, on) => {
+  const world = session(on)
+  await prompt($, 'p1')
+  const running = await startCall($, world, 'c1')
+  await finishCall(world, running, 'c1')
+  expect(await shows(mountGroup($, [['c1', 'Bash']]))).toBe(false)
+  expect(await shows(mountGroup($, [['c1', 'Bash'], ['r1', 'Read']]))).toBe(true)
+})
+
+test('/tool-drawer off gives the rows back and hides the drawer; on takes them again', async ($, on) => {
+  const world = session(on)
+  await prompt($, 'p1')
+  const running = await startCall($, world, 'c1')
+  await finishCall(world, running, 'c1')
+
+  expect((await command($, 'off')).text).toMatch(/off/)
+  expect(await shows(mountToolUse($, 'c1'))).toBe(true)
+  expect(await (await mountBand($)).find({ key: 'tool-drawer:toggle' })).toBeUndefined()
+  expect((await command($, '')).text).toMatch(/is off/)
+
+  expect((await command($, 'on')).text).toMatch(/on/)
+  expect(await shows(mountToolUse($, 'c1'))).toBe(false)
+  expect(await (await mountBand($)).find({ key: 'tool-drawer:toggle' })).toBeDefined()
+})
+
+// --- The drawer -----------------------------------------------------------
+
+test('with no call in scope the drawer draws nothing and the arrows stay', async ($, on) => {
+  session(on)
+  await prompt($, 'p1')
+  const band = await mountBand($)
+  expect(await band.find({ key: 'tool-drawer:toggle' })).toBeUndefined()
+  expect(await band.find({ key: 'prompt-jump:previous' })).toBeDefined()
+})
+
+test('the drawer yields to a survey and stays out of an agent transcript', async ($, on) => {
+  const world = session(on)
+  await prompt($, 'p1')
+  const running = await startCall($, world, 'c1')
+  expect(await (await mountBand($, { hasSurvey: true })).find({ key: 'tool-drawer:toggle' })).toBeUndefined()
+  expect(await (await mountBand($, { view: { agentId: 'a1' } })).find({ key: 'tool-drawer:toggle' })).toBeUndefined()
+  await finishCall(world, running, 'c1')
+})
+
+test('the drawer sits above the arrows', async ($, on) => {
+  const world = session(on)
+  await prompt($, 'p1')
+  const running = await startCall($, world, 'c1')
+  const keys = (await (await mountBand($)).findAll({ type: 'Button' })).map(found => found.key)
+  expect(keys.indexOf('tool-drawer:toggle')).toBeLessThan(keys.indexOf('prompt-jump:previous'))
+  await finishCall(world, running, 'c1')
+})
+
+test('scope follows the arrows, and the scope button switches to all turns', async ($, on) => {
+  const world = session(on)
+  on('ui.scroll', () => ({}))
+  await prompt($, 'p1')
+  await finishCall(world, await startCall($, world, 'c1'), 'c1')
+  await prompt($, 'p2')
+  await finishCall(world, await startCall($, world, 'c2'), 'c2')
+
+  const band = await mountBand($)
+  expect((await band.find({ key: 'tool-drawer:scope' }))?.props.label).toBe('Turn 2/2')
+  expect(await band.find({ key: 'tool-drawer:card:c1' })).toBeUndefined()
+  expect(await band.find({ key: 'tool-drawer:card:c2' })).toBeDefined()
+
+  await band.press({ key: 'prompt-jump:previous' })
+  expect((await band.find({ key: 'tool-drawer:scope' }))?.props.label).toBe('Turn 1/2')
+  expect(await band.find({ key: 'tool-drawer:card:c1' })).toBeDefined()
+  expect(await band.find({ key: 'tool-drawer:card:c2' })).toBeUndefined()
+
+  await band.press({ key: 'tool-drawer:scope' })
+  expect((await band.find({ key: 'tool-drawer:scope' }))?.props.label).toBe('All')
+  expect(await band.find({ key: 'tool-drawer:card:c1' })).toBeDefined()
+  expect(await band.find({ key: 'tool-drawer:card:c2' })).toBeDefined()
+})
+
+test('a card opens and closes on a press', async ($, on) => {
+  const world = session(on)
+  await prompt($, 'p1')
+  await finishCall(world, await startCall($, world, 'c1', 'ls'), 'c1')
+  const band = await mountBand($)
+  await band.press({ key: 'tool-drawer:card:c1' })
+  expect((await band.find({ key: 'tool-drawer:card:c1' }))?.props.label).toMatch(/^▾/)
+  expect(await band.find({ type: 'Text', text: '┃ $ ls' })).toBeDefined()
+  await band.press({ key: 'tool-drawer:card:c1' })
+  expect(await band.find({ type: 'Text', text: '┃ $ ls' })).toBeUndefined()
+})
+
+test('the drawer opens on a new turn’s first call until the person opens or closes it by hand', async ($, on) => {
+  const world = session(on)
+  await prompt($, 'p1')
+  await finishCall(world, await startCall($, world, 'c1'), 'c1')
+  const band = await mountBand($)
+  expect(await band.find({ key: 'tool-drawer:card:c1' })).toBeDefined()
+
+  await band.press({ key: 'tool-drawer:toggle' })
+  expect(await band.find({ key: 'tool-drawer:card:c1' })).toBeUndefined()
+  await prompt($, 'p2')
+  await finishCall(world, await startCall($, world, 'c2'), 'c2')
+  expect((await band.find({ key: 'tool-drawer:toggle' }))?.props.label).toMatch(/^▸/)
+  expect(await band.find({ key: 'tool-drawer:card:c2' })).toBeUndefined()
+})
+
+test('/clear forgets the held calls and their rows come back', async ($, on) => {
+  const world = session(on)
+  await prompt($, 'p1')
+  await finishCall(world, await startCall($, world, 'c1'), 'c1')
+  await $.session.end({ reason: 'clear', sessionId: 'session', resume: { id: 'session' } })
+  expect(await shows(mountToolUse($, 'c1'))).toBe(true)
+  expect(await (await mountBand($)).find({ key: 'tool-drawer:toggle' })).toBeUndefined()
+})
+
+test('/resume forgets the held calls', async ($, on) => {
+  const world = session(on)
+  await prompt($, 'p1')
+  await finishCall(world, await startCall($, world, 'c1'), 'c1')
+  await $.session.end({ reason: 'resume', sessionId: 'session', resume: { id: 'resumed' } })
+  expect(await shows(mountToolUse($, 'c1'))).toBe(true)
+})
+
+// --- The turn rule --------------------------------------------------------
+
+const mountUserRow = ($: Engine, requestId: string) =>
+  $.ui.mount({
+    plugin: 'sc-mods',
+    surface: 'terminal',
+    component: 'UserMessage',
+    requestId,
+    viewport: { columns: 30, rows: 40 },
+    props: { text: 'hi', origin: COMPOSER, isExpanded: true },
+  } as never)
+
+test('a rule with the turn number sits above the second prompt on, not the first or other rows', async ($, on) => {
+  session(on)
+  await prompt($, 'p1')
+  await prompt($, 'p2')
+  const second = await mountUserRow($, 'p2')
+  expect((await second.find({ type: 'Text', text: /Turn 2/ }))?.text).toBe(turnRuleText(2, 26))
+  expect(await second.find(ENGINE)).toBeDefined()
+
+  const first = await mountUserRow($, 'p1')
+  expect(await first.find({ type: 'Text', text: /Turn/ })).toBeUndefined()
+  const notice = await mountUserRow($, 'notice')
+  expect(await notice.find({ type: 'Text', text: /Turn/ })).toBeUndefined()
+})
+
+test('the turn rule stays while the drawer is off', async ($, on) => {
+  session(on)
+  await prompt($, 'p1')
+  await prompt($, 'p2')
+  await command($, 'off')
+  expect(await (await mountUserRow($, 'p2')).find({ type: 'Text', text: /Turn 2/ })).toBeDefined()
+})
+
+// --- Pure helpers ---------------------------------------------------------
+
+test('turnRuleText fills the width with the label near the right end', () => {
+  expect(turnRuleText(3, 20)).toBe('╌╌╌╌╌╌╌╌╌╌ Turn 3 ╌╌')
+  expect(turnRuleText(3, 20)).toHaveLength(20)
+  expect(turnRuleText(3, 5)).toBe('Turn 3')
+})
+
+test('fit cuts with an ellipsis', () => {
+  expect(fit('abcdef', 4)).toBe('abc…')
+  expect(fit('abc', 4)).toBe('abc')
+  expect(fit('abc', 0)).toBe('')
+})
+
+test('keptOutput keeps the last lines and counts them all', () => {
+  const text = Array.from({ length: MAX_KEPT_LINES + 5 }, (_, n) => `line ${n}`).join('\n') + '\n'
+  const kept = keptOutput(text)
+  expect(kept.outputLineCount).toBe(MAX_KEPT_LINES + 5)
+  expect(kept.output).toHaveLength(MAX_KEPT_LINES)
+  expect(kept.output[0]).toBe('line 5')
+  expect(keptOutput('x'.repeat(1000)).output[0]).toHaveLength(400)
+  expect(keptOutput('')).toEqual({ output: [], outputLineCount: 0 })
+})
+
+test('endingOf reads stdout then stderr, an error, or a refusal', () => {
+  expect(endingOf({ result: { stdout: 'a\n', stderr: 'b\n' } } as never)).toEqual({ status: 'done', text: 'a\nb' })
+  expect(endingOf({ isError: true, result: undefined, text: 'boom' })).toEqual({ status: 'error', text: 'boom' })
+  expect(endingOf({ deny: 'no' })).toEqual({ status: 'error', text: 'no' })
+})
+
+test('withCall keeps at most MAX_HELD_CALLS, dropping the oldest', () => {
+  let calls: HeldCall[] = []
+  for (let n = 0; n < MAX_HELD_CALLS + 3; n += 1) calls = withCall(calls, call({ id: `c${n}` }))
+  expect(calls).toHaveLength(MAX_HELD_CALLS)
+  expect(calls[0]?.id).toBe('c3')
+})
+
+test('summaryText counts each status shown', () => {
+  expect(summaryText([call({ status: 'done' }), call({ status: 'done' }), call({ status: 'running' })])).toBe('Tool Usage (2 done · 1 running · bash)')
+  expect(summaryText([call({ status: 'error' })])).toBe('Tool Usage (1 failed · bash)')
+})
+
+test('callsInScope picks the turn’s calls or all of them', () => {
+  const calls = [call({ id: 'a', promptId: 'p1' }), call({ id: 'b', promptId: 'p2' }), call({ id: 'c', promptId: '' })]
+  const turn = { promptId: 'p2', number: 2, count: 2 }
+  expect(callsInScope(calls, 'turn', turn).map(one => one.id)).toEqual(['b'])
+  expect(callsInScope(calls, 'all', turn).map(one => one.id)).toEqual(['a', 'b', 'c'])
+  expect(callsInScope(calls, 'turn', undefined)).toEqual([])
+  expect(scopeText('turn', turn)).toBe('Turn 2/2')
+  expect(scopeText('all', turn)).toBe('All')
+})
+
+test('durationText and cardText', () => {
+  expect(durationText(400)).toBe('0.4s')
+  expect(durationText(12_300)).toBe('12s')
+  expect(durationText(65_000)).toBe('1m05s')
+  const done = call({ status: 'done', durationMs: 400, command: 'git status\nmore' })
+  expect(cardText(done, false, 0, 80)).toBe('▸ ✓ bash 0.4s  git status')
+  expect(cardText(done, true, 0, 12)).toBe('▾ ✓ bash 0.…')
+})
+
+test('cardBody shows the last lines with a note of the earlier ones', () => {
+  const lines = Array.from({ length: 40 }, (_, n) => `l${n}`)
+  const body = cardBody(call({ output: lines, outputLineCount: 240 }), 80)
+  expect(body.command).toBe('┃ $ ls -la')
+  expect(body.lines).toHaveLength(30)
+  expect(body.lines[0]).toBe('┃ l10')
+  expect(body.earlierNote).toBe('┃ … 210 earlier lines')
+  expect(cardBody(call({ output: ['x'], outputLineCount: 1 }), 80).earlierNote).toBeUndefined()
+})
+
+test('isHeld only while on and only for a kept call', () => {
+  const calls = [call({ id: 'c1' })]
+  expect(isHeld(NEW_VIEW, calls, 'c1')).toBe(true)
+  expect(isHeld(NEW_VIEW, calls, 'c2')).toBe(false)
+  expect(isHeld({ ...NEW_VIEW, isOn: false }, calls, 'c1')).toBe(false)
+})
+
+test('switched turns the drawer on and off and reports its state', () => {
+  expect(switched(NEW_VIEW, 'off').view.isOn).toBe(false)
+  expect(switched({ ...NEW_VIEW, isOn: false }, ' on ').view.isOn).toBe(true)
+  expect(switched(NEW_VIEW, '').text).toMatch(/^Tool drawer is on\./)
+  expect(switched(NEW_VIEW, 'maybe').text).toMatch(/Unknown option "maybe"/)
+})

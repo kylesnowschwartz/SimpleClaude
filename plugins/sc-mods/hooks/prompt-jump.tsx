@@ -43,8 +43,27 @@ export function jumpTarget(trail: PromptTrail, step: Step): number | undefined {
   return target >= 0 && target < trail.prompts.length ? target : undefined
 }
 
-/** `7/8` while the arrows are on the seventh of eight prompts; empty with none known. */
-export const positionText = (trail: PromptTrail): string => (trail.prompts.length === 0 ? '' : `${indexOn(trail) + 1}/${trail.prompts.length}`)
+/** `Turn 7/8` while the arrows are on the seventh of eight prompts; empty with none known. */
+export const positionText = (trail: PromptTrail): string => (trail.prompts.length === 0 ? '' : `Turn ${indexOn(trail) + 1}/${trail.prompts.length}`)
+
+/** The prompt the arrows are on: its id, its number counting from 1, and how many prompts are known. */
+export type TurnOn = { promptId: string; number: number; count: number }
+
+/** The prompt the arrows are on, or undefined with none known. */
+export function turnOn(trail: PromptTrail): TurnOn | undefined {
+  const index = indexOn(trail)
+  const promptId = trail.prompts[index]
+  return promptId === undefined ? undefined : { promptId, number: index + 1, count: trail.prompts.length }
+}
+
+/** The newest prompt known, or undefined with none. */
+export const newestPromptId = (trail: PromptTrail): string | undefined => trail.prompts.at(-1)
+
+/** The prompt's number counting from 1, or undefined for a row that is not one of the person's prompts known. */
+export function promptNumber(trail: PromptTrail, id: string): number | undefined {
+  const index = trail.prompts.indexOf(id)
+  return index < 0 ? undefined : index + 1
+}
 
 /** Adds a prompt the conversation stored; the arrows rest on it. */
 export function notePrompt(trail: PromptTrail, id: string) {
@@ -234,6 +253,15 @@ const REACHABLE_DOORS: SessionAppendDoor[] = ['prompt', 'delivery', 'response', 
 const PROMPT_POSITION = atom({ plugin: 'sc-mods', key: 'promptPosition' } as const, '')
 
 const publishPosition = ($: EngineInterface, trail: PromptTrail) => update($, PROMPT_POSITION, () => positionText(trail))
+
+/**
+ * The prompt the arrows are on, read while drawing: a jump, a new prompt or
+ * the transcript file's read draws the reader again.
+ */
+export async function readTurnOn($: EngineInterface, trail: PromptTrail): Promise<TurnOn | undefined> {
+  await read($, PROMPT_POSITION)
+  return turnOn(trail)
+}
 
 async function jump($: EngineInterface, trail: PromptTrail, step: Step) {
   await readStored($, trail)

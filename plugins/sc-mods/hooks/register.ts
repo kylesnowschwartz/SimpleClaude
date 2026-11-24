@@ -4,6 +4,8 @@ import { drawDiagram, type Runner } from './merman'
 import { newTrail, registerPromptJump, startPromptJump } from './prompt-jump'
 import { registerReplyCopy } from './reply-copy'
 import { registerShowImage, startShowImage } from './show-image'
+import { registerToolDrawer, startToolDrawer } from './tool-drawer'
+import { registerTurnRule } from './turn-rule'
 
 // The reply's indent plus a margin column on each side.
 const GUTTER = 4
@@ -126,6 +128,9 @@ export const register: Register = (on, options) => {
   registerReplyCopy(on)
   const trail = newTrail()
   registerPromptJump(on, trail)
+  // After the prompt arrows, so the drawer draws above them.
+  registerToolDrawer(on, trail)
+  registerTurnRule(on, trail)
   registerShowImage(on)
 
   // A plugin hooks session.start once, so it starts each slice here.
@@ -133,6 +138,7 @@ export const register: Register = (on, options) => {
     const started = await next(e)
     startPromptJump($, trail)
     await startShowImage($)
+    await startToolDrawer($)
     return started
   })
 
