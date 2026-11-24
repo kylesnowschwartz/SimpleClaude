@@ -25,8 +25,12 @@ import {
   scopeText,
   backgroundNoteText,
   restoredCalls,
-  commandRow,
   cardParts,
+  commandBlock,
+  COMMAND_ROWS,
+  outputBlocks,
+  wrapCells,
+  bodyRows,
   elapsedCells,
   TOOL_ICON,
   copyText,
@@ -200,8 +204,9 @@ test('a call is kept running, then done with its output and duration', async ($,
   expect((await band.find({ key: 'tool-drawer:card:c1' }))?.props.label).toBe('▸ ✓ 󰯠  0.4s  ls')
 
   await band.press({ key: 'tool-drawer:card:c1' })
-  const rows = (await band.findAll({ type: 'Button' })).map(found => String(found.props.label)).filter(text => text.startsWith('┃'))
-  expect(rows).toEqual(['┃ $ ls', '┃ a', '┃ b', '┃ warn'])
+  expect(await band.find({ type: 'Code' })).toMatchObject({ props: { source: 'ls', language: 'bash' } })
+  expect(await band.find({ type: 'Text', text: 'a\nb\nwarn' })).toBeDefined()
+  expect(await band.findAll({ type: 'Button', text: '┃' })).toHaveLength(4)
   expect(await band.find({ type: 'Text', text: '$ ' })).toMatchObject({ props: { color: 'suggestion' } })
   expect(await band.find({ type: 'Text', text: 'ls' })).toMatchObject({ props: { color: 'suggestion' } })
 })
@@ -216,12 +221,13 @@ test('a failed call opens its own card; a refused one is declined', async ($, on
   const band = await mountBand($)
   expect((await band.find({ key: 'tool-drawer:toggle' }))?.props.label).toBe('▾ Tool Usage (1 failed · 1 declined · bash)')
   expect(String((await band.find({ key: 'tool-drawer:card:c1' }))?.props.label)).toMatch(/^▾ ✗ 󰯠/u)
-  expect(await band.find({ type: 'Button', text: '┃ boom' })).toBeDefined()
+  expect(await band.find({ type: 'Text', text: /(^|\n)boom(\n|$)/ })).toBeDefined()
   expect(await band.find({ type: 'Text', text: '✗' })).toMatchObject({ props: { color: 'error' } })
   expect(String((await band.find({ key: 'tool-drawer:card:c2' }))?.props.label)).toMatch(/^▸ ⊘ 󰯠/u)
   expect(await band.find({ type: 'Text', text: '⊘' })).toMatchObject({ props: { dimColor: true } })
+  expect(await band.find({ type: 'Text', text: /declined/ })).toBeUndefined()
   await band.press({ key: 'tool-drawer:card:c2' })
-  expect(await band.find({ type: 'Button', text: /^┃ .*declined/ })).toBeDefined()
+  expect(await band.find({ type: 'Text', text: /declined/ })).toBeDefined()
 })
 
 test('a failed card the person closed stays closed', async ($, on) => {
@@ -368,9 +374,9 @@ test('a card opens and closes on a press', async ($, on) => {
   const band = await mountBand($)
   await band.press({ key: 'tool-drawer:card:c1' })
   expect((await band.find({ key: 'tool-drawer:card:c1' }))?.props.label).toMatch(/^▾/)
-  expect(await band.find({ key: 'tool-drawer:body:c1:command' })).toBeDefined()
+  expect(await band.find({ key: 'tool-drawer:bar:c1:0' })).toBeDefined()
   await band.press({ key: 'tool-drawer:card:c1' })
-  expect(await band.find({ key: 'tool-drawer:body:c1:command' })).toBeUndefined()
+  expect(await band.find({ key: 'tool-drawer:bar:c1:0' })).toBeUndefined()
 })
 
 test('the drawer opens on a new turn’s first call until the person opens or closes it by hand', async ($, on) => {
@@ -503,10 +509,10 @@ test('durationText and cardText', () => {
 test('cardBody shows the last lines with a note of the earlier ones', () => {
   const lines = Array.from({ length: 40 }, (_, n) => `l${n}`)
   const body = cardBody(call({ output: lines, outputLineCount: 240 }), 80)
-  expect(body.command).toBe('┃ $ ls -la')
+  expect(body.commandRows).toEqual(['ls -la'])
   expect(body.lines).toHaveLength(30)
-  expect(body.lines[0]).toBe('┃ l10')
-  expect(body.earlierNote).toBe('┃ … 210 earlier lines')
+  expect(body.lines[0]).toBe('l10')
+  expect(body.earlierNote).toBe('… 210 earlier lines')
   expect(cardBody(call({ output: ['x'], outputLineCount: 1 }), 80).earlierNote).toBeUndefined()
 })
 
@@ -544,7 +550,7 @@ test('a 30-line body in a 12-row band leaves the rows beneath the drawer clear',
   expect(layoutRows(layout)).toBeLessThanOrEqual(room)
   // Frame, bar, card, command row, note, then the last lines.
   expect(layout.cards[0]?.bodyLines).toBe(room - 6)
-  expect(cardBody(longCall('a'), 80, room - 6).earlierNote).toBe(`┃ … ${30 - (room - 6)} earlier lines`)
+  expect(cardBody(longCall('a'), 80, room - 6).earlierNote).toBe(`… ${30 - (room - 6)} earlier lines`)
 })
 
 test('many cards in a small band show the newest under a note of the earlier ones', () => {
@@ -578,8 +584,8 @@ test('in a 12-row band the arrows stay under an expanded 30-line card', async ($
   const frame = frameIn(await band.drawn())
   expect(rowsOf(frame)).toBeGreaterThan(FRAME_ROWS)
   expect(rowsOf(frame)).toBeLessThanOrEqual(drawerRoom(12, 0))
-  expect(await band.find({ type: 'Button', text: '┃ line 29' })).toBeDefined()
-  expect(await band.find({ type: 'Button', text: '┃ line 0' })).toBeUndefined()
+  expect(await band.find({ type: 'Text', text: /(^|\n)line 29(\n|$)/ })).toBeDefined()
+  expect(await band.find({ type: 'Text', text: /(^|\n)line 0(\n|$)/ })).toBeUndefined()
 })
 
 // --- Room left by other plugins' band rows --------------------------------
@@ -631,7 +637,7 @@ test('with another plugin’s 3-row row in the band, the drawer and the arrows f
   const frame = frameIn(await band.drawn())
   expect(rowsOf(frame)).toBeGreaterThan(FRAME_ROWS)
   expect(rowsOf(frame) + ARROWS_ROWS + 3).toBeLessThanOrEqual(12)
-  expect(await band.find({ type: 'Button', text: '┃ line 29' })).toBeDefined()
+  expect(await band.find({ type: 'Text', text: /(^|\n)line 29(\n|$)/ })).toBeDefined()
 })
 
 // --- The running command on the bar ---------------------------------------
@@ -679,16 +685,6 @@ test('the open drawer is framed, in the running colour while a call runs and dim
 
 // --- Colour and copy --------------------------------------------------------
 
-test('commandRow colours the whole command on one line, cut with the bar and prompt', () => {
-  const row = commandRow(call({ command: 'git status --short\n| wc -l' }), 80)
-  expect(row.bar + row.prompt).toBe('┃ $ ')
-  expect(row.command.map(token => token.text).join('')).toBe('git status --short | wc -l')
-  expect(row.command.find(token => token.text === '--short')?.role).toBe('flag')
-  expect(row.command.find(token => token.text === 'wc')?.role).toBe('command')
-  const cut = commandRow(call({ command: 'git status --short' }), 10)
-  expect(cut.command.map(token => token.text).join('')).toBe('git s…')
-})
-
 test('a card shows the shell icon on each card, one cell wide, its command coloured', () => {
   expect(TOOL_ICON.codePointAt(0)).toBe(0xf0be0)
   const parts = cardParts(call({ status: 'done', durationMs: 0, command: 'pwd && ls' }), false, 0, 40)
@@ -697,26 +693,24 @@ test('a card shows the shell icon on each card, one cell wide, its command colou
   expect(cardText(call({ status: 'done', durationMs: 0, command: 'pwd && ls' }), false, 0, 40)).toBe(`▸ ✓ ${TOOL_ICON}  0.0s  pwd && ls`)
 })
 
-test('a click on an open card\'s body collapses it, the copy button still copies', async ($, on) => {
+test('a click on an open card\'s side bar collapses it; its text is no button; the copy button still copies', async ($, on) => {
   const world = session(on)
   await prompt($, 'p1')
   await finishCall(world, await startCall($, world, 'c1', 'ls'), 'c1', { stdout: 'a\nb\n' })
   const band = await mountBand($)
   await band.press({ key: 'tool-drawer:card:c1' })
-  expect(await band.find({ key: 'tool-drawer:body:c1:line:1' })).toBeDefined()
-  await band.press({ key: 'tool-drawer:body:c1:line:1' })
-  expect(await band.find({ key: 'tool-drawer:body:c1:line:1' })).toBeUndefined()
+  expect(await band.findAll({ type: 'Button', text: 'a\nb' })).toHaveLength(0)
+  expect(await band.find({ key: 'tool-drawer:copy:c1' })).toBeDefined()
+  await band.press({ key: 'tool-drawer:bar:c1:2' })
+  expect(await band.find({ key: 'tool-drawer:bar:c1:0' })).toBeUndefined()
   expect(await band.find({ key: 'tool-drawer:copy:c1' })).toBeUndefined()
-  await band.press({ key: 'tool-drawer:card:c1' })
-  await band.press({ key: 'tool-drawer:body:c1:command' })
-  expect(await band.find({ key: 'tool-drawer:body:c1:command' })).toBeUndefined()
 })
 
 test('a failed card draws its error text in the error colour', async ($, on) => {
   const world = session(on)
   await prompt($, 'p1')
   await finishCall(world, await startCall($, world, 'c1'), 'c1', { error: 'boom' })
-  expect(await (await mountBand($)).find({ type: 'Text', text: ' boom' })).toMatchObject({ props: { color: 'error' } })
+  expect(await (await mountBand($)).find({ type: 'Text', text: /(^|\n)boom(\n|$)/ })).toMatchObject({ props: { color: 'error' } })
 })
 
 test('an open card’s copy button copies the command and its output', async ($, on) => {
@@ -868,7 +862,7 @@ test('a command that ran and failed is failed however quickly it ended, and open
   const band = await mountBand($)
   expect((await band.find({ key: 'tool-drawer:toggle' }))?.props.label).toBe('▾ Tool Usage (1 failed · bash)')
   expect(String((await band.find({ key: 'tool-drawer:card:c1' }))?.props.label)).toMatch(/^▾ ✗ 󰯠/u)
-  expect(await band.find({ type: 'Text', text: ' ls: /nonexistent: No such file or directory' })).toMatchObject({ props: { color: 'error' } })
+  expect(await band.find({ type: 'Text', text: /(^|\n)ls: \/nonexistent: No such file or directory(\n|$)/ })).toMatchObject({ props: { color: 'error' } })
 })
 
 test('a command declined at the dialog never ran and is declined', async ($, on) => {
@@ -940,8 +934,8 @@ test('a command moved to the background shows ↗, counts apart and says where i
   expect((await band.find({ key: 'tool-drawer:card:c1' }))?.props.label).toBe('▸ ↗ 󰯠  npm run dev')
   expect(await band.find({ type: 'Text', text: '↗' })).toMatchObject({ props: { dimColor: true } })
   await band.press({ key: 'tool-drawer:card:c1' })
-  expect(await band.find({ type: 'Text', text: ` ${backgroundNoteText('b7')}` })).toMatchObject({ props: { dimColor: true } })
-  expect(await band.find({ type: 'Button', text: '┃ starting' })).toBeDefined()
+  expect(await band.find({ type: 'Text', text: backgroundNoteText('b7') })).toMatchObject({ props: { dimColor: true } })
+  expect(await band.find({ type: 'Text', text: /(^|\n)starting(\n|$)/ })).toBeDefined()
 })
 
 test('endingOf reads a background task id; a read-back call with one is in the background too', () => {
@@ -998,7 +992,7 @@ test('an open card without room for its body draws closed, never open and empty'
   // In a smaller band the oldest card, open, still shows with its body; closed cards give way.
   const band = await mountBand($, { maxRows: 9 })
   expect(String((await band.find({ key: 'tool-drawer:card:c1' }))?.props.label)).toMatch(/^▾/)
-  expect(await band.find({ key: 'tool-drawer:body:c1:command' })).toBeDefined()
+  expect(await band.find({ key: 'tool-drawer:bar:c1:0' })).toBeDefined()
   expect(await band.find({ key: 'tool-drawer:card:c2' })).toBeUndefined()
   expect(await band.find({ key: 'tool-drawer:card:c4' })).toBeDefined()
 
@@ -1021,4 +1015,54 @@ test('cards with and without a time start their commands at one column', () => {
   expect(a).toBe(`▸ ✓ ${TOOL_ICON}  5.9s  git status`)
   expect(b).toBe(`▸ ✓ ${TOOL_ICON}        ls`)
   expect(a.indexOf('git')).toBe(b.indexOf('ls'))
+})
+
+// --- The open card's command and output blocks ------------------------------
+
+test('wrapCells splits a line by cells and keeps an empty line as one row', () => {
+  expect(wrapCells('abcdefg', 3)).toEqual(['abc', 'def', 'g'])
+  expect(wrapCells('', 3)).toEqual([''])
+  expect(wrapCells('漢字漢', 3)).toEqual(['漢', '字', '漢'])
+})
+
+test('the command block keeps line breaks, wraps long lines, and stops at COMMAND_ROWS with a count of the rest', () => {
+  expect(commandBlock("python3 - <<'EOF'\nprint(1)\nEOF", 40)).toEqual({ rows: ["python3 - <<'EOF'", 'print(1)', 'EOF'], moreRows: 0 })
+  expect(commandBlock('x'.repeat(25), 12).rows).toEqual(['x'.repeat(10), 'x'.repeat(10), 'x'.repeat(5)])
+  const long = commandBlock(Array.from({ length: 12 }, (_, n) => `line ${n}`).join('\n'), 40)
+  expect(long.rows).toHaveLength(COMMAND_ROWS)
+  expect(long.moreRows).toBe(12 - COMMAND_ROWS)
+  const body = cardBody(call({ command: Array.from({ length: 12 }, (_, n) => `l${n}`).join('\n'), output: ['out'], outputLineCount: 1 }), 40)
+  expect(body.commandNote).toBe(`… ${12 - COMMAND_ROWS} more lines`)
+  expect(bodyRows(body)).toBe(COMMAND_ROWS + 1 + 1)
+})
+
+test('output blocks draw a diff hunk header as a plain row and recount a cut hunk', () => {
+  const lines = ['diff --git a/V b/V', '--- a/V', '+++ b/V', '@@ -1,5 +1,5 @@ top', ' a', '-b', '+c']
+  const blocks = outputBlocks(lines, { format: 'diff' })
+  expect(blocks).toEqual([
+    { lines: ['diff --git a/V b/V', '--- a/V', '+++ b/V', '@@ -1,5 +1,5 @@ top'] },
+    { source: '@@ -1,2 +1,2 @@ top\n a\n-b\n+c', language: { format: 'diff' } },
+  ])
+  expect(outputBlocks(['{"a": 1}'], { language: 'json' })).toEqual([{ source: '{"a": 1}', language: { language: 'json' } }])
+  expect(outputBlocks(['x'], undefined)).toEqual([{ lines: ['x'] }])
+})
+
+test('rowsOf counts a Code by its drawn lines: a diff\'s hunk headers take none', () => {
+  expect(rowsOf({ type: 'Code', props: { source: 'a\nb\nc' } })).toBe(3)
+  expect(rowsOf({ type: 'Code', props: { source: '@@ -1 +1 @@\n-a\n+b', format: 'diff' } })).toBe(2)
+  expect(rowsOf({ type: 'Box', props: { flexDirection: 'column' }, children: [{ type: 'Text', props: {}, children: ['x\ny'] }, { type: 'Code', props: { source: 'p\nq' } }] })).toBe(4)
+})
+
+test('an open card\'s bar has one row a body row, and the drawn body fits the band', async ($, on) => {
+  const world = session(on)
+  await prompt($, 'p1')
+  await finishCall(world, await startCall($, world, 'c1', "cat <<'EOF'\na\nb\nEOF"), 'c1', { stdout: Array.from({ length: 40 }, (_, n) => `l${n}`).join('\n') })
+  const band = await mountBand($, { maxRows: 16 })
+  await band.press({ key: 'tool-drawer:card:c1' })
+  const bars = await band.findAll({ type: 'Button', text: '┃' })
+  const frame = frameIn(await band.drawn())
+  expect(rowsOf(frame)).toBeLessThanOrEqual(drawerRoom(16, 0))
+  // Frame, bar line and card row, then one bar row per body row.
+  expect(bars.length).toBe(rowsOf(frame) - FRAME_ROWS - 2)
+  expect(await band.find({ type: 'Code' })).toMatchObject({ props: { source: "cat <<'EOF'\na\nb\nEOF", language: 'bash', wrap: 'truncate-end' } })
 })

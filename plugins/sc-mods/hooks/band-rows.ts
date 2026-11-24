@@ -24,10 +24,20 @@ function textLines(element: Drawn): number {
 }
 
 /**
+ * The rows a Code drawn with `wrap: 'truncate-end'` takes: one a source line,
+ * less, under `format: 'diff'`, the hunk headers, which draw no row.
+ */
+function codeRows(props: Record<string, unknown>): number {
+  if (typeof props.source !== 'string') return 1
+  const lines = props.source.split('\n')
+  return props.format === 'diff' ? lines.filter(line => !line.startsWith('@@ ')).length : lines.length
+}
+
+/**
  * The rows a drawn tree takes: a column Box sums its children and the gaps
  * between them, a row Box (the default direction) takes the tallest, each
  * plus its padding, margin and border; a fixed height wins; a Text counts its
- * lines; a hidden Box takes none; anything else counts as one row.
+ * lines; a Code counts its drawn lines; a hidden Box takes none; anything else counts as one row.
  */
 export function rowsOf(tree: unknown): number {
   if (tree === null || tree === undefined || tree === false) return 0
@@ -38,6 +48,7 @@ export function rowsOf(tree: unknown): number {
   const element = tree as Drawn
   const props = element.props ?? {}
   if (element.type === 'Text') return textLines(element)
+  if (element.type === 'Code') return codeRows(props)
   if (element.type !== 'Box') return 1
   if (props.display === 'none') return 0
 

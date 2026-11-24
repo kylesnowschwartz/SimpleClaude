@@ -2,7 +2,8 @@ import { atom, read, update } from 'claude-code'
 import type { ElementConstructor, EngineInterface, On, TextHoverProps, TextProps, RenderSurface, Timer, ToolCallResult } from 'claude-code'
 import type { DrawerScope, DrawerView, HeldCall, HeldCallStatus } from '../types'
 import { rowsOf } from './band-rows'
-import { cells, cleanLine, cleanText, fit } from './drawer-text'
+import { cells, cleanLine, cleanText, fit, headOf } from './drawer-text'
+import { outputLanguage, type OutputLanguage } from './output-language'
 import { fitTokens, isDimRole, SHELL_ROLE_COLOR, shellTokens, tokenCells, type ShellToken } from './shell-colors'
 import { newestPromptId, readStoredPrompts, readTurnOn, type PromptTrail, type TurnOn } from './prompt-jump'
 
@@ -227,32 +228,79 @@ export function cardText(call: HeldCall, isExpanded: boolean, now: number, width
   return parts.caret + parts.mark + parts.head + parts.command.map(token => token.text).join('')
 }
 
+/** The most rows an open card's command takes; past them a dim note counts the rest. */
+export const COMMAND_ROWS = 8
+/** The cells the open card's `┃` bar and the gap after it take. */
+export const BAR_CELLS = 2
+/** The cells before each command row: `$ ` on the first, two spaces under it. */
+const PROMPT_CELLS = 2
+/** The width the body layout assumes when none is given: each source line one row. */
+const UNBOUNDED = 100_000
+
+/** The line split into rows of at most `width` cells; an empty line is one empty row. */
+export function wrapCells(line: string, width: number): string[] {
+  if (width <= 0) return [line]
+  const rows: string[] = []
+  let rest = line
+  do {
+    const head = headOf(rest, width)
+    // A character wider than the row still moves on.
+    const taken = head === '' ? [...rest][0] ?? '' : head
+    rows.push(taken)
+    rest = rest.slice(taken.length)
+  } while (rest !== '')
+  return rows
+}
+
+/** An open card's command as its rows show it: each line wrapped to `width` cells, at most COMMAND_ROWS, and how many rows are left out. */
+export function commandBlock(command: string, width: number): { rows: string[]; moreRows: number } {
+  const all = command.split('\n').flatMap(line => wrapCells(line, width - PROMPT_CELLS))
+  return { rows: all.slice(0, COMMAND_ROWS), moreRows: Math.max(0, all.length - COMMAND_ROWS) }
+}
+
+/** `… 3 more lines`: the command rows a body leaves out. */
+const moreLinesText = (count: number) => `${ELLIPSIS} ${count} more line${count === 1 ? '' : 's'}`
+
+/** What an open card's body draws beside its `┃` bar, each row cut to the content width. */
+export type CardBody = {
+  /** The command's rows, wrapped, under the `$ ` prompt. */
+  commandRows: string[]
+  /** The dim note of the command rows left out. */
+  commandNote: string | undefined
+  backgroundNote: string | undefined
+  earlierNote: string | undefined
+  /** The output's shown lines, each one row. */
+  lines: string[]
+}
+
+/** The rows a body takes: its command rows and notes and its shown output lines. */
+export const bodyRows = (body: CardBody) =>
+  body.commandRows.length + (body.commandNote === undefined ? 0 : 1) + (body.backgroundNote === undefined ? 0 : 1) + (body.earlierNote === undefined ? 0 : 1) + body.lines.length
+
 /**
- * An expanded card's body: `┃ $ <command>`, a dim note of the lines left out,
- * then the last `shownLines` output lines (at most SHOWN_LINES), each
- * `┃ `-prefixed and cut to `width`.
+ * An expanded card's body beside its bar, in `width` cells counting the bar:
+ * the command wrapped over up to COMMAND_ROWS rows with a dim note of the
+ * rest, the background note, a dim note of the output lines left out, then
+ * the last `shownLines` output lines (at most SHOWN_LINES), each cut to one row.
  */
-export function cardBody(
-  call: HeldCall,
-  width: number,
-  shownLines = SHOWN_LINES,
-): { command: string; backgroundNote: string | undefined; earlierNote: string | undefined; lines: string[] } {
+export function cardBody(call: HeldCall, width: number, shownLines = SHOWN_LINES): CardBody {
+  const content = width - BAR_CELLS
   const count = Math.max(0, Math.min(shownLines, SHOWN_LINES))
   const lines = count === 0 ? [] : call.output.slice(-count)
   const earlier = call.outputLineCount - lines.length
+  const command = commandBlock(call.command, content)
   return {
-    command: fit(`┃ $ ${call.command.replace(/\n/g, ' ')}`, width),
-    backgroundNote: call.status === 'background' ? fit(`┃ ${backgroundNoteText(call.backgroundTaskId)}`, width) : undefined,
-    earlierNote: earlier > 0 ? fit(`┃ ${ELLIPSIS} ${earlier} earlier line${earlier === 1 ? '' : 's'}`, width) : undefined,
-    lines: lines.map(line => fit(`┃ ${line}`, width)),
+    commandRows: command.rows,
+    commandNote: command.moreRows > 0 ? fit(moreLinesText(command.moreRows), content) : undefined,
+    backgroundNote: call.status === 'background' ? fit(backgroundNoteText(call.backgroundTaskId), content) : undefined,
+    earlierNote: earlier > 0 ? fit(`${ELLIPSIS} ${earlier} earlier line${earlier === 1 ? '' : 's'}`, content) : undefined,
+    lines: lines.map(line => headOf(line, content)),
   }
 }
 
 /** What an open card of a call in the background says of it. */
 export const backgroundNoteText = (taskId: string) => `Runs in the background as task ${taskId}; its output arrives in the conversation.`
 
-/** The rows a body takes beside its command row and output lines: the background note and the earlier-lines note. */
-const bodyNoteRows = (call: HeldCall, lines: number) => (call.status === 'background' ? 1 : 0) + (call.outputLineCount > lines ? 1 : 0)
 
 /** Rows of this plugin's band row under the drawer: the prompt arrows. */
 export const ARROWS_ROWS = 1
@@ -271,10 +319,10 @@ export type CardRoom = { call: HeldCall; bodyLines: number | undefined }
 /** What the open drawer shows in the rows it has: the cards, and how many older calls the dim note counts. */
 export type DrawerLayout = { cards: CardRoom[]; earlierCalls: number }
 
-/** The most output lines a body shows in `rows`, with its command row and its note when lines are left out; undefined when not even the command fits. */
-function bodyLinesIn(call: HeldCall, rows: number): number | undefined {
+/** The most output lines a body shows in `rows`, with its command rows and its notes; undefined when not even the command fits. */
+function bodyLinesIn(call: HeldCall, rows: number, width: number): number | undefined {
   for (let lines = Math.min(SHOWN_LINES, call.output.length); lines >= 0; lines -= 1) {
-    if (1 + lines + bodyNoteRows(call, lines) <= rows) return lines
+    if (bodyRows(cardBody(call, width, lines)) <= rows) return lines
   }
   return undefined
 }
@@ -291,7 +339,7 @@ export const FRAME_ROWS = 2
  * Without room for the frame, the bar and one card, the bar shows alone,
  * unframed.
  */
-export function drawerLayout(calls: readonly HeldCall[], expanded: readonly string[], rows: number): DrawerLayout {
+export function drawerLayout(calls: readonly HeldCall[], expanded: readonly string[], rows: number, width = UNBOUNDED): DrawerLayout {
   const cardRows = rows - FRAME_ROWS - 1
   if (cardRows < 1 || calls.length === 0) return { cards: [], earlierCalls: 0 }
 
@@ -302,10 +350,10 @@ export function drawerLayout(calls: readonly HeldCall[], expanded: readonly stri
     if (call === undefined) continue
     // A row stays for the note while other cards are left to list.
     const noteRow = calls.length - bodyLines.size - 1 > 0 ? 1 : 0
-    const lines = bodyLinesIn(call, cardRows - used - 1 - noteRow)
+    const lines = bodyLinesIn(call, cardRows - used - 1 - noteRow, width)
     if (lines === undefined) continue
     bodyLines.set(call.id, lines)
-    used += 2 + lines + bodyNoteRows(call, lines)
+    used += 1 + bodyRows(cardBody(call, width, lines))
   }
 
   const others = calls.filter(call => !bodyLines.has(call.id))
@@ -321,11 +369,6 @@ export function drawerLayout(calls: readonly HeldCall[], expanded: readonly stri
 
 /** `… 3 earlier calls`, cut to `width`. */
 export const earlierCallsText = (count: number, width: number) => fit(`${ELLIPSIS} ${count} earlier call${count === 1 ? '' : 's'}`, width)
-
-/** A body's command row in its drawn parts: the `┃ ` bar, the `$ ` prompt, and the whole command on one line, coloured and cut to `width` cells with them. */
-export function commandRow(call: HeldCall, width: number): { bar: string; prompt: string; command: ShellToken[] } {
-  return { bar: '┃ ', prompt: '$ ', command: fitTokens(shellTokens(call.command.replace(/\n/g, ' ')), width - 4) }
-}
 
 /** What a card's copy button puts on the clipboard: `$ <command>`, then the output it kept. */
 export const copyText = (call: HeldCall): string => [`$ ${call.command}`, ...call.output].join('\n')
@@ -641,13 +684,14 @@ export function registerToolDrawer(on: On, trail: PromptTrail) {
     const beneath = await next(e)
     const isRunning = shown.some(call => call.status === 'running')
     const scope = scopeText(view.scope, turn)
-    const layout = view.isOpen ? drawerLayout(shown, view.expanded, drawerRoom(e.props.maxRows, await read($, OTHER_BAND_ROWS))) : { cards: [], earlierCalls: 0 }
+    // Inside the frame, the border and its padding take two cells a side.
+    const framedWidth = e.props.bodyColumns - 2 - 2 * FRAME_PADDING
+    const layout = view.isOpen ? drawerLayout(shown, view.expanded, drawerRoom(e.props.maxRows, await read($, OTHER_BAND_ROWS)), framedWidth) : { cards: [], earlierCalls: 0 }
     const isFramed = layout.cards.length > 0
     const timeCells = elapsedCells(layout.cards.map(card => card.call), now)
-    // Inside the frame, the border and its padding take two cells a side.
-    const width = isFramed ? e.props.bodyColumns - 2 - 2 * FRAME_PADDING : e.props.bodyColumns
+    const width = isFramed ? framedWidth : e.props.bodyColumns
     const bar = barTexts(`${view.isOpen ? '▾' : '▸'} ${summaryText(shown)}`, runningText(shown, now), scope, width, view.isOpen && !isFramed ? NO_ROOM_NOTE : undefined)
-    const { Box, Button, Text } = $.ui.resolve(e)
+    const { Box, Button, Code, Text } = $.ui.resolve(e)
     return (
       <Box flexDirection="column">
         {beneath}
@@ -680,15 +724,7 @@ export function registerToolDrawer(on: On, trail: PromptTrail) {
             // An open card's copy button sits on its row, after a gap.
             const parts = cardParts(call, body !== undefined, now, body === undefined ? width : width - cells(COPY_LABEL) - 1, timeCells)
             const label = parts.caret + parts.mark + parts.head + parts.command.map(token => token.text).join('')
-            const command = body === undefined ? undefined : commandRow(call, width)
             const collapse = () => toggleCard($, call.id)
-            const bar = <Text color={BAR_COLOR} hover={quiet}>┃</Text>
-            const bodyRow = (key: string, text: string, style: { color?: string; dimColor?: boolean }) => (
-              <Button key={`tool-drawer:body:${call.id}:${key}`} plain label={text} onPress={collapse} hover={quiet}>
-                {bar}
-                <Text {...style} hover={quiet}>{text.slice(1)}</Text>
-              </Button>
-            )
             return (
               <Box key={`tool-drawer:call:${call.id}`} flexDirection="column">
                 <Box flexDirection="row" columnGap={1}>
@@ -709,17 +745,31 @@ export function registerToolDrawer(on: On, trail: PromptTrail) {
                     <Button key={`tool-drawer:copy:${call.id}`} plain dimColor label={COPY_LABEL} onPress={press => copyCall($, call, press.surface)} />
                   )}
                 </Box>
-                {body === undefined || command === undefined ? null : (
-                  <Box flexDirection="column">
-                    <Button key={`tool-drawer:body:${call.id}:command`} plain label={body.command} onPress={collapse} hover={quiet}>
-                      {bar}
-                      {' '}
-                      <Text color={ACCENT_COLOR} hover={quiet}>{command.prompt}</Text>
-                      {tokenSpans(Text, command.command, quiet)}
-                    </Button>
-                    {body.backgroundNote === undefined ? null : bodyRow('background', body.backgroundNote, { dimColor: true })}
-                    {body.earlierNote === undefined ? null : bodyRow('earlier', body.earlierNote, { dimColor: true })}
-                    {body.lines.map((line, index) => bodyRow(`line:${index}`, line, call.status === 'error' ? { color: ERROR_COLOR } : {}))}
+                {body === undefined ? null : (
+                  <Box flexDirection="row" columnGap={1}>
+                    <Box flexDirection="column">
+                      {Array.from({ length: bodyRows(body) }, (_, index) => (
+                        <Button key={`tool-drawer:bar:${call.id}:${index}`} plain label="┃" onPress={collapse} hover={quiet}>
+                          <Text color={BAR_COLOR} hover={quiet}>┃</Text>
+                        </Button>
+                      ))}
+                    </Box>
+                    <Box flexDirection="column">
+                      <Box flexDirection="row">
+                        <Text color={ACCENT_COLOR}>{['$ ', ...body.commandRows.slice(1).map(() => '  ')].join('\n')}</Text>
+                        <Code source={body.commandRows.join('\n')} language="bash" wrap="truncate-end" />
+                      </Box>
+                      {body.commandNote === undefined ? null : <Text dimColor>{body.commandNote}</Text>}
+                      {body.backgroundNote === undefined ? null : <Text dimColor>{body.backgroundNote}</Text>}
+                      {body.earlierNote === undefined ? null : <Text dimColor>{body.earlierNote}</Text>}
+                      {outputBlocks(body.lines, outputLanguage(call.command, call.output, call.status === 'error')).map(block =>
+                        'lines' in block ? (
+                          <Text {...(call.status === 'error' ? { color: ERROR_COLOR } : {})}>{block.lines.join('\n')}</Text>
+                        ) : (
+                          <Code source={block.source} wrap="truncate-end" {...block.language} />
+                        ),
+                      )}
+                    </Box>
                   </Box>
                 )}
               </Box>
@@ -729,6 +779,57 @@ export function registerToolDrawer(on: On, trail: PromptTrail) {
       </Box>
     )
   })
+}
+
+/** One run of an open card's output, one row a shown line: plain lines, or a source the engine highlights. */
+export type OutputBlock = { lines: string[] } | { source: string; language: OutputLanguage }
+
+const HUNK_COUNTS = /^@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@(.*)$/
+
+/**
+ * The shown output lines in the runs they draw in, one row a line. A diff
+ * draws each hunk header as a plain row, then the hunk's lines as a diff
+ * whose header counts the lines shown (the engine draws no row for a hunk
+ * header); every other line is plain. Any other language draws all lines.
+ */
+export function outputBlocks(lines: readonly string[], language: OutputLanguage | undefined): OutputBlock[] {
+  if (lines.length === 0) return []
+  if (language === undefined) return [{ lines: [...lines] }]
+  if (!('format' in language)) return [{ source: lines.join('\n'), language }]
+  const blocks: OutputBlock[] = []
+  const plain = (line: string) => {
+    const last = blocks.at(-1)
+    if (last !== undefined && 'lines' in last) last.lines.push(line)
+    else blocks.push({ lines: [line] })
+  }
+  for (let index = 0; index < lines.length; ) {
+    const line = lines[index] ?? ''
+    const counts = HUNK_COUNTS.exec(line)
+    index += 1
+    if (counts === null) {
+      plain(line)
+      continue
+    }
+    let oldLeft = Number(counts[2] ?? '1')
+    let newLeft = Number(counts[4] ?? '1')
+    const body: string[] = []
+    while (index < lines.length && (oldLeft > 0 || newLeft > 0)) {
+      const next = lines[index] ?? ''
+      const mark = next[0] ?? ' '
+      if (mark !== ' ' && mark !== '-' && mark !== '+' && next !== '') break
+      if (mark !== '+') oldLeft -= 1
+      if (mark !== '-') newLeft -= 1
+      body.push(next === '' ? ' ' : next)
+      index += 1
+    }
+    plain(line)
+    if (body.length === 0) continue
+    const oldCount = body.filter(one => !one.startsWith('+')).length
+    const newCount = body.filter(one => !one.startsWith('-')).length
+    const header = `@@ -${counts[1]},${oldCount} +${counts[3]},${newCount} @@${counts[5] ?? ''}`
+    blocks.push({ source: [header, ...body].join('\n'), language })
+  }
+  return blocks
 }
 
 /** A command's parts as coloured Text spans, each taking `hover`'s one colour while its row is under the pointer. */
