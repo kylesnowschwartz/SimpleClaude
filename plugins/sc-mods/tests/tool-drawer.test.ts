@@ -22,6 +22,8 @@ import {
   drawerRoom,
   otherRowsOf,
   scopeText,
+  commandSegments,
+  copyText,
   runningText,
   barTexts,
   SHOWN_LINES,
@@ -32,6 +34,7 @@ import {
 } from '../hooks/tool-drawer'
 import { turnRuleText } from '../hooks/turn-rule'
 import { rowsOf } from '../hooks/band-rows'
+import { recordToasts } from './support'
 
 const BAND = {
   hasSurvey: false,
@@ -45,8 +48,17 @@ const BAND = {
 
 const COMPOSER: PromptOrigin = { kind: 'composer' }
 const ENGINE = { type: 'Text', text: 'engine' }
-// A card's mark is a Text inside its Button, on the card's row.
-const MARKS = ['✓', '✗', '⊘', '■', '…']
+/** The drawer's framed block in a drawn band. */
+function frameIn(tree: unknown): unknown {
+  if (tree === null || typeof tree !== 'object') return undefined
+  const element = tree as { props?: Record<string, unknown>; children?: unknown[] }
+  if (element.props?.borderStyle === 'round') return element
+  for (const child of element.children ?? []) {
+    const found = frameIn(child)
+    if (found !== undefined) return found
+  }
+  return undefined
+}
 
 // --- The session beneath the plugin ---------------------------------------
 
@@ -167,7 +179,8 @@ test('a call is kept running, then done with its output and duration', async ($,
 
   await band.press({ key: 'tool-drawer:card:c1' })
   const texts = (await band.findAll({ type: 'Text' })).map(found => found.text)
-  expect(texts.filter(text => text.startsWith('┃'))).toEqual(['┃ $ ls', '┃ a', '┃ b', '┃ warn'])
+  expect(texts.filter(text => text.startsWith('┃'))).toEqual(['┃ ', '┃ a', '┃ b', '┃ warn'])
+  expect(await band.find({ type: 'Text', text: '$ ls' })).toMatchObject({ props: { color: 'suggestion' } })
 })
 
 test('a failed call opens its own card; a refused one is declined', async ($, on) => {
@@ -332,9 +345,9 @@ test('a card opens and closes on a press', async ($, on) => {
   const band = await mountBand($)
   await band.press({ key: 'tool-drawer:card:c1' })
   expect((await band.find({ key: 'tool-drawer:card:c1' }))?.props.label).toMatch(/^▾/)
-  expect(await band.find({ type: 'Text', text: '┃ $ ls' })).toBeDefined()
+  expect(await band.find({ type: 'Text', text: '$ ls' })).toBeDefined()
   await band.press({ key: 'tool-drawer:card:c1' })
-  expect(await band.find({ type: 'Text', text: '┃ $ ls' })).toBeUndefined()
+  expect(await band.find({ type: 'Text', text: '$ ls' })).toBeUndefined()
 })
 
 test('the drawer opens on a new turn’s first call until the person opens or closes it by hand', async ($, on) => {
@@ -537,11 +550,9 @@ test('in a 12-row band the arrows stay under an expanded 30-line card', async ($
   await finishCall(world, await startCall($, world, 'c1', 'seq 30'), 'c1', { stdout: out })
   const band = await mountBand($, { maxRows: 12, scroll: { offset: 0, bodyRows: 11 } })
   await band.press({ key: 'tool-drawer:card:c1' })
-  // One element a row: the scope button shares the bar's row; the arrows' row and the engine's drawing are beneath the drawer.
-  const drawerRows = (await band.findAll({}))
-    .filter(found => found.type === 'Text' || found.type === 'Button')
-    .filter(found => found.key !== 'tool-drawer:scope' && !String(found.key ?? '').startsWith('prompt-jump') && found.text !== 'Turn 1/1' && found.text !== 'engine' && !MARKS.includes(found.text))
-  expect(drawerRows.length + FRAME_ROWS).toBeLessThanOrEqual(drawerRoom(12, 0))
+  const frame = frameIn(await band.drawn())
+  expect(rowsOf(frame)).toBeGreaterThan(FRAME_ROWS)
+  expect(rowsOf(frame)).toBeLessThanOrEqual(drawerRoom(12, 0))
   expect(await band.find({ type: 'Text', text: '┃ line 29' })).toBeDefined()
   expect(await band.find({ type: 'Text', text: '┃ line 0' })).toBeUndefined()
 })
@@ -592,10 +603,9 @@ test('with another plugin’s 3-row row in the band, the drawer and the arrows f
 
   const band = await mountBand($, { maxRows: 12, scroll: { offset: 0, bodyRows: 11 } })
   await band.press({ key: 'tool-drawer:card:c1' })
-  const drawerRows = (await band.findAll({}))
-    .filter(found => found.type === 'Text' || found.type === 'Button')
-    .filter(found => found.key !== 'tool-drawer:scope' && !String(found.key ?? '').startsWith('prompt-jump') && found.text !== 'Turn 1/1' && found.text !== 'engine' && !MARKS.includes(found.text))
-  expect(drawerRows.length + FRAME_ROWS + ARROWS_ROWS + 3).toBeLessThanOrEqual(12)
+  const frame = frameIn(await band.drawn())
+  expect(rowsOf(frame)).toBeGreaterThan(FRAME_ROWS)
+  expect(rowsOf(frame) + ARROWS_ROWS + 3).toBeLessThanOrEqual(12)
   expect(await band.find({ type: 'Text', text: '┃ line 29' })).toBeDefined()
 })
 
@@ -640,4 +650,49 @@ test('the open drawer is framed, in the running colour while a call runs and dim
   expect(await frameOf()).toContain('"borderDimColor":true')
   await band.press({ key: 'tool-drawer:toggle' })
   expect(await frameOf()).toBeUndefined()
+})
+
+// --- Colour and copy --------------------------------------------------------
+
+test('commandSegments splits a command row for its accent colour', () => {
+  expect(commandSegments('┃ $ git status --short')).toEqual({ gutter: '┃ ', program: '$ git', rest: ' status --short' })
+  expect(commandSegments('┃ $ ')).toEqual({ gutter: '┃ ', program: '$ ', rest: '' })
+})
+
+test('a failed card draws its error text in the error colour', async ($, on) => {
+  const world = session(on)
+  await prompt($, 'p1')
+  await finishCall(world, await startCall($, world, 'c1'), 'c1', { error: 'boom' })
+  expect(await (await mountBand($)).find({ type: 'Text', text: '┃ boom' })).toMatchObject({ props: { color: 'error' } })
+})
+
+test('an open card’s copy button copies the command and its output', async ($, on) => {
+  const world = session(on)
+  const copied: string[] = []
+  on('ui.copy', async (_$, e) => {
+    copied.push(e.text)
+    return { value: { isCopied: true } }
+  })
+  const toasts = recordToasts(on)
+  await prompt($, 'p1')
+  await finishCall(world, await startCall($, world, 'c1', 'ls'), 'c1', { stdout: 'a\nb\n' })
+  const band = await mountBand($)
+  expect(await band.find({ key: 'tool-drawer:copy:c1' })).toBeUndefined()
+  await band.press({ key: 'tool-drawer:card:c1' })
+  await band.press({ key: 'tool-drawer:copy:c1' })
+  expect(copied).toEqual(['$ ls\na\nb'])
+  expect(toasts).toEqual(['Copied the command and its output'])
+  expect(copyText(call({ command: 'x', output: [] }))).toBe('$ x')
+})
+
+test('a refused copy says why', async ($, on) => {
+  const world = session(on)
+  on('ui.copy', async () => ({ value: { isCopied: false, reason: 'no-clipboard' as const } }))
+  const toasts = recordToasts(on)
+  await prompt($, 'p1')
+  await finishCall(world, await startCall($, world, 'c1', 'ls'), 'c1')
+  const band = await mountBand($)
+  await band.press({ key: 'tool-drawer:card:c1' })
+  await band.press({ key: 'tool-drawer:copy:c1' })
+  expect(toasts).toEqual(['Copy failed: no-clipboard'])
 })

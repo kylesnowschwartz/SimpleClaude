@@ -1,5 +1,5 @@
 import { atom, read, update } from 'claude-code'
-import type { EngineInterface, On, Timer, ToolCallResult } from 'claude-code'
+import type { EngineInterface, On, RenderSurface, Timer, ToolCallResult } from 'claude-code'
 import type { DrawerScope, DrawerView, HeldCall, HeldCallStatus } from '../types'
 import { rowsOf } from './band-rows'
 import { cells, cleanLine, cleanText, fit } from './drawer-text'
@@ -22,6 +22,10 @@ export const SHOWN_LINES = 30
 const TICK_MS = 1000
 /** The theme colour of a running call's dot. */
 const RUNNING_COLOR = 'warning'
+/** The theme colours of a command's program name and of a failed call's error text. */
+const ACCENT_COLOR = 'suggestion'
+const ERROR_COLOR = 'error'
+const COPY_LABEL = '⧉ copy'
 /** The cells between the drawer's border and its text on each side. */
 const FRAME_PADDING = 1
 const ELLIPSIS = '…'
@@ -154,7 +158,7 @@ const STATUS_MARK: Record<HeldCallStatus, string> = { running: ELLIPSIS, done: '
 
 /** How a card's mark is drawn: a failure in the error colour, a declined or interrupted call dim, the rest as the line. */
 export const markStyle = (status: HeldCallStatus): { color?: string; dimColor?: boolean } =>
-  status === 'error' ? { color: 'error' } : status === 'declined' || status === 'interrupted' ? { dimColor: true } : {}
+  status === 'error' ? { color: ERROR_COLOR } : status === 'declined' || status === 'interrupted' ? { dimColor: true } : {}
 
 /** A card's line: `▸ ✓ bash 0.4s  <first line of the command>`, cut to `width`; a running call shows its seconds so far. */
 export function cardText(call: HeldCall, isExpanded: boolean, now: number, width: number): string {
@@ -239,6 +243,20 @@ export function drawerLayout(calls: readonly HeldCall[], expanded: readonly stri
 
 /** `… 3 earlier calls`, cut to `width`. */
 export const earlierCallsText = (count: number, width: number) => fit(`${ELLIPSIS} ${count} earlier call${count === 1 ? '' : 's'}`, width)
+
+/**
+ * A body's command row in its three drawn parts: the `┃ ` gutter, the `$` and
+ * the program's name (drawn in the accent colour), and the rest.
+ */
+export function commandSegments(row: string): { gutter: string; program: string; rest: string } {
+  const gutter = row.startsWith('┃ ') ? '┃ ' : ''
+  const after = row.slice(gutter.length)
+  const program = /^\$ \S*/.exec(after)?.[0] ?? ''
+  return { gutter, program, rest: after.slice(program.length) }
+}
+
+/** What a card's copy button puts on the clipboard: `$ <command>`, then the output it kept. */
+export const copyText = (call: HeldCall): string => [`$ ${call.command}`, ...call.output].join('\n')
 
 /** Whether the drawer holds the call in place of its rows: it is on and keeps the call. */
 export const isHeld = (view: DrawerView, calls: readonly HeldCall[], id: string | undefined) =>
@@ -327,6 +345,11 @@ function markInterrupted($: EngineInterface, id: string, calls: readonly HeldCal
 /** Whether the drawer holds the call now, read while drawing so a call's start or end draws the row again. */
 async function holds($: EngineInterface, id: string | undefined): Promise<boolean> {
   return isHeld(await read($, DRAWER_VIEW), await read($, HELD_CALLS), id)
+}
+
+async function copyCall($: EngineInterface, call: HeldCall, surface: RenderSurface) {
+  const result = await $.ui.copy({ text: copyText(call), surface })
+  $.ui.toast(result.isCopied ? 'Copied the command and its output' : `Copy failed: ${result.reason}`)
 }
 
 const press = ($: EngineInterface, change: (view: DrawerView) => DrawerView) => update($, DRAWER_VIEW, change)
@@ -466,26 +489,37 @@ export function registerToolDrawer(on: On, trail: PromptTrail) {
           {layout.cards.map(({ call, bodyLines }) => {
             const isExpanded = view.expanded.includes(call.id)
             const body = bodyLines === undefined ? undefined : cardBody(call, width, bodyLines)
-            const label = cardText(call, isExpanded, now, width)
+            // An open card's copy button sits on its row, after a gap.
+            const label = cardText(call, isExpanded, now, body === undefined ? width : width - cells(COPY_LABEL) - 1)
+            const command = body === undefined ? undefined : commandSegments(body.command)
             return (
               <Box key={`tool-drawer:call:${call.id}`} flexDirection="column">
-                <Button
-                  key={`tool-drawer:card:${call.id}`}
-                  plain
-                  dimColor={call.status === 'done'}
-                  label={label}
-                  onPress={() => press($, current => toggleExpanded(current, call.id))}
-                >
-                  {label.slice(0, 2)}
-                  <Text {...markStyle(call.status)}>{label.slice(2, 3)}</Text>
-                  {label.slice(3)}
-                </Button>
-                {body === undefined ? null : (
+                <Box flexDirection="row" columnGap={1}>
+                  <Button
+                    key={`tool-drawer:card:${call.id}`}
+                    plain
+                    dimColor={call.status === 'done'}
+                    label={label}
+                    onPress={() => press($, current => toggleExpanded(current, call.id))}
+                  >
+                    {label.slice(0, 2)}
+                    <Text {...markStyle(call.status)}>{label.slice(2, 3)}</Text>
+                    {label.slice(3)}
+                  </Button>
+                  {body === undefined ? null : (
+                    <Button key={`tool-drawer:copy:${call.id}`} plain dimColor label={COPY_LABEL} onPress={press => copyCall($, call, press.surface)} />
+                  )}
+                </Box>
+                {body === undefined || command === undefined ? null : (
                   <Box flexDirection="column">
-                    <Text>{body.command}</Text>
+                    <Box flexDirection="row">
+                      <Text>{command.gutter}</Text>
+                      <Text color={ACCENT_COLOR}>{command.program}</Text>
+                      <Text>{command.rest}</Text>
+                    </Box>
                     {body.earlierNote === undefined ? null : <Text dimColor>{body.earlierNote}</Text>}
                     {body.lines.map(line => (
-                      <Text>{line}</Text>
+                      <Text {...(call.status === 'error' ? { color: ERROR_COLOR } : {})}>{line}</Text>
                     ))}
                   </Box>
                 )}
