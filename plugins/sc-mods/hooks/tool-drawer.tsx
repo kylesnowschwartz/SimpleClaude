@@ -3,7 +3,7 @@ import type { EngineInterface, On, RenderSurface, Timer, ToolCallResult } from '
 import type { DrawerScope, DrawerView, HeldCall, HeldCallStatus } from '../types'
 import { rowsOf } from './band-rows'
 import { cells, cleanLine, cleanText, fit } from './drawer-text'
-import { newestPromptId, readTurnOn, type PromptTrail, type TurnOn } from './prompt-jump'
+import { newestPromptId, readStoredPrompts, readTurnOn, type PromptTrail, type TurnOn } from './prompt-jump'
 
 /** The one tool whose calls the drawer holds. */
 export const DRAWER_TOOL = 'Bash'
@@ -33,7 +33,7 @@ const FRAME_PADDING = 1
 const ELLIPSIS = '…'
 
 // Change a tag when its value's fields change: it declines what an earlier version stored.
-const HELD_CALLS = atom({ plugin: 'sc-mods', key: 'heldCalls' } as const, [], { shape: 'held-calls-2' })
+const HELD_CALLS = atom({ plugin: 'sc-mods', key: 'heldCalls' } as const, [], { shape: 'held-calls-3' })
 export const NEW_VIEW: DrawerView = { isOn: true, isOpen: false, isSetByHand: false, scope: 'turn', expanded: [], collapsed: [] }
 const DRAWER_VIEW = atom({ plugin: 'sc-mods', key: 'drawerView' } as const, NEW_VIEW, { shape: 'drawer-view-2' })
 /** The time a running card's elapsed seconds count to, moved on each second while a call runs. */
@@ -164,9 +164,9 @@ export const markStyle = (status: HeldCallStatus): { color?: string; dimColor?: 
 
 /** A card's line: `▸ ✓ bash 0.4s  <first line of the command>`, cut to `width`; a running call shows its seconds so far. */
 export function cardText(call: HeldCall, isExpanded: boolean, now: number, width: number): string {
-  const elapsed = call.status === 'running' ? secondsSince(call.startedAt, now) : durationText(call.durationMs)
+  const elapsed = call.status === 'running' ? secondsSince(call.startedAt, now) : call.durationMs < 0 ? '' : ` ${durationText(call.durationMs)}`
   const firstLine = call.command.split('\n')[0] ?? ''
-  return fit(`${isExpanded ? '▾' : '▸'} ${STATUS_MARK[call.status]} ${TOOL_LABEL} ${elapsed}  ${firstLine}`, width)
+  return fit(`${isExpanded ? '▾' : '▸'} ${STATUS_MARK[call.status]} ${TOOL_LABEL}${call.status === 'running' ? ` ${elapsed}` : elapsed}  ${firstLine}`, width)
 }
 
 /**
@@ -259,6 +259,30 @@ export function commandSegments(row: string): { gutter: string; program: string;
 
 /** What a card's copy button puts on the clipboard: `$ <command>`, then the output it kept. */
 export const copyText = (call: HeldCall): string => [`$ ${call.command}`, ...call.output].join('\n')
+
+/** A past message as the conversation read gives it: its role and row id, and an assistant message's tool calls with their outcomes. */
+type PastMessage = { role: string; uuid?: string; toolUses: ReadonlyArray<{ tool_use_id: string; tool: string; input: Record<string, unknown>; result?: unknown; text?: string; isError?: true }> }
+
+/**
+ * The finished shell commands of the main conversation read back, oldest
+ * first, each under the person's prompt it followed (one of `promptIds`, or
+ * none before the first). A call still in flight, or already in `held`, is
+ * left out. Their timing is not stored, so `durationMs` is -1.
+ */
+export function restoredCalls(messages: readonly PastMessage[], promptIds: ReadonlySet<string>, held: ReadonlySet<string>): HeldCall[] {
+  const calls: HeldCall[] = []
+  let promptId: string | undefined
+  for (const message of messages) {
+    if (message.role === 'user' && message.uuid !== undefined && promptIds.has(message.uuid)) promptId = message.uuid
+    for (const use of message.toolUses) {
+      if (use.tool !== DRAWER_TOOL || use.text === undefined || held.has(use.tool_use_id)) continue
+      const command = typeof use.input.command === 'string' ? use.input.command : ''
+      const ran = (use.isError ? { isError: true, result: undefined, text: use.text } : { result: use.result }) as ToolCallResult
+      calls.push(endedCall(startedCall(use.tool_use_id, command, promptId, 0), endingOf(ran), 0))
+    }
+  }
+  return calls.map(call => ({ ...call, durationMs: -1 }))
+}
 
 /** Whether the drawer holds the call in place of its rows: it is on and keeps the call. */
 export const isHeld = (view: DrawerView, calls: readonly HeldCall[], id: string | undefined) =>
@@ -535,8 +559,32 @@ export function registerToolDrawer(on: On, trail: PromptTrail) {
   })
 }
 
-/** Adds `/tool-drawer`, and turns the drawer on or off as `/tool-drawer` last left it, once the session has started. */
-export async function startToolDrawer($: EngineInterface) {
+/** The most rows of the conversation read back for its past shell commands. */
+const RESTORE_READ_ROWS = 4096
+
+/**
+ * Takes in the finished shell commands the conversation already holds (a
+ * resumed conversation, a plugin reload), grouped under their prompts, so
+ * their rows leave the transcript too.
+ */
+async function restore($: EngineInterface, trail: PromptTrail) {
+  await readStoredPrompts($, trail)
+  const messages = await $.session.messages({ last: RESTORE_READ_ROWS })
+  if ('deny' in messages) return
+  const promptIds = new Set(trail.prompts)
+  await update($, HELD_CALLS, calls => {
+    const past = restoredCalls(messages as readonly PastMessage[], promptIds, new Set(calls.map(call => call.id)))
+    return past.length === 0 ? calls : [...past, ...calls].slice(-MAX_HELD_CALLS)
+  })
+}
+
+/** Adds `/tool-drawer`, turns the drawer on or off as `/tool-drawer` last left it, and takes in the conversation's past shell commands, once the session has started. */
+export async function startToolDrawer($: EngineInterface, trail: PromptTrail) {
+  // Past commands wait on the transcript file's read, so the session starts without them.
+  void restore($, trail).catch(error => {
+    // Past commands keep their rows in the conversation.
+    $.ui.log(`sc-mods: could not read past shell commands: ${error instanceof Error ? error.message : String(error)}`, { to: 'debug' })
+  })
   try {
     const isOn = await $.store.get(SWITCH_KEY)
     if (typeof isOn === 'boolean') await update($, DRAWER_VIEW, view => ({ ...view, isOn }))

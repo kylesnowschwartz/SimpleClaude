@@ -22,6 +22,7 @@ import {
   drawerRoom,
   otherRowsOf,
   scopeText,
+  restoredCalls,
   commandSegments,
   copyText,
   runningText,
@@ -720,4 +721,46 @@ test('a switch kept off from an earlier session holds at start', async ($, on) =
   expect((await command($, '')).text).toMatch(/is off/)
   await command($, 'on')
   expect(store.get('toolDrawerOn')).toBe(true)
+})
+
+// --- Past commands read back -------------------------------------------------
+
+const use = (id: string, command: string, outcome: { result?: unknown; text?: string; isError?: true }) => ({ tool_use_id: id, tool: 'Bash', input: { command }, ...outcome })
+const PAST = [
+  { role: 'user', uuid: 'p1', text: 'go', toolUses: [] },
+  { role: 'assistant', uuid: 'a1', text: '', toolUses: [use('old1', 'ls', { result: { stdout: 'a\n', stderr: '' }, text: 'a' }), { tool_use_id: 'r1', tool: 'Read', input: {}, text: 'x' }] },
+  { role: 'user', uuid: 'n1', text: 'notice', toolUses: [] },
+  { role: 'user', uuid: 'p2', text: 'again', toolUses: [] },
+  { role: 'assistant', uuid: 'a2', text: '', toolUses: [use('old2', 'false', { text: 'Exit code 1', isError: true }), use('live', 'sleep 9', {})] },
+]
+
+test('restoredCalls takes the finished shell commands under their prompts', () => {
+  const calls = restoredCalls(PAST, new Set(['p1', 'p2']), new Set())
+  expect(calls.map(one => [one.id, one.promptId, one.status, one.durationMs])).toEqual([
+    ['old1', 'p1', 'done', -1],
+    ['old2', 'p2', 'error', -1],
+  ])
+  expect(calls[0]?.output).toEqual(['a'])
+  expect(restoredCalls(PAST, new Set(['p1', 'p2']), new Set(['old1'])).map(one => one.id)).toEqual(['old2'])
+  expect(cardText(calls[0] as HeldCall, false, 0, 80)).toBe('▸ ✓ bash  ls')
+})
+
+test('at session start the past shell commands join the drawer and their rows leave', async ($, on) => {
+  const world = session(on)
+  on('session.messages', async () => ({ value: PAST }) as never)
+  await prompt($, 'p1')
+  await prompt($, 'p2')
+  await $.session.start({ cwd: '/work', surface: 'terminal', isInteractive: true })
+  await world.clock.advance(50)
+  expect(await shows(mountToolUse($, 'old1'))).toBe(false)
+  expect(await shows(mountToolUse($, 'live'))).toBe(true)
+  const band = await mountBand($)
+  // Past commands leave the drawer closed.
+  expect((await band.find({ key: 'tool-drawer:toggle' }))?.props.label).toMatch(/^▸/)
+  await band.press({ key: 'tool-drawer:toggle' })
+  expect(await band.find({ key: 'tool-drawer:card:old1' })).toBeUndefined()
+  expect(await band.find({ key: 'tool-drawer:card:old2' })).toBeDefined()
+  await band.press({ key: 'tool-drawer:scope' })
+  expect(await band.find({ key: 'tool-drawer:card:old1' })).toBeDefined()
+  expect(await band.find({ key: 'tool-drawer:card:old2' })).toBeDefined()
 })

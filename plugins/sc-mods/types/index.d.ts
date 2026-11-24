@@ -22,7 +22,8 @@ export type HeldCallStatus = 'running' | 'done' | 'error' | 'declined' | 'interr
  * `promptId` is the person's prompt the call ran under, or '' when none was
  * known. `output` is the last lines of stdout then stderr (or the error
  * text), each cut to a length; `outputLineCount` counts every line the call
- * printed. `durationMs` is 0 while it runs.
+ * printed. `durationMs` is 0 while it runs, and -1 for a call read back from
+ * the conversation, whose timing is not stored.
  */
 export type HeldCall = {
   id: string

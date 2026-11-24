@@ -138,7 +138,7 @@ export const register: Register = (on, options) => {
     const started = await next(e)
     startPromptJump($, trail)
     await startShowImage($)
-    await startToolDrawer($)
+    await startToolDrawer($, trail)
     return started
   })
 

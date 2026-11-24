@@ -355,6 +355,11 @@ export function registerPromptJump(on: On, trail: PromptTrail) {
   })
 }
 
+/** Resolves once the prompts the transcript file held are known (or could not be read). */
+export function readStoredPrompts($: EngineInterface, trail: PromptTrail): Promise<void> {
+  return readStored($, trail)
+}
+
 /** Starts the read of the transcript file, once the session has started. */
 export function startPromptJump($: EngineInterface, trail: PromptTrail) {
   void readStored($, trail)
