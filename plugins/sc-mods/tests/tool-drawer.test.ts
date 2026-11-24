@@ -69,12 +69,18 @@ type Pending = { finish: (answer: { stdout?: string; stderr?: string; error?: st
  * Stands for the engine: each component drawn as a Text `engine`, the clock,
  * and Bash calls that run until the test finishes them.
  */
-function session(on: On): { clock: MockClock; calls: Map<string, Pending> } {
+function session(on: On): { clock: MockClock; calls: Map<string, Pending>; store: Map<string, unknown> } {
   on('ui.render', async () => ({ type: 'Text', props: {}, children: ['engine'] }) as unknown as RenderElement)
   on('session.start', async (_$, e) => ({ cwd: e.cwd }))
   on('session.end', async (_$, e) => ({ sessionId: e.sessionId }))
   on('command.register', () => ({ value: { command: 'tool-drawer' } }))
   const clock = mock.clock(on, { now: 1_000_000 })
+  const store = new Map<string, unknown>()
+  on('store.get', async (_$, e) => ({ value: store.get(e.key) }))
+  on('store.set', async (_$, e) => {
+    store.set(e.key, e.value)
+    return { value: undefined }
+  })
   const calls = new Map<string, Pending>()
   on('tool.call', (_$, e) =>
     new Promise(resolve => {
@@ -87,7 +93,7 @@ function session(on: On): { clock: MockClock; calls: Map<string, Pending> } {
       })
     }),
   )
-  return { clock, calls }
+  return { clock, calls, store }
 }
 
 const prompt = ($: Engine, uuid: string) =>
@@ -695,4 +701,23 @@ test('a refused copy says why', async ($, on) => {
   await band.press({ key: 'tool-drawer:card:c1' })
   await band.press({ key: 'tool-drawer:copy:c1' })
   expect(toasts).toEqual(['Copy failed: no-clipboard'])
+})
+
+// --- The remembered switch --------------------------------------------------
+
+test('/tool-drawer off is kept across sessions and read at session start', async ($, on) => {
+  const { store } = session(on)
+  await command($, 'off')
+  expect(store.get('toolDrawerOn')).toBe(false)
+  await $.session.start({ cwd: '/work', surface: 'terminal', isInteractive: true })
+  expect((await command($, '')).text).toMatch(/is off/)
+})
+
+test('a switch kept off from an earlier session holds at start', async ($, on) => {
+  const { store } = session(on)
+  store.set('toolDrawerOn', false)
+  await $.session.start({ cwd: '/work', surface: 'terminal', isInteractive: true })
+  expect((await command($, '')).text).toMatch(/is off/)
+  await command($, 'on')
+  expect(store.get('toolDrawerOn')).toBe(true)
 })

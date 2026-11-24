@@ -9,6 +9,8 @@ import { newestPromptId, readTurnOn, type PromptTrail, type TurnOn } from './pro
 export const DRAWER_TOOL = 'Bash'
 const TOOL_LABEL = 'bash'
 const COMMAND_NAME = 'tool-drawer'
+/** The `$.store` key that keeps `/tool-drawer on|off` across sessions. */
+const SWITCH_KEY = 'toolDrawerOn'
 
 /** The most calls kept; past it the oldest goes. */
 export const MAX_HELD_CALLS = 200
@@ -387,11 +389,12 @@ export function registerToolDrawer(on: On, trail: PromptTrail) {
 
   on('command.run', { command: COMMAND_NAME }, async ($, e) => {
     let text = ''
-    await update($, DRAWER_VIEW, view => {
-      const after = switched(view, e.args)
+    const view = await update($, DRAWER_VIEW, current => {
+      const after = switched(current, e.args)
       text = after.text
       return after.view
     })
+    await $.store.set(SWITCH_KEY, view.isOn)
     return { text }
   })
 
@@ -532,12 +535,14 @@ export function registerToolDrawer(on: On, trail: PromptTrail) {
   })
 }
 
-/** Adds `/tool-drawer`, once the session has started. */
+/** Adds `/tool-drawer`, and turns the drawer on or off as `/tool-drawer` last left it, once the session has started. */
 export async function startToolDrawer($: EngineInterface) {
   try {
+    const isOn = await $.store.get(SWITCH_KEY)
+    if (typeof isOn === 'boolean') await update($, DRAWER_VIEW, view => ({ ...view, isOn }))
     await $.command.register({ name: COMMAND_NAME, description: 'Show shell commands in a drawer above the prompt: on, off, or no argument for its state' })
   } catch (error) {
-    // The drawer works without its command; it stays on.
-    $.ui.log(`sc-mods: could not add /${COMMAND_NAME}: ${error instanceof Error ? error.message : String(error)}`, { to: 'debug' })
+    // The drawer works without its command or its kept switch; it stays as it is.
+    $.ui.log(`sc-mods: could not start /${COMMAND_NAME}: ${error instanceof Error ? error.message : String(error)}`, { to: 'debug' })
   }
 }
