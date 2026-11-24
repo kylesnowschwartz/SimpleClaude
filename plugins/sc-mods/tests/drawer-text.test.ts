@@ -48,3 +48,20 @@ test('kept output and commands are cleaned', () => {
   expect(keptOutput('\u001b[32mok\u001b[0m\r\nnext\n').output).toEqual(['ok', 'next'])
   expect(startedCall('c', 'echo\t\u001b[1mhi\u001b[0m', 'p', 0).command).toBe('echo    hi')
 })
+
+test('emoji presentation below the emoji blocks and the emoji selector take two cells', () => {
+  expect(charCells('✅')).toBe(2)
+  expect(charCells('⌚')).toBe(2)
+  expect(cells('✔')).toBe(1)
+  expect(cells('✔\ufe0f')).toBe(2)
+  expect(cells('☀\ufe0f ok')).toBe(5)
+  expect(fit('✔\ufe0f✔\ufe0f✔\ufe0f', 4)).toBe('✔\ufe0f…')
+})
+
+test('invisible characters go before tabs are expanded', () => {
+  expect(cleanLine('a\u200b\u200b\tb')).toBe('a       b')
+})
+
+test('the 8-bit CSI goes with its parameters', () => {
+  expect(cleanLine('\u009b31mred\u009b0m')).toBe('red')
+})
