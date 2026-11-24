@@ -10,7 +10,6 @@ import {
   durationText,
   earlierCallsText,
   endingOf,
-  fit,
   isHeld,
   keptOutput,
   MAX_HELD_CALLS,
@@ -362,12 +361,6 @@ test('turnRuleText fills the width with the label near the right end', () => {
   expect(turnRuleText(3, 20)).toBe('╌╌╌╌╌╌╌╌╌╌ Turn 3 ╌╌')
   expect(turnRuleText(3, 20)).toHaveLength(20)
   expect(turnRuleText(3, 5)).toBe('Turn 3')
-})
-
-test('fit cuts with an ellipsis', () => {
-  expect(fit('abcdef', 4)).toBe('abc…')
-  expect(fit('abc', 4)).toBe('abc')
-  expect(fit('abc', 0)).toBe('')
 })
 
 test('keptOutput keeps the last lines and counts them all', () => {

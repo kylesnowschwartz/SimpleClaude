@@ -1,6 +1,7 @@
 import { atom, read, update } from 'claude-code'
 import type { EngineInterface, On, Timer, ToolCallResult } from 'claude-code'
 import type { DrawerScope, DrawerView, HeldCall, HeldCallStatus } from '../types'
+import { cleanLine, cleanText, fit } from './drawer-text'
 import { newestPromptId, readTurnOn, type PromptTrail, type TurnOn } from './prompt-jump'
 
 /** The one tool whose calls the drawer holds. */
@@ -12,7 +13,7 @@ const COMMAND_NAME = 'tool-drawer'
 export const MAX_HELD_CALLS = 200
 /** The most output lines a call keeps: its last ones. */
 export const MAX_KEPT_LINES = 200
-/** The most characters a kept line or a command keeps. */
+/** The most cells a kept line or a command keeps. */
 export const MAX_LINE_CHARS = 400
 export const MAX_COMMAND_CHARS = 2000
 /** The most output lines an expanded card shows: the last ones. */
@@ -29,18 +30,16 @@ const DRAWER_CLOCK = atom({ plugin: 'sc-mods', key: 'drawerClock' } as const, 0)
 
 // --- Pure helpers ---------------------------------------------------------
 
-/** The text cut to `width` characters, its last one `…` when cut. */
-export function fit(text: string, width: number): string {
-  if (width <= 0) return ''
-  return text.length <= width ? text : text.slice(0, width - 1) + ELLIPSIS
-}
-
-/** What a call kept of its output: its last MAX_KEPT_LINES lines, each cut to MAX_LINE_CHARS, and how many lines it printed. */
+/**
+ * What a call kept of its output: its last MAX_KEPT_LINES lines, each
+ * cleaned as the terminal shows it and cut to MAX_LINE_CHARS cells, and how
+ * many lines it printed.
+ */
 export function keptOutput(text: string): { output: string[]; outputLineCount: number } {
   const trimmed = text.replace(/\n+$/, '')
   if (trimmed === '') return { output: [], outputLineCount: 0 }
   const lines = trimmed.split('\n')
-  return { output: lines.slice(-MAX_KEPT_LINES).map(line => fit(line, MAX_LINE_CHARS)), outputLineCount: lines.length }
+  return { output: lines.slice(-MAX_KEPT_LINES).map(line => fit(cleanLine(line), MAX_LINE_CHARS)), outputLineCount: lines.length }
 }
 
 const joinStreams = (stdout: string, stderr: string) => [stdout.replace(/\n+$/, ''), stderr.replace(/\n+$/, '')].filter(part => part !== '').join('\n')
@@ -57,7 +56,7 @@ export function endingOf(ran: ToolCallResult): { status: HeldCallStatus; text: s
 
 /** A new running call, as the drawer keeps it. */
 export function startedCall(id: string, command: string, promptId: string | undefined, startedAt: number): HeldCall {
-  return { id, promptId: promptId ?? '', command: fit(command, MAX_COMMAND_CHARS), status: 'running', startedAt, durationMs: 0, output: [], outputLineCount: 0 }
+  return { id, promptId: promptId ?? '', command: fit(cleanText(command), MAX_COMMAND_CHARS), status: 'running', startedAt, durationMs: 0, output: [], outputLineCount: 0 }
 }
 
 /** The calls with one more, the oldest dropped past MAX_HELD_CALLS. */
