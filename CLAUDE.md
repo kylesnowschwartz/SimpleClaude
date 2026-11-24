@@ -41,7 +41,7 @@ SimpleClaude consists of these plugins:
 - **sc-research**: Research agents for library source (via opensrc), GitHub search (via gh), and web research
 - **sc-skills**: Skills for hypothesis testing, Socratic thinking, functional thinking, file querying, image generation, and coding rules
 - **sc-docs**: Writing and diagram skills: `human-writing` for plain prose (per-format references, a Vale lint, an optional personal voice file), `cold-reader` for a context-free review of persisted documents, and `sc-mermaid`, which picks the mermaid diagram type that fits (sequence, state, ER, gantt, and more) and validates it with mmdc
-- **sc-mods**: Claude Code mods, written as a TypeScript hooks module (`hooks/hooks.json` lists `{"modules": [...]}`). Draws mermaid fences in replies as Unicode text by running merman-cli, jumps between prompts from the band above the prompt, copies a reply's markdown, and adds a `show_image` tool that draws pictures in its result row
+- **sc-mods**: Claude Code mods, written as a TypeScript hooks module (`hooks/hooks.json` lists `{"modules": [...]}`). Draws mermaid fences in replies as Unicode text by running merman-cli, jumps between prompts from the band above the prompt, moves shell commands into a drawer in that band (`/tool-drawer on|off`), draws a dashed turn line above each prompt, copies a reply's markdown, and adds a `show_image` tool that draws pictures in its result row
 
 **sc-mods merman-cli**: sc-mods downloads merman-cli on first use; see [merman-cli (sc-mods)](#merman-cli-sc-mods).
 

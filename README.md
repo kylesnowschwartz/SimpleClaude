@@ -31,7 +31,7 @@ claude plugin install sc-mods
 - **sc-research** _(optional)_: Research agents for library source (via opensrc), GitHub search (via gh), and web research
 - **sc-skills** _(optional)_: Hypothesis testing, Socratic thinking, functional thinking, file querying, image generation, and coding rules
 - **sc-docs** _(optional)_: Writing and diagram skills: `human-writing` for plain prose in Slack messages, emails, PRs, issues, tickets, and docs; `cold-reader`, which checks that a persisted document makes sense to a reader with no project context; and `sc-mermaid`, which picks the mermaid diagram type that fits (sequence, state, ER, gantt, and more) and validates it with mmdc. Both writing skills lint drafts with [Vale](https://vale.sh) (`brew install vale`)
-- **sc-mods** _(optional)_: Claude Code mods. Draws mermaid diagrams in replies as Unicode text in the terminal, adds prompt-jump buttons above the prompt, and a copy button under each reply. See [`plugins/sc-mods/README.md`](plugins/sc-mods/README.md)
+- **sc-mods** _(optional)_: Claude Code mods. Draws mermaid diagrams in replies as Unicode text in the terminal, adds prompt-jump buttons above the prompt, moves shell commands into a drawer there, draws a turn line above each prompt, and adds a copy button under each reply. See [`plugins/sc-mods/README.md`](plugins/sc-mods/README.md)
 
 ## Updating
 
@@ -106,7 +106,7 @@ SimpleClaude/
 │   ├── sc-research/              # Research plugin: library source, GitHub, and web agents
 │   ├── sc-skills/                # Skills plugin: patterns, design, querying
 │   ├── sc-docs/                  # Docs plugin: writing and mermaid diagram skills
-│   └── sc-mods/                  # Mods plugin: mermaid diagrams, prompt jumps, reply copy
+│   └── sc-mods/                  # Mods plugin: mermaid diagrams, prompt jumps, tool drawer, reply copy
 ├── scripts/
 │   ├── install.rb                # Installation/update script
 │   └── update-merman.sh          # Pins the merman release sc-mods downloads

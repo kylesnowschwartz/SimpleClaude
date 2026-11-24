@@ -2,10 +2,12 @@
 
 Claude Code mods from SimpleClaude. A mod is a plugin that changes Claude Code's own interface; see the [mods documentation](https://code.claude.com/docs/en/plugins/mods/overview).
 
-sc-mods does four things:
+sc-mods does these things:
 
 - It draws the mermaid diagrams in Claude's replies as Unicode text, so you can read a diagram in the terminal without copying it into a renderer.
 - It puts `◀` and `▶` buttons in the band above the prompt, which scroll the conversation to your previous or next prompt.
+- It moves Claude's shell commands out of the conversation into a drawer above the prompt, where each command opens to show its output.
+- It draws a dashed `Turn N` line above each of your prompts after the first.
 - It puts a `⧉ copy` button under Claude's replies, which copies the reply's markdown.
 - It gives Claude a `show_image` tool, which shows you pictures inline in the conversation.
 
@@ -38,11 +40,45 @@ The drawing has to fit the terminal's width. For a flowchart that is too wide, t
 
 ## Jump between prompts
 
-The band above the prompt shows two buttons, `◀` and `▶`, with a dim count between them: `[ ◀ ] 2/5 [ ▶ ]` while the arrows are on the second of five prompts. Click a button to scroll the conversation so your previous or next prompt sits at the bottom of the view, just above the prompt box, with Claude's reply to it out of view below. The first few prompts cannot reach the bottom, so the view stops at the start of the conversation. On the newest prompt, `▶` scrolls to the end of the conversation. The hotkeys `1` and `2` press the buttons while the band holds the keyboard: press ctrl+x then tab to move the keyboard to the band, or click in it; Esc returns it to the prompt box.
+The band above the prompt shows two buttons, `◀` and `▶`, with a dim count between them: `[ ◀ ] Turn 2/5 [ ▶ ]` while the arrows are on the second of five prompts. Click a button to scroll the conversation so your previous or next prompt sits at the bottom of the view, just above the prompt box, with Claude's reply to it out of view below. The first few prompts cannot reach the bottom, so the view stops at the start of the conversation. On the newest prompt, `▶` scrolls to the end of the conversation. The hotkeys `1` and `2` press the buttons while the band holds the keyboard: press ctrl+x then tab to move the keyboard to the band, or click in it; Esc returns it to the prompt box.
 
 The arrows count every prompt you send while the mod runs. When the mod loads into a conversation that already has prompts (`claude --resume`, `claude --continue`, a plugin reload), it counts that conversation's prompts from its last compaction on. The arrows step from the prompt they last jumped to; each new prompt you send puts them back on the newest. Scrolling the conversation yourself does not move them. A toast says so when there is no earlier prompt, or no later one in a conversation the mod loaded into that has not stored a row since, and gives Claude Code's reason when it does not scroll.
 
 Jumping needs fullscreen mode, where Claude Code draws the conversation itself. The classic layout leaves the conversation to the terminal's scrollback and refuses the scroll.
+
+## Tool drawer
+
+Claude's shell commands (the Bash tool) do not show in the conversation. They show in a drawer in the band above the prompt, over the prompt arrows:
+
+```text
+▾ Tool Usage (2 done · 1 running · bash) ● [ Turn 3/8 ]
+▸ ✓ bash 0.4s  git status
+▾ ✓ bash 1.2s  ls -la
+┃ $ ls -la
+┃ total 8
+┃ -rw-r--r--  1 me  staff  120 README.md
+▸ … bash 3s  just test
+```
+
+- Click the `Tool Usage` line to open or close the drawer. The `●` shows while a command runs.
+- The drawer lists the commands of the prompt the arrows are on. Press `◀` or `▶` to see another prompt's commands. Click `Turn 3/8` to list the commands of every prompt (`All`), and click it again to go back.
+- Each command has one line: `✓` done, `✗` failed or refused, `…` still running with its seconds so far, then how long it took and its first line. Click the line to show the full command and its output: stdout, then stderr, or the error. A long output shows its last 30 lines, under a dim `… N earlier lines` note.
+- The drawer opens by itself at the first command of each new prompt, until you open or close it yourself. After that it stays as you left it for the rest of the session.
+- When the prompt the arrows are on has no commands, the drawer is not shown.
+
+The command `/tool-drawer off` puts the shell commands back in the conversation and hides the drawer. `/tool-drawer on` turns it on again; it is on by default. `/tool-drawer` alone says whether it is on.
+
+Only the main conversation's commands go to the drawer; a subagent's stay where they are. The drawer shows a command's output once the command ends, not while it runs. Commands Claude ran before the mod loaded (a resumed conversation, a plugin reload) keep their rows in the conversation. `/clear` and `/resume` empty the drawer.
+
+## Turn lines
+
+Above each of your prompts after the first, a dim dashed line names the prompt's turn number, so the turns of a long conversation stand apart:
+
+```text
+╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌ Turn 3 ╌╌
+```
+
+The number is the prompt's place in the count the arrows use. Notifications and messages from other sessions get no line. `/tool-drawer off` does not hide these lines.
 
 ## Copy a reply
 
@@ -137,6 +173,7 @@ It downloads merman-cli into the cache if it is not there, and stops with the la
 - When the mod loads into a session that already has prompts (`claude --resume`, `claude --continue`, a plugin reload), it runs `find` and `grep` once over the session's transcript file to learn them, on load or at the first press. Without those commands on the `PATH`, those prompts are not counted. Prompts from before the conversation's last compaction are not counted: Claude Code draws a resumed conversation from that point, so there is nothing to scroll to.
 - After a rewind (Esc Esc, or editing an earlier prompt), the prompts the rewind went back past stay counted until `/clear` or `/resume`.
 - The jump buttons step through the main conversation, and are hidden while an agent's transcript is on screen.
+- The drawer keeps the last 200 commands of a session, and each command's last 200 output lines, each up to 400 characters.
 - The mod is built for the terminal. The desktop app and the VS Code extension are untested.
 - `show_image` reads and converts pictures with `sips`, which only macOS has. Where `sips` does not run, the tool is not registered, and Claude does not see it.
 - Only the terminal draws `show_image` pictures, and only a terminal that can draw pixels. Elsewhere the row lists the caption and the paths as text.
