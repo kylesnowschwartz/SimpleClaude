@@ -28,6 +28,7 @@ import {
   copyText,
   runningText,
   barTexts,
+  NO_ROOM_NOTE,
   SHOWN_LINES,
   startedCall,
   summaryText,
@@ -637,7 +638,7 @@ test('runningText names the newest running command and its seconds', () => {
 
 test('barTexts gives the summary room first and cuts the running command', () => {
   const summary = '▸ Tool Usage (2 done · 1 running · bash)'
-  expect(barTexts(summary, 'npm test 12s', 'Turn 3/8', 80)).toEqual({ summary, running: 'npm test 12s' })
+  expect(barTexts(summary, 'npm test 12s', 'Turn 3/8', 80)).toEqual({ summary, running: 'npm test 12s', note: undefined })
   const tight = barTexts(summary, 'npm test --coverage 12s', 'Turn 3/8', 62)
   expect(tight.summary).toBe(summary)
   expect(tight.running).toBe('npm t…')
@@ -864,4 +865,28 @@ test('a call that fails after its conversation was cleared leaves the new one al
   await finishCall(world, await startCall($, world, 'c1', 'ls'), 'c1')
   const band = await mountBand($)
   expect(String((await band.find({ key: 'tool-drawer:card:c1' }))?.props.label)).toMatch(/^▸ ✓ bash/)
+})
+
+// --- No room for cards -----------------------------------------------------
+
+test('barTexts fits the no-room note after the running command', () => {
+  const summary = '▾ Tool Usage (1 done · bash)'
+  expect(barTexts(summary, undefined, 'Turn 1/1', 80, NO_ROOM_NOTE).note).toBe('no room for cards')
+  expect(barTexts(summary, undefined, 'Turn 1/1', 50, NO_ROOM_NOTE).note).toBe('no room…')
+  expect(barTexts(summary, undefined, 'Turn 1/1', 40, NO_ROOM_NOTE).note).toBeUndefined()
+})
+
+test('an open drawer with no room for a card says so on its bar', async ($, on) => {
+  const world = session(on)
+  await prompt($, 'p1')
+  await finishCall(world, await startCall($, world, 'c1', 'ls'), 'c1')
+  const cramped = await mountBand($, { maxRows: 4, bodyColumns: 80 })
+  expect(await cramped.find({ type: 'Text', text: 'no room for cards' })).toBeDefined()
+  expect(await cramped.find({ key: 'tool-drawer:card:c1' })).toBeUndefined()
+  await cramped.press({ key: 'tool-drawer:toggle' })
+  expect(await cramped.find({ type: 'Text', text: 'no room for cards' })).toBeUndefined()
+  await cramped.unmount()
+  const roomy = await mountBand($, { bodyColumns: 80 })
+  await roomy.press({ key: 'tool-drawer:toggle' })
+  expect(await roomy.find({ type: 'Text', text: 'no room for cards' })).toBeUndefined()
 })

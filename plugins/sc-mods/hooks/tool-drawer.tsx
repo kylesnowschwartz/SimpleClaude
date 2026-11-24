@@ -128,18 +128,33 @@ export function runningText(calls: readonly HeldCall[], now: number): string | u
 const secondsSince = (startedAt: number, now: number) => `${Math.max(0, Math.floor((now - startedAt) / 1000))}s`
 
 /**
- * The bar's two texts cut to `width` cells together with the scope button
+ * The bar's texts cut to `width` cells together with the scope button
  * (`[ Turn 3/8 ]`), the `●` and the gaps: the summary first, then the running
- * command in what is left, dropped when nothing is.
+ * command, then `note`, each in what is left and dropped when under 4 cells.
  */
-export function barTexts(summary: string, running: string | undefined, scope: string, width: number): { summary: string; running: string | undefined } {
+export function barTexts(
+  summary: string,
+  running: string | undefined,
+  scope: string,
+  width: number,
+  note?: string,
+): { summary: string; running: string | undefined; note: string | undefined } {
   const scopeCells = cells(scope) + 4 + 1
   const dotCells = running === undefined ? 0 : 2
   const fittedSummary = fit(summary, width - scopeCells - dotCells)
-  if (running === undefined) return { summary: fittedSummary, running }
-  const left = width - scopeCells - dotCells - cells(fittedSummary) - 1
-  return { summary: fittedSummary, running: left >= 4 ? fit(running, left) : undefined }
+  let left = width - scopeCells - dotCells - cells(fittedSummary)
+  const take = (text: string | undefined) => {
+    if (text === undefined || left - 1 < 4) return undefined
+    const fitted = fit(text, left - 1)
+    left -= cells(fitted) + 1
+    return fitted
+  }
+  const fittedRunning = take(running)
+  return { summary: fittedSummary, running: fittedRunning, note: take(note) }
 }
+
+/** The bar's note while the drawer is open and the band has no room for one card. */
+export const NO_ROOM_NOTE = 'no room for cards'
 
 /** `Turn 3/8` for the prompt the arrows are on, or `All`. */
 export const scopeText = (scope: DrawerScope, turn: TurnOn | undefined) =>
@@ -572,7 +587,7 @@ export function registerToolDrawer(on: On, trail: PromptTrail) {
     const isFramed = layout.cards.length > 0
     // Inside the frame, the border and its padding take two cells a side.
     const width = isFramed ? e.props.bodyColumns - 2 - 2 * FRAME_PADDING : e.props.bodyColumns
-    const bar = barTexts(`${view.isOpen ? '▾' : '▸'} ${summaryText(shown)}`, runningText(shown, now), scope, width)
+    const bar = barTexts(`${view.isOpen ? '▾' : '▸'} ${summaryText(shown)}`, runningText(shown, now), scope, width, view.isOpen && !isFramed ? NO_ROOM_NOTE : undefined)
     const { Box, Button, Text } = $.ui.resolve(e)
     return (
       <Box flexDirection="column">
@@ -590,6 +605,7 @@ export function registerToolDrawer(on: On, trail: PromptTrail) {
             />
             {isRunning ? <Text color={RUNNING_COLOR}>●</Text> : null}
             {bar.running === undefined ? null : <Text>{bar.running}</Text>}
+            {bar.note === undefined ? null : <Text dimColor>{bar.note}</Text>}
             <Button
               key="tool-drawer:scope"
               dimColor
