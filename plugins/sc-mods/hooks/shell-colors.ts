@@ -24,8 +24,12 @@ export const SHELL_ROLE_COLOR: Partial<Record<ShellRole, string>> = {
 export const isDimRole = (role: ShellRole) => role === 'comment'
 
 const ELLIPSIS = '…'
-// Operators after which the next word is a command, longest first.
-const COMMAND_OPERATORS = ['&&', '||', '$(', '|&', ';', '|', '&', '(', '`']
+// Operators after which the next word is a command, longest first; a backtick only when it opens.
+const COMMAND_OPERATORS = ['&&', '||', '$(', '|&', ';', '|', '&', '(']
+// `$((…))` arithmetic, drawn as one variable.
+const ARITHMETIC = /^\$\(\((?:[^)]|\)(?!\)))*(?:\)\))?/
+// A double-quoted string, a backslash escaping the character after it; unclosed, the rest of the line.
+const DOUBLE_QUOTED = /^"(?:\\[\s\S]|[^"\\])*"?/
 const REDIRECT = /^(?:\d*>&\d+|&>>?|\d*>>?|\d*<<?<?)/
 const VARIABLE = /^\$(?:\{[^}]*\}?|[A-Za-z_][A-Za-z0-9_]*|[0-9@#?$!*-])/
 const ASSIGNMENT = /^[A-Za-z_][A-Za-z0-9_]*=/
@@ -37,8 +41,8 @@ const isPath = (word: string) => word.includes('/') || word.startsWith('~') || /
 /**
  * The command line in parts, left to right, their texts joined giving the
  * line back: the first word and each word after `&&`, `||`, `;`, `|`, `&`,
- * `(` or `$(` is a command, a word after a leading `-` a flag, a word with
- * a `/` or a leading `~` a path, a quoted part a string, `$X` and `${X}`
+ * `(`, `$(` or an opening backtick is a command, `$((…))` arithmetic a variable, a word after a leading `-` a flag, a word with
+ * a `/` or a leading `~` a path, a quoted part a string (a backslash escaping inside double quotes), `$X` and `${X}`
  * variables, `>`, `2>&1` and the like redirects, and a `#` that starts a
  * word comments out the rest.
  */
@@ -47,6 +51,7 @@ export function shellTokens(line: string): ShellToken[] {
   let rest = line
   let expectsCommand = true
   let atWordStart = true
+  let isInBackticks = false
   const push = (text: string, role: ShellRole) => {
     const last = tokens.at(-1)
     if (last !== undefined && last.role === role && role === 'plain') last.text += text
@@ -65,6 +70,20 @@ export function shellTokens(line: string): ShellToken[] {
       push(rest, 'comment')
       break
     }
+    const arithmetic = ARITHMETIC.exec(rest)?.[0]
+    if (arithmetic !== undefined) {
+      push(arithmetic, 'variable')
+      atWordStart = false
+      expectsCommand = false
+      continue
+    }
+    if (rest.startsWith('`')) {
+      push('`', 'operator')
+      isInBackticks = !isInBackticks
+      expectsCommand = isInBackticks
+      atWordStart = isInBackticks
+      continue
+    }
     const operator = COMMAND_OPERATORS.find(op => rest.startsWith(op))
     const redirect = REDIRECT.exec(rest)?.[0]
     if (redirect !== undefined && redirect !== '' && (operator === undefined || redirect.length > operator.length)) {
@@ -80,13 +99,14 @@ export function shellTokens(line: string): ShellToken[] {
     }
     if (rest.startsWith(')')) {
       push(')', 'operator')
+      expectsCommand = false
       atWordStart = true
       continue
     }
     const quote = rest[0]
     if (quote === "'" || quote === '"') {
-      const end = rest.indexOf(quote, 1)
-      push(end === -1 ? rest : rest.slice(0, end + 1), 'string')
+      const end = rest.indexOf("'", 1)
+      push(quote === '"' ? (DOUBLE_QUOTED.exec(rest)?.[0] ?? rest) : end === -1 ? rest : rest.slice(0, end + 1), 'string')
       atWordStart = false
       expectsCommand = false
       continue

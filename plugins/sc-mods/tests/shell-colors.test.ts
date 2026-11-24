@@ -32,3 +32,20 @@ test('fitTokens cuts by terminal cells and ends with an ellipsis', () => {
   expect(cells(wide.map(token => token.text).join(''))).toBeLessThanOrEqual(9)
   expect(fitTokens(tokens, 0)).toEqual([])
 })
+
+test('an escaped double quote stays inside its string; single quotes escape nothing', () => {
+  expect(roles('grep "a\\"b" f && ls')).toEqual([['grep', 'command'], ['"a\\"b"', 'string'], ['f', 'plain'], ['&&', 'operator'], ['ls', 'command']])
+  expect(roles("echo 'a\\' b")).toEqual([['echo', 'command'], ["'a\\'", 'string'], ['b', 'plain']])
+})
+
+test('only an opening backtick, $( or ( makes the next word a command', () => {
+  expect(roles('echo `date` foo')).toEqual([['echo', 'command'], ['`', 'operator'], ['date', 'command'], ['`', 'operator'], ['foo', 'plain']])
+  expect(roles('echo $(date) foo')).toEqual([['echo', 'command'], ['$(', 'operator'], ['date', 'command'], [')', 'operator'], ['foo', 'plain']])
+  expect(roles('echo $((1+2)) foo')).toEqual([['echo', 'command'], ['$((1+2))', 'variable'], ['foo', 'plain']])
+})
+
+test('the parts rebuild escaped, backticked and arithmetic lines exactly', () => {
+  for (const line of ['grep "a\\"b" f && ls', 'echo `date` foo', 'echo $((1+2)) "x', "echo 'open"]) {
+    expect(shellTokens(line).map(token => token.text).join('')).toBe(line)
+  }
+})
