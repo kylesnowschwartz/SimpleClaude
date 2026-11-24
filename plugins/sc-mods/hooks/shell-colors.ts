@@ -12,11 +12,11 @@ export type ShellToken = { text: string; role: ShellRole }
 /** The theme colour of each role; a role absent here draws as the line around it. */
 export const SHELL_ROLE_COLOR: Partial<Record<ShellRole, string>> = {
   command: 'suggestion',
-  operator: 'permission',
+  operator: 'claude',
   flag: 'warning',
   string: 'success',
   variable: 'merged',
-  redirect: 'permission',
+  redirect: 'claude',
   path: 'ide',
 }
 
