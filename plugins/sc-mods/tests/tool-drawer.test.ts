@@ -1,4 +1,4 @@
-import type { On, PromptOrigin, RenderElement } from 'claude-code'
+import type { On, PromptOrigin, RenderElement, ToolCallResult } from 'claude-code'
 import type { Engine, MockClock } from 'claude-code/testing'
 import { expect, mock, test } from 'claude-code/testing'
 import type { HeldCall } from '../types'
@@ -63,14 +63,18 @@ function frameIn(tree: unknown): unknown {
 
 // --- The session beneath the plugin ---------------------------------------
 
-/** A Bash call the session runs; `finish` ends it with what it printed or an error. */
-type Pending = { finish: (answer: { stdout?: string; stderr?: string; error?: string; deny?: string; throws?: string }) => void }
+/**
+ * How a running Bash call ends: it prints, errs with `error`, is refused by
+ * the tool with `deny`, or rejects with `throws`.
+ */
+type Ending = { stdout?: string; stderr?: string; error?: string; deny?: string; throws?: string }
+type Pending = { finish: (answer: Ending) => Promise<void> }
 
 /**
  * Stands for the engine: each component drawn as a Text `engine`, the clock,
  * and Bash calls that run until the test finishes them.
  */
-function session(on: On): { clock: MockClock; calls: Map<string, Pending>; store: Map<string, unknown> } {
+function session(on: On): { clock: MockClock; calls: Map<string, Pending>; store: Map<string, unknown>; declines: Set<string> } {
   on('ui.render', async () => ({ type: 'Text', props: {}, children: ['engine'] }) as unknown as RenderElement)
   on('session.start', async (_$, e) => ({ cwd: e.cwd }))
   on('session.end', async (_$, e) => ({ sessionId: e.sessionId }))
@@ -83,10 +87,12 @@ function session(on: On): { clock: MockClock; calls: Map<string, Pending>; store
     return { value: undefined }
   })
   const calls = new Map<string, Pending>()
-  on('tool.call', (_$, e) =>
-    new Promise((resolve, reject) => {
+  const declines = new Set<string>()
+  // An allowed call runs through `tool.run`, which holds it until the test finishes it.
+  on('tool.run', (_$, e) =>
+    new Promise<ToolCallResult>((resolve, reject) => {
       calls.set(e.tool_use_id, {
-        finish: ({ stdout = '', stderr = '', error, deny, throws }) => {
+        finish: async ({ stdout = '', stderr = '', error, deny, throws }) => {
           if (throws !== undefined) reject(new Error(throws))
           else if (deny !== undefined) resolve({ deny })
           else if (error !== undefined) resolve({ isError: true, result: undefined, text: error })
@@ -95,7 +101,9 @@ function session(on: On): { clock: MockClock; calls: Map<string, Pending>; store
       })
     }),
   )
-  return { clock, calls, store }
+  // A call the test declines is refused before it runs, as a declined dialog refuses it.
+  on('tool.check', async (_$, e) => (e.tool_use_id !== undefined && declines.has(e.tool_use_id) ? { decision: 'deny', reason: 'declined' } : { decision: 'allow' }))
+  return { clock, calls, store, declines }
 }
 
 const prompt = ($: Engine, uuid: string) =>
@@ -109,7 +117,7 @@ async function startCall($: Engine, world: { calls: Map<string, Pending>; clock:
 }
 
 async function finishCall(world: { calls: Map<string, Pending>; clock: MockClock }, { running }: { running: Promise<unknown> }, id: string, answer: Parameters<Pending['finish']>[0] = { stdout: 'ok\n' }) {
-  world.calls.get(id)?.finish(answer)
+  await world.calls.get(id)?.finish(answer)
   await running
 }
 
@@ -196,8 +204,8 @@ test('a failed call opens its own card; a refused one is declined', async ($, on
   await prompt($, 'p1')
   const failing = await startCall($, world, 'c1')
   await finishCall(world, failing, 'c1', { error: 'Exit code 2\nboom' })
-  const refused = await startCall($, world, 'c2')
-  await finishCall(world, refused, 'c2', { deny: 'Permission denied' })
+  world.declines.add('c2')
+  await (await startCall($, world, 'c2')).running
   const band = await mountBand($)
   expect((await band.find({ key: 'tool-drawer:toggle' }))?.props.label).toBe('▾ Tool Usage (1 failed · 1 declined · bash)')
   expect(String((await band.find({ key: 'tool-drawer:card:c1' }))?.props.label)).toMatch(/^▾ ✗ bash/)
@@ -206,7 +214,7 @@ test('a failed call opens its own card; a refused one is declined', async ($, on
   expect(String((await band.find({ key: 'tool-drawer:card:c2' }))?.props.label)).toMatch(/^▸ ⊘ bash/)
   expect(await band.find({ type: 'Text', text: '⊘' })).toMatchObject({ props: { dimColor: true } })
   await band.press({ key: 'tool-drawer:card:c2' })
-  expect(await band.find({ type: 'Text', text: '┃ Permission denied' })).toBeDefined()
+  expect(await band.find({ type: 'Text', text: /┃ .*declined/ })).toBeDefined()
 })
 
 test('a failed card the person closed stays closed', async ($, on) => {
@@ -445,9 +453,10 @@ test('keptOutput keeps the last lines and counts them all', () => {
 test('endingOf reads stdout then stderr, an error, or a refusal', () => {
   expect(endingOf({ result: { stdout: 'a\n', stderr: 'b\n' } } as never)).toEqual({ status: 'done', text: 'a\nb' })
   expect(endingOf({ isError: true, result: undefined, text: 'boom' })).toEqual({ status: 'error', text: 'boom' })
-  expect(endingOf({ deny: 'no' })).toEqual({ status: 'declined', text: 'no' })
-  expect(endingOf({ isError: true, result: undefined, text: 'denied' }, { wasAsked: true, wasSeenRunning: false }).status).toBe('declined')
-  expect(endingOf({ isError: true, result: undefined, text: 'exit 1' }, { wasAsked: true, wasSeenRunning: true }).status).toBe('error')
+  expect(endingOf({ deny: 'no' }, false)).toEqual({ status: 'declined', text: 'no' })
+  expect(endingOf({ isError: true, result: undefined, text: 'The user declined' }, false).status).toBe('declined')
+  expect(endingOf({ isError: true, result: undefined, text: 'Exit code 1' }, true).status).toBe('error')
+  expect(endingOf({ deny: 'no' }, true).status).toBe('error')
   expect(endingOf({ isError: true, result: undefined, text: 'Interrupted by user' }).status).toBe('interrupted')
   expect(endingOf({ result: { stdout: '', stderr: '', interrupted: true } } as never).status).toBe('interrupted')
 })
@@ -812,4 +821,25 @@ test('a command that throws surfaces its own error when the bookkeeping fails to
   )
   expect(thrown).toBeDefined()
   expect(thrown).not.toMatch(/clock refused/)
+})
+
+// --- Declined against failed -------------------------------------------------
+
+test('a command that ran and failed is failed however quickly it ended, and opens its card', async ($, on) => {
+  const world = session(on)
+  await prompt($, 'p1')
+  await finishCall(world, await startCall($, world, 'c1', 'ls /nonexistent'), 'c1', { error: 'Exit code 1\nls: /nonexistent: No such file or directory' })
+  const band = await mountBand($)
+  expect((await band.find({ key: 'tool-drawer:toggle' }))?.props.label).toBe('▾ Tool Usage (1 failed · bash)')
+  expect(String((await band.find({ key: 'tool-drawer:card:c1' }))?.props.label)).toMatch(/^▾ ✗ bash/)
+  expect(await band.find({ type: 'Text', text: '┃ ls: /nonexistent: No such file or directory' })).toMatchObject({ props: { color: 'error' } })
+})
+
+test('a command declined at the dialog never ran and is declined', async ($, on) => {
+  const world = session(on)
+  await prompt($, 'p1')
+  world.declines.add('c1')
+  await (await startCall($, world, 'c1', 'rm -rf x')).running
+  const band = await mountBand($)
+  expect(String((await band.find({ key: 'tool-drawer:card:c1' }))?.props.label)).toMatch(/^▸ ⊘ bash/)
 })

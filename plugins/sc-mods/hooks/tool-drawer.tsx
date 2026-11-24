@@ -60,22 +60,19 @@ const joinStreams = (stdout: string, stderr: string) => [stdout.replace(/\n+$/, 
 // How Claude Code words a tool call the person stopped with Esc.
 const INTERRUPTED_TEXT = /interrupted by user/i
 
-/** What the drawer knows of a call besides its result: whether it was put to the permission dialog, and whether it was seen running after. */
-export type CallPath = { wasAsked: boolean; wasSeenRunning: boolean }
-
 /**
  * How the call ended and the text it printed: stdout then stderr, or the
- * error the result carries. A refusal is declined, and so is an error of a
- * call put to the dialog and never seen running, which is how a declined
- * dialog reports; an error that says the person stopped it, or a result
- * marked interrupted, is interrupted.
+ * error the result carries. `hasRun` says the call was allowed and started:
+ * an error or refusal of a call that never started was declined (at the
+ * permission dialog, by the auto-mode classifier, or by a hook). An error that
+ * says the person stopped it, or a result marked interrupted, is interrupted.
  */
-export function endingOf(ran: ToolCallResult, path: CallPath = { wasAsked: false, wasSeenRunning: false }): { status: HeldCallStatus; text: string } {
-  if (ran.deny !== undefined) return { status: 'declined', text: ran.deny }
+export function endingOf(ran: ToolCallResult, hasRun = true): { status: HeldCallStatus; text: string } {
+  if (ran.deny !== undefined) return { status: hasRun ? 'error' : 'declined', text: ran.deny }
   if (ran.isError) {
     const text = ran.text ?? ''
     if (INTERRUPTED_TEXT.test(text)) return { status: 'interrupted', text }
-    return { status: path.wasAsked && !path.wasSeenRunning ? 'declined' : 'error', text }
+    return { status: hasRun ? 'error' : 'declined', text }
   }
   const result = ran.result as { stdout?: unknown; stderr?: unknown; interrupted?: unknown } | undefined
   const stdout = typeof result?.stdout === 'string' ? result.stdout : ''
@@ -356,6 +353,8 @@ async function noteEnd($: EngineInterface, id: string, ending: { status: HeldCal
  * `run` is called exactly once.
  */
 async function record($: EngineInterface, trail: PromptTrail, id: string, command: string, run: () => Promise<ToolCallResult>) {
+  const underWay = { hasRun: false }
+  callsUnderWay.set(id, underWay)
   try {
     await noteStart($, trail, id, command)
   } catch (error) {
@@ -367,6 +366,7 @@ async function record($: EngineInterface, trail: PromptTrail, id: string, comman
     ran = await run()
   } catch (error) {
     // A call cut short by an abort settles by throwing.
+    callsUnderWay.delete(id)
     try {
       await noteEnd($, id, { status: 'interrupted', text: error instanceof Error ? error.message : String(error) })
     } catch (bookkeeping) {
@@ -375,19 +375,21 @@ async function record($: EngineInterface, trail: PromptTrail, id: string, comman
     throw error
   }
 
+  callsUnderWay.delete(id)
   try {
-    await noteEnd($, id, endingOf(ran, { wasAsked: askedCalls.has(id), wasSeenRunning: callsSeenRunning.has(id) }))
-    askedCalls.delete(id)
-    callsSeenRunning.delete(id)
+    await noteEnd($, id, endingOf(ran, underWay.hasRun))
   } catch (error) {
     logQuietly($, 'keep a finished command', error)
   }
   return ran
 }
 
-/** The calls put to the permission dialog, and those drawn running since: a call asked and never seen running that errs was declined. */
-const askedCalls = new Set<string>()
-const callsSeenRunning = new Set<string>()
+/**
+ * The calls under way that the drawer holds, by id: whether each has been
+ * allowed and started (`tool.run` fires for it). Added when a call starts,
+ * removed when it ends, emptied when the conversation ends.
+ */
+const callsUnderWay = new Map<string, { hasRun: boolean }>()
 
 /** The view with a failed call's card open, unless the person closed that card. */
 export const openedOnFailure = (view: DrawerView, id: string): DrawerView =>
@@ -445,6 +447,7 @@ export function registerToolDrawer(on: On, trail: PromptTrail) {
   // `/clear` and `/resume` go on in this process with another conversation.
   on('session.end', { reason: ['clear', 'resume'] }, async ($, e, next) => {
     stopTicking()
+    callsUnderWay.clear()
     try {
       await update($, HELD_CALLS, () => [])
       await update($, DRAWER_VIEW, view => ({ ...NEW_VIEW, isOn: view.isOn }))
@@ -454,7 +457,7 @@ export function registerToolDrawer(on: On, trail: PromptTrail) {
     return next(e)
   })
 
-  on('tool.call', async ($, e, next) => {
+  on('tool.call', { tool: DRAWER_TOOL }, async ($, e, next) => {
     if (e.tool !== DRAWER_TOOL || e.agentId !== undefined) return next(e)
     return record($, trail, e.tool_use_id, e.command, () => next(e))
   })
@@ -470,21 +473,15 @@ export function registerToolDrawer(on: On, trail: PromptTrail) {
     return { text }
   })
 
-  // A call put to a decider: the dialog, or the auto-mode classifier.
-  on('tool.check', async ($, e, next) => {
-    const verdict = await next(e)
-    try {
-      if (verdict.decision === 'ask' && e.tool === DRAWER_TOOL && e.tool_use_id !== undefined) askedCalls.add(e.tool_use_id)
-    } catch (error) {
-      logQuietly($, 'note an asked command', error)
-    }
-    return verdict
+  // Fires only for a call that was allowed and is about to run, never for a refusal.
+  on('tool.run', { tool: DRAWER_TOOL }, async ($, e, next) => {
+    const underWay = callsUnderWay.get(e.tool_use_id)
+    if (underWay !== undefined) underWay.hasRun = true
+    return next(e)
   })
 
   on('ui.render', { component: 'ToolUse' }, async ($, e, next) => {
-    if (e.props.tool !== DRAWER_TOOL) return next(e)
-    if (e.props.isRunning) callsSeenRunning.add(e.props.tool_use_id)
-    if (!(await holds($, e.props.tool_use_id))) return next(e)
+    if (e.props.tool !== DRAWER_TOOL || !(await holds($, e.props.tool_use_id))) return next(e)
     if (e.props.isInterrupted) markInterrupted($, e.props.tool_use_id, await read($, HELD_CALLS))
     const { Box } = $.ui.resolve(e)
     return <Box />
@@ -497,8 +494,6 @@ export function registerToolDrawer(on: On, trail: PromptTrail) {
   })
 
   on('ui.render', { component: 'ToolProgress' }, async ($, e, next) => {
-    // The run-in-background pill shows only under a running call.
-    callsSeenRunning.add(e.props.tool_use_id)
     if (!(await holds($, e.props.tool_use_id))) return next(e)
     const { Box } = $.ui.resolve(e)
     return <Box />
