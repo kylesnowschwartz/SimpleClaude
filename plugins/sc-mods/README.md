@@ -62,7 +62,7 @@ Claude's shell commands (the Bash tool) do not show in the conversation. They sh
 
 - Click the `Tool Usage` line to open or close the drawer. The `●` shows while a command runs.
 - The drawer lists the commands of the prompt the arrows are on. Press `◀` or `▶` to see another prompt's commands. Click `Turn 3/8` to list the commands of every prompt (`All`), and click it again to go back.
-- Each command has one line: `✓` done, `✗` failed or refused, `…` still running with its seconds so far, then how long it took and its first line. Click the line to show the full command and its output: stdout, then stderr, or the error. A long output shows its last 30 lines, under a dim `… N earlier lines` note.
+- Each command has one line: `✓` done, `✗` failed or refused, `…` still running with its seconds so far, then how long it took and its first line. Click the line to show the full command and its output: stdout, then stderr, or the error. A long output shows its last 30 lines, fewer when the band has less room, under a dim `… N earlier lines` note. The drawer leaves room for the prompt arrows: when its cards do not fit, it shows the newest under a dim `… N earlier calls` line.
 - The drawer opens by itself at the first command of each new prompt, until you open or close it yourself. After that it stays as you left it for the rest of the session.
 - When the prompt the arrows are on has no commands, the drawer is not shown.
 

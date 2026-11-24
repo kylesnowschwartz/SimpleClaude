@@ -113,12 +113,13 @@ export function cardText(call: HeldCall, isExpanded: boolean, now: number, width
 }
 
 /**
- * An expanded card's body: `┃ $ <command>`, a dim note of the lines left out
- * when there are more than SHOWN_LINES, then the last output lines, each
+ * An expanded card's body: `┃ $ <command>`, a dim note of the lines left out,
+ * then the last `shownLines` output lines (at most SHOWN_LINES), each
  * `┃ `-prefixed and cut to `width`.
  */
-export function cardBody(call: HeldCall, width: number): { command: string; earlierNote: string | undefined; lines: string[] } {
-  const lines = call.output.slice(-SHOWN_LINES)
+export function cardBody(call: HeldCall, width: number, shownLines = SHOWN_LINES): { command: string; earlierNote: string | undefined; lines: string[] } {
+  const count = Math.max(0, Math.min(shownLines, SHOWN_LINES))
+  const lines = count === 0 ? [] : call.output.slice(-count)
   const earlier = call.outputLineCount - lines.length
   return {
     command: fit(`┃ $ ${call.command.replace(/\n/g, ' ')}`, width),
@@ -126,6 +127,58 @@ export function cardBody(call: HeldCall, width: number): { command: string; earl
     lines: lines.map(line => fit(`┃ ${line}`, width)),
   }
 }
+
+/**
+ * Rows the band keeps clear under the drawer: the prompt arrows' row, and one
+ * more for a row another plugin draws beneath, which cannot be measured.
+ */
+export const ROWS_BENEATH_DRAWER = 2
+
+/** One card the open drawer shows, and how many output lines its body shows; undefined for no body. */
+export type CardRoom = { call: HeldCall; bodyLines: number | undefined }
+
+/** What the open drawer shows in the rows it has: the cards, and how many older calls the dim note counts. */
+export type DrawerLayout = { cards: CardRoom[]; earlierCalls: number }
+
+/** The most output lines a body shows in `rows`, with its command row and its note when lines are left out; undefined when not even the command fits. */
+function bodyLinesIn(call: HeldCall, rows: number): number | undefined {
+  for (let lines = Math.min(SHOWN_LINES, call.output.length); lines >= 0; lines -= 1) {
+    const noteRows = call.outputLineCount > lines ? 1 : 0
+    if (1 + lines + noteRows <= rows) return lines
+  }
+  return undefined
+}
+
+/**
+ * Fits the open drawer into `rows` rows, the bar's included. The room goes to
+ * the bar, then a row per card (the newest when not all fit, under a dim
+ * `… N earlier calls` row), then the expanded cards' bodies, the newest first.
+ * Under two rows the bar shows alone.
+ */
+export function drawerLayout(calls: readonly HeldCall[], expanded: readonly string[], rows: number): DrawerLayout {
+  const cardRows = rows - 1
+  if (cardRows < 1 || calls.length === 0) return { cards: [], earlierCalls: 0 }
+
+  const fitsAll = calls.length <= cardRows
+  // With one row for cards and more calls than that, the newest card shows without the note.
+  const shownCount = fitsAll ? calls.length : Math.max(1, cardRows - 1)
+  const shown = calls.slice(-shownCount)
+  const earlierCalls = calls.length - shown.length
+  let left = cardRows - shown.length - (earlierCalls > 0 && cardRows > 1 ? 1 : 0)
+
+  const bodyLines = new Map<string, number>()
+  for (const call of [...shown].reverse()) {
+    if (!expanded.includes(call.id)) continue
+    const lines = bodyLinesIn(call, left)
+    if (lines === undefined) continue
+    bodyLines.set(call.id, lines)
+    left -= 1 + lines + (call.outputLineCount > lines ? 1 : 0)
+  }
+  return { cards: shown.map(call => ({ call, bodyLines: bodyLines.get(call.id) })), earlierCalls: earlierCalls > 0 && cardRows > 1 ? earlierCalls : 0 }
+}
+
+/** `… 3 earlier calls`, cut to `width`. */
+export const earlierCallsText = (count: number, width: number) => fit(`${ELLIPSIS} ${count} earlier call${count === 1 ? '' : 's'}`, width)
 
 /** Whether the drawer holds the call in place of its rows: it is on and keeps the call. */
 export const isHeld = (view: DrawerView, calls: readonly HeldCall[], id: string | undefined) =>
@@ -277,6 +330,7 @@ export function registerToolDrawer(on: On, trail: PromptTrail) {
     const isRunning = shown.some(call => call.status === 'running')
     const scope = scopeText(view.scope, turn)
     // The bar's other parts: the dot, the scope button's brackets and the gaps.
+    const layout = view.isOpen ? drawerLayout(shown, view.expanded, e.props.maxRows - ROWS_BENEATH_DRAWER) : { cards: [], earlierCalls: 0 }
     const summaryWidth = width - scope.length - (isRunning ? 2 : 0) - 6
     const { Box, Button, Text } = $.ui.resolve(e)
     return (
@@ -297,32 +351,31 @@ export function registerToolDrawer(on: On, trail: PromptTrail) {
             onPress={() => press($, current => ({ ...current, scope: current.scope === 'all' ? 'turn' : 'all' }))}
           />
         </Box>
-        {view.isOpen
-          ? shown.map(call => {
-              const isExpanded = view.expanded.includes(call.id)
-              const body = isExpanded ? cardBody(call, width) : undefined
-              return (
-                <Box key={`tool-drawer:call:${call.id}`} flexDirection="column">
-                  <Button
-                    key={`tool-drawer:card:${call.id}`}
-                    plain
-                    dimColor={call.status === 'done'}
-                    label={cardText(call, isExpanded, now, width)}
-                    onPress={() => press($, current => toggleExpanded(current, call.id))}
-                  />
-                  {body === undefined ? null : (
-                    <Box flexDirection="column">
-                      <Text>{body.command}</Text>
-                      {body.earlierNote === undefined ? null : <Text dimColor>{body.earlierNote}</Text>}
-                      {body.lines.map(line => (
-                        <Text>{line}</Text>
-                      ))}
-                    </Box>
-                  )}
+        {layout.earlierCalls > 0 ? <Text dimColor>{earlierCallsText(layout.earlierCalls, width)}</Text> : null}
+        {layout.cards.map(({ call, bodyLines }) => {
+          const isExpanded = view.expanded.includes(call.id)
+          const body = bodyLines === undefined ? undefined : cardBody(call, width, bodyLines)
+          return (
+            <Box key={`tool-drawer:call:${call.id}`} flexDirection="column">
+              <Button
+                key={`tool-drawer:card:${call.id}`}
+                plain
+                dimColor={call.status === 'done'}
+                label={cardText(call, isExpanded, now, width)}
+                onPress={() => press($, current => toggleExpanded(current, call.id))}
+              />
+              {body === undefined ? null : (
+                <Box flexDirection="column">
+                  <Text>{body.command}</Text>
+                  {body.earlierNote === undefined ? null : <Text dimColor>{body.earlierNote}</Text>}
+                  {body.lines.map(line => (
+                    <Text>{line}</Text>
+                  ))}
                 </Box>
-              )
-            })
-          : null}
+              )}
+            </Box>
+          )
+        })}
       </Box>
     )
   })

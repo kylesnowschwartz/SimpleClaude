@@ -6,7 +6,9 @@ import {
   callsInScope,
   cardBody,
   cardText,
+  drawerLayout,
   durationText,
+  earlierCallsText,
   endingOf,
   fit,
   isHeld,
@@ -14,7 +16,9 @@ import {
   MAX_HELD_CALLS,
   MAX_KEPT_LINES,
   NEW_VIEW,
+  ROWS_BENEATH_DRAWER,
   scopeText,
+  SHOWN_LINES,
   startedCall,
   summaryText,
   switched,
@@ -435,4 +439,62 @@ test('switched turns the drawer on and off and reports its state', () => {
   expect(switched({ ...NEW_VIEW, isOn: false }, ' on ').view.isOn).toBe(true)
   expect(switched(NEW_VIEW, '').text).toMatch(/^Tool drawer is on\./)
   expect(switched(NEW_VIEW, 'maybe').text).toMatch(/Unknown option "maybe"/)
+})
+
+// --- Fitting the band -----------------------------------------------------
+
+const rowsOf = (layout: ReturnType<typeof drawerLayout>) =>
+  1 +
+  (layout.earlierCalls > 0 ? 1 : 0) +
+  layout.cards.reduce((rows, { call: one, bodyLines }) => {
+    if (bodyLines === undefined) return rows + 1
+    return rows + 2 + bodyLines + (one.outputLineCount > bodyLines ? 1 : 0)
+  }, 0)
+
+const longCall = (id: string, lines = 30) =>
+  call({ id, output: Array.from({ length: lines }, (_, n) => `l${n}`), outputLineCount: lines })
+
+test('a 30-line body in a 12-row band leaves the rows beneath the drawer clear', () => {
+  const room = 12 - ROWS_BENEATH_DRAWER
+  const layout = drawerLayout([longCall('a')], ['a'], room)
+  expect(rowsOf(layout)).toBeLessThanOrEqual(room)
+  // Bar, card, command row, note, then the last lines.
+  expect(layout.cards[0]?.bodyLines).toBe(room - 4)
+  expect(cardBody(longCall('a'), 80, room - 4).earlierNote).toBe(`┃ … ${30 - (room - 4)} earlier lines`)
+})
+
+test('many cards in a small band show the newest under a note of the earlier ones', () => {
+  const calls = Array.from({ length: 10 }, (_, n) => call({ id: `c${n}` }))
+  const layout = drawerLayout(calls, [], 5)
+  expect(layout.cards.map(one => one.call.id)).toEqual(['c7', 'c8', 'c9'])
+  expect(layout.earlierCalls).toBe(7)
+  expect(rowsOf(layout)).toBe(5)
+  expect(earlierCallsText(7, 80)).toBe('… 7 earlier calls')
+})
+
+test('the newest expanded card gets the room first', () => {
+  const layout = drawerLayout([longCall('a'), longCall('b')], ['a', 'b'], 10)
+  expect(layout.cards.map(one => one.bodyLines)).toEqual([undefined, 5])
+  expect(rowsOf(layout)).toBeLessThanOrEqual(10)
+})
+
+test('a roomy band shows a body’s 30 lines; a tiny one shows the bar alone', () => {
+  expect(drawerLayout([longCall('a', 50)], ['a'], 60).cards[0]?.bodyLines).toBe(SHOWN_LINES)
+  expect(drawerLayout([longCall('a')], ['a'], 1)).toEqual({ cards: [], earlierCalls: 0 })
+})
+
+test('in a 12-row band the arrows stay under an expanded 30-line card', async ($, on) => {
+  const world = session(on)
+  await prompt($, 'p1')
+  const out = Array.from({ length: 30 }, (_, n) => `line ${n}`).join('\n')
+  await finishCall(world, await startCall($, world, 'c1', 'seq 30'), 'c1', { stdout: out })
+  const band = await mountBand($, { maxRows: 12, scroll: { offset: 0, bodyRows: 11 } })
+  await band.press({ key: 'tool-drawer:card:c1' })
+  // One element a row: the scope button shares the bar's row; the arrows' row and the engine's drawing are beneath the drawer.
+  const drawerRows = (await band.findAll({}))
+    .filter(found => found.type === 'Text' || found.type === 'Button')
+    .filter(found => found.key !== 'tool-drawer:scope' && !String(found.key ?? '').startsWith('prompt-jump') && found.text !== 'Turn 1/1' && found.text !== 'engine')
+  expect(drawerRows.length).toBeLessThanOrEqual(12 - ROWS_BENEATH_DRAWER)
+  expect(await band.find({ type: 'Text', text: '┃ line 29' })).toBeDefined()
+  expect(await band.find({ type: 'Text', text: '┃ line 0' })).toBeUndefined()
 })
