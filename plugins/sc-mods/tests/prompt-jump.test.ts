@@ -144,7 +144,8 @@ test('the band counts the prompts stored, dim between the arrows, the arrows on 
   drawsEngineDefaults(on)
   await storeAll($, 'p1', 'p2')
   const band = await mountBand($)
-  const leaves = (await band.findAll({})).filter(element => element.type !== 'Box')
+  // `next(e)` hands the band core's own drawing as a `{ type: 'engine', ref }` element, which is not the arrows' row.
+  const leaves = (await band.findAll({})).filter(element => element.type !== 'Box' && element.type !== 'engine')
   expect(leaves.map(element => element.type)).toEqual(['Button', 'Text', 'Button'])
   expect((await band.find(POSITION))?.text).toBe('Turn 2/2')
   expect((await band.find(POSITION))?.props).toMatchObject({ dimColor: true })
