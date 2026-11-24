@@ -32,3 +32,11 @@ test('a failed call or no output stays plain', () => {
   expect(outputLanguage('git diff', HUNK, true)).toBeUndefined()
   expect(outputLanguage('cat a.json', [])).toBeUndefined()
 })
+
+test('jq raw output is JSON only when it parses; git stash show -p is a diff', () => {
+  expect(outputLanguage('cat a.json | jq -r .name', ['alice'])).toBeUndefined()
+  expect(outputLanguage('cat a.json | jq --raw-output .name', ['alice'])).toBeUndefined()
+  expect(outputLanguage('cat a.json | jq -r .item', ['{"a": 1}'])).toEqual({ language: 'json' })
+  expect(outputLanguage('cat a.json | jq -c .', ['x'])).toEqual({ language: 'json' })
+  expect(outputLanguage('git stash show -p', HUNK)).toEqual({ format: 'diff' })
+})

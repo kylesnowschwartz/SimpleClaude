@@ -1066,3 +1066,27 @@ test('an open card\'s bar has one row a body row, and the drawn body fits the ba
   expect(bars.length).toBe(rowsOf(frame) - FRAME_ROWS - 2)
   expect(await band.find({ type: 'Code' })).toMatchObject({ props: { source: "cat <<'EOF'\na\nb\nEOF", language: 'bash', wrap: 'truncate-end' } })
 })
+
+const drawnRows = (blocks: ReturnType<typeof outputBlocks>) =>
+  blocks.reduce((sum, block) => sum + ('lines' in block ? block.lines.length : rowsOf({ type: 'Code', props: { source: block.source, ...block.language } })), 0)
+
+test('hunk lines that read like file headers stay in their hunk, one row each', () => {
+  const lines = ['--- a/a.sql', '+++ b/a.sql', '@@ -1,3 +1,3 @@', '--- old sql comment', '-i++;', '+new sql', '+++i;', ' keep']
+  const blocks = outputBlocks(lines, { format: 'diff' })
+  expect(blocks).toEqual([
+    { lines: ['--- a/a.sql', '+++ b/a.sql', '@@ -1,3 +1,3 @@'] },
+    { source: '@@ -1,3 +1,3 @@\n--- old sql comment\n-i++;\n+new sql\n+++i;\n keep', language: { format: 'diff' } },
+  ])
+  expect(drawnRows(blocks)).toBe(lines.length)
+})
+
+test('a no-newline marker keeps the hunk whole and draws as a plain row after it', () => {
+  const lines = ['@@ -1 +1 @@', '-old', '\\ No newline at end of file', '+new', '\\ No newline at end of file', 'diff --git a/c b/c']
+  const blocks = outputBlocks(lines, { format: 'diff' })
+  expect(blocks).toEqual([
+    { lines: ['@@ -1 +1 @@'] },
+    { source: '@@ -1,1 +1,1 @@\n-old\n+new', language: { format: 'diff' } },
+    { lines: ['\\ No newline at end of file', '\\ No newline at end of file', 'diff --git a/c b/c'] },
+  ])
+  expect(drawnRows(blocks)).toBe(lines.length)
+})

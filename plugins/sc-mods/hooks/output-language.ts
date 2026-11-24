@@ -5,9 +5,10 @@
 export type OutputLanguage = { format: 'diff' } | { language: string } | { path: string }
 
 // Commands that print unified diffs.
-const DIFF_COMMAND = /\bgit\b(?:\s+-[Cc]\s+\S+|\s+--?[\w-]+(?:=\S+)?)*\s+(?:diff|show)\b|\bgit\b.*\blog\b.*\s(?:-p|--patch)\b|\bdiff\s+(?:-\w*u|--unified)/
+const DIFF_COMMAND = /\bgit\b(?:\s+-[Cc]\s+\S+|\s+--?[\w-]+(?:=\S+)?)*\s+(?:diff|show|stash\s+show)\b|\bgit\b.*\blog\b.*\s(?:-p|--patch)\b|\bdiff\s+(?:-\w*u|--unified)/
 const HUNK_HEADER = /^@@ -\d+(?:,\d+)? \+\d+(?:,\d+)? @@/
-const JQ_PIPE = /\|\s*jq\b/
+// A jq pipe prints JSON unless it prints raw strings.
+const JQ_PIPE = /\|\s*jq\b(?![^|]*\s(?:-[a-zA-Z]*r[a-zA-Z]*|--raw-output)\b)/
 // `cat f`, `head -n 20 f`, `tail -5 f`, `sed -n '1,20p' f`, `bat f`: one command and one file.
 const SINGLE_FILE_READER = /^\s*(?:cat|bat|head|tail|sed\s+-n\s+(?:'[^']*'|"[^"]*"|\S+))(?:\s+-{1,2}[\w-]+(?:[= ]\d+)?)*\s+([^\s|&;<>()`$'"*?]+)\s*$/
 // A file name with an extension, or a name the highlighter knows by itself.

@@ -321,8 +321,10 @@ export type DrawerLayout = { cards: CardRoom[]; earlierCalls: number }
 
 /** The most output lines a body shows in `rows`, with its command rows and its notes; undefined when not even the command fits. */
 function bodyLinesIn(call: HeldCall, rows: number, width: number): number | undefined {
+  const command = commandBlock(call.command, width - BAR_CELLS)
+  const fixedRows = command.rows.length + (command.moreRows > 0 ? 1 : 0) + (call.status === 'background' ? 1 : 0)
   for (let lines = Math.min(SHOWN_LINES, call.output.length); lines >= 0; lines -= 1) {
-    if (bodyRows(cardBody(call, width, lines)) <= rows) return lines
+    if (fixedRows + lines + (call.outputLineCount > lines ? 1 : 0) <= rows) return lines
   }
   return undefined
 }
@@ -762,11 +764,13 @@ export function registerToolDrawer(on: On, trail: PromptTrail) {
                       {body.commandNote === undefined ? null : <Text dimColor>{body.commandNote}</Text>}
                       {body.backgroundNote === undefined ? null : <Text dimColor>{body.backgroundNote}</Text>}
                       {body.earlierNote === undefined ? null : <Text dimColor>{body.earlierNote}</Text>}
-                      {outputBlocks(body.lines, outputLanguage(call.command, call.output, call.status === 'error')).map(block =>
+                      {outputBlocks(body.lines, outputLanguage(call.command, call.output, call.status === 'error')).map((block, index) =>
                         'lines' in block ? (
-                          <Text {...(call.status === 'error' ? { color: ERROR_COLOR } : {})}>{block.lines.join('\n')}</Text>
+                          <Text key={`tool-drawer:output:${call.id}:${index}`} wrap="truncate-end" {...(call.status === 'error' ? { color: ERROR_COLOR } : {})}>
+                            {block.lines.join('\n')}
+                          </Text>
                         ) : (
-                          <Code source={block.source} wrap="truncate-end" {...block.language} />
+                          <Code key={`tool-drawer:output:${call.id}:${index}`} source={block.source} wrap="truncate-end" {...block.language} />
                         ),
                       )}
                     </Box>
@@ -813,9 +817,16 @@ export function outputBlocks(lines: readonly string[], language: OutputLanguage 
     let oldLeft = Number(counts[2] ?? '1')
     let newLeft = Number(counts[4] ?? '1')
     const body: string[] = []
-    while (index < lines.length && (oldLeft > 0 || newLeft > 0)) {
+    // `\ No newline at end of file` draws no row in a diff, so it follows the hunk as a plain row.
+    const markers: string[] = []
+    while (index < lines.length && (oldLeft > 0 || newLeft > 0 || (lines[index] ?? '').startsWith('\\'))) {
       const next = lines[index] ?? ''
       const mark = next[0] ?? ' '
+      if (mark === '\\') {
+        markers.push(next)
+        index += 1
+        continue
+      }
       if (mark !== ' ' && mark !== '-' && mark !== '+' && next !== '') break
       if (mark !== '+') oldLeft -= 1
       if (mark !== '-') newLeft -= 1
@@ -823,11 +834,13 @@ export function outputBlocks(lines: readonly string[], language: OutputLanguage 
       index += 1
     }
     plain(line)
-    if (body.length === 0) continue
-    const oldCount = body.filter(one => !one.startsWith('+')).length
-    const newCount = body.filter(one => !one.startsWith('-')).length
-    const header = `@@ -${counts[1]},${oldCount} +${counts[3]},${newCount} @@${counts[5] ?? ''}`
-    blocks.push({ source: [header, ...body].join('\n'), language })
+    if (body.length > 0) {
+      const oldCount = body.filter(one => !one.startsWith('+')).length
+      const newCount = body.filter(one => !one.startsWith('-')).length
+      const header = `@@ -${counts[1]},${oldCount} +${counts[3]},${newCount} @@${counts[5] ?? ''}`
+      blocks.push({ source: [header, ...body].join('\n'), language })
+    }
+    markers.forEach(plain)
   }
   return blocks
 }
