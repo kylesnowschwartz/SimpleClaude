@@ -53,11 +53,11 @@ Claude's shell commands (the Bash tool) do not show in the conversation. They sh
 ```text
 ╭─────────────────────────────────────────────────────────────────────────────────╮
 │ ▾ Tool Usage (2 done · 1 failed · 1 running · bash) ● just test 3s [ Turn 3/8 ] │
-│ ▸ ✓ 󰯠 0.4s  git status                                                        │
-│ ▾ ✗ 󰯠 1.2s  ls missing ⧉ copy                                                 │
+│ ▸ ✓ 󰯠 0.4s  git status                                                          │
+│ ▾ ✗ 󰯠 1.2s  ls missing ⧉ copy                                                   │
 │ ┃ $ ls missing                                                                  │
 │ ┃ ls: missing: No such file or directory                                        │
-│ ▸ … 󰯠 3s  just test                                                           │
+│ ▸ … 󰯠 3s  just test                                                             │
 ╰─────────────────────────────────────────────────────────────────────────────────╯
 [ ◀ ] Turn 3/8 [ ▶ ]
 ```
