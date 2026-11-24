@@ -64,7 +64,7 @@ function frameIn(tree: unknown): unknown {
 // --- The session beneath the plugin ---------------------------------------
 
 /** A Bash call the session runs; `finish` ends it with what it printed or an error. */
-type Pending = { finish: (answer: { stdout?: string; stderr?: string; error?: string; deny?: string }) => void }
+type Pending = { finish: (answer: { stdout?: string; stderr?: string; error?: string; deny?: string; throws?: string }) => void }
 
 /**
  * Stands for the engine: each component drawn as a Text `engine`, the clock,
@@ -84,10 +84,11 @@ function session(on: On): { clock: MockClock; calls: Map<string, Pending>; store
   })
   const calls = new Map<string, Pending>()
   on('tool.call', (_$, e) =>
-    new Promise(resolve => {
+    new Promise((resolve, reject) => {
       calls.set(e.tool_use_id, {
-        finish: ({ stdout = '', stderr = '', error, deny }) => {
-          if (deny !== undefined) resolve({ deny })
+        finish: ({ stdout = '', stderr = '', error, deny, throws }) => {
+          if (throws !== undefined) reject(new Error(throws))
+          else if (deny !== undefined) resolve({ deny })
           else if (error !== undefined) resolve({ isError: true, result: undefined, text: error })
           else resolve({ result: { stdout, stderr, interrupted: false } })
         },
@@ -763,4 +764,52 @@ test('at session start the past shell commands join the drawer and their rows le
   await band.press({ key: 'tool-drawer:scope' })
   expect(await band.find({ key: 'tool-drawer:card:old1' })).toBeDefined()
   expect(await band.find({ key: 'tool-drawer:card:old2' })).toBeDefined()
+})
+
+// --- The command decides the hook's answer ---------------------------------
+
+/**
+ * A session whose clock the test can refuse: while `refuse.on`, `$.clock.now`
+ * is denied, so the drawer's bookkeeping fails. The Bash call answers what
+ * `answer` holds, or rejects with `throws`.
+ */
+function faultySession(on: On) {
+  const refuse = { on: false }
+  const answer: { stdout: string; throws?: string; refusesAfterStart?: true } = { stdout: 'fine\n' }
+  let ran = 0
+  on('ui.render', async () => ({ type: 'Text', props: {}, children: ['engine'] }) as unknown as RenderElement)
+  on('clock.now', async () => (refuse.on ? { deny: 'clock refused' } : { value: 1000 }))
+  on('tool.call', async () => {
+    ran += 1
+    if (answer.refusesAfterStart) refuse.on = true
+    if (answer.throws !== undefined) throw new Error(answer.throws)
+    return { result: { stdout: answer.stdout, stderr: '', interrupted: false } }
+  })
+  return { refuse, answer, runs: () => ran }
+}
+
+test('bookkeeping that fails before the run still runs the command and returns its result', async ($, on) => {
+  const world = faultySession(on)
+  world.refuse.on = true
+  expect(await $.tool.call({ tool: 'Bash', tool_use_id: 'c1', command: 'ls' })).toMatchObject({ result: { stdout: 'fine\n' } })
+  expect(world.runs()).toBe(1)
+})
+
+test('bookkeeping that fails after a successful run returns the result unchanged', async ($, on) => {
+  const world = faultySession(on)
+  world.answer.refusesAfterStart = true
+  expect(await $.tool.call({ tool: 'Bash', tool_use_id: 'c1', command: 'ls' })).toMatchObject({ result: { stdout: 'fine\n' } })
+  expect(world.runs()).toBe(1)
+})
+
+test('a command that throws surfaces its own error when the bookkeeping fails too', async ($, on) => {
+  const world = faultySession(on)
+  world.refuse.on = true
+  world.answer.throws = 'the command failed'
+  const thrown = await $.tool.call({ tool: 'Bash', tool_use_id: 'c1', command: 'boom' }).then(
+    () => undefined,
+    (error: unknown) => (error instanceof Error ? error.message : String(error)),
+  )
+  expect(thrown).toBeDefined()
+  expect(thrown).not.toMatch(/clock refused/)
 })

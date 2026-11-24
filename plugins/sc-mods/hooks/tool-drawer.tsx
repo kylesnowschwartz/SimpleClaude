@@ -317,7 +317,17 @@ function stopTicking() {
   ticker = undefined
 }
 
-async function record($: EngineInterface, trail: PromptTrail, id: string, command: string, run: () => Promise<ToolCallResult>) {
+/** Logs a failure of the drawer's own bookkeeping to the debug log; the log itself never throws into a hook. */
+function logQuietly($: EngineInterface, what: string, error: unknown) {
+  try {
+    $.ui.log(`sc-mods: tool drawer could not ${what}: ${error instanceof Error ? error.message : String(error)}`, { to: 'debug' })
+  } catch {
+    // Nothing is left to tell.
+  }
+}
+
+/** Keeps a call that starts: it joins the drawer, which opens at a new prompt's first call, and the clock ticks while it runs. */
+async function noteStart($: EngineInterface, trail: PromptTrail, id: string, command: string) {
   const startedAt = await $.clock.now()
   const promptId = newestPromptId(trail)
   const call = startedCall(id, command, promptId, startedAt)
@@ -329,24 +339,50 @@ async function record($: EngineInterface, trail: PromptTrail, id: string, comman
   if (isFirst) await update($, DRAWER_VIEW, view => (view.isSetByHand ? view : { ...view, isOpen: true }))
   await update($, DRAWER_CLOCK, () => startedAt)
   startTicking($)
+}
 
-  const end = async (ending: { status: HeldCallStatus; text: string }) => {
-    const endedAt = await $.clock.now()
-    const calls = await update($, HELD_CALLS, list => list.map(one => (one.id === id ? endedCall(one, ending, endedAt) : one)))
-    if (!calls.some(one => one.status === 'running')) stopTicking()
-    if (ending.status === 'error') await update($, DRAWER_VIEW, view => openedOnFailure(view, id))
-    askedCalls.delete(id)
-    callsSeenRunning.delete(id)
-  }
+/** Keeps how a call ended, and opens its card when it failed. */
+async function noteEnd($: EngineInterface, id: string, ending: { status: HeldCallStatus; text: string }) {
+  const endedAt = await $.clock.now()
+  const calls = await update($, HELD_CALLS, list => list.map(one => (one.id === id ? endedCall(one, ending, endedAt) : one)))
+  if (!calls.some(one => one.status === 'running')) stopTicking()
+  if (ending.status === 'error') await update($, DRAWER_VIEW, view => openedOnFailure(view, id))
+}
+
+/**
+ * Runs the call with the drawer's bookkeeping around it. The command's own
+ * promise alone decides what the hook returns or throws: bookkeeping before
+ * the run and after it is guarded apart, a failure there only logged, and
+ * `run` is called exactly once.
+ */
+async function record($: EngineInterface, trail: PromptTrail, id: string, command: string, run: () => Promise<ToolCallResult>) {
   try {
-    const ran = await run()
-    await end(endingOf(ran, { wasAsked: askedCalls.has(id), wasSeenRunning: callsSeenRunning.has(id) }))
-    return ran
+    await noteStart($, trail, id, command)
+  } catch (error) {
+    logQuietly($, 'keep a starting command', error)
+  }
+
+  let ran: ToolCallResult
+  try {
+    ran = await run()
   } catch (error) {
     // A call cut short by an abort settles by throwing.
-    await end({ status: 'interrupted', text: error instanceof Error ? error.message : String(error) })
+    try {
+      await noteEnd($, id, { status: 'interrupted', text: error instanceof Error ? error.message : String(error) })
+    } catch (bookkeeping) {
+      logQuietly($, 'keep an interrupted command', bookkeeping)
+    }
     throw error
   }
+
+  try {
+    await noteEnd($, id, endingOf(ran, { wasAsked: askedCalls.has(id), wasSeenRunning: callsSeenRunning.has(id) }))
+    askedCalls.delete(id)
+    callsSeenRunning.delete(id)
+  } catch (error) {
+    logQuietly($, 'keep a finished command', error)
+  }
+  return ran
 }
 
 /** The calls put to the permission dialog, and those drawn running since: a call asked and never seen running that errs was declined. */
@@ -365,7 +401,15 @@ export const openedOnFailure = (view: DrawerView, id: string): DrawerView =>
 function markInterrupted($: EngineInterface, id: string, calls: readonly HeldCall[]) {
   const call = calls.find(one => one.id === id)
   if (call === undefined || (call.status !== 'running' && call.status !== 'error')) return
-  $.clock.after(0, () => void update($, HELD_CALLS, list => list.map(one => (one.id === id && (one.status === 'running' || one.status === 'error') ? { ...one, status: 'interrupted' } : one))))
+  try {
+    $.clock.after(0, () =>
+      void update($, HELD_CALLS, list => list.map(one => (one.id === id && (one.status === 'running' || one.status === 'error') ? { ...one, status: 'interrupted' } : one))).catch(error =>
+        logQuietly($, 'mark an interrupted command', error),
+      ),
+    )
+  } catch (error) {
+    logQuietly($, 'mark an interrupted command', error)
+  }
 }
 
 /** Whether the drawer holds the call now, read while drawing so a call's start or end draws the row again. */
@@ -401,8 +445,12 @@ export function registerToolDrawer(on: On, trail: PromptTrail) {
   // `/clear` and `/resume` go on in this process with another conversation.
   on('session.end', { reason: ['clear', 'resume'] }, async ($, e, next) => {
     stopTicking()
-    await update($, HELD_CALLS, () => [])
-    await update($, DRAWER_VIEW, view => ({ ...NEW_VIEW, isOn: view.isOn }))
+    try {
+      await update($, HELD_CALLS, () => [])
+      await update($, DRAWER_VIEW, view => ({ ...NEW_VIEW, isOn: view.isOn }))
+    } catch (error) {
+      logQuietly($, 'forget the ended conversation', error)
+    }
     return next(e)
   })
 
@@ -425,7 +473,11 @@ export function registerToolDrawer(on: On, trail: PromptTrail) {
   // A call put to a decider: the dialog, or the auto-mode classifier.
   on('tool.check', async ($, e, next) => {
     const verdict = await next(e)
-    if (verdict.decision === 'ask' && e.tool === DRAWER_TOOL && e.tool_use_id !== undefined) askedCalls.add(e.tool_use_id)
+    try {
+      if (verdict.decision === 'ask' && e.tool === DRAWER_TOOL && e.tool_use_id !== undefined) askedCalls.add(e.tool_use_id)
+    } catch (error) {
+      logQuietly($, 'note an asked command', error)
+    }
     return verdict
   })
 
@@ -465,8 +517,12 @@ export function registerToolDrawer(on: On, trail: PromptTrail) {
   // learns what the others take once the band settles. A write is refused
   // while drawing, so it goes on the clock, and only when the count changed.
   on('ui.render', { component: 'AbovePromptList' }, async ($, e, next) => {
-    const measured = otherRowsOf(e.props.rows, $.plugin.name)
-    if (measured !== (await read($, OTHER_BAND_ROWS))) $.clock.after(0, () => void update($, OTHER_BAND_ROWS, () => measured))
+    try {
+      const measured = otherRowsOf(e.props.rows, $.plugin.name)
+      if (measured !== (await read($, OTHER_BAND_ROWS))) $.clock.after(0, () => void update($, OTHER_BAND_ROWS, () => measured).catch(error => logQuietly($, 'keep the band rows', error)))
+    } catch (error) {
+      logQuietly($, 'measure the band', error)
+    }
     return next(e)
   })
 
