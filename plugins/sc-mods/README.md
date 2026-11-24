@@ -64,10 +64,10 @@ Claude's shell commands (the Bash tool) do not show in the conversation. They sh
 
 - Click the `Tool Usage` line to open or close the drawer. While a command runs, a `●` follows the counts, with the newest running command and its seconds so far, and the open drawer's border takes the running colour.
 - The drawer lists the commands of the prompt the arrows are on. Press `◀` or `▶` to see another prompt's commands. Click `Turn 3/8` to list the commands of every prompt (`All`), and click it again to go back.
-- Each command has one line: a mark, how long it took, and its first line. The marks are `✓` done, `✗` failed (in the error colour), `⊘` declined at the permission dialog or refused, `■` stopped with Esc, and `…` still running, with its seconds so far. The counts on the bar name each kind: `1 failed · 1 declined · 1 interrupted`.
+- Each command has one line: a mark, how long it took, and its first line. The marks are `✓` done, `✗` failed (in the error colour), `⊘` declined (refused before it ran, at the permission dialog or by a hook), `■` stopped with Esc, and `…` still running, with its seconds so far. The counts on the bar name each kind: `1 failed · 1 declined · 1 interrupted`.
 - Click a command's line to show the full command and its output: stdout, then stderr, or the error. The `$` and the program's name are drawn in the accent colour, and a failed command's error in the error colour. A long output shows its last 30 lines, fewer when the band has less room, under a dim `… N earlier lines` note. `⧉ copy` on an open command's line copies the command and its output.
 - A command that fails opens its own line, so its error shows without a click, unless you have closed that line yourself.
-- The drawer fits the band with the prompt arrows and any other mod's rows in it: when its commands do not fit, it shows the newest under a dim `… N earlier calls` line.
+- The drawer fits the band with the prompt arrows and any other mod's rows in it: when its commands do not fit, it shows the newest under a dim `… N earlier calls` line. When the band has no room for even one command, the bar says `no room for cards`.
 - The drawer opens by itself at the first command of each new prompt, until you open or close it yourself. After that it stays as you left it for the rest of the session.
 - When the prompt the arrows are on has no commands, the drawer is not shown.
 
