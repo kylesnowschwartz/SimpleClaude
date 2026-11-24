@@ -51,24 +51,31 @@ Jumping needs fullscreen mode, where Claude Code draws the conversation itself. 
 Claude's shell commands (the Bash tool) do not show in the conversation. They show in a drawer in the band above the prompt, over the prompt arrows:
 
 ```text
-▾ Tool Usage (2 done · 1 running · bash) ● [ Turn 3/8 ]
-▸ ✓ bash 0.4s  git status
-▾ ✓ bash 1.2s  ls -la
-┃ $ ls -la
-┃ total 8
-┃ -rw-r--r--  1 me  staff  120 README.md
-▸ … bash 3s  just test
+╭─────────────────────────────────────────────────────────────────────────────────╮
+│ ▾ Tool Usage (2 done · 1 failed · 1 running · bash) ● just test 3s [ Turn 3/8 ] │
+│ ▸ ✓ bash 0.4s  git status                                                       │
+│ ▾ ✗ bash 1.2s  ls missing ⧉ copy                                                │
+│ ┃ $ ls missing                                                                  │
+│ ┃ ls: missing: No such file or directory                                        │
+│ ▸ … bash 3s  just test                                                          │
+╰─────────────────────────────────────────────────────────────────────────────────╯
+[ ◀ ] Turn 3/8 [ ▶ ]
 ```
 
-- Click the `Tool Usage` line to open or close the drawer. The `●` shows while a command runs.
+- Click the `Tool Usage` line to open or close the drawer. While a command runs, a `●` follows the counts, with the newest running command and its seconds so far, and the open drawer's border takes the running colour.
 - The drawer lists the commands of the prompt the arrows are on. Press `◀` or `▶` to see another prompt's commands. Click `Turn 3/8` to list the commands of every prompt (`All`), and click it again to go back.
-- Each command has one line: `✓` done, `✗` failed or refused, `…` still running with its seconds so far, then how long it took and its first line. Click the line to show the full command and its output: stdout, then stderr, or the error. A long output shows its last 30 lines, fewer when the band has less room, under a dim `… N earlier lines` note. The drawer leaves room for the prompt arrows: when its cards do not fit, it shows the newest under a dim `… N earlier calls` line.
+- Each command has one line: a mark, how long it took, and its first line. The marks are `✓` done, `✗` failed (in the error colour), `⊘` declined at the permission dialog or refused, `■` stopped with Esc, and `…` still running, with its seconds so far. The counts on the bar name each kind: `1 failed · 1 declined · 1 interrupted`.
+- Click a command's line to show the full command and its output: stdout, then stderr, or the error. The `$` and the program's name are drawn in the accent colour, and a failed command's error in the error colour. A long output shows its last 30 lines, fewer when the band has less room, under a dim `… N earlier lines` note. `⧉ copy` on an open command's line copies the command and its output.
+- A command that fails opens its own line, so its error shows without a click, unless you have closed that line yourself.
+- The drawer fits the band with the prompt arrows and any other mod's rows in it: when its commands do not fit, it shows the newest under a dim `… N earlier calls` line.
 - The drawer opens by itself at the first command of each new prompt, until you open or close it yourself. After that it stays as you left it for the rest of the session.
 - When the prompt the arrows are on has no commands, the drawer is not shown.
 
-The command `/tool-drawer off` puts the shell commands back in the conversation and hides the drawer. `/tool-drawer on` turns it on again; it is on by default. `/tool-drawer` alone says whether it is on.
+Output shows as the terminal would leave it: colour codes and other escape sequences are removed, a line a progress bar rewrote with carriage returns keeps what was last written, tabs are expanded, and lines are cut to the band's width counting wide characters as two columns.
 
-Only the main conversation's commands go to the drawer; a subagent's stay where they are. The drawer shows a command's output once the command ends, not while it runs. Commands Claude ran before the mod loaded (a resumed conversation, a plugin reload) keep their rows in the conversation. `/clear` and `/resume` empty the drawer.
+The command `/tool-drawer off` puts the shell commands back in the conversation and hides the drawer. `/tool-drawer on` turns it on again; it is on by default. `/tool-drawer` alone says whether it is on. The choice is kept for later sessions.
+
+Only the main conversation's commands go to the drawer; a subagent's stay where they are. The drawer shows a command's output once the command ends, not while it runs. When the mod loads into a conversation that already ran commands (`claude --resume`, `claude --continue`, a plugin reload), the finished ones join the drawer under their prompts, without how long they took, and leave the conversation; the drawer stays closed for them. `/clear` and `/resume` empty the drawer.
 
 ## Turn lines
 
@@ -173,7 +180,7 @@ It downloads merman-cli into the cache if it is not there, and stops with the la
 - When the mod loads into a session that already has prompts (`claude --resume`, `claude --continue`, a plugin reload), it runs `find` and `grep` once over the session's transcript file to learn them, on load or at the first press. Without those commands on the `PATH`, those prompts are not counted. Prompts from before the conversation's last compaction are not counted: Claude Code draws a resumed conversation from that point, so there is nothing to scroll to.
 - After a rewind (Esc Esc, or editing an earlier prompt), the prompts the rewind went back past stay counted until `/clear` or `/resume`.
 - The jump buttons step through the main conversation, and are hidden while an agent's transcript is on screen.
-- The drawer keeps the last 200 commands of a session, and each command's last 200 output lines, each up to 400 characters.
+- The drawer keeps the last 200 commands of a session, and each command's last 200 output lines, each up to 400 columns. Past commands read back from a resumed conversation come from its newest 4096 messages.
 - The mod is built for the terminal. The desktop app and the VS Code extension are untested.
 - `show_image` reads and converts pictures with `sips`, which only macOS has. Where `sips` does not run, the tool is not registered, and Claude does not see it.
 - Only the terminal draws `show_image` pictures, and only a terminal that can draw pixels. Elsewhere the row lists the caption and the paths as text.
