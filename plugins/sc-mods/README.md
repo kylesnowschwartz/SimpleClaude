@@ -53,21 +53,21 @@ Claude's shell commands (the Bash tool) do not show in the conversation. They sh
 ```text
 ╭─────────────────────────────────────────────────────────────────────────────────╮
 │ ▾ Tool Usage (2 done · 1 failed · 1 running · bash) ● just test 3s [ Turn 3/8 ] │
-│ ▸ ✓ 󰯠 0.4s  git status                                                          │
-│ ▾ ✗ 󰯠 1.2s  ls missing ⧉ copy                                                   │
+│ ▸ ✓ 󰯠  0.4s  git status                                                         │
+│ ▾ ✗ 󰯠  1.2s  ls missing ⧉ copy                                                  │
 │ ┃ $ ls missing                                                                  │
 │ ┃ ls: missing: No such file or directory                                        │
-│ ▸ … 󰯠 3s  just test                                                             │
+│ ▸ … 󰯠  3s    just test                                                          │
 ╰─────────────────────────────────────────────────────────────────────────────────╯
 [ ◀ ] Turn 3/8 [ ▶ ]
 ```
 
 - Click the `Tool Usage` line to open or close the drawer. While a command runs, a `●` follows the counts, with the newest running command and its seconds so far, and the open drawer's border takes the running colour.
 - The drawer lists the commands of the prompt the arrows are on. Press `◀` or `▶` to see another prompt's commands. Click `Turn 3/8` to list the commands of every prompt (`All`), and click it again to go back.
-- Each command has one line: a mark, a wrench icon (`󰯠`, U+F0BE0, which needs a Nerd Font), how long it took, and its first line, cut to one row with `…`. The command is coloured by what each word does: command names, operators such as `&&` and `|`, flags, quoted strings, variables, redirects, paths and comments each take their own theme colour. The marks are `✓` done, `✗` failed (in the error colour), `⊘` declined (refused before it ran, at the permission dialog or by a hook), `■` stopped with Esc, `↗` moved to the background (ctrl+b, a command started in the background, or one that passed its timeout), and `…` still running, with its seconds so far. The counts on the bar name each kind: `1 failed · 1 declined · 1 interrupted · 1 in background`. A command in the background shows no time, does not open by itself, and its open line says its task id: it runs on, and its output arrives in the conversation, not in the drawer.
+- Each command has one line: a mark, a wrench icon (`󰯠`, U+F0BE0, which needs a Nerd Font), how long it took, and its first line, cut to one row with `…`. The times take the same width on every line, so the commands start at one column. The command is coloured by what each word does: command names, operators such as `&&` and `|`, flags, quoted strings, variables, redirects, paths and comments each take their own theme colour. Under the pointer the whole line lights as one block, in one colour. The marks are `✓` done, `✗` failed (in the error colour), `⊘` declined (refused before it ran, at the permission dialog or by a hook), `■` stopped with Esc, `↗` moved to the background (ctrl+b, a command started in the background, or one that passed its timeout), and `…` still running, with its seconds so far. The counts on the bar name each kind: `1 failed · 1 declined · 1 interrupted · 1 in background`. A command in the background shows no time, does not open by itself, and its open line says its task id: it runs on, and its output arrives in the conversation, not in the drawer.
 - Click a command's line to show the full command and its output: stdout, then stderr, or the error. The open command shows the whole command on one coloured `$` line, cut with `…` when it is wider than the drawer, and a green `┃` bar runs down its left side; a failed command's error is in the error colour. A click anywhere on an open command's body, the bar or the text, closes it again, the same as a click on its line. A long output shows its last 30 lines, fewer when the band has less room, under a dim `… N earlier lines` note. `⧉ copy` on an open command's line copies the command and its output.
 - A command that fails opens its own line, so its error shows without a click, unless you have closed that line yourself.
-- The drawer fits the band with the prompt arrows and any other mod's rows in it: when its commands do not fit, it shows the newest under a dim `… N earlier calls` line. When the band has no room for even one command, the bar says `no room for cards`.
+- The drawer fits the band with the prompt arrows and any other mod's rows in it: when its commands do not fit, it shows the newest under a dim `… N earlier calls` line. An open command keeps its output in view before older closed commands do: they move into the `… N earlier calls` count first, and of several open commands the one opened last comes first. An open command with no room for its output shows closed. When the band has no room for even one command, the bar says `no room for cards`.
 - The drawer opens by itself at the first command of each new prompt, until you open or close it yourself. After that it stays as you left it for the rest of the session.
 - When the prompt the arrows are on has no commands, the drawer is not shown.
 
@@ -75,7 +75,7 @@ Output shows as the terminal would leave it: colour codes and other escape seque
 
 The command `/tool-drawer off` puts the shell commands back in the conversation and hides the drawer. `/tool-drawer on` turns it on again; it is on by default. `/tool-drawer` alone says whether it is on. The choice is kept for later sessions.
 
-Only the main conversation's commands go to the drawer; a subagent's stay where they are. The drawer shows a command's output once the command ends, not while it runs. When the mod loads into a conversation that already ran commands (`claude --resume`, `claude --continue`, a plugin reload), the finished ones join the drawer under their prompts, without how long they took, and leave the conversation; the drawer stays closed for them. `/clear` and `/resume` empty the drawer.
+Only the main conversation's commands go to the drawer; a subagent's stay where they are. The drawer shows a command's output once the command ends, not while it runs. When the mod loads into a conversation that already ran commands (`claude --resume`, `claude --continue`, a plugin reload), the finished ones join the drawer under their prompts, with their output and how they ended but without how long they took, and leave the conversation; the drawer stays closed for them. `/clear` and `/resume` empty the drawer.
 
 ## Turn lines
 

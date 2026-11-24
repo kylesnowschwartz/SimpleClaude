@@ -1,5 +1,5 @@
 import { atom, read, update } from 'claude-code'
-import type { ElementConstructor, EngineInterface, On, TextProps, RenderSurface, Timer, ToolCallResult } from 'claude-code'
+import type { ElementConstructor, EngineInterface, On, TextHoverProps, TextProps, RenderSurface, Timer, ToolCallResult } from 'claude-code'
 import type { DrawerScope, DrawerView, HeldCall, HeldCallStatus } from '../types'
 import { rowsOf } from './band-rows'
 import { cells, cleanLine, cleanText, fit } from './drawer-text'
@@ -32,6 +32,8 @@ const ACCENT_COLOR = 'suggestion'
 const ERROR_COLOR = 'error'
 /** The theme colour of an open card's `┃` bar. */
 const BAR_COLOR = 'success'
+/** The one colour every part of a card's row takes under the pointer, so the row lights as one block. */
+const HOVER_COLOR = 'text'
 const COPY_LABEL = '⧉ copy'
 /** The cells between the drawer's border and its text on each side. */
 const FRAME_PADDING = 1
@@ -189,16 +191,28 @@ export const markStyle = (status: HeldCallStatus): { color?: string; dimColor?: 
 /** A card's line in its drawn parts: the caret and a space, the status mark, the icon and time, and the command's coloured first line. */
 export type CardParts = { caret: string; mark: string; head: string; command: ShellToken[] }
 
-/**
- * A card's line, `▸ ✓ 󰯠 0.4s  <first line of the command>`, in parts cut to
- * `width` cells together; a running call shows its seconds so far.
- */
-export function cardParts(call: HeldCall, isExpanded: boolean, now: number, width: number): CardParts {
+/** A card's time: its seconds so far while running, its duration once ended, empty when unknown or in the background. */
+export function elapsedText(call: HeldCall, now: number): string {
   // A call in the background runs on, so it shows no time that reads as finished.
-  const elapsed = call.status === 'running' ? ` ${secondsSince(call.startedAt, now)}` : call.durationMs < 0 || call.status === 'background' ? '' : ` ${durationText(call.durationMs)}`
+  if (call.status === 'running') return secondsSince(call.startedAt, now)
+  return call.durationMs < 0 || call.status === 'background' ? '' : durationText(call.durationMs)
+}
+
+/** The cells the widest time of the cards takes, so every card's command starts at one column. */
+export const elapsedCells = (calls: readonly HeldCall[], now: number) => Math.max(0, ...calls.map(call => cells(elapsedText(call, now))))
+
+/**
+ * A card's line, `▸ ✓ 󰯠  0.4s  <first line of the command>`, in parts cut to
+ * `width` cells together. The time is padded to `timeCells` cells, so cards
+ * with and without a time start their commands at one column. Two spaces
+ * follow the icon: a terminal may draw a Nerd Font icon over the cell after it.
+ */
+export function cardParts(call: HeldCall, isExpanded: boolean, now: number, width: number, timeCells = 0): CardParts {
+  const elapsed = elapsedText(call, now)
+  const time = elapsed + ' '.repeat(Math.max(0, timeCells - cells(elapsed)))
   const caret = `${isExpanded ? '▾' : '▸'} `
   const mark = STATUS_MARK[call.status]
-  const head = ` ${TOOL_ICON}${elapsed}  `
+  const head = time === '' ? ` ${TOOL_ICON}  ` : ` ${TOOL_ICON}  ${time}  `
   const prefix = caret + mark + head
   const command = shellTokens(call.command.split('\n')[0] ?? '')
   if (cells(prefix) + tokenCells(command) <= width) return { caret, mark, head, command }
@@ -208,8 +222,8 @@ export function cardParts(call: HeldCall, isExpanded: boolean, now: number, widt
 }
 
 /** A card's line as plain text: its parts joined. */
-export function cardText(call: HeldCall, isExpanded: boolean, now: number, width: number): string {
-  const parts = cardParts(call, isExpanded, now, width)
+export function cardText(call: HeldCall, isExpanded: boolean, now: number, width: number, timeCells = 0): string {
+  const parts = cardParts(call, isExpanded, now, width, timeCells)
   return parts.caret + parts.mark + parts.head + parts.command.map(token => token.text).join('')
 }
 
@@ -270,31 +284,39 @@ export const FRAME_ROWS = 2
 
 /**
  * Fits the open drawer into `rows` rows, its frame and bar included. The room
- * goes to the frame and the bar, then a row per card (the newest when not all
- * fit, under a dim `… N earlier calls` row), then the expanded cards' bodies,
- * the newest first. Without room for the frame, the bar and one card, the bar
- * shows alone, unframed.
+ * goes to the frame and the bar, then to the open cards' rows and bodies, the
+ * most recently opened first (the last of `expanded`), then a row per other
+ * card, the newest first, under a dim `… N earlier calls` row when not all
+ * fit. An open card without room for its body's command row shows closed.
+ * Without room for the frame, the bar and one card, the bar shows alone,
+ * unframed.
  */
 export function drawerLayout(calls: readonly HeldCall[], expanded: readonly string[], rows: number): DrawerLayout {
   const cardRows = rows - FRAME_ROWS - 1
   if (cardRows < 1 || calls.length === 0) return { cards: [], earlierCalls: 0 }
 
-  const fitsAll = calls.length <= cardRows
-  // With one row for cards and more calls than that, the newest card shows without the note.
-  const shownCount = fitsAll ? calls.length : Math.max(1, cardRows - 1)
-  const shown = calls.slice(-shownCount)
-  const earlierCalls = calls.length - shown.length
-  let left = cardRows - shown.length - (earlierCalls > 0 && cardRows > 1 ? 1 : 0)
-
   const bodyLines = new Map<string, number>()
-  for (const call of [...shown].reverse()) {
-    if (!expanded.includes(call.id)) continue
-    const lines = bodyLinesIn(call, left)
+  let used = 0
+  for (const id of [...expanded].reverse()) {
+    const call = calls.find(one => one.id === id)
+    if (call === undefined) continue
+    // A row stays for the note while other cards are left to list.
+    const noteRow = calls.length - bodyLines.size - 1 > 0 ? 1 : 0
+    const lines = bodyLinesIn(call, cardRows - used - 1 - noteRow)
     if (lines === undefined) continue
     bodyLines.set(call.id, lines)
-    left -= 1 + lines + bodyNoteRows(call, lines)
+    used += 2 + lines + bodyNoteRows(call, lines)
   }
-  return { cards: shown.map(call => ({ call, bodyLines: bodyLines.get(call.id) })), earlierCalls: earlierCalls > 0 && cardRows > 1 ? earlierCalls : 0 }
+
+  const others = calls.filter(call => !bodyLines.has(call.id))
+  const left = cardRows - used
+  // With one row for cards, no open card, and more calls than that, the newest card shows without the note.
+  const othersShown = others.length <= left ? others.length : bodyLines.size === 0 && left === 1 ? 1 : Math.max(0, left - 1)
+  const shownOthers = new Set(others.slice(others.length - othersShown).map(call => call.id))
+  const shown = calls.filter(call => bodyLines.has(call.id) || shownOthers.has(call.id))
+  const earlierCalls = calls.length - shown.length
+  const hasNoteRow = earlierCalls > 0 && left - othersShown >= 1
+  return { cards: shown.map(call => ({ call, bodyLines: bodyLines.get(call.id) })), earlierCalls: hasNoteRow ? earlierCalls : 0 }
 }
 
 /** `… 3 earlier calls`, cut to `width`. */
@@ -621,6 +643,7 @@ export function registerToolDrawer(on: On, trail: PromptTrail) {
     const scope = scopeText(view.scope, turn)
     const layout = view.isOpen ? drawerLayout(shown, view.expanded, drawerRoom(e.props.maxRows, await read($, OTHER_BAND_ROWS))) : { cards: [], earlierCalls: 0 }
     const isFramed = layout.cards.length > 0
+    const timeCells = elapsedCells(layout.cards.map(card => card.call), now)
     // Inside the frame, the border and its padding take two cells a side.
     const width = isFramed ? e.props.bodyColumns - 2 - 2 * FRAME_PADDING : e.props.bodyColumns
     const bar = barTexts(`${view.isOpen ? '▾' : '▸'} ${summaryText(shown)}`, runningText(shown, now), scope, width, view.isOpen && !isFramed ? NO_ROOM_NOTE : undefined)
@@ -651,18 +674,19 @@ export function registerToolDrawer(on: On, trail: PromptTrail) {
           </Box>
           {layout.earlierCalls > 0 ? <Text dimColor>{earlierCallsText(layout.earlierCalls, width)}</Text> : null}
           {layout.cards.map(({ call, bodyLines }) => {
-            const isExpanded = view.expanded.includes(call.id)
+            // A card shows open only with its body drawn.
             const body = bodyLines === undefined ? undefined : cardBody(call, width, bodyLines)
+            const quiet = { scope: `tool-drawer:row:${call.id}`, color: HOVER_COLOR }
             // An open card's copy button sits on its row, after a gap.
-            const parts = cardParts(call, isExpanded, now, body === undefined ? width : width - cells(COPY_LABEL) - 1)
+            const parts = cardParts(call, body !== undefined, now, body === undefined ? width : width - cells(COPY_LABEL) - 1, timeCells)
             const label = parts.caret + parts.mark + parts.head + parts.command.map(token => token.text).join('')
             const command = body === undefined ? undefined : commandRow(call, width)
             const collapse = () => toggleCard($, call.id)
-            const bar = <Text color={BAR_COLOR}>┃</Text>
+            const bar = <Text color={BAR_COLOR} hover={quiet}>┃</Text>
             const bodyRow = (key: string, text: string, style: { color?: string; dimColor?: boolean }) => (
-              <Button key={`tool-drawer:body:${call.id}:${key}`} plain label={text} onPress={collapse}>
+              <Button key={`tool-drawer:body:${call.id}:${key}`} plain label={text} onPress={collapse} hover={quiet}>
                 {bar}
-                <Text {...style}>{text.slice(1)}</Text>
+                <Text {...style} hover={quiet}>{text.slice(1)}</Text>
               </Button>
             )
             return (
@@ -674,11 +698,12 @@ export function registerToolDrawer(on: On, trail: PromptTrail) {
                     dimColor={call.status === 'done'}
                     label={label}
                     onPress={collapse}
+                    hover={quiet}
                   >
                     {parts.caret}
-                    <Text {...markStyle(call.status)}>{parts.mark}</Text>
+                    <Text {...markStyle(call.status)} hover={quiet}>{parts.mark}</Text>
                     {parts.head}
-                    {tokenSpans(Text, parts.command)}
+                    {tokenSpans(Text, parts.command, quiet)}
                   </Button>
                   {body === undefined ? null : (
                     <Button key={`tool-drawer:copy:${call.id}`} plain dimColor label={COPY_LABEL} onPress={press => copyCall($, call, press.surface)} />
@@ -686,11 +711,11 @@ export function registerToolDrawer(on: On, trail: PromptTrail) {
                 </Box>
                 {body === undefined || command === undefined ? null : (
                   <Box flexDirection="column">
-                    <Button key={`tool-drawer:body:${call.id}:command`} plain label={body.command} onPress={collapse}>
+                    <Button key={`tool-drawer:body:${call.id}:command`} plain label={body.command} onPress={collapse} hover={quiet}>
                       {bar}
                       {' '}
-                      <Text color={ACCENT_COLOR}>{command.prompt}</Text>
-                      {tokenSpans(Text, command.command)}
+                      <Text color={ACCENT_COLOR} hover={quiet}>{command.prompt}</Text>
+                      {tokenSpans(Text, command.command, quiet)}
                     </Button>
                     {body.backgroundNote === undefined ? null : bodyRow('background', body.backgroundNote, { dimColor: true })}
                     {body.earlierNote === undefined ? null : bodyRow('earlier', body.earlierNote, { dimColor: true })}
@@ -706,12 +731,12 @@ export function registerToolDrawer(on: On, trail: PromptTrail) {
   })
 }
 
-/** A command's parts as coloured Text spans. */
-function tokenSpans(Text: ElementConstructor<TextProps>, tokens: readonly ShellToken[]) {
+/** A command's parts as coloured Text spans, each taking `hover`'s one colour while its row is under the pointer. */
+function tokenSpans(Text: ElementConstructor<TextProps>, tokens: readonly ShellToken[], hover: TextHoverProps) {
   return tokens.map(token => {
     const color = SHELL_ROLE_COLOR[token.role]
-    if (color !== undefined) return <Text color={color}>{token.text}</Text>
-    if (isDimRole(token.role)) return <Text dimColor>{token.text}</Text>
+    if (color !== undefined) return <Text color={color} hover={hover}>{token.text}</Text>
+    if (isDimRole(token.role)) return <Text dimColor hover={hover}>{token.text}</Text>
     return token.text
   })
 }

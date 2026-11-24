@@ -27,6 +27,7 @@ import {
   restoredCalls,
   commandRow,
   cardParts,
+  elapsedCells,
   TOOL_ICON,
   copyText,
   runningText,
@@ -196,7 +197,7 @@ test('a call is kept running, then done with its output and duration', async ($,
   await finishCall(world, running, 'c1', { stdout: 'a\nb\n', stderr: 'warn\n' })
   expect((await band.find({ key: 'tool-drawer:toggle' }))?.props.label).toBe('▾ Tool Usage (1 done · bash)')
   expect(await band.find({ type: 'Text', text: '●' })).toBeUndefined()
-  expect((await band.find({ key: 'tool-drawer:card:c1' }))?.props.label).toBe('▸ ✓ 󰯠 0.4s  ls')
+  expect((await band.find({ key: 'tool-drawer:card:c1' }))?.props.label).toBe('▸ ✓ 󰯠  0.4s  ls')
 
   await band.press({ key: 'tool-drawer:card:c1' })
   const rows = (await band.findAll({ type: 'Button' })).map(found => String(found.props.label)).filter(text => text.startsWith('┃'))
@@ -263,7 +264,7 @@ test('a running card counts its seconds up while the call runs', async ($, on) =
   const running = await startCall($, world, 'c1', 'sleep 5')
   const band = await mountBand($)
   await world.clock.advance(3000)
-  expect((await band.find({ key: 'tool-drawer:card:c1' }))?.props.label).toBe('▸ … 󰯠 3s  sleep 5')
+  expect((await band.find({ key: 'tool-drawer:card:c1' }))?.props.label).toBe('▸ … 󰯠  3s  sleep 5')
   await finishCall(world, running, 'c1')
 })
 
@@ -494,9 +495,9 @@ test('durationText and cardText', () => {
   expect(durationText(12_300)).toBe('12s')
   expect(durationText(65_000)).toBe('1m05s')
   const done = call({ status: 'done', durationMs: 400, command: 'git status\nmore' })
-  expect(cardText(done, false, 0, 80)).toBe('▸ ✓ 󰯠 0.4s  git status')
-  expect(cardText(done, true, 0, 8)).toBe('▾ ✓ 󰯠 0…')
-  expect(cardText(done, false, 0, 14)).toBe('▸ ✓ 󰯠 0.4s  g…')
+  expect(cardText(done, false, 0, 80)).toBe('▸ ✓ 󰯠  0.4s  git status')
+  expect(cardText(done, true, 0, 8)).toBe('▾ ✓ 󰯠  …')
+  expect(cardText(done, false, 0, 15)).toBe('▸ ✓ 󰯠  0.4s  g…')
 })
 
 test('cardBody shows the last lines with a note of the earlier ones', () => {
@@ -691,9 +692,9 @@ test('commandRow colours the whole command on one line, cut with the bar and pro
 test('a card shows the shell icon on each card, one cell wide, its command coloured', () => {
   expect(TOOL_ICON.codePointAt(0)).toBe(0xf0be0)
   const parts = cardParts(call({ status: 'done', durationMs: 0, command: 'pwd && ls' }), false, 0, 40)
-  expect(parts.head).toBe(` ${TOOL_ICON} 0.0s  `)
+  expect(parts.head).toBe(` ${TOOL_ICON}  0.0s  `)
   expect(parts.command.map(token => [token.text, token.role])).toEqual([['pwd', 'command'], [' ', 'plain'], ['&&', 'operator'], [' ', 'plain'], ['ls', 'command']])
-  expect(cardText(call({ status: 'done', durationMs: 0, command: 'pwd && ls' }), false, 0, 40)).toBe(`▸ ✓ ${TOOL_ICON} 0.0s  pwd && ls`)
+  expect(cardText(call({ status: 'done', durationMs: 0, command: 'pwd && ls' }), false, 0, 40)).toBe(`▸ ✓ ${TOOL_ICON}  0.0s  pwd && ls`)
 })
 
 test('a click on an open card\'s body collapses it, the copy button still copies', async ($, on) => {
@@ -953,4 +954,71 @@ test('a background card’s note takes its row in the layout', () => {
   const background = { ...longCall('a'), status: 'background' as const, backgroundTaskId: 'b1' }
   const layout = drawerLayout([background], ['a'], 12)
   expect(layout.cards[0]?.bodyLines).toBe(12 - FRAME_ROWS - 1 - 1 - 1 - 1 - 1)
+})
+
+// --- Restored output, open cards first, one command column ------------------
+
+test('a restored call carries its output and its ending as the conversation read gives them', () => {
+  const past = [
+    { role: 'user', uuid: 'p1', toolUses: [] },
+    {
+      role: 'assistant',
+      toolUses: [
+        { tool_use_id: 'r1', tool: 'Bash', input: { command: 'echo alpha; echo beta' }, result: { stdout: 'alpha\nbeta', stderr: '', interrupted: false }, text: 'alpha\nbeta' },
+        { tool_use_id: 'r2', tool: 'Bash', input: { command: 'ls /nonexistent' }, result: 'Error: Exit code 1\nls: /nonexistent: No such file or directory', text: 'Exit code 1\nls: /nonexistent: No such file or directory', isError: true as const },
+      ],
+    },
+  ]
+  const [ok, failed] = restoredCalls(past, new Set(['p1']), new Set())
+  expect(ok).toMatchObject({ status: 'done', output: ['alpha', 'beta'], outputLineCount: 2, durationMs: -1, promptId: 'p1' })
+  expect(failed).toMatchObject({ status: 'error', output: ['Exit code 1', 'ls: /nonexistent: No such file or directory'] })
+})
+
+test('an open card takes the room before older closed cards, the most recently opened first', () => {
+  const calls = Array.from({ length: 22 }, (_, n) => call({ id: `c${n}`, status: 'done', output: ['a', 'b'], outputLineCount: 2 }))
+  // 9 rows: frame and bar take 3, leaving 6 for cards.
+  const layout = drawerLayout(calls, ['c3'], 9)
+  const open = layout.cards.find(card => card.call.id === 'c3')
+  expect(open?.bodyLines).toBe(2)
+  const rows = layout.cards.length + (layout.earlierCalls > 0 ? 1 : 0) + 1 + 2
+  expect(rows).toBeLessThanOrEqual(6)
+  expect(layout.earlierCalls).toBe(22 - layout.cards.length)
+  expect(layout.cards.at(-1)?.call.id).toBe('c21')
+
+  const two = drawerLayout(calls, ['c3', 'c5'], 7)
+  expect(two.cards.find(card => card.call.id === 'c5')?.bodyLines).toBeDefined()
+  expect(two.cards.find(card => card.call.id === 'c3')?.bodyLines).toBeUndefined()
+})
+
+test('an open card without room for its body draws closed, never open and empty', async ($, on) => {
+  const world = session(on)
+  await prompt($, 'p1')
+  for (const id of ['c1', 'c2', 'c3', 'c4']) await finishCall(world, await startCall($, world, id, `echo ${id}`), id, { stdout: 'x\n' })
+  await (await mountBand($, { maxRows: 20 })).press({ key: 'tool-drawer:card:c1' })
+  // In a smaller band the oldest card, open, still shows with its body; closed cards give way.
+  const band = await mountBand($, { maxRows: 9 })
+  expect(String((await band.find({ key: 'tool-drawer:card:c1' }))?.props.label)).toMatch(/^▾/)
+  expect(await band.find({ key: 'tool-drawer:body:c1:command' })).toBeDefined()
+  expect(await band.find({ key: 'tool-drawer:card:c2' })).toBeUndefined()
+  expect(await band.find({ key: 'tool-drawer:card:c4' })).toBeDefined()
+
+  const tiny = drawerLayout([call({ id: 'a', output: ['x'], outputLineCount: 1 })], ['a'], 4)
+  expect(tiny.cards).toEqual([{ call: expect.objectContaining({ id: 'a' }), bodyLines: undefined }])
+  const cramped = await mountBand($, { maxRows: 5 })
+  for (const found of await cramped.findAll({ type: 'Button' })) {
+    const label = String(found.props.label)
+    if (label.startsWith('▾ ✓')) expect(await cramped.find({ key: String(found.props.key).replace('card', 'body') + ':command' })).toBeDefined()
+  }
+})
+
+test('cards with and without a time start their commands at one column', () => {
+  const timed = call({ id: 't', status: 'done', durationMs: 5900, command: 'git status' })
+  const restored = call({ id: 'r', status: 'done', durationMs: -1, command: 'ls' })
+  const timeCells = elapsedCells([timed, restored], 0)
+  expect(timeCells).toBe(4)
+  const a = cardText(timed, false, 0, 80, timeCells)
+  const b = cardText(restored, false, 0, 80, timeCells)
+  expect(a).toBe(`▸ ✓ ${TOOL_ICON}  5.9s  git status`)
+  expect(b).toBe(`▸ ✓ ${TOOL_ICON}        ls`)
+  expect(a.indexOf('git')).toBe(b.indexOf('ls'))
 })
