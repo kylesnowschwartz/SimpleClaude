@@ -15,6 +15,7 @@ import {
   MAX_HELD_CALLS,
   MAX_KEPT_LINES,
   NEW_VIEW,
+  prunedView,
   openedOnFailure,
   toggleExpanded,
   ARROWS_ROWS,
@@ -844,3 +845,23 @@ test('a command declined at the dialog never ran and is declined', async ($, on)
   expect(String((await band.find({ key: 'tool-drawer:card:c1' }))?.props.label)).toMatch(/^▸ ⊘ bash/)
 })
 
+
+// --- The view keeps only held calls ------------------------------------------
+
+test('prunedView drops the ids of calls no longer held', () => {
+  const view = { ...NEW_VIEW, expanded: ['a', 'gone'], collapsed: ['b', 'old'] }
+  expect(prunedView(view, [call({ id: 'a' }), call({ id: 'b' })])).toMatchObject({ expanded: ['a'], collapsed: ['b'] })
+})
+
+test('a call that fails after its conversation was cleared leaves the new one alone', async ($, on) => {
+  const world = session(on)
+  await prompt($, 'p1')
+  const old = await startCall($, world, 'c1', 'make')
+  await $.session.end({ reason: 'clear', sessionId: 'session', resume: { id: 'session' } })
+  await finishCall(world, old, 'c1', { error: 'Exit code 2' })
+  await prompt($, 'p2')
+  // The same id in the new conversation starts with its card closed.
+  await finishCall(world, await startCall($, world, 'c1', 'ls'), 'c1')
+  const band = await mountBand($)
+  expect(String((await band.find({ key: 'tool-drawer:card:c1' }))?.props.label)).toMatch(/^▸ ✓ bash/)
+})

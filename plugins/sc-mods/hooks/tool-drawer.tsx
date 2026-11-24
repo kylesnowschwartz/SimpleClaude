@@ -348,12 +348,24 @@ async function noteStart($: EngineInterface, trail: PromptTrail, id: string, com
   startTicking($)
 }
 
-/** Keeps how a call ended, and opens its card when it failed. */
-async function noteEnd($: EngineInterface, id: string, ending: { status: HeldCallStatus; text: string }) {
+/**
+ * The conversation the process is on, counted up at each `/clear` and
+ * `/resume`: a call that ends after its conversation ended keeps nothing.
+ */
+let conversation = 0
+
+/** Keeps how a call ended, and opens its card when it failed; nothing when its conversation has ended. */
+async function noteEnd($: EngineInterface, id: string, ending: { status: HeldCallStatus; text: string }, startedIn: number) {
+  if (startedIn !== conversation) return
   const endedAt = await $.clock.now()
   const calls = await update($, HELD_CALLS, list => list.map(one => (one.id === id ? endedCall(one, ending, endedAt) : one)))
-  if (!calls.some(one => one.status === 'running')) stopTicking()
-  if (ending.status === 'error') await update($, DRAWER_VIEW, view => openedOnFailure(view, id))
+  if (ending.status === 'error') await update($, DRAWER_VIEW, view => prunedView(openedOnFailure(view, id), calls))
+}
+
+/** The view with only the held calls' ids in `expanded` and `collapsed`. */
+export function prunedView(view: DrawerView, calls: readonly HeldCall[]): DrawerView {
+  const held = new Set(calls.map(call => call.id))
+  return { ...view, expanded: view.expanded.filter(id => held.has(id)), collapsed: view.collapsed.filter(id => held.has(id)) }
 }
 
 /**
@@ -364,6 +376,7 @@ async function noteEnd($: EngineInterface, id: string, ending: { status: HeldCal
  */
 async function record($: EngineInterface, trail: PromptTrail, id: string, command: string, run: () => Promise<ToolCallResult>) {
   const underWay = { hasRun: false }
+  const startedIn = conversation
   callsUnderWay.set(id, underWay)
   try {
     await noteStart($, trail, id, command)
@@ -378,7 +391,7 @@ async function record($: EngineInterface, trail: PromptTrail, id: string, comman
     // A call cut short by an abort settles by throwing.
     callsUnderWay.delete(id)
     try {
-      await noteEnd($, id, { status: 'interrupted', text: error instanceof Error ? error.message : String(error) })
+      await noteEnd($, id, { status: 'interrupted', text: error instanceof Error ? error.message : String(error) }, startedIn)
     } catch (bookkeeping) {
       logQuietly($, 'keep an interrupted command', bookkeeping)
     } finally {
@@ -389,7 +402,7 @@ async function record($: EngineInterface, trail: PromptTrail, id: string, comman
 
   callsUnderWay.delete(id)
   try {
-    await noteEnd($, id, endingOf(ran, underWay.hasRun))
+    await noteEnd($, id, endingOf(ran, underWay.hasRun), startedIn)
   } catch (error) {
     logQuietly($, 'keep a finished command', error)
   } finally {
@@ -440,6 +453,12 @@ async function copyCall($: EngineInterface, call: HeldCall, surface: RenderSurfa
 
 const press = ($: EngineInterface, change: (view: DrawerView) => DrawerView) => update($, DRAWER_VIEW, change)
 
+/** Opens or closes a card by hand, dropping the ids of calls no longer held. */
+async function toggleCard($: EngineInterface, id: string) {
+  const calls = await read($, HELD_CALLS)
+  await update($, DRAWER_VIEW, view => prunedView(toggleExpanded(view, id), calls))
+}
+
 /** The view with the card opened, or closed by hand. */
 export function toggleExpanded(view: DrawerView, id: string): DrawerView {
   if (view.expanded.includes(id)) return { ...view, expanded: view.expanded.filter(one => one !== id), collapsed: [...view.collapsed, id] }
@@ -462,6 +481,7 @@ export function registerToolDrawer(on: On, trail: PromptTrail) {
   on('session.end', { reason: ['clear', 'resume'] }, async ($, e, next) => {
     stopTicking()
     callsUnderWay.clear()
+    conversation += 1
     try {
       await update($, HELD_CALLS, () => [])
       await update($, DRAWER_VIEW, view => ({ ...NEW_VIEW, isOn: view.isOn }))
@@ -592,7 +612,7 @@ export function registerToolDrawer(on: On, trail: PromptTrail) {
                     plain
                     dimColor={call.status === 'done'}
                     label={label}
-                    onPress={() => press($, current => toggleExpanded(current, call.id))}
+                    onPress={() => toggleCard($, call.id)}
                   >
                     {label.slice(0, 2)}
                     <Text {...markStyle(call.status)}>{label.slice(2, 3)}</Text>
