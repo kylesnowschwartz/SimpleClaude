@@ -15,6 +15,8 @@ import {
   MAX_HELD_CALLS,
   MAX_KEPT_LINES,
   NEW_VIEW,
+  openedOnFailure,
+  toggleExpanded,
   ARROWS_ROWS,
   drawerRoom,
   otherRowsOf,
@@ -40,6 +42,8 @@ const BAND = {
 
 const COMPOSER: PromptOrigin = { kind: 'composer' }
 const ENGINE = { type: 'Text', text: 'engine' }
+// A card's mark is a Text inside its Button, on the card's row.
+const MARKS = ['✓', '✗', '⊘', '■', '…']
 
 // --- The session beneath the plugin ---------------------------------------
 
@@ -163,7 +167,7 @@ test('a call is kept running, then done with its output and duration', async ($,
   expect(texts.filter(text => text.startsWith('┃'))).toEqual(['┃ $ ls', '┃ a', '┃ b', '┃ warn'])
 })
 
-test('a call that errs or is refused is kept as an error with the error text', async ($, on) => {
+test('a failed call opens its own card; a refused one is declined', async ($, on) => {
   const world = session(on)
   await prompt($, 'p1')
   const failing = await startCall($, world, 'c1')
@@ -171,10 +175,48 @@ test('a call that errs or is refused is kept as an error with the error text', a
   const refused = await startCall($, world, 'c2')
   await finishCall(world, refused, 'c2', { deny: 'Permission denied' })
   const band = await mountBand($)
-  expect((await band.find({ key: 'tool-drawer:toggle' }))?.props.label).toBe('▾ Tool Usage (2 failed · bash)')
-  expect(String((await band.find({ key: 'tool-drawer:card:c1' }))?.props.label)).toMatch(/^▸ ✗ bash/)
+  expect((await band.find({ key: 'tool-drawer:toggle' }))?.props.label).toBe('▾ Tool Usage (1 failed · 1 declined · bash)')
+  expect(String((await band.find({ key: 'tool-drawer:card:c1' }))?.props.label)).toMatch(/^▾ ✗ bash/)
+  expect(await band.find({ type: 'Text', text: '┃ boom' })).toBeDefined()
+  expect(await band.find({ type: 'Text', text: '✗' })).toMatchObject({ props: { color: 'error' } })
+  expect(String((await band.find({ key: 'tool-drawer:card:c2' }))?.props.label)).toMatch(/^▸ ⊘ bash/)
+  expect(await band.find({ type: 'Text', text: '⊘' })).toMatchObject({ props: { dimColor: true } })
   await band.press({ key: 'tool-drawer:card:c2' })
   expect(await band.find({ type: 'Text', text: '┃ Permission denied' })).toBeDefined()
+})
+
+test('a failed card the person closed stays closed', async ($, on) => {
+  const view = toggleExpanded(openedOnFailure(NEW_VIEW, 'c1'), 'c1')
+  expect(view.expanded).toEqual([])
+  expect(openedOnFailure(view, 'c1').expanded).toEqual([])
+  expect(toggleExpanded(view, 'c1')).toMatchObject({ expanded: ['c1'], collapsed: [] })
+})
+
+test('a call cut short by an abort, or stopped with Esc, is interrupted', async ($, on) => {
+  const world = session(on)
+  await prompt($, 'p1')
+  const stopped = await startCall($, world, 'c1')
+  await finishCall(world, stopped, 'c1', { error: '[Request interrupted by user for tool use]' })
+  const band = await mountBand($)
+  expect(String((await band.find({ key: 'tool-drawer:card:c1' }))?.props.label)).toMatch(/^▸ ■ bash/)
+  expect((await band.find({ key: 'tool-drawer:toggle' }))?.props.label).toBe('▾ Tool Usage (1 interrupted · bash)')
+})
+
+test('a row an abort ended marks its call interrupted', async ($, on) => {
+  const world = session(on)
+  await prompt($, 'p1')
+  const failing = await startCall($, world, 'c1')
+  await finishCall(world, failing, 'c1', { error: 'Exit code 130' })
+  const row = await $.ui.mount({
+    plugin: 'sc-mods',
+    surface: 'terminal',
+    component: 'ToolUse',
+    requestId: 'c1',
+    props: { tool_use_id: 'c1', tool: 'Bash', input: {}, isRunning: false, isErrored: true, isInterrupted: true, isExpanded: true },
+  })
+  await world.clock.advance(0)
+  await row.unmount()
+  expect(String((await (await mountBand($)).find({ key: 'tool-drawer:card:c1' }))?.props.label)).toMatch(/^▾ ■ bash/)
 })
 
 test('a running card counts its seconds up while the call runs', async ($, on) => {
@@ -379,7 +421,11 @@ test('keptOutput keeps the last lines and counts them all', () => {
 test('endingOf reads stdout then stderr, an error, or a refusal', () => {
   expect(endingOf({ result: { stdout: 'a\n', stderr: 'b\n' } } as never)).toEqual({ status: 'done', text: 'a\nb' })
   expect(endingOf({ isError: true, result: undefined, text: 'boom' })).toEqual({ status: 'error', text: 'boom' })
-  expect(endingOf({ deny: 'no' })).toEqual({ status: 'error', text: 'no' })
+  expect(endingOf({ deny: 'no' })).toEqual({ status: 'declined', text: 'no' })
+  expect(endingOf({ isError: true, result: undefined, text: 'denied' }, { wasAsked: true, wasSeenRunning: false }).status).toBe('declined')
+  expect(endingOf({ isError: true, result: undefined, text: 'exit 1' }, { wasAsked: true, wasSeenRunning: true }).status).toBe('error')
+  expect(endingOf({ isError: true, result: undefined, text: 'Interrupted by user' }).status).toBe('interrupted')
+  expect(endingOf({ result: { stdout: '', stderr: '', interrupted: true } } as never).status).toBe('interrupted')
 })
 
 test('withCall keeps at most MAX_HELD_CALLS, dropping the oldest', () => {
@@ -489,7 +535,7 @@ test('in a 12-row band the arrows stay under an expanded 30-line card', async ($
   // One element a row: the scope button shares the bar's row; the arrows' row and the engine's drawing are beneath the drawer.
   const drawerRows = (await band.findAll({}))
     .filter(found => found.type === 'Text' || found.type === 'Button')
-    .filter(found => found.key !== 'tool-drawer:scope' && !String(found.key ?? '').startsWith('prompt-jump') && found.text !== 'Turn 1/1' && found.text !== 'engine')
+    .filter(found => found.key !== 'tool-drawer:scope' && !String(found.key ?? '').startsWith('prompt-jump') && found.text !== 'Turn 1/1' && found.text !== 'engine' && !MARKS.includes(found.text))
   expect(drawerRows.length).toBeLessThanOrEqual(drawerRoom(12, 0))
   expect(await band.find({ type: 'Text', text: '┃ line 29' })).toBeDefined()
   expect(await band.find({ type: 'Text', text: '┃ line 0' })).toBeUndefined()
@@ -543,7 +589,7 @@ test('with another plugin’s 3-row row in the band, the drawer and the arrows f
   await band.press({ key: 'tool-drawer:card:c1' })
   const drawerRows = (await band.findAll({}))
     .filter(found => found.type === 'Text' || found.type === 'Button')
-    .filter(found => found.key !== 'tool-drawer:scope' && !String(found.key ?? '').startsWith('prompt-jump') && found.text !== 'Turn 1/1' && found.text !== 'engine')
+    .filter(found => found.key !== 'tool-drawer:scope' && !String(found.key ?? '').startsWith('prompt-jump') && found.text !== 'Turn 1/1' && found.text !== 'engine' && !MARKS.includes(found.text))
   expect(drawerRows.length + ARROWS_ROWS + 3).toBeLessThanOrEqual(12)
   expect(await band.find({ type: 'Text', text: '┃ line 29' })).toBeDefined()
 })

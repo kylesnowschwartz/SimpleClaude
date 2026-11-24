@@ -23,9 +23,9 @@ const TICK_MS = 1000
 const ELLIPSIS = '…'
 
 // Change a tag when its value's fields change: it declines what an earlier version stored.
-const HELD_CALLS = atom({ plugin: 'sc-mods', key: 'heldCalls' } as const, [], { shape: 'held-calls-1' })
-export const NEW_VIEW: DrawerView = { isOn: true, isOpen: false, isSetByHand: false, scope: 'turn', expanded: [] }
-const DRAWER_VIEW = atom({ plugin: 'sc-mods', key: 'drawerView' } as const, NEW_VIEW, { shape: 'drawer-view-1' })
+const HELD_CALLS = atom({ plugin: 'sc-mods', key: 'heldCalls' } as const, [], { shape: 'held-calls-2' })
+export const NEW_VIEW: DrawerView = { isOn: true, isOpen: false, isSetByHand: false, scope: 'turn', expanded: [], collapsed: [] }
+const DRAWER_VIEW = atom({ plugin: 'sc-mods', key: 'drawerView' } as const, NEW_VIEW, { shape: 'drawer-view-2' })
 /** The time a running card's elapsed seconds count to, moved on each second while a call runs. */
 const DRAWER_CLOCK = atom({ plugin: 'sc-mods', key: 'drawerClock' } as const, 0)
 /** The rows the other plugins' band rows took when the band last settled. */
@@ -47,14 +47,30 @@ export function keptOutput(text: string): { output: string[]; outputLineCount: n
 
 const joinStreams = (stdout: string, stderr: string) => [stdout.replace(/\n+$/, ''), stderr.replace(/\n+$/, '')].filter(part => part !== '').join('\n')
 
-/** How the call ended and the text it printed: stdout then stderr, or the error the result carries. */
-export function endingOf(ran: ToolCallResult): { status: HeldCallStatus; text: string } {
-  if (ran.deny !== undefined) return { status: 'error', text: ran.deny }
-  if (ran.isError) return { status: 'error', text: ran.text ?? '' }
-  const result = ran.result as { stdout?: unknown; stderr?: unknown } | undefined
+// How Claude Code words a tool call the person stopped with Esc.
+const INTERRUPTED_TEXT = /interrupted by user/i
+
+/** What the drawer knows of a call besides its result: whether it was put to the permission dialog, and whether it was seen running after. */
+export type CallPath = { wasAsked: boolean; wasSeenRunning: boolean }
+
+/**
+ * How the call ended and the text it printed: stdout then stderr, or the
+ * error the result carries. A refusal is declined, and so is an error of a
+ * call put to the dialog and never seen running, which is how a declined
+ * dialog reports; an error that says the person stopped it, or a result
+ * marked interrupted, is interrupted.
+ */
+export function endingOf(ran: ToolCallResult, path: CallPath = { wasAsked: false, wasSeenRunning: false }): { status: HeldCallStatus; text: string } {
+  if (ran.deny !== undefined) return { status: 'declined', text: ran.deny }
+  if (ran.isError) {
+    const text = ran.text ?? ''
+    if (INTERRUPTED_TEXT.test(text)) return { status: 'interrupted', text }
+    return { status: path.wasAsked && !path.wasSeenRunning ? 'declined' : 'error', text }
+  }
+  const result = ran.result as { stdout?: unknown; stderr?: unknown; interrupted?: unknown } | undefined
   const stdout = typeof result?.stdout === 'string' ? result.stdout : ''
   const stderr = typeof result?.stderr === 'string' ? result.stderr : ''
-  return { status: 'done', text: joinStreams(stdout, stderr) }
+  return { status: result?.interrupted === true ? 'interrupted' : 'done', text: joinStreams(stdout, stderr) }
 }
 
 /** A new running call, as the drawer keeps it. */
@@ -80,12 +96,14 @@ export function callsInScope(calls: readonly HeldCall[], scope: DrawerScope, tur
   return turn === undefined ? [] : calls.filter(call => call.promptId === turn.promptId)
 }
 
-/** `Tool Usage (2 done · 1 failed · 1 running · bash)`, each count shown only when above 0. */
+/** `Tool Usage (2 done · 1 failed · 1 declined · 1 running · bash)`, each count shown only when above 0. */
 export function summaryText(calls: readonly HeldCall[]): string {
   const count = (status: HeldCallStatus) => calls.filter(call => call.status === status).length
   const parts = [
     [count('done'), 'done'],
     [count('error'), 'failed'],
+    [count('declined'), 'declined'],
+    [count('interrupted'), 'interrupted'],
     [count('running'), 'running'],
   ]
     .filter(([n]) => (n as number) > 0)
@@ -105,7 +123,11 @@ export function durationText(ms: number): string {
   return `${Math.floor(seconds / 60)}m${String(seconds % 60).padStart(2, '0')}s`
 }
 
-const STATUS_MARK: Record<HeldCallStatus, string> = { running: ELLIPSIS, done: '✓', error: '✗' }
+const STATUS_MARK: Record<HeldCallStatus, string> = { running: ELLIPSIS, done: '✓', error: '✗', declined: '⊘', interrupted: '■' }
+
+/** How a card's mark is drawn: a failure in the error colour, a declined or interrupted call dim, the rest as the line. */
+export const markStyle = (status: HeldCallStatus): { color?: string; dimColor?: boolean } =>
+  status === 'error' ? { color: 'error' } : status === 'declined' || status === 'interrupted' ? { dimColor: true } : {}
 
 /** A card's line: `▸ ✓ bash 0.4s  <first line of the command>`, cut to `width`; a running call shows its seconds so far. */
 export function cardText(call: HeldCall, isExpanded: boolean, now: number, width: number): string {
@@ -237,15 +259,38 @@ async function record($: EngineInterface, trail: PromptTrail, id: string, comman
     const endedAt = await $.clock.now()
     const calls = await update($, HELD_CALLS, list => list.map(one => (one.id === id ? endedCall(one, ending, endedAt) : one)))
     if (!calls.some(one => one.status === 'running')) stopTicking()
+    if (ending.status === 'error') await update($, DRAWER_VIEW, view => openedOnFailure(view, id))
+    askedCalls.delete(id)
+    callsSeenRunning.delete(id)
   }
   try {
     const ran = await run()
-    await end(endingOf(ran))
+    await end(endingOf(ran, { wasAsked: askedCalls.has(id), wasSeenRunning: callsSeenRunning.has(id) }))
     return ran
   } catch (error) {
-    await end({ status: 'error', text: error instanceof Error ? error.message : String(error) })
+    // A call cut short by an abort settles by throwing.
+    await end({ status: 'interrupted', text: error instanceof Error ? error.message : String(error) })
     throw error
   }
+}
+
+/** The calls put to the permission dialog, and those drawn running since: a call asked and never seen running that errs was declined. */
+const askedCalls = new Set<string>()
+const callsSeenRunning = new Set<string>()
+
+/** The view with a failed call's card open, unless the person closed that card. */
+export const openedOnFailure = (view: DrawerView, id: string): DrawerView =>
+  view.collapsed.includes(id) || view.expanded.includes(id) ? view : { ...view, expanded: [...view.expanded, id] }
+
+/**
+ * Marks a held call the row says an abort ended, once: a failed or still
+ * running call is interrupted. A write is refused while drawing, so it goes
+ * on the clock.
+ */
+function markInterrupted($: EngineInterface, id: string, calls: readonly HeldCall[]) {
+  const call = calls.find(one => one.id === id)
+  if (call === undefined || (call.status !== 'running' && call.status !== 'error')) return
+  $.clock.after(0, () => void update($, HELD_CALLS, list => list.map(one => (one.id === id && (one.status === 'running' || one.status === 'error') ? { ...one, status: 'interrupted' } : one))))
 }
 
 /** Whether the drawer holds the call now, read while drawing so a call's start or end draws the row again. */
@@ -255,10 +300,11 @@ async function holds($: EngineInterface, id: string | undefined): Promise<boolea
 
 const press = ($: EngineInterface, change: (view: DrawerView) => DrawerView) => update($, DRAWER_VIEW, change)
 
-const toggleExpanded = (view: DrawerView, id: string): DrawerView => ({
-  ...view,
-  expanded: view.expanded.includes(id) ? view.expanded.filter(one => one !== id) : [...view.expanded, id],
-})
+/** The view with the card opened, or closed by hand. */
+export function toggleExpanded(view: DrawerView, id: string): DrawerView {
+  if (view.expanded.includes(id)) return { ...view, expanded: view.expanded.filter(one => one !== id), collapsed: [...view.collapsed, id] }
+  return { ...view, expanded: [...view.expanded, id], collapsed: view.collapsed.filter(one => one !== id) }
+}
 
 /**
  * The tool drawer: the main conversation's shell commands leave the
@@ -295,8 +341,18 @@ export function registerToolDrawer(on: On, trail: PromptTrail) {
     return { text }
   })
 
+  // A call put to a decider: the dialog, or the auto-mode classifier.
+  on('tool.check', async ($, e, next) => {
+    const verdict = await next(e)
+    if (verdict.decision === 'ask' && e.tool === DRAWER_TOOL && e.tool_use_id !== undefined) askedCalls.add(e.tool_use_id)
+    return verdict
+  })
+
   on('ui.render', { component: 'ToolUse' }, async ($, e, next) => {
-    if (e.props.tool !== DRAWER_TOOL || !(await holds($, e.props.tool_use_id))) return next(e)
+    if (e.props.tool !== DRAWER_TOOL) return next(e)
+    if (e.props.isRunning) callsSeenRunning.add(e.props.tool_use_id)
+    if (!(await holds($, e.props.tool_use_id))) return next(e)
+    if (e.props.isInterrupted) markInterrupted($, e.props.tool_use_id, await read($, HELD_CALLS))
     const { Box } = $.ui.resolve(e)
     return <Box />
   })
@@ -308,6 +364,8 @@ export function registerToolDrawer(on: On, trail: PromptTrail) {
   })
 
   on('ui.render', { component: 'ToolProgress' }, async ($, e, next) => {
+    // The run-in-background pill shows only under a running call.
+    callsSeenRunning.add(e.props.tool_use_id)
     if (!(await holds($, e.props.tool_use_id))) return next(e)
     const { Box } = $.ui.resolve(e)
     return <Box />
@@ -371,15 +429,20 @@ export function registerToolDrawer(on: On, trail: PromptTrail) {
         {layout.cards.map(({ call, bodyLines }) => {
           const isExpanded = view.expanded.includes(call.id)
           const body = bodyLines === undefined ? undefined : cardBody(call, width, bodyLines)
+          const label = cardText(call, isExpanded, now, width)
           return (
             <Box key={`tool-drawer:call:${call.id}`} flexDirection="column">
               <Button
                 key={`tool-drawer:card:${call.id}`}
                 plain
                 dimColor={call.status === 'done'}
-                label={cardText(call, isExpanded, now, width)}
+                label={label}
                 onPress={() => press($, current => toggleExpanded(current, call.id))}
-              />
+              >
+                {label.slice(0, 2)}
+                <Text {...markStyle(call.status)}>{label.slice(2, 3)}</Text>
+                {label.slice(3)}
+              </Button>
               {body === undefined ? null : (
                 <Box flexDirection="column">
                   <Text>{body.command}</Text>

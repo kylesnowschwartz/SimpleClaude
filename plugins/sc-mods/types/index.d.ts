@@ -10,8 +10,12 @@ export type PictureView = { isHidden: boolean; size: ImageSize | '' }
 /** Each picture's view in one `show_image` row, keyed by its tool_use_id, by the picture's index; a picture not in it is shown at the call's size. */
 export type PictureViews = Record<string, PictureView>
 
-/** Where a call the tool drawer holds stands: still running, finished, or ended in an error (a refusal included). */
-export type HeldCallStatus = 'running' | 'done' | 'error'
+/**
+ * Where a call the tool drawer holds stands: still running, finished, ended
+ * in an error, declined at the permission dialog (or refused by a hook), or
+ * interrupted by Esc or an abort.
+ */
+export type HeldCallStatus = 'running' | 'done' | 'error' | 'declined' | 'interrupted'
 
 /**
  * One shell command the tool drawer holds in place of its transcript rows.
@@ -38,9 +42,11 @@ export type DrawerScope = 'turn' | 'all'
  * How the tool drawer shows. `isOn` false gives every row back to the
  * transcript and hides the drawer; `isSetByHand` is true once the person has
  * opened or closed it, so a new prompt's first call leaves it as it is.
- * `expanded` lists the ids of the calls whose card shows its output.
+ * `expanded` lists the ids of the calls whose card shows its output;
+ * `collapsed` those whose card the person closed, which a failure does not
+ * open again.
  */
-export type DrawerView = { isOn: boolean; isOpen: boolean; isSetByHand: boolean; scope: DrawerScope; expanded: string[] }
+export type DrawerView = { isOn: boolean; isOpen: boolean; isSetByHand: boolean; scope: DrawerScope; expanded: string[]; collapsed: string[] }
 
 declare module 'claude-code' {
   interface PluginState {
