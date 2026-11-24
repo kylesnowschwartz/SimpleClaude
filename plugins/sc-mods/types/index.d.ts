@@ -13,16 +13,18 @@ export type PictureViews = Record<string, PictureView>
 /**
  * Where a call the tool drawer holds stands: still running, finished, ended
  * in an error, declined at the permission dialog (or refused by a hook), or
- * interrupted by Esc or an abort.
+ * interrupted by Esc or an abort, or moved to the background (ctrl+b,
+ * `run_in_background`, or its timeout), where it runs on.
  */
-export type HeldCallStatus = 'running' | 'done' | 'error' | 'declined' | 'interrupted'
+export type HeldCallStatus = 'running' | 'done' | 'error' | 'declined' | 'interrupted' | 'background'
 
 /**
  * One shell command the tool drawer holds in place of its transcript rows.
  * `promptId` is the person's prompt the call ran under, or '' when none was
  * known. `output` is the last lines of stdout then stderr (or the error
  * text), each cut to a length; `outputLineCount` counts every line the call
- * printed. `durationMs` is 0 while it runs, and -1 for a call read back from
+ * printed. `backgroundTaskId` names the background task a call moved to, or
+ * is ''. `durationMs` is 0 while it runs, and -1 for a call read back from
  * the conversation, whose timing is not stored.
  */
 export type HeldCall = {
@@ -34,6 +36,7 @@ export type HeldCall = {
   durationMs: number
   output: string[]
   outputLineCount: number
+  backgroundTaskId: string
 }
 
 /** Which calls the drawer lists: those of the prompt the arrows are on, or every one. */

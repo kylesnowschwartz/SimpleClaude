@@ -33,7 +33,7 @@ const FRAME_PADDING = 1
 const ELLIPSIS = '…'
 
 // Change a tag when its value's fields change: it declines what an earlier version stored.
-const HELD_CALLS = atom({ plugin: 'sc-mods', key: 'heldCalls' } as const, [], { shape: 'held-calls-3' })
+const HELD_CALLS = atom({ plugin: 'sc-mods', key: 'heldCalls' } as const, [], { shape: 'held-calls-4' })
 export const NEW_VIEW: DrawerView = { isOn: true, isOpen: false, isSetByHand: false, scope: 'turn', expanded: [], collapsed: [] }
 const DRAWER_VIEW = atom({ plugin: 'sc-mods', key: 'drawerView' } as const, NEW_VIEW, { shape: 'drawer-view-2' })
 /** The time a running card's elapsed seconds count to, moved on each second while a call runs. */
@@ -66,31 +66,37 @@ const INTERRUPTED_TEXT = /interrupted by user/i
  * an error or refusal of a call that never started was declined (at the
  * permission dialog, by the auto-mode classifier, or by a hook). An error that
  * says the person stopped it, or a result marked interrupted, is interrupted.
+ * A result that names a background task moved there and runs on.
  */
-export function endingOf(ran: ToolCallResult, hasRun = true): { status: HeldCallStatus; text: string } {
+export function endingOf(ran: ToolCallResult, hasRun = true): CallEnding {
   if (ran.deny !== undefined) return { status: hasRun ? 'error' : 'declined', text: ran.deny }
   if (ran.isError) {
     const text = ran.text ?? ''
     if (INTERRUPTED_TEXT.test(text)) return { status: 'interrupted', text }
     return { status: hasRun ? 'error' : 'declined', text }
   }
-  const result = ran.result as { stdout?: unknown; stderr?: unknown; interrupted?: unknown } | undefined
+  const result = ran.result as { stdout?: unknown; stderr?: unknown; interrupted?: unknown; backgroundTaskId?: unknown } | undefined
   const stdout = typeof result?.stdout === 'string' ? result.stdout : ''
   const stderr = typeof result?.stderr === 'string' ? result.stderr : ''
-  return { status: result?.interrupted === true ? 'interrupted' : 'done', text: joinStreams(stdout, stderr) }
+  const text = joinStreams(stdout, stderr)
+  if (typeof result?.backgroundTaskId === 'string' && result.backgroundTaskId !== '') return { status: 'background', text, backgroundTaskId: result.backgroundTaskId }
+  return { status: result?.interrupted === true ? 'interrupted' : 'done', text }
 }
+
+/** How a call ended, the text it printed, and the background task it moved to, if it did. */
+export type CallEnding = { status: HeldCallStatus; text: string; backgroundTaskId?: string }
 
 /** A new running call, as the drawer keeps it. */
 export function startedCall(id: string, command: string, promptId: string | undefined, startedAt: number): HeldCall {
-  return { id, promptId: promptId ?? '', command: fit(cleanText(command), MAX_COMMAND_CHARS), status: 'running', startedAt, durationMs: 0, output: [], outputLineCount: 0 }
+  return { id, promptId: promptId ?? '', command: fit(cleanText(command), MAX_COMMAND_CHARS), status: 'running', startedAt, durationMs: 0, output: [], outputLineCount: 0, backgroundTaskId: '' }
 }
 
 /** The calls with one more, the oldest dropped past MAX_HELD_CALLS. */
 export const withCall = (calls: readonly HeldCall[], call: HeldCall): HeldCall[] => [...calls.filter(one => one.id !== call.id), call].slice(-MAX_HELD_CALLS)
 
 /** The call ended: its status, duration and output. */
-export function endedCall(call: HeldCall, ending: { status: HeldCallStatus; text: string }, endedAt: number): HeldCall {
-  return { ...call, status: ending.status, durationMs: Math.max(0, endedAt - call.startedAt), ...keptOutput(ending.text) }
+export function endedCall(call: HeldCall, ending: CallEnding, endedAt: number): HeldCall {
+  return { ...call, status: ending.status, durationMs: Math.max(0, endedAt - call.startedAt), ...keptOutput(ending.text), backgroundTaskId: ending.backgroundTaskId ?? '' }
 }
 
 /** Whether a call starting under `promptId` is the first of its prompt: no call kept so far ran under it. */
@@ -111,6 +117,7 @@ export function summaryText(calls: readonly HeldCall[]): string {
     [count('error'), 'failed'],
     [count('declined'), 'declined'],
     [count('interrupted'), 'interrupted'],
+    [count('background'), 'in background'],
     [count('running'), 'running'],
   ]
     .filter(([n]) => (n as number) > 0)
@@ -168,15 +175,16 @@ export function durationText(ms: number): string {
   return `${Math.floor(seconds / 60)}m${String(seconds % 60).padStart(2, '0')}s`
 }
 
-const STATUS_MARK: Record<HeldCallStatus, string> = { running: ELLIPSIS, done: '✓', error: '✗', declined: '⊘', interrupted: '■' }
+const STATUS_MARK: Record<HeldCallStatus, string> = { running: ELLIPSIS, done: '✓', error: '✗', declined: '⊘', interrupted: '■', background: '↗' }
 
 /** How a card's mark is drawn: a failure in the error colour, a declined or interrupted call dim, the rest as the line. */
 export const markStyle = (status: HeldCallStatus): { color?: string; dimColor?: boolean } =>
-  status === 'error' ? { color: ERROR_COLOR } : status === 'declined' || status === 'interrupted' ? { dimColor: true } : {}
+  status === 'error' ? { color: ERROR_COLOR } : status === 'declined' || status === 'interrupted' || status === 'background' ? { dimColor: true } : {}
 
 /** A card's line: `▸ ✓ bash 0.4s  <first line of the command>`, cut to `width`; a running call shows its seconds so far. */
 export function cardText(call: HeldCall, isExpanded: boolean, now: number, width: number): string {
-  const elapsed = call.status === 'running' ? secondsSince(call.startedAt, now) : call.durationMs < 0 ? '' : ` ${durationText(call.durationMs)}`
+  // A call in the background runs on, so it shows no time that reads as finished.
+  const elapsed = call.status === 'running' ? secondsSince(call.startedAt, now) : call.durationMs < 0 || call.status === 'background' ? '' : ` ${durationText(call.durationMs)}`
   const firstLine = call.command.split('\n')[0] ?? ''
   return fit(`${isExpanded ? '▾' : '▸'} ${STATUS_MARK[call.status]} ${TOOL_LABEL}${call.status === 'running' ? ` ${elapsed}` : elapsed}  ${firstLine}`, width)
 }
@@ -186,16 +194,27 @@ export function cardText(call: HeldCall, isExpanded: boolean, now: number, width
  * then the last `shownLines` output lines (at most SHOWN_LINES), each
  * `┃ `-prefixed and cut to `width`.
  */
-export function cardBody(call: HeldCall, width: number, shownLines = SHOWN_LINES): { command: string; earlierNote: string | undefined; lines: string[] } {
+export function cardBody(
+  call: HeldCall,
+  width: number,
+  shownLines = SHOWN_LINES,
+): { command: string; backgroundNote: string | undefined; earlierNote: string | undefined; lines: string[] } {
   const count = Math.max(0, Math.min(shownLines, SHOWN_LINES))
   const lines = count === 0 ? [] : call.output.slice(-count)
   const earlier = call.outputLineCount - lines.length
   return {
     command: fit(`┃ $ ${call.command.replace(/\n/g, ' ')}`, width),
+    backgroundNote: call.status === 'background' ? fit(`┃ ${backgroundNoteText(call.backgroundTaskId)}`, width) : undefined,
     earlierNote: earlier > 0 ? fit(`┃ ${ELLIPSIS} ${earlier} earlier line${earlier === 1 ? '' : 's'}`, width) : undefined,
     lines: lines.map(line => fit(`┃ ${line}`, width)),
   }
 }
+
+/** What an open card of a call in the background says of it. */
+export const backgroundNoteText = (taskId: string) => `Runs in the background as task ${taskId}; its output arrives in the conversation.`
+
+/** The rows a body takes beside its command row and output lines: the background note and the earlier-lines note. */
+const bodyNoteRows = (call: HeldCall, lines: number) => (call.status === 'background' ? 1 : 0) + (call.outputLineCount > lines ? 1 : 0)
 
 /** Rows of this plugin's band row under the drawer: the prompt arrows. */
 export const ARROWS_ROWS = 1
@@ -217,8 +236,7 @@ export type DrawerLayout = { cards: CardRoom[]; earlierCalls: number }
 /** The most output lines a body shows in `rows`, with its command row and its note when lines are left out; undefined when not even the command fits. */
 function bodyLinesIn(call: HeldCall, rows: number): number | undefined {
   for (let lines = Math.min(SHOWN_LINES, call.output.length); lines >= 0; lines -= 1) {
-    const noteRows = call.outputLineCount > lines ? 1 : 0
-    if (1 + lines + noteRows <= rows) return lines
+    if (1 + lines + bodyNoteRows(call, lines) <= rows) return lines
   }
   return undefined
 }
@@ -250,7 +268,7 @@ export function drawerLayout(calls: readonly HeldCall[], expanded: readonly stri
     const lines = bodyLinesIn(call, left)
     if (lines === undefined) continue
     bodyLines.set(call.id, lines)
-    left -= 1 + lines + (call.outputLineCount > lines ? 1 : 0)
+    left -= 1 + lines + bodyNoteRows(call, lines)
   }
   return { cards: shown.map(call => ({ call, bodyLines: bodyLines.get(call.id) })), earlierCalls: earlierCalls > 0 && cardRows > 1 ? earlierCalls : 0 }
 }
@@ -370,7 +388,7 @@ async function noteStart($: EngineInterface, trail: PromptTrail, id: string, com
 let conversation = 0
 
 /** Keeps how a call ended, and opens its card when it failed; nothing when its conversation has ended. */
-async function noteEnd($: EngineInterface, id: string, ending: { status: HeldCallStatus; text: string }, startedIn: number) {
+async function noteEnd($: EngineInterface, id: string, ending: CallEnding, startedIn: number) {
   if (startedIn !== conversation) return
   const endedAt = await $.clock.now()
   const calls = await update($, HELD_CALLS, list => list.map(one => (one.id === id ? endedCall(one, ending, endedAt) : one)))
@@ -645,6 +663,7 @@ export function registerToolDrawer(on: On, trail: PromptTrail) {
                       <Text color={ACCENT_COLOR}>{command.program}</Text>
                       <Text>{command.rest}</Text>
                     </Box>
+                    {body.backgroundNote === undefined ? null : <Text dimColor>{body.backgroundNote}</Text>}
                     {body.earlierNote === undefined ? null : <Text dimColor>{body.earlierNote}</Text>}
                     {body.lines.map(line => (
                       <Text {...(call.status === 'error' ? { color: ERROR_COLOR } : {})}>{line}</Text>

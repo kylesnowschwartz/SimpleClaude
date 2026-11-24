@@ -23,6 +23,7 @@ import {
   drawerRoom,
   otherRowsOf,
   scopeText,
+  backgroundNoteText,
   restoredCalls,
   commandSegments,
   copyText,
@@ -69,7 +70,7 @@ function frameIn(tree: unknown): unknown {
  * How a running Bash call ends: it prints, errs with `error`, is refused by
  * the tool with `deny`, or rejects with `throws`.
  */
-type Ending = { stdout?: string; stderr?: string; error?: string; deny?: string; throws?: string }
+type Ending = { stdout?: string; stderr?: string; error?: string; deny?: string; throws?: string; backgroundTaskId?: string }
 type Pending = { finish: (answer: Ending) => Promise<void> }
 
 /**
@@ -94,11 +95,11 @@ function session(on: On): { clock: MockClock; calls: Map<string, Pending>; store
   on('tool.run', (_$, e) =>
     new Promise<ToolCallResult>((resolve, reject) => {
       calls.set(e.tool_use_id, {
-        finish: async ({ stdout = '', stderr = '', error, deny, throws }) => {
+        finish: async ({ stdout = '', stderr = '', error, deny, throws, backgroundTaskId }) => {
           if (throws !== undefined) reject(new Error(throws))
           else if (deny !== undefined) resolve({ deny })
           else if (error !== undefined) resolve({ isError: true, result: undefined, text: error })
-          else resolve({ result: { stdout, stderr, interrupted: false } })
+          else resolve({ result: { stdout, stderr, interrupted: false, ...(backgroundTaskId === undefined ? {} : { backgroundTaskId, backgroundedByUser: true }) } })
         },
       })
     }),
@@ -520,7 +521,7 @@ test('switched turns the drawer on and off and reports its state', () => {
 
 // --- Fitting the band -----------------------------------------------------
 
-const layoutRows = (layout: ReturnType<typeof drawerLayout>) =>
+const layoutRows = (layout: ReturnType<typeof drawerLayout>): number =>
   1 +
   (layout.cards.length > 0 ? FRAME_ROWS : 0) +
   (layout.earlierCalls > 0 ? 1 : 0) +
@@ -889,4 +890,35 @@ test('an open drawer with no room for a card says so on its bar', async ($, on) 
   const roomy = await mountBand($, { bodyColumns: 80 })
   await roomy.press({ key: 'tool-drawer:toggle' })
   expect(await roomy.find({ type: 'Text', text: 'no room for cards' })).toBeUndefined()
+})
+
+// --- In the background ---------------------------------------------------------
+
+test('a command moved to the background shows ↗, counts apart and says where its output goes', async ($, on) => {
+  const world = session(on)
+  await prompt($, 'p1')
+  const running = await startCall($, world, 'c1', 'npm run dev')
+  await world.clock.advance(4800)
+  await finishCall(world, running, 'c1', { stdout: 'starting\n', backgroundTaskId: 'b7' })
+  const band = await mountBand($, { bodyColumns: 120 })
+  expect((await band.find({ key: 'tool-drawer:toggle' }))?.props.label).toBe('▾ Tool Usage (1 in background · bash)')
+  expect(await band.find({ type: 'Text', text: '●' })).toBeUndefined()
+  // It does not open by itself and claims no finished time.
+  expect((await band.find({ key: 'tool-drawer:card:c1' }))?.props.label).toBe('▸ ↗ bash  npm run dev')
+  expect(await band.find({ type: 'Text', text: '↗' })).toMatchObject({ props: { dimColor: true } })
+  await band.press({ key: 'tool-drawer:card:c1' })
+  expect(await band.find({ type: 'Text', text: `┃ ${backgroundNoteText('b7')}` })).toMatchObject({ props: { dimColor: true } })
+  expect(await band.find({ type: 'Text', text: '┃ starting' })).toBeDefined()
+})
+
+test('endingOf reads a background task id; a read-back call with one is in the background too', () => {
+  expect(endingOf({ result: { stdout: '', stderr: '', interrupted: false, backgroundTaskId: 'b1' } } as never)).toEqual({ status: 'background', text: '', backgroundTaskId: 'b1' })
+  const past = [{ role: 'assistant', toolUses: [{ tool_use_id: 'x', tool: 'Bash', input: { command: 'sleep 99' }, result: { stdout: '', stderr: '', backgroundTaskId: 'b2' }, text: 'running in background' }] }]
+  expect(restoredCalls(past, new Set(), new Set())[0]).toMatchObject({ status: 'background', backgroundTaskId: 'b2' })
+})
+
+test('a background card’s note takes its row in the layout', () => {
+  const background = { ...longCall('a'), status: 'background' as const, backgroundTaskId: 'b1' }
+  const layout = drawerLayout([background], ['a'], 12)
+  expect(layout.cards[0]?.bodyLines).toBe(12 - FRAME_ROWS - 1 - 1 - 1 - 1 - 1)
 })
