@@ -300,9 +300,19 @@ export function switched(view: DrawerView, args: string): { view: DrawerView; te
 /** The second-by-second tick while a call runs, so running cards count up. */
 let ticker: Timer | undefined
 
-const tickNow = async ($: EngineInterface) => {
-  const now = await $.clock.now()
-  await update($, DRAWER_CLOCK, () => now)
+/** Moves the running cards' clock on; a tick that finds no call under way stops the ticker. */
+async function tickNow($: EngineInterface) {
+  if (callsUnderWay.size === 0) {
+    stopTicking()
+    return
+  }
+  try {
+    const now = await $.clock.now()
+    await update($, DRAWER_CLOCK, () => now)
+  } catch (error) {
+    stopTicking()
+    logQuietly($, 'move the clock on', error)
+  }
 }
 
 function startTicking($: EngineInterface) {
@@ -371,6 +381,8 @@ async function record($: EngineInterface, trail: PromptTrail, id: string, comman
       await noteEnd($, id, { status: 'interrupted', text: error instanceof Error ? error.message : String(error) })
     } catch (bookkeeping) {
       logQuietly($, 'keep an interrupted command', bookkeeping)
+    } finally {
+      if (callsUnderWay.size === 0) stopTicking()
     }
     throw error
   }
@@ -380,6 +392,8 @@ async function record($: EngineInterface, trail: PromptTrail, id: string, comman
     await noteEnd($, id, endingOf(ran, underWay.hasRun))
   } catch (error) {
     logQuietly($, 'keep a finished command', error)
+  } finally {
+    if (callsUnderWay.size === 0) stopTicking()
   }
   return ran
 }

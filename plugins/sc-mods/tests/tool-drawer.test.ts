@@ -843,3 +843,4 @@ test('a command declined at the dialog never ran and is declined', async ($, on)
   const band = await mountBand($)
   expect(String((await band.find({ key: 'tool-drawer:card:c1' }))?.props.label)).toMatch(/^▸ ⊘ bash/)
 })
+
