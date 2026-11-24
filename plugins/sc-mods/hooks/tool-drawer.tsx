@@ -1,6 +1,7 @@
 import { atom, read, update } from 'claude-code'
 import type { EngineInterface, On, Timer, ToolCallResult } from 'claude-code'
 import type { DrawerScope, DrawerView, HeldCall, HeldCallStatus } from '../types'
+import { rowsOf } from './band-rows'
 import { cleanLine, cleanText, fit } from './drawer-text'
 import { newestPromptId, readTurnOn, type PromptTrail, type TurnOn } from './prompt-jump'
 
@@ -27,6 +28,8 @@ export const NEW_VIEW: DrawerView = { isOn: true, isOpen: false, isSetByHand: fa
 const DRAWER_VIEW = atom({ plugin: 'sc-mods', key: 'drawerView' } as const, NEW_VIEW, { shape: 'drawer-view-1' })
 /** The time a running card's elapsed seconds count to, moved on each second while a call runs. */
 const DRAWER_CLOCK = atom({ plugin: 'sc-mods', key: 'drawerClock' } as const, 0)
+/** The rows the other plugins' band rows took when the band last settled. */
+const OTHER_BAND_ROWS = atom({ plugin: 'sc-mods', key: 'otherBandRows' } as const, 0)
 
 // --- Pure helpers ---------------------------------------------------------
 
@@ -127,11 +130,16 @@ export function cardBody(call: HeldCall, width: number, shownLines = SHOWN_LINES
   }
 }
 
-/**
- * Rows the band keeps clear under the drawer: the prompt arrows' row, and one
- * more for a row another plugin draws beneath, which cannot be measured.
- */
-export const ROWS_BENEATH_DRAWER = 2
+/** Rows of this plugin's band row under the drawer: the prompt arrows. */
+export const ARROWS_ROWS = 1
+
+/** The rows the open drawer may take: the band's room less the arrows and the other plugins' rows. */
+export const drawerRoom = (maxRows: number, otherRows: number) => maxRows - ARROWS_ROWS - otherRows
+
+/** The rows the band rows of other plugins take, by plugin name. */
+export function otherRowsOf(rows: ReadonlyArray<{ plugin: string; tree: unknown }>, ownPlugin: string): number {
+  return rows.filter(row => row.plugin !== ownPlugin).reduce((sum, row) => sum + rowsOf(row.tree), 0)
+}
 
 /** One card the open drawer shows, and how many output lines its body shows; undefined for no body. */
 export type CardRoom = { call: HeldCall; bodyLines: number | undefined }
@@ -314,6 +322,15 @@ export function registerToolDrawer(on: On, trail: PromptTrail) {
     return <Box />
   })
 
+  // The band stacks one row per plugin in `maxRows` together, so the drawer
+  // learns what the others take once the band settles. A write is refused
+  // while drawing, so it goes on the clock, and only when the count changed.
+  on('ui.render', { component: 'AbovePromptList' }, async ($, e, next) => {
+    const measured = otherRowsOf(e.props.rows, $.plugin.name)
+    if (measured !== (await read($, OTHER_BAND_ROWS))) $.clock.after(0, () => void update($, OTHER_BAND_ROWS, () => measured))
+    return next(e)
+  })
+
   on('ui.render', { component: 'AbovePrompt' }, async ($, e, next) => {
     if (e.props.hasSurvey || e.props.view.agentId !== undefined) return next(e)
     const view = await read($, DRAWER_VIEW)
@@ -329,7 +346,7 @@ export function registerToolDrawer(on: On, trail: PromptTrail) {
     const isRunning = shown.some(call => call.status === 'running')
     const scope = scopeText(view.scope, turn)
     // The bar's other parts: the dot, the scope button's brackets and the gaps.
-    const layout = view.isOpen ? drawerLayout(shown, view.expanded, e.props.maxRows - ROWS_BENEATH_DRAWER) : { cards: [], earlierCalls: 0 }
+    const layout = view.isOpen ? drawerLayout(shown, view.expanded, drawerRoom(e.props.maxRows, await read($, OTHER_BAND_ROWS))) : { cards: [], earlierCalls: 0 }
     const summaryWidth = width - scope.length - (isRunning ? 2 : 0) - 6
     const { Box, Button, Text } = $.ui.resolve(e)
     return (

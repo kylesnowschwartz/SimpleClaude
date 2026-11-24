@@ -50,6 +50,7 @@ declare module 'claude-code' {
       heldCalls: Shaped<HeldCall[]>
       drawerView: Shaped<DrawerView>
       drawerClock: number
+      otherBandRows: number
     }
   }
 }

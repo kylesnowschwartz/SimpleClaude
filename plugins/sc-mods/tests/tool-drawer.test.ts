@@ -15,7 +15,9 @@ import {
   MAX_HELD_CALLS,
   MAX_KEPT_LINES,
   NEW_VIEW,
-  ROWS_BENEATH_DRAWER,
+  ARROWS_ROWS,
+  drawerRoom,
+  otherRowsOf,
   scopeText,
   SHOWN_LINES,
   startedCall,
@@ -24,6 +26,7 @@ import {
   withCall,
 } from '../hooks/tool-drawer'
 import { turnRuleText } from '../hooks/turn-rule'
+import { rowsOf } from '../hooks/band-rows'
 
 const BAND = {
   hasSurvey: false,
@@ -436,7 +439,7 @@ test('switched turns the drawer on and off and reports its state', () => {
 
 // --- Fitting the band -----------------------------------------------------
 
-const rowsOf = (layout: ReturnType<typeof drawerLayout>) =>
+const layoutRows = (layout: ReturnType<typeof drawerLayout>) =>
   1 +
   (layout.earlierCalls > 0 ? 1 : 0) +
   layout.cards.reduce((rows, { call: one, bodyLines }) => {
@@ -448,9 +451,9 @@ const longCall = (id: string, lines = 30) =>
   call({ id, output: Array.from({ length: lines }, (_, n) => `l${n}`), outputLineCount: lines })
 
 test('a 30-line body in a 12-row band leaves the rows beneath the drawer clear', () => {
-  const room = 12 - ROWS_BENEATH_DRAWER
+  const room = drawerRoom(12, 1)
   const layout = drawerLayout([longCall('a')], ['a'], room)
-  expect(rowsOf(layout)).toBeLessThanOrEqual(room)
+  expect(layoutRows(layout)).toBeLessThanOrEqual(room)
   // Bar, card, command row, note, then the last lines.
   expect(layout.cards[0]?.bodyLines).toBe(room - 4)
   expect(cardBody(longCall('a'), 80, room - 4).earlierNote).toBe(`┃ … ${30 - (room - 4)} earlier lines`)
@@ -461,14 +464,14 @@ test('many cards in a small band show the newest under a note of the earlier one
   const layout = drawerLayout(calls, [], 5)
   expect(layout.cards.map(one => one.call.id)).toEqual(['c7', 'c8', 'c9'])
   expect(layout.earlierCalls).toBe(7)
-  expect(rowsOf(layout)).toBe(5)
+  expect(layoutRows(layout)).toBe(5)
   expect(earlierCallsText(7, 80)).toBe('… 7 earlier calls')
 })
 
 test('the newest expanded card gets the room first', () => {
   const layout = drawerLayout([longCall('a'), longCall('b')], ['a', 'b'], 10)
   expect(layout.cards.map(one => one.bodyLines)).toEqual([undefined, 5])
-  expect(rowsOf(layout)).toBeLessThanOrEqual(10)
+  expect(layoutRows(layout)).toBeLessThanOrEqual(10)
 })
 
 test('a roomy band shows a body’s 30 lines; a tiny one shows the bar alone', () => {
@@ -487,7 +490,60 @@ test('in a 12-row band the arrows stay under an expanded 30-line card', async ($
   const drawerRows = (await band.findAll({}))
     .filter(found => found.type === 'Text' || found.type === 'Button')
     .filter(found => found.key !== 'tool-drawer:scope' && !String(found.key ?? '').startsWith('prompt-jump') && found.text !== 'Turn 1/1' && found.text !== 'engine')
-  expect(drawerRows.length).toBeLessThanOrEqual(12 - ROWS_BENEATH_DRAWER)
+  expect(drawerRows.length).toBeLessThanOrEqual(drawerRoom(12, 0))
   expect(await band.find({ type: 'Text', text: '┃ line 29' })).toBeDefined()
   expect(await band.find({ type: 'Text', text: '┃ line 0' })).toBeUndefined()
+})
+
+// --- Room left by other plugins' band rows --------------------------------
+
+const box = (props: Record<string, unknown>, ...children: unknown[]) => ({ type: 'Box', props, children })
+const text = (value: string) => ({ type: 'Text', props: {}, children: [value] })
+/** A framed one-line box, as an activity box draws its row: border, headline, border. */
+const FRAMED_ROW = box({ flexDirection: 'row' }, box({ flexDirection: 'column', borderStyle: 'round', paddingX: 1 }, box({ flexDirection: 'row' }, text('▸'), text('Running tests'))))
+
+test('rowsOf reads a tree’s rows', () => {
+  expect(rowsOf(text('one'))).toBe(1)
+  expect(rowsOf(text('one\ntwo'))).toBe(2)
+  expect(rowsOf(box({ flexDirection: 'column' }, text('a'), text('b'), text('c')))).toBe(3)
+  expect(rowsOf(box({}, text('a'), box({ flexDirection: 'column' }, text('b'), text('c'))))).toBe(2)
+  expect(rowsOf(FRAMED_ROW)).toBe(3)
+  expect(rowsOf(box({ flexDirection: 'column', paddingY: 1, gap: 1 }, text('a'), text('b')))).toBe(5)
+  expect(rowsOf(box({ display: 'none' }, text('a')))).toBe(0)
+  expect(rowsOf(box({}))).toBe(0)
+  expect(rowsOf({ type: 'Button', props: { label: 'x' } })).toBe(1)
+  expect(rowsOf({ type: 'engine', ref: 1 })).toBe(1)
+})
+
+test('otherRowsOf counts only the other plugins’ rows', () => {
+  const rows = [
+    { plugin: 'activity', tree: FRAMED_ROW },
+    { plugin: 'sc-mods', tree: box({ flexDirection: 'column' }, text('a'), text('b')) },
+    { plugin: 'clock', tree: text('12:00') },
+  ]
+  expect(otherRowsOf(rows, 'sc-mods')).toBe(4)
+  expect(drawerRoom(12, 4)).toBe(12 - ARROWS_ROWS - 4)
+})
+
+test('with another plugin’s 3-row row in the band, the drawer and the arrows fit in maxRows', async ($, on) => {
+  const world = session(on)
+  await prompt($, 'p1')
+  const out = Array.from({ length: 30 }, (_, n) => `line ${n}`).join('\n')
+  await finishCall(world, await startCall($, world, 'c1', 'seq 30'), 'c1', { stdout: out })
+  const list = await $.ui.mount({
+    plugin: 'sc-mods',
+    surface: 'terminal',
+    component: 'AbovePromptList',
+    props: { ...BAND, maxRows: 12, rows: [{ plugin: 'activity', tree: FRAMED_ROW }] },
+  } as never)
+  await world.clock.advance(0)
+  await list.unmount()
+
+  const band = await mountBand($, { maxRows: 12, scroll: { offset: 0, bodyRows: 11 } })
+  await band.press({ key: 'tool-drawer:card:c1' })
+  const drawerRows = (await band.findAll({}))
+    .filter(found => found.type === 'Text' || found.type === 'Button')
+    .filter(found => found.key !== 'tool-drawer:scope' && !String(found.key ?? '').startsWith('prompt-jump') && found.text !== 'Turn 1/1' && found.text !== 'engine')
+  expect(drawerRows.length + ARROWS_ROWS + 3).toBeLessThanOrEqual(12)
+  expect(await band.find({ type: 'Text', text: '┃ line 29' })).toBeDefined()
 })
