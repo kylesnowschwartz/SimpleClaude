@@ -40,7 +40,7 @@ The drawing has to fit the terminal's width. For a flowchart that is too wide, t
 
 ## Jump between prompts
 
-The band above the prompt shows two buttons, `◀` and `▶`, with a dim count between them: `[ ◀ ] Turn 2/5 [ ▶ ]` while the arrows are on the second of five prompts. Click a button to scroll the conversation so your previous or next prompt sits at the top of the view, with Claude's reply to it below. The last prompts cannot reach the top when little follows them, so the view stops at the end of the conversation. The end of the conversation is a place after the newest prompt: `▶` on the newest prompt scrolls to the end, `▶` at the end scrolls there again, and `◀` at the end goes to the newest prompt. The hotkeys `1` and `2` press the buttons while the band holds the keyboard: press ctrl+x then tab to move the keyboard to the band, or click in it; Esc returns it to the prompt box.
+The band above the prompt shows two buttons, `◀` and `▶`, with a dim count between them: `[ ◀ ] Turn 2/5 [ ▶ ]` while the arrows are on the second of five prompts. While the [tool drawer](#tool-drawer) is shown, the arrows sit in it, around its `Turn 2/5` button, and take no row of their own. Click a button to scroll the conversation so your previous or next prompt sits at the top of the view, with Claude's reply to it below. The last prompts cannot reach the top when little follows them, so the view stops at the end of the conversation. The end of the conversation is a place after the newest prompt: `▶` on the newest prompt scrolls to the end, `▶` at the end scrolls there again, and `◀` at the end goes to the newest prompt. The hotkeys `1` and `2` press the buttons while the band holds the keyboard: press ctrl+x then tab to move the keyboard to the band, or click in it; Esc returns it to the prompt box.
 
 The arrows count every prompt you send while the mod runs. When the mod loads into a conversation that already has prompts (`claude --resume`, `claude --continue`, a plugin reload), it counts that conversation's prompts from its last compaction on. The arrows step from the place they last jumped to; each new prompt you send puts them back at the end, where the count shows the newest prompt. Scrolling the conversation yourself does not move them. On the newest prompt of a conversation the mod loaded into, `▶` scrolls to the last rows the transcript file holds. A toast says so when there is no earlier prompt, or no later prompt and no row to scroll to, and gives Claude Code's reason when it does not scroll.
 
@@ -48,28 +48,33 @@ Jumping needs fullscreen mode, where Claude Code draws the conversation itself. 
 
 ## Tool drawer
 
-Claude's shell commands (the Bash tool) do not show in the conversation. They show in a drawer in the band above the prompt, over the prompt arrows:
+Claude's shell commands (the Bash tool) do not show in the conversation. They show in a drawer in the band above the prompt. The prompt arrows sit in the drawer's bottom border:
 
 ```text
 ╭─────────────────────────────────────────────────────────────────────────────────╮
-│ ▾ Tool Usage (2 done · 1 failed · 1 running · bash) ● just test 3s [ Turn 3/8 ] │
+│ ▾ Tool Usage (2 done · 1 failed · 1 running · bash) ● just test 3s              │
 │ ▸ ✓ 󰯠  0.4s  git status                                                         │
 │ ▾ ✗ 󰯠  1.2s  ls missing ⧉ copy                                                  │
 │ ┃ $ ls missing                                                                  │
 │ ┃ ls: missing: No such file or directory                                        │
 │ ▸ … 󰯠  3s    just test                                                          │
-╰─────────────────────────────────────────────────────────────────────────────────╯
-[ ◀ ] Turn 3/8 [ ▶ ]
+╰─[ ◀ ]─[ Turn 3/8 ]─[ ▶ ]─────────────────────────────────────────────────────────╯
+```
+
+Closed, the drawer is one line, with the arrows at its end:
+
+```text
+▸ Tool Usage (2 done · 1 failed · 1 running · bash) [ ◀ ] [ Turn 3/8 ] [ ▶ ]
 ```
 
 - Click the `Tool Usage` line to open or close the drawer. While a command runs, a `●` follows the counts, with the newest running command and its seconds so far, and the open drawer's border takes the running colour.
-- The drawer lists the commands of the prompt the arrows are on. Press `◀` or `▶` to see another prompt's commands. Click `Turn 3/8` to list the commands of every prompt (`All`), and click it again to go back.
+- The drawer lists the commands of the prompt the arrows are on. Press `◀` or `▶` to see another prompt's commands. Click `Turn 3/8`, between the arrows, to list the commands of every prompt (`All`), and click it again to go back.
 - Each command has one line: a mark, a wrench icon (`󰯠`, U+F0BE0, which needs a Nerd Font), how long it took, and its first line, cut to one row with `…`. The times take the same width on every line, so the commands start at one column. The command is coloured by what each word does: command names, operators such as `&&` and `|`, flags, quoted strings, variables, redirects, paths and comments each take their own theme colour. Under the pointer the whole line lights as one block, in one colour. The marks are `✓` done, `✗` failed (in the error colour), `⊘` declined (refused before it ran, at the permission dialog or by a hook), `■` stopped with Esc, `↗` moved to the background (ctrl+b, a command started in the background, or one that passed its timeout), and `…` still running, with its seconds so far. The counts on the bar name each kind: `1 failed · 1 declined · 1 interrupted · 1 in background`. A command in the background shows no time, does not open by itself, and its open line says its task id: it runs on, and its output arrives in the conversation, not in the drawer.
 - Click a command's line to show the full command and its output: stdout, then stderr, or the error. The open command shows the whole command after a `$`, highlighted by Claude Code's code highlighter, with its line breaks kept and long lines wrapped, up to 8 rows and then a dim `… N more lines` note. A green `┃` bar runs down its left side; a click on the bar closes the command, the same as a click on its line, and a click on the text beside it does nothing. The output is highlighted when its language is known: a diff from `git diff`, `git show`, `git log -p` or `diff -u`, JSON (output that parses as JSON, or a command ending in `| jq`), or the one file `cat`, `bat`, `head`, `tail` or `sed -n` printed, by its file name. Other output is plain, and a failed command's error is in the error colour. Each output line takes one row, cut at the drawer's edge. A long output shows its last 30 lines, fewer when the band has less room, under a dim `… N earlier lines` note. `⧉ copy` on an open command's line copies the command and its output.
 - A command that fails stays closed, with its `✗` mark in the error colour; click its line to read the error.
-- The drawer fits the band with the prompt arrows and any other mod's rows in it: when its commands do not fit, it shows the newest under a dim `… N earlier calls` line. An open command keeps its output in view before older closed commands do: they move into the `… N earlier calls` count first, and of several open commands the one opened last comes first. An open command with no room for its output shows closed. When the band has no room for even one command, the bar says `no room for cards`.
+- The drawer fits the band with any other mod's rows in it: when its commands do not fit, it shows the newest under a dim `… N earlier calls` line. An open command keeps its output in view before older closed commands do: they move into the `… N earlier calls` count first, and of several open commands the one opened last comes first. An open command with no room for its output shows closed. When the band has no room for even one command, the bar says `no room for cards`.
 - The drawer opens by itself at the first command of each new prompt, until you open or close it yourself. After that it stays as you left it for the rest of the session.
-- When the prompt the arrows are on has no commands, the drawer is not shown.
+- When the prompt the arrows are on has no commands, the drawer is not shown, and the arrows take their own row.
 
 Output shows as the terminal would leave it: colour codes and other escape sequences are removed, a line a progress bar rewrote with carriage returns keeps what was last written, tabs are expanded, and lines are cut to the band's width counting wide characters as two columns.
 

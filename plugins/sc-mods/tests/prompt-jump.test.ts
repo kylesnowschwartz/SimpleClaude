@@ -2,6 +2,7 @@ import type { On, PromptOrigin, RenderElement, SessionAppendDoor } from 'claude-
 import type { Engine, MockClock } from 'claude-code/testing'
 import { expect, mock, test } from 'claude-code/testing'
 import {
+  holdsArrows,
   END_ROW_COUNT,
   endRowsToTry,
   firstScrollRefusal,
@@ -128,6 +129,14 @@ test('the band keeps what the plugins beneath it draw, above the arrows', async 
   const band = await mountBand($)
   expect(await band.find({ key: 'beneath' })).toBeDefined()
   expect(await band.find({ key: 'prompt-jump:previous' })).toBeDefined()
+})
+
+test('holdsArrows finds the ◀ button anywhere in a drawn tree', () => {
+  const button = { type: 'Button', props: { key: 'prompt-jump:previous' } }
+  expect(holdsArrows({ type: 'Box', props: {}, children: [[{ type: 'Text', props: {}, children: ['x'] }], { type: 'Box', props: {}, children: [button] }] })).toBe(true)
+  expect(holdsArrows({ type: 'Box', props: { key: 'other' }, children: [] })).toBe(false)
+  expect(holdsArrows({ type: 'engine', ref: 1 })).toBe(false)
+  expect(holdsArrows(null)).toBe(false)
 })
 
 test('the band yields to a survey', async ($, on) => {

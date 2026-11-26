@@ -17,7 +17,7 @@ import {
   NEW_VIEW,
   prunedView,
   toggleExpanded,
-  ARROWS_ROWS,
+  arrowsCells,
   FRAME_ROWS,
   drawerRoom,
   otherRowsOf,
@@ -44,6 +44,7 @@ import {
 } from '../hooks/tool-drawer'
 import { turnRuleText } from '../hooks/turn-rule'
 import { rowsOf } from '../hooks/band-rows'
+import { cells } from '../hooks/drawer-text'
 import { recordToasts } from './support'
 
 const BAND = {
@@ -353,6 +354,103 @@ test('the drawer sits above the arrows', async ($, on) => {
   await finishCall(world, running, 'c1')
 })
 
+/** This plugin's part of the drawn band: the band's own row beneath it, then what this plugin draws. */
+function ownPart(tree: unknown): unknown {
+  const children = ((tree as { children?: unknown[] }).children ?? []) as Array<{ part?: { plugin?: string } }>
+  return children.find(child => child.part?.plugin === 'sc-mods')
+}
+
+/** The Box in the tree whose children hold an element of `key`, or undefined. */
+function parentOf(tree: unknown, key: string): { props?: Record<string, unknown>; children?: unknown[] } | undefined {
+  if (tree === null || typeof tree !== 'object') return undefined
+  const element = tree as { props?: Record<string, unknown>; children?: unknown[] }
+  const children = (element.children ?? []).flat(Infinity) as Array<{ props?: Record<string, unknown> } | null>
+  if (children.some(child => child?.props?.key === key)) return element
+  for (const child of children) {
+    const found = parentOf(child, key)
+    if (found !== undefined) return found
+  }
+  return undefined
+}
+
+test('the closed drawer draws the arrows at the end of its bar, around the scope button, and no row of their own', async ($, on) => {
+  const world = session(on)
+  await prompt($, 'p1')
+  await finishCall(world, await startCall($, world, 'c1', 'ls /nonexistent'), 'c1', { error: 'Exit code 1' })
+  const band = await mountBand($)
+  await band.press({ key: 'tool-drawer:toggle' })
+  expect(await band.find({ key: 'tool-drawer:card:c1' })).toBeUndefined()
+  expect(await band.findAll({ key: 'prompt-jump:previous' })).toHaveLength(1)
+  const drawn = await band.drawn()
+  const arrows = parentOf(drawn, 'prompt-jump:previous')
+  expect((arrows?.children ?? []).flat(Infinity).map(child => (child as { props?: { key?: string } } | null)?.props?.key)).toEqual([
+    'prompt-jump:previous',
+    'tool-drawer:scope',
+    'prompt-jump:next',
+  ])
+  // The bar's row holds the toggle and the arrows: this plugin draws the engine's row and the bar, two rows, as many as with the drawer off.
+  expect(parentOf(drawn, 'tool-drawer:toggle')?.children).toContain(arrows)
+  expect(rowsOf(ownPart(drawn))).toBe(2)
+})
+
+test('the framed drawer draws the arrows over its bottom border, and the bar has no scope button', async ($, on) => {
+  const world = session(on)
+  await prompt($, 'p1')
+  await finishCall(world, await startCall($, world, 'c1'), 'c1')
+  const band = await mountBand($)
+  const drawn = await band.drawn()
+  const frame = frameIn(drawn)
+  expect(frame).toBeDefined()
+  expect(await band.findAll({ key: 'prompt-jump:previous' })).toHaveLength(1)
+  expect(await band.findAll({ key: 'tool-drawer:scope' })).toHaveLength(1)
+  const arrows = parentOf(drawn, 'prompt-jump:previous')
+  expect(arrows?.props).toMatchObject({ position: 'absolute', bottom: 0 })
+  expect(parentOf(frame, 'tool-drawer:scope')).toBeUndefined()
+  // The engine's row, then the frame: border, bar, card, border. The arrows take no row.
+  expect(rowsOf(ownPart(drawn))).toBe(1 + rowsOf(frame))
+  expect(rowsOf(frame)).toBe(4)
+})
+
+test('the arrows in the drawer jump as on their own row, and the scope button still switches to all', async ($, on) => {
+  const world = session(on)
+  on('ui.scroll', () => ({}))
+  await prompt($, 'p1')
+  await finishCall(world, await startCall($, world, 'c1'), 'c1')
+  await prompt($, 'p2')
+  await finishCall(world, await startCall($, world, 'c2'), 'c2')
+  const band = await mountBand($)
+  expect((await band.find({ key: 'prompt-jump:previous' }))?.props).toMatchObject({ label: '◀', hotkey: '1' })
+  expect((await band.find({ key: 'prompt-jump:next' }))?.props).toMatchObject({ label: '▶', hotkey: '2' })
+  await band.press({ key: 'prompt-jump:previous' })
+  await band.press({ key: 'prompt-jump:previous' })
+  expect((await band.find({ key: 'tool-drawer:scope' }))?.props.label).toBe('Turn 1/2')
+  await band.press({ key: 'prompt-jump:next' })
+  expect((await band.find({ key: 'tool-drawer:scope' }))?.props.label).toBe('Turn 2/2')
+  await band.press({ key: 'tool-drawer:scope' })
+  expect((await band.find({ key: 'tool-drawer:scope' }))?.props.label).toBe('All')
+  expect(await band.findAll({ key: 'prompt-jump:next' })).toHaveLength(1)
+})
+
+test('with the drawer off the arrows keep their own row', async ($, on) => {
+  const world = session(on)
+  await prompt($, 'p1')
+  await finishCall(world, await startCall($, world, 'c1'), 'c1')
+  await command($, 'off')
+  const band = await mountBand($)
+  expect(await band.find({ key: 'tool-drawer:toggle' })).toBeUndefined()
+  expect(await band.findAll({ key: 'prompt-jump:previous' })).toHaveLength(1)
+  expect(rowsOf(ownPart(await band.drawn()))).toBe(2)
+})
+
+test('the bar leaves room for the arrows, so a narrow bar does not wrap', () => {
+  expect(arrowsCells('Turn 3/8')).toBe(5 + 1 + 12 + 1 + 5)
+  const summary = '▸ Tool Usage (2 done · 1 running · bash)'
+  const width = 50
+  const bar = barTexts(summary, 'npm test 12s', arrowsCells('Turn 3/8') + 1, width)
+  expect(bar.running).toBeUndefined()
+  expect(cells(bar.summary) + 2 + arrowsCells('Turn 3/8') + 1).toBeLessThanOrEqual(width)
+})
+
 test('scope follows the arrows, and the scope button switches to all turns', async ($, on) => {
   const world = session(on)
   on('ui.scroll', () => ({}))
@@ -615,6 +713,7 @@ test('rowsOf reads a tree’s rows', () => {
   expect(rowsOf(FRAMED_ROW)).toBe(3)
   expect(rowsOf(box({ flexDirection: 'column', paddingY: 1, gap: 1 }, text('a'), text('b')))).toBe(5)
   expect(rowsOf(box({ display: 'none' }, text('a')))).toBe(0)
+  expect(rowsOf(box({ flexDirection: 'column' }, text('a'), box({ position: 'absolute', bottom: 0 }, text('b'))))).toBe(1)
   expect(rowsOf(box({}))).toBe(0)
   expect(rowsOf({ type: 'Button', props: { label: 'x' } })).toBe(1)
   expect(rowsOf({ type: 'engine', ref: 1 })).toBe(1)
@@ -627,7 +726,7 @@ test('otherRowsOf counts only the other plugins’ rows', () => {
     { plugin: 'clock', tree: text('12:00') },
   ]
   expect(otherRowsOf(rows, 'sc-mods')).toBe(4)
-  expect(drawerRoom(12, 4)).toBe(12 - ARROWS_ROWS - 4)
+  expect(drawerRoom(12, 4)).toBe(12 - 4)
 })
 
 test('with another plugin’s 3-row row in the band, the drawer and the arrows fit in maxRows', async ($, on) => {
@@ -648,7 +747,7 @@ test('with another plugin’s 3-row row in the band, the drawer and the arrows f
   await band.press({ key: 'tool-drawer:card:c1' })
   const frame = frameIn(await band.drawn())
   expect(rowsOf(frame)).toBeGreaterThan(FRAME_ROWS)
-  expect(rowsOf(frame) + ARROWS_ROWS + 3).toBeLessThanOrEqual(12)
+  expect(rowsOf(frame) + 3).toBeLessThanOrEqual(12)
   expect(await band.find({ type: 'Text', text: /(^|\n)line 29(\n|$)/ })).toBeDefined()
 })
 
@@ -662,11 +761,11 @@ test('runningText names the newest running command and its seconds', () => {
 
 test('barTexts gives the summary room first and cuts the running command', () => {
   const summary = '▸ Tool Usage (2 done · 1 running · bash)'
-  expect(barTexts(summary, 'npm test 12s', 'Turn 3/8', 80)).toEqual({ summary, running: 'npm test 12s', note: undefined })
-  const tight = barTexts(summary, 'npm test --coverage 12s', 'Turn 3/8', 62)
+  expect(barTexts(summary, 'npm test 12s', 13, 80)).toEqual({ summary, running: 'npm test 12s', note: undefined })
+  const tight = barTexts(summary, 'npm test --coverage 12s', 13, 62)
   expect(tight.summary).toBe(summary)
   expect(tight.running).toBe('npm t…')
-  expect(barTexts(summary, 'npm test 12s', 'Turn 3/8', 50).running).toBeUndefined()
+  expect(barTexts(summary, 'npm test 12s', 13, 50).running).toBeUndefined()
 })
 
 test('the bar shows the running command after the dot', async ($, on) => {
@@ -914,16 +1013,16 @@ test('a call that fails after its conversation was cleared leaves the new one al
 
 test('barTexts fits the no-room note after the running command', () => {
   const summary = '▾ Tool Usage (1 done · bash)'
-  expect(barTexts(summary, undefined, 'Turn 1/1', 80, NO_ROOM_NOTE).note).toBe('no room for cards')
-  expect(barTexts(summary, undefined, 'Turn 1/1', 50, NO_ROOM_NOTE).note).toBe('no room…')
-  expect(barTexts(summary, undefined, 'Turn 1/1', 40, NO_ROOM_NOTE).note).toBeUndefined()
+  expect(barTexts(summary, undefined, 13, 80, NO_ROOM_NOTE).note).toBe('no room for cards')
+  expect(barTexts(summary, undefined, 13, 50, NO_ROOM_NOTE).note).toBe('no room…')
+  expect(barTexts(summary, undefined, 13, 40, NO_ROOM_NOTE).note).toBeUndefined()
 })
 
 test('an open drawer with no room for a card says so on its bar', async ($, on) => {
   const world = session(on)
   await prompt($, 'p1')
   await finishCall(world, await startCall($, world, 'c1', 'ls'), 'c1')
-  const cramped = await mountBand($, { maxRows: 4, bodyColumns: 80 })
+  const cramped = await mountBand($, { maxRows: 3, bodyColumns: 80 })
   expect(await cramped.find({ type: 'Text', text: 'no room for cards' })).toBeDefined()
   expect(await cramped.find({ key: 'tool-drawer:card:c1' })).toBeUndefined()
   await cramped.press({ key: 'tool-drawer:toggle' })
@@ -1005,7 +1104,7 @@ test('an open card without room for its body draws closed, never open and empty'
   for (const id of ['c1', 'c2', 'c3', 'c4']) await finishCall(world, await startCall($, world, id, `echo ${id}`), id, { stdout: 'x\n' })
   await (await mountBand($, { maxRows: 20 })).press({ key: 'tool-drawer:card:c1' })
   // In a smaller band the oldest card, open, still shows with its body; closed cards give way.
-  const band = await mountBand($, { maxRows: 9 })
+  const band = await mountBand($, { maxRows: 8 })
   expect(String((await band.find({ key: 'tool-drawer:card:c1' }))?.props.label)).toMatch(/^▾/)
   expect(await band.find({ key: 'tool-drawer:bar:c1:0' })).toBeDefined()
   expect(await band.find({ key: 'tool-drawer:card:c2' })).toBeUndefined()

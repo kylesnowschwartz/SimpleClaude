@@ -128,7 +128,7 @@ export const register: Register = (on, options) => {
   registerReplyCopy(on)
   const trail = newTrail()
   registerPromptJump(on, trail)
-  // After the prompt arrows, so the drawer draws above them.
+  // Beneath the prompt arrows' hook: the drawer draws above their row, or holds the arrows in its own rows.
   registerToolDrawer(on, trail)
   registerTurnRule(on, trail)
   registerShowImage(on)

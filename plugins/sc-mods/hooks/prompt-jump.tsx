@@ -1,5 +1,5 @@
 import { atom, read, update } from 'claude-code'
-import type { EngineInterface, On, ProcessRunResult, SessionAppendDoor, SessionAppendInput } from 'claude-code'
+import type { ButtonProps, ElementConstructor, EngineInterface, On, RenderNode, ProcessRunResult, SessionAppendDoor, SessionAppendInput } from 'claude-code'
 
 /** A step through the person's prompts: back to the previous one, or on to the next. */
 export type Step = -1 | 1
@@ -405,18 +405,47 @@ export function registerPromptJump(on: On, trail: PromptTrail) {
     const position = await read($, PROMPT_POSITION)
     // The band is shared: what the plugins beneath draw stays, above the arrows.
     const beneath = await next(e)
+    // A plugin beneath that draws the arrows in its own rows keeps the band a row shorter.
+    if (holdsArrows(beneath)) return beneath
     const { Box, Button, Text } = $.ui.resolve(e)
     return (
       <Box flexDirection="column">
         {beneath}
         <Box flexDirection="row" columnGap={1}>
-          <Button key="prompt-jump:previous" hotkey="1" label="◀" onPress={() => jump($, trail, -1)} />
-          {position === '' ? null : <Text dimColor>{position}</Text>}
-          <Button key="prompt-jump:next" hotkey="2" label="▶" onPress={() => jump($, trail, 1)} />
+          {promptArrows($, Button, trail, position === '' ? null : <Text dimColor>{position}</Text>)}
         </Box>
       </Box>
     )
   })
+}
+
+/** The keys of the ◀ and ▶ buttons, wherever they are drawn. */
+export const PREVIOUS_KEY = 'prompt-jump:previous'
+export const NEXT_KEY = 'prompt-jump:next'
+
+/** The cells a ◀ or ▶ button takes: the terminal draws it `[ ◀ ]`. */
+export const ARROW_CELLS = 5
+
+/**
+ * The ◀ and ▶ buttons with `between` drawn between them, as the children of
+ * a row Box. A plugin that draws them in its own band rows keeps the arrows'
+ * own row from being drawn; they jump as they do there.
+ */
+export function promptArrows($: EngineInterface, Button: ElementConstructor<ButtonProps>, trail: PromptTrail, between: RenderNode | null): Array<RenderNode | null> {
+  return [
+    <Button key={PREVIOUS_KEY} hotkey="1" label="◀" onPress={() => jump($, trail, -1)} />,
+    between,
+    <Button key={NEXT_KEY} hotkey="2" label="▶" onPress={() => jump($, trail, 1)} />,
+  ]
+}
+
+/** Whether a drawn tree holds the ◀ button. */
+export function holdsArrows(tree: unknown): boolean {
+  if (Array.isArray(tree)) return tree.some(holdsArrows)
+  if (tree === null || typeof tree !== 'object') return false
+  const element = tree as { key?: unknown; props?: { key?: unknown } | null; children?: unknown }
+  if (element.key === PREVIOUS_KEY || element.props?.key === PREVIOUS_KEY) return true
+  return holdsArrows(element.children)
 }
 
 /** Resolves once the prompts the transcript file held are known (or could not be read). */

@@ -5,7 +5,7 @@ import { rowsOf } from './band-rows'
 import { cells, cleanLine, cleanText, fit, headOf } from './drawer-text'
 import { outputLanguage, type OutputLanguage } from './output-language'
 import { fitTokens, isDimRole, SHELL_ROLE_COLOR, shellTokens, tokenCells, type ShellToken } from './shell-colors'
-import { newestPromptId, readStoredPrompts, readTurnOn, type PromptTrail, type TurnOn } from './prompt-jump'
+import { ARROW_CELLS, newestPromptId, promptArrows, readStoredPrompts, readTurnOn, type PromptTrail, type TurnOn } from './prompt-jump'
 
 /** The one tool whose calls the drawer holds. */
 export const DRAWER_TOOL = 'Bash'
@@ -36,6 +36,8 @@ const BAR_COLOR = 'success'
 /** The one colour every part of a card's row takes under the pointer, so the row lights as one block. */
 const HOVER_COLOR = 'text'
 const COPY_LABEL = '⧉ copy'
+/** The cells of the bottom border before the turn arrows drawn over it: the corner and one line. */
+const ARROWS_INDENT = 2
 /** The cells between the drawer's border and its text on each side. */
 const FRAME_PADDING = 1
 const ELLIPSIS = '…'
@@ -142,19 +144,23 @@ export function runningText(calls: readonly HeldCall[], now: number): string | u
 
 const secondsSince = (startedAt: number, now: number) => `${Math.max(0, Math.floor((now - startedAt) / 1000))}s`
 
+/** The cells the turn arrows take around the scope button: `[ ◀ ] [ Turn 3/8 ] [ ▶ ]`. */
+export const arrowsCells = (scope: string) => ARROW_CELLS + 1 + cells(scope) + 4 + 1 + ARROW_CELLS
+
 /**
- * The bar's texts cut to `width` cells together with the scope button
- * (`[ Turn 3/8 ]`), the `●` and the gaps: the summary first, then the running
- * command, then `note`, each in what is left and dropped when under 4 cells.
+ * The bar's texts cut to `width` cells together with `endCells` cells at its
+ * end (the turn arrows and the gap before them, or none), the `●` and the
+ * gaps: the summary first, then the running command, then `note`, each in
+ * what is left and dropped when under 4 cells.
  */
 export function barTexts(
   summary: string,
   running: string | undefined,
-  scope: string,
+  endCells: number,
   width: number,
   note?: string,
 ): { summary: string; running: string | undefined; note: string | undefined } {
-  const scopeCells = cells(scope) + 4 + 1
+  const scopeCells = endCells
   const dotCells = running === undefined ? 0 : 2
   const fittedSummary = fit(summary, width - scopeCells - dotCells)
   let left = width - scopeCells - dotCells - cells(fittedSummary)
@@ -302,11 +308,8 @@ export function cardBody(call: HeldCall, width: number, shownLines = SHOWN_LINES
 export const backgroundNoteText = (taskId: string) => `Runs in the background as task ${taskId}; its output arrives in the conversation.`
 
 
-/** Rows of this plugin's band row under the drawer: the prompt arrows. */
-export const ARROWS_ROWS = 1
-
-/** The rows the open drawer may take: the band's room less the arrows and the other plugins' rows. */
-export const drawerRoom = (maxRows: number, otherRows: number) => maxRows - ARROWS_ROWS - otherRows
+/** The rows the open drawer may take: the band's room less the other plugins' rows. The turn arrows sit in the drawer's own rows. */
+export const drawerRoom = (maxRows: number, otherRows: number) => maxRows - otherRows
 
 /** The rows the band rows of other plugins take, by plugin name. */
 export function otherRowsOf(rows: ReadonlyArray<{ plugin: string; tree: unknown }>, ownPlugin: string): number {
@@ -580,14 +583,17 @@ export function toggleExpanded(view: DrawerView, id: string): DrawerView {
 
 /**
  * The tool drawer: the main conversation's shell commands leave the
- * transcript and show in a drawer above the prompt arrows, one card a call,
+ * transcript and show in a drawer above the prompt, one card a call,
  * listed for the prompt the arrows are on or for all prompts. A row leaves
  * the transcript only for a call the drawer keeps, and only while it is on;
  * calls from before the plugin loaded keep their rows. `/tool-drawer off`
  * gives every row back.
  *
- * Register it after `registerPromptJump`, with the same trail, so it draws
- * above the arrows; `startToolDrawer` runs once the session has started.
+ * While it draws, the drawer holds the turn arrows around its scope button:
+ * in its bottom border when framed, at the end of its bar when not, so the
+ * arrows' own row is not drawn. Register it after `registerPromptJump`, with
+ * the same trail, so it draws beneath the arrows' hook; `startToolDrawer`
+ * runs once the session has started.
  */
 export function registerToolDrawer(on: On, trail: PromptTrail) {
   // `/clear` and `/resume` go on in this process with another conversation.
@@ -687,8 +693,23 @@ export function registerToolDrawer(on: On, trail: PromptTrail) {
     const isFramed = layout.cards.length > 0
     const timeCells = elapsedCells(layout.cards.map(card => card.call), now)
     const width = isFramed ? framedWidth : e.props.bodyColumns
-    const bar = barTexts(`${view.isOpen ? '▾' : '▸'} ${summaryText(shown)}`, runningText(shown, now), scope, width, view.isOpen && !isFramed ? NO_ROOM_NOTE : undefined)
+    const bar = barTexts(`${view.isOpen ? '▾' : '▸'} ${summaryText(shown)}`, runningText(shown, now), isFramed ? 0 : arrowsCells(scope) + 1, width, view.isOpen && !isFramed ? NO_ROOM_NOTE : undefined)
     const { Box, Button, Code, Text } = $.ui.resolve(e)
+    const arrows = (
+      <Box flexDirection="row" columnGap={1} {...(isFramed ? { position: 'absolute' as const, bottom: 0, left: ARROWS_INDENT } : {})}>
+        {promptArrows(
+          $,
+          Button,
+          trail,
+          <Button
+            key="tool-drawer:scope"
+            dimColor
+            label={scope}
+            onPress={() => press($, current => ({ ...current, scope: current.scope === 'all' ? 'turn' : 'all' }))}
+          />,
+        )}
+      </Box>
+    )
     return (
       <Box flexDirection="column">
         {beneath}
@@ -706,12 +727,7 @@ export function registerToolDrawer(on: On, trail: PromptTrail) {
             {isRunning ? <Text color={RUNNING_COLOR}>●</Text> : null}
             {bar.running === undefined ? null : <Text>{bar.running}</Text>}
             {bar.note === undefined ? null : <Text dimColor>{bar.note}</Text>}
-            <Button
-              key="tool-drawer:scope"
-              dimColor
-              label={scope}
-              onPress={() => press($, current => ({ ...current, scope: current.scope === 'all' ? 'turn' : 'all' }))}
-            />
+            {isFramed ? null : arrows}
           </Box>
           {layout.earlierCalls > 0 ? <Text dimColor>{earlierCallsText(layout.earlierCalls, width)}</Text> : null}
           {layout.cards.map(({ call, bodyLines }) => {
@@ -775,6 +791,8 @@ export function registerToolDrawer(on: On, trail: PromptTrail) {
             )
           })}
         </Box>
+        {/* Placed over the frame's bottom border, the band's last row; it takes no row of its own. */}
+        {isFramed ? arrows : null}
       </Box>
     )
   })

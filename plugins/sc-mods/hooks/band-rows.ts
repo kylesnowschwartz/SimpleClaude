@@ -37,7 +37,7 @@ function codeRows(props: Record<string, unknown>): number {
  * The rows a drawn tree takes: a column Box sums its children and the gaps
  * between them, a row Box (the default direction) takes the tallest, each
  * plus its padding, margin and border; a fixed height wins; a Text counts its
- * lines; a Code counts its drawn lines; a hidden Box takes none; anything else counts as one row.
+ * lines; a Code counts its drawn lines; a hidden Box, or one placed `position: 'absolute'`, takes none; anything else counts as one row.
  */
 export function rowsOf(tree: unknown): number {
   if (tree === null || tree === undefined || tree === false) return 0
@@ -50,7 +50,7 @@ export function rowsOf(tree: unknown): number {
   if (element.type === 'Text') return textLines(element)
   if (element.type === 'Code') return codeRows(props)
   if (element.type !== 'Box') return 1
-  if (props.display === 'none') return 0
+  if (props.display === 'none' || props.position === 'absolute') return 0
 
   const sizes = childrenOf(element).map(rowsOf)
   const direction = typeof props.flexDirection === 'string' ? props.flexDirection : 'row'
