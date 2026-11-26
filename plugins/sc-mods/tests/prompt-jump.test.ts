@@ -262,22 +262,22 @@ test('the scroll to the end falls back to an older row when the newer is refused
   expect(await firstScrollRefusal([], scroll)).toBeUndefined()
 })
 
-test('◀ from the end lands on the newest prompt, and again on the one before it', async ($, on) => {
+test('◀ from the end lands on the prompt before the newest, and again on the one before it', async ($, on) => {
   drawsEngineDefaults(on)
   await storeAll($, 'p1', 'p2', 'p3')
   const band = await mountBand($)
-  await band.press({ key: 'prompt-jump:previous' })
   expect((await band.find(POSITION))?.text).toBe('Turn 3/3')
   await band.press({ key: 'prompt-jump:previous' })
   expect((await band.find(POSITION))?.text).toBe('Turn 2/3')
+  await band.press({ key: 'prompt-jump:previous' })
+  expect((await band.find(POSITION))?.text).toBe('Turn 1/3')
 })
 
-test('▶ from the newest prompt goes to the end, where ◀ lands on the newest prompt again', async ($, on) => {
+test('▶ from the newest prompt goes to the end, where ◀ lands on the prompt before the newest again', async ($, on) => {
   drawsEngineDefaults(on)
   const toasts = recordToasts(on)
   await storeAll($, 'p1', 'p2', 'p3')
   const band = await mountBand($)
-  await band.press({ key: 'prompt-jump:previous' })
   await band.press({ key: 'prompt-jump:previous' })
   await band.press({ key: 'prompt-jump:next' })
   expect((await band.find(POSITION))?.text).toBe('Turn 3/3')
@@ -285,7 +285,7 @@ test('▶ from the newest prompt goes to the end, where ◀ lands on the newest 
   await band.press({ key: 'prompt-jump:next' })
   expect(toasts[0]).toMatch(/^Can't scroll to the end: \S/)
   await band.press({ key: 'prompt-jump:previous' })
-  expect((await band.find(POSITION))?.text).toBe('Turn 3/3')
+  expect((await band.find(POSITION))?.text).toBe('Turn 2/3')
 })
 
 test('▶ at the end scrolls to the end again', async ($, on) => {
@@ -306,7 +306,7 @@ test('two quick presses of ◀ move two prompts', async ($, on) => {
   const band = await mountBand($)
   // The second press arrives while the first one's scroll is under way.
   await Promise.all([band.press({ key: 'prompt-jump:previous' }), band.press({ key: 'prompt-jump:previous' })])
-  expect((await band.find(POSITION))?.text).toBe('Turn 2/3')
+  expect((await band.find(POSITION))?.text).toBe('Turn 1/3')
 })
 
 // The kit has no transcript to scroll, so its scroll fails the way a surface without one does.
@@ -321,8 +321,6 @@ test('at the newest prompt, ▶ scrolls to the row stored last, and the count st
   expect(toasts[0]).toMatch(/^Can't scroll to the end: \S/)
   expect((await band.find(POSITION))?.text).toBe('Turn 2/2')
   await band.press({ key: 'prompt-jump:previous' })
-  expect((await band.find(POSITION))?.text).toBe('Turn 2/2')
-  await band.press({ key: 'prompt-jump:previous' })
   expect((await band.find(POSITION))?.text).toBe('Turn 1/2')
 })
 
@@ -335,9 +333,9 @@ test('a scroll that does not move the transcript toasts why, and the arrows move
   await band.press({ key: 'prompt-jump:previous' })
   expect(toasts.length).toBe(1)
   expect(toasts[0]).toMatch(/^Can't jump to that prompt: \S/)
-  expect((await band.find(POSITION))?.text).toBe('Turn 3/3')
-  await band.press({ key: 'prompt-jump:previous' })
   expect((await band.find(POSITION))?.text).toBe('Turn 2/3')
+  await band.press({ key: 'prompt-jump:previous' })
+  expect((await band.find(POSITION))?.text).toBe('Turn 1/3')
 })
 
 test('after /clear, the count starts over with the new conversation', async ($, on) => {
@@ -398,7 +396,7 @@ test('a file read after a compaction adds nothing before the prompts known since
   for (const id of [...before, ...after]) notePrompt(trail, id)
   noteStored(trail, after)
   expect(trail.prompts).toEqual([...before, ...after])
-  expect(jumpTarget(trail, -1)).toBe(21)
+  expect(jumpTarget(trail, -1)).toBe(20)
 })
 
 test('a file that does not hold the first prompt known adds nothing', () => {
@@ -420,9 +418,9 @@ test('prompts from before a compaction stay counted when the first press reads t
   await band.press({ key: 'prompt-jump:previous' })
   await file.clock.advance(SETTLE_MS)
   expect(toasts[0]).toMatch(/^Can't jump to that prompt: \S/)
-  expect((await band.find(POSITION))?.text).toBe('Turn 22/22')
-  await band.press({ key: 'prompt-jump:previous' })
   expect((await band.find(POSITION))?.text).toBe('Turn 21/22')
+  await band.press({ key: 'prompt-jump:previous' })
+  expect((await band.find(POSITION))?.text).toBe('Turn 20/22')
 })
 
 test('a prompt stored before the read ends is counted once', async ($, on) => {
@@ -445,7 +443,7 @@ test('with no transcript file at load, the first press reads it', async ($, on) 
   await band.press({ key: 'prompt-jump:previous' })
   await file.clock.advance(SETTLE_MS)
   expect(toasts[0]).toMatch(/^Can't jump to that prompt: \S/)
-  expect((await band.find(POSITION))?.text).toBe('Turn 3/3')
+  expect((await band.find(POSITION))?.text).toBe('Turn 2/3')
 })
 
 test('a transcript file that cannot be read leaves the prompts stored since counted', async ($, on) => {
@@ -493,7 +491,7 @@ test('a file that holds none of the prompts known is read again at the next pres
   await file.clock.advance(SETTLE_MS)
   expect(file.reads).toBe(2)
   expect(toasts[0]).toMatch(/^Can't jump to that prompt: \S/)
-  expect((await band.find(POSITION))?.text).toBe('Turn 3/3')
+  expect((await band.find(POSITION))?.text).toBe('Turn 2/3')
 })
 
 test('a file whose compaction leaves out the first prompt known is read once', async ($, on) => {
@@ -507,7 +505,7 @@ test('a file whose compaction leaves out the first prompt known is read once', a
   await file.clock.advance(SETTLE_MS)
   expect(file.reads).toBe(1)
   expect(toasts.length).toBe(1)
-  expect((await band.find(POSITION))?.text).toBe('Turn 2/2')
+  expect((await band.find(POSITION))?.text).toBe('Turn 1/2')
 })
 
 test('the prompts of a transcript file are those of the person since the last compaction', () => {
@@ -528,8 +526,8 @@ test('the prompts of a transcript file are those of the person since the last co
 
 // --- Stepping through the prompts ---------------------------------------
 
-test('from the end, a step back lands on the newest prompt', () => {
-  expect(jumpTarget(trailOf(8), -1)).toBe(7)
+test('from the end, a step back lands on the prompt before the newest', () => {
+  expect(jumpTarget(trailOf(8), -1)).toBe(6)
 })
 
 test('a step counts from the prompt last jumped to', () => {
@@ -546,7 +544,8 @@ test('a step on from the newest prompt, or from the end, lands at the end', () =
 test('there is nothing before the first prompt', () => {
   expect(jumpTarget(trailOf(8, 0), -1)).toBeUndefined()
   expect(jumpTarget(trailOf(0), -1)).toBeUndefined()
-  expect(jumpTarget(trailOf(1), -1)).toBe(0)
+  expect(jumpTarget(trailOf(1), -1)).toBeUndefined()
+  expect(jumpTarget(trailOf(2), -1)).toBe(0)
 })
 
 test('the count reads the prompt the arrows are on among the prompts stored', () => {
@@ -559,5 +558,5 @@ test('a new prompt puts the arrows back on the newest', () => {
   const trail = trailOf(8, 2)
   notePrompt(trail, 'p9')
   expect(positionText(trail)).toBe('Turn 9/9')
-  expect(jumpTarget(trail, -1)).toBe(8)
+  expect(jumpTarget(trail, -1)).toBe(7)
 })

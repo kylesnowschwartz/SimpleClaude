@@ -10,7 +10,8 @@ export type Step = -1 | 1
  * then those stored since. `at` is the index of the prompt the arrows last
  * jumped to, or undefined while they rest at the end of the conversation, a
  * place after the newest prompt where ▶ past the newest and every
- * new prompt puts them. `storedRead` is the read of the transcript file,
+ * new prompt puts them; there the count shows the newest prompt, and ◀ steps
+ * from it. `storedRead` is the read of the transcript file,
  * under way or done; undefined until it starts, and again when it found no
  * file or a file behind the conversation, so the next need tries again.
  * `endRow` is the id of the row the conversation stored last, where its end
@@ -56,12 +57,14 @@ const indexOn = ({ prompts, at }: PromptTrail) => at ?? prompts.length - 1
 
 /**
  * Where a step lands: the index of a prompt, `'end'` for the end of the
- * conversation after the newest prompt, or undefined before the first. From
- * the end, a step back lands on the newest prompt and a step on stays at the
- * end; from the newest prompt, a step on lands at the end.
+ * conversation after the newest prompt, or undefined before the first. A
+ * step back counts from the prompt the count shows, so from the end it lands
+ * on the prompt before the newest; a step on from the end stays at the end,
+ * and from the newest prompt lands at the end.
  */
 export function jumpTarget(trail: PromptTrail, step: Step): number | 'end' | undefined {
-  const target = (trail.at ?? trail.prompts.length) + step
+  if (step === 1 && trail.at === undefined) return 'end'
+  const target = indexOn(trail) + step
   if (target < 0) return undefined
   return target < trail.prompts.length ? target : 'end'
 }
@@ -367,7 +370,8 @@ async function scrollRefusal($: EngineInterface, requestId: string, block: 'star
  * next of the person's prompts sits at the top of the view, with the
  * arrows' place among them between. The end of the conversation is a place
  * after the newest prompt: ▶ from the newest prompt, or from the end, scrolls
- * there, and ◀ from it goes to the newest prompt. Hotkeys 1 and 2 press them
+ * there, and ◀ from it goes to the prompt before the newest, the one before the
+ * prompt the count shows. Hotkeys 1 and 2 press them
  * while the band holds the keyboard.
  *
  * The prompts counted are those the transcript file holds since its last

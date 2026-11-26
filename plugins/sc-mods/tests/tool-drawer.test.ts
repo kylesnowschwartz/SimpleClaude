@@ -492,7 +492,7 @@ test('after a new prompt the drawer keeps the last turn’s commands until the n
   await finishCall(world, running, 'c2')
 })
 
-test('on the newest prompt, a ◀ from the end keeps the held list; a second ◀ to an older empty turn shows the empty drawer', async ($, on) => {
+test('on the newest prompt, reached by ◀ then ▶, the held list stays; ◀ to an older empty turn shows the empty drawer', async ($, on) => {
   const world = session(on)
   on('ui.scroll', () => ({}))
   await prompt($, 'p1')
@@ -504,6 +504,7 @@ test('on the newest prompt, a ◀ from the end keeps the held list; a second ◀
   expect((await band.find({ key: 'tool-drawer:toggle' }))?.props.label).toBe(summary)
   const rows = rowsOf(ownPart(await band.drawn()))
   await band.press({ key: 'prompt-jump:previous' })
+  await band.press({ key: 'prompt-jump:next' })
   expect((await band.find({ key: 'tool-drawer:toggle' }))?.props.label).toBe(summary)
   expect((await band.find({ key: 'tool-drawer:scope' }))?.props.label).toBe('Turn 3/3')
   expect(await band.find({ key: 'tool-drawer:card:c1' })).toBeDefined()
@@ -572,8 +573,7 @@ test('scope follows the arrows, and the scope button switches to all turns', asy
   expect(await band.find({ key: 'tool-drawer:card:c1' })).toBeUndefined()
   expect(await band.find({ key: 'tool-drawer:card:c2' })).toBeDefined()
 
-  // From the end, the first ◀ lands on the newest prompt, the second on the one before it.
-  await band.press({ key: 'prompt-jump:previous' })
+  // From the end, ◀ lands on the prompt before the newest.
   await band.press({ key: 'prompt-jump:previous' })
   expect((await band.find({ key: 'tool-drawer:scope' }))?.props.label).toBe('Turn 1/2')
   expect(await band.find({ key: 'tool-drawer:card:c1' })).toBeDefined()
