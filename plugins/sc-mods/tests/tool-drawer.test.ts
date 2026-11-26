@@ -18,6 +18,7 @@ import {
   prunedView,
   toggleExpanded,
   arrowsCells,
+  NO_COMMANDS_TEXT,
   listedTurn,
   FRAME_ROWS,
   drawerRoom,
@@ -46,6 +47,7 @@ import {
 import { turnRuleText } from '../hooks/turn-rule'
 import { rowsOf } from '../hooks/band-rows'
 import { cells } from '../hooks/drawer-text'
+import { ARROWS_COLUMN } from '../hooks/prompt-jump'
 import { recordToasts } from './support'
 
 const BAND = {
@@ -475,7 +477,8 @@ test('after a new prompt the drawer keeps the last turn’s commands until the n
 
   await prompt($, 'p2')
   const held = await mountBand($)
-  expect((await held.find({ key: 'tool-drawer:scope' }))?.props.label).toBe('Turn 1/2')
+  expect((await held.find({ key: 'tool-drawer:scope' }))?.props.label).toBe('Turn 2/2')
+  expect((await held.find({ key: 'tool-drawer:toggle' }))?.props.label).toBe('▾ Tool Usage (1 done · bash · turn 1)')
   expect(await held.find({ key: 'tool-drawer:card:c1' })).toBeDefined()
   expect(rowsOf(ownPart(await held.drawn()))).toBe(rowsBefore)
   await held.unmount()
@@ -488,17 +491,49 @@ test('after a new prompt the drawer keeps the last turn’s commands until the n
   await finishCall(world, running, 'c2')
 })
 
-test('a jump to a prompt with no commands draws no drawer', async ($, on) => {
+test('a jump to a prompt with no commands keeps the drawer and the arrows where they were', async ($, on) => {
   const world = session(on)
   on('ui.scroll', () => ({}))
   await prompt($, 'p1')
   await prompt($, 'p2')
   await finishCall(world, await startCall($, world, 'c2'), 'c2')
   const band = await mountBand($)
+  const arrowsBefore = parentOf(await band.drawn(), 'prompt-jump:previous')?.props
   await band.press({ key: 'prompt-jump:previous' })
   await band.press({ key: 'prompt-jump:previous' })
+  const drawn = await band.drawn()
+  expect(frameIn(drawn)).toBeDefined()
+  expect(await band.find({ type: 'Text', text: NO_COMMANDS_TEXT })).toBeDefined()
+  expect((await band.find({ key: 'tool-drawer:scope' }))?.props.label).toBe('Turn 1/2')
+  expect(parentOf(drawn, 'prompt-jump:previous')?.props).toEqual(arrowsBefore)
+  expect(rowsOf(frameIn(drawn))).toBe(4)
+})
+
+test('closed, an empty turn keeps the Tool Usage line with the arrows first', async ($, on) => {
+  const world = session(on)
+  on('ui.scroll', () => ({}))
+  await prompt($, 'p1')
+  await prompt($, 'p2')
+  await finishCall(world, await startCall($, world, 'c2'), 'c2')
+  const band = await mountBand($)
+  await band.press({ key: 'tool-drawer:toggle' })
+  const arrowsBefore = parentOf(await band.drawn(), 'prompt-jump:previous')
+  await band.press({ key: 'prompt-jump:previous' })
+  await band.press({ key: 'prompt-jump:previous' })
+  const drawn = await band.drawn()
+  expect((await band.find({ key: 'tool-drawer:toggle' }))?.props.label).toBe('▸ Tool Usage (no commands · bash)')
+  const arrows = parentOf(drawn, 'prompt-jump:previous')
+  expect(arrows?.props).toEqual(arrowsBefore?.props)
+  const line = parentOf(drawn, 'tool-drawer:toggle')
+  expect((line?.children ?? []).flat(Infinity)[0]).toBe(arrows)
+})
+
+test('with no command in any turn the arrows keep their own row, at the drawer’s column', async ($, on) => {
+  session(on)
+  await prompt($, 'p1')
+  const band = await mountBand($)
   expect(await band.find({ key: 'tool-drawer:toggle' })).toBeUndefined()
-  expect(await band.findAll({ key: 'prompt-jump:previous' })).toHaveLength(1)
+  expect(parentOf(await band.drawn(), 'prompt-jump:previous')?.props).toMatchObject({ marginLeft: ARROWS_COLUMN })
 })
 
 test('scope follows the arrows, and the scope button switches to all turns', async ($, on) => {
@@ -642,6 +677,8 @@ test('withCall keeps at most MAX_HELD_CALLS, dropping the oldest', () => {
 })
 
 test('summaryText counts each status shown', () => {
+  expect(summaryText([])).toBe('Tool Usage (no commands · bash)')
+  expect(summaryText([call({ status: 'done' })], 3)).toBe('Tool Usage (1 done · bash · turn 3)')
   expect(summaryText([call({ status: 'done' }), call({ status: 'done' }), call({ status: 'running' })])).toBe('Tool Usage (2 done · 1 running · bash)')
   expect(summaryText([call({ status: 'error' })])).toBe('Tool Usage (1 failed · bash)')
 })

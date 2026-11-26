@@ -5,7 +5,7 @@ import { rowsOf } from './band-rows'
 import { cells, cleanLine, cleanText, fit, headOf } from './drawer-text'
 import { outputLanguage, type OutputLanguage } from './output-language'
 import { fitTokens, isDimRole, SHELL_ROLE_COLOR, shellTokens, tokenCells, type ShellToken } from './shell-colors'
-import { ARROW_CELLS, newestPromptId, promptArrows, readStoredPrompts, readTurnOn, type PromptTrail, type TurnOn } from './prompt-jump'
+import { ARROW_CELLS, ARROWS_COLUMN, newestPromptId, promptArrows, readStoredPrompts, readTurnOn, type PromptTrail, type TurnOn } from './prompt-jump'
 
 /** The one tool whose calls the drawer holds. */
 export const DRAWER_TOOL = 'Bash'
@@ -37,7 +37,6 @@ const BAR_COLOR = 'success'
 const HOVER_COLOR = 'text'
 const COPY_LABEL = '⧉ copy'
 /** The cells of the bottom border before the turn arrows drawn over it: the corner and one line. */
-const ARROWS_INDENT = 2
 /** The cells between the drawer's border and its text on each side. */
 const FRAME_PADDING = 1
 const ELLIPSIS = '…'
@@ -137,8 +136,8 @@ export function listedTurn(calls: readonly HeldCall[], turn: TurnOn | undefined,
   return turn
 }
 
-/** `Tool Usage (2 done · 1 failed · 1 declined · 1 running · bash)`, each count shown only when above 0. */
-export function summaryText(calls: readonly HeldCall[]): string {
+/** `Tool Usage (2 done · 1 failed · 1 declined · 1 running · bash)`, each count shown only when above 0; `Tool Usage (no commands · bash)` for none. `listedNumber` names the turn the calls ran under when it is not the arrows' turn: `Tool Usage (9 done · bash · turn 3)`. */
+export function summaryText(calls: readonly HeldCall[], listedNumber?: number): string {
   const count = (status: HeldCallStatus) => calls.filter(call => call.status === status).length
   const parts = [
     [count('done'), 'done'],
@@ -150,7 +149,8 @@ export function summaryText(calls: readonly HeldCall[]): string {
   ]
     .filter(([n]) => (n as number) > 0)
     .map(([n, word]) => `${n} ${word}`)
-  return `Tool Usage (${[...parts, TOOL_LABEL].join(' · ')})`
+  const listed = listedNumber === undefined ? [] : [`turn ${listedNumber}`]
+  return `Tool Usage (${[...(parts.length === 0 ? ['no commands'] : parts), TOOL_LABEL, ...listed].join(' · ')})`
 }
 
 /** The newest running call's first line and its seconds so far, `npm test 12s`; undefined while none runs. */
@@ -191,6 +191,9 @@ export function barTexts(
   const fittedRunning = take(running)
   return { summary: fittedSummary, running: fittedRunning, note: take(note) }
 }
+
+/** The open drawer's one line for a turn with no commands. */
+export const NO_COMMANDS_TEXT = 'No commands in this turn'
 
 /** The bar's note while the drawer is open and the band has no room for one card. */
 export const NO_ROOM_NOTE = 'no room for cards'
@@ -608,7 +611,7 @@ export function toggleExpanded(view: DrawerView, id: string): DrawerView {
  * gives every row back.
  *
  * While it draws, the drawer holds the turn arrows around its scope button:
- * in its bottom border when framed, at the end of its bar when not, so the
+ * in its bottom border when framed, at the start of its bar when not, so the
  * arrows' own row is not drawn. Register it after `registerPromptJump`, with
  * the same trail, so it draws beneath the arrows' hook; `startToolDrawer`
  * runs once the session has started.
@@ -698,24 +701,31 @@ export function registerToolDrawer(on: On, trail: PromptTrail) {
     if (!view.isOn) return next(e)
 
     const held = await read($, HELD_CALLS)
-    const turn = listedTurn(held, await readTurnOn($, trail), trail.prompts, trail.at === undefined)
+    // The count between the arrows is their place; the list may be an earlier turn's while they rest.
+    const arrowsTurn = await readTurnOn($, trail)
+    const turn = listedTurn(held, arrowsTurn, trail.prompts, trail.at === undefined)
     const shown = callsInScope(held, view.scope, turn)
-    if (shown.length === 0) return next(e)
+    const listedNumber = view.scope === 'turn' && turn !== undefined && turn.promptId !== arrowsTurn?.promptId ? turn.number : undefined
+    // A turn with no commands keeps the drawer, so the arrows stay where they are; with no command anywhere it draws nothing.
+    if (shown.length === 0 && (view.scope === 'all' || held.length === 0)) return next(e)
+    const isEmpty = shown.length === 0
 
     const now = await read($, DRAWER_CLOCK)
     const beneath = await next(e)
     const isRunning = shown.some(call => call.status === 'running')
-    const scope = scopeText(view.scope, turn)
+    const scope = scopeText(view.scope, arrowsTurn)
     // Inside the frame, the border and its padding take two cells a side.
     const framedWidth = e.props.bodyColumns - 2 - 2 * FRAME_PADDING
     const layout = view.isOpen ? drawerLayout(shown, view.expanded, drawerRoom(e.props.maxRows, await read($, OTHER_BAND_ROWS)), framedWidth) : { cards: [], earlierCalls: 0 }
-    const isFramed = layout.cards.length > 0
+    const room = drawerRoom(e.props.maxRows, await read($, OTHER_BAND_ROWS))
+    // An empty turn's open frame holds the bar and one dim line.
+    const isFramed = isEmpty ? view.isOpen && room >= FRAME_ROWS + 2 : layout.cards.length > 0
     const timeCells = elapsedCells(layout.cards.map(card => card.call), now)
     const width = isFramed ? framedWidth : e.props.bodyColumns
-    const bar = barTexts(`${view.isOpen ? '▾' : '▸'} ${summaryText(shown)}`, runningText(shown, now), isFramed ? 0 : arrowsCells(scope) + 1, width, view.isOpen && !isFramed ? NO_ROOM_NOTE : undefined)
+    const bar = barTexts(`${view.isOpen ? '▾' : '▸'} ${summaryText(shown, listedNumber)}`, runningText(shown, now), isFramed ? 0 : ARROWS_COLUMN + arrowsCells(scope) + 1, width, view.isOpen && !isFramed ? NO_ROOM_NOTE : undefined)
     const { Box, Button, Code, Text } = $.ui.resolve(e)
     const arrows = (
-      <Box flexDirection="row" columnGap={1} {...(isFramed ? { position: 'absolute' as const, bottom: 0, left: ARROWS_INDENT } : {})}>
+      <Box flexDirection="row" columnGap={1} {...(isFramed ? { position: 'absolute' as const, bottom: 0, left: ARROWS_COLUMN } : { marginLeft: ARROWS_COLUMN })}>
         {promptArrows(
           $,
           Button,
@@ -737,6 +747,8 @@ export function registerToolDrawer(on: On, trail: PromptTrail) {
           {...(isFramed ? { borderStyle: 'round', paddingX: FRAME_PADDING, ...(isRunning ? { borderColor: RUNNING_COLOR } : { borderDimColor: true }) } : {})}
         >
           <Box flexDirection="row" columnGap={1}>
+            {/* First on the closed line, so the summary's length never moves the arrows. */}
+            {isFramed ? null : arrows}
             <Button
               key="tool-drawer:toggle"
               plain
@@ -746,8 +758,8 @@ export function registerToolDrawer(on: On, trail: PromptTrail) {
             {isRunning ? <Text color={RUNNING_COLOR}>●</Text> : null}
             {bar.running === undefined ? null : <Text>{bar.running}</Text>}
             {bar.note === undefined ? null : <Text dimColor>{bar.note}</Text>}
-            {isFramed ? null : arrows}
           </Box>
+          {isEmpty && isFramed ? <Text dimColor>{fit(NO_COMMANDS_TEXT, width)}</Text> : null}
           {layout.earlierCalls > 0 ? <Text dimColor>{earlierCallsText(layout.earlierCalls, width)}</Text> : null}
           {layout.cards.map(({ call, bodyLines }) => {
             // A card shows open only with its body drawn.

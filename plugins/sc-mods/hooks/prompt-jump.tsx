@@ -411,7 +411,7 @@ export function registerPromptJump(on: On, trail: PromptTrail) {
     return (
       <Box flexDirection="column">
         {beneath}
-        <Box flexDirection="row" columnGap={1}>
+        <Box flexDirection="row" columnGap={1} marginLeft={ARROWS_COLUMN}>
           {promptArrows($, Button, trail, position === '' ? null : <Text dimColor>{position}</Text>)}
         </Box>
       </Box>
@@ -422,6 +422,13 @@ export function registerPromptJump(on: On, trail: PromptTrail) {
 /** The keys of the ◀ and ▶ buttons, wherever they are drawn. */
 export const PREVIOUS_KEY = 'prompt-jump:previous'
 export const NEXT_KEY = 'prompt-jump:next'
+
+/**
+ * The column ◀ starts at wherever the arrows are drawn: on their own row, on
+ * the tool drawer's closed line, and over its bottom border after the corner
+ * and one line.
+ */
+export const ARROWS_COLUMN = 2
 
 /** The cells a ◀ or ▶ button takes: the terminal draws it `[ ◀ ]`. */
 export const ARROW_CELLS = 5

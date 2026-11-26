@@ -40,7 +40,7 @@ The drawing has to fit the terminal's width. For a flowchart that is too wide, t
 
 ## Jump between prompts
 
-The band above the prompt shows two buttons, `◀` and `▶`, with a dim count between them: `[ ◀ ] Turn 2/5 [ ▶ ]` while the arrows are on the second of five prompts. While the [tool drawer](#tool-drawer) is shown, the arrows sit in it, around its `Turn 2/5` button, and take no row of their own. Click a button to scroll the conversation so your previous or next prompt sits at the top of the view, with Claude's reply to it below. The last prompts cannot reach the top when little follows them, so the view stops at the end of the conversation. The end of the conversation is a place after the newest prompt: `▶` on the newest prompt scrolls to the end, `▶` at the end scrolls there again, and `◀` at the end goes to the newest prompt. The hotkeys `1` and `2` press the buttons while the band holds the keyboard: press ctrl+x then tab to move the keyboard to the band, or click in it; Esc returns it to the prompt box.
+The band above the prompt shows two buttons, `◀` and `▶`, with a dim count between them: `[ ◀ ] Turn 2/5 [ ▶ ]` while the arrows are on the second of five prompts. While the [tool drawer](#tool-drawer) is shown, the arrows sit in it, around its `Turn 2/5` button, and take no row of their own. The arrows start at the same column in every place, two cells in, so they do not move as you page through prompts. Click a button to scroll the conversation so your previous or next prompt sits at the top of the view, with Claude's reply to it below. The last prompts cannot reach the top when little follows them, so the view stops at the end of the conversation. The end of the conversation is a place after the newest prompt: `▶` on the newest prompt scrolls to the end, `▶` at the end scrolls there again, and `◀` at the end goes to the newest prompt. The hotkeys `1` and `2` press the buttons while the band holds the keyboard: press ctrl+x then tab to move the keyboard to the band, or click in it; Esc returns it to the prompt box.
 
 The arrows count every prompt you send while the mod runs. When the mod loads into a conversation that already has prompts (`claude --resume`, `claude --continue`, a plugin reload), it counts that conversation's prompts from its last compaction on. The arrows step from the place they last jumped to; each new prompt you send puts them back at the end, where the count shows the newest prompt. Scrolling the conversation yourself does not move them. On the newest prompt of a conversation the mod loaded into, `▶` scrolls to the last rows the transcript file holds. A toast says so when there is no earlier prompt, or no later prompt and no row to scroll to, and gives Claude Code's reason when it does not scroll.
 
@@ -61,10 +61,10 @@ Claude's shell commands (the Bash tool) do not show in the conversation. They sh
 ╰─[ ◀ ]─[ Turn 3/8 ]─[ ▶ ]─────────────────────────────────────────────────────────╯
 ```
 
-Closed, the drawer is one line, with the arrows at its end:
+Closed, the drawer is one line, with the arrows first:
 
 ```text
-▸ Tool Usage (2 done · 1 failed · 1 running · bash) [ ◀ ] [ Turn 3/8 ] [ ▶ ]
+  [ ◀ ] [ Turn 3/8 ] [ ▶ ] ▸ Tool Usage (2 done · 1 failed · 1 running · bash)
 ```
 
 - Click the `Tool Usage` line to open or close the drawer. While a command runs, a `●` follows the counts, with the newest running command and its seconds so far, and the open drawer's border takes the running colour.
@@ -74,8 +74,9 @@ Closed, the drawer is one line, with the arrows at its end:
 - A command that fails stays closed, with its `✗` mark in the error colour; click its line to read the error.
 - The drawer fits the band with any other mod's rows in it: when its commands do not fit, it shows the newest under a dim `… N earlier calls` line. An open command keeps its output in view before older closed commands do: they move into the `… N earlier calls` count first, and of several open commands the one opened last comes first. An open command with no room for its output shows closed. When the band has no room for even one command, the bar says `no room for cards`.
 - The drawer opens by itself at the first command of each new prompt, until you open or close it yourself. After that it stays as you left it for the rest of the session.
-- When you send a prompt, the drawer keeps listing the latest earlier prompt's commands, at the same size and open or closed, with that prompt's number on its `Turn` button, until the new prompt's first command starts.
-- When the arrows are on a prompt with no commands, the drawer is not shown, and the arrows take their own row.
+- When you send a prompt, the drawer keeps listing the latest earlier prompt's commands, at the same size and open or closed, until the new prompt's first command starts. The count between the arrows shows the new prompt, and the `Tool Usage` line names the turn the commands belong to: `Tool Usage (9 done · bash · turn 3)`.
+- When the arrows are on a prompt with no commands, the drawer stays: closed, its line reads `Tool Usage (no commands · bash)`; open, it says `No commands in this turn`.
+- When the conversation has no commands at all, or `/tool-drawer off` is set, the drawer is not shown, and the arrows take their own row.
 
 Output shows as the terminal would leave it: colour codes and other escape sequences are removed, a line a progress bar rewrote with carriage returns keeps what was last written, tabs are expanded, and lines are cut to the band's width counting wide characters as two columns.
 
