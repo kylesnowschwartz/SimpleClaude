@@ -120,13 +120,14 @@ export function callsInScope(calls: readonly HeldCall[], scope: DrawerScope, tur
 
 /**
  * The turn whose commands the drawer lists under scope `turn`: the one the
- * arrows are on, except while they rest at the end of the conversation on a
- * prompt with no command yet, where it is the latest earlier prompt with a
- * command. So the drawer stays in place between a prompt and its first
- * command. `prompts` is the trail's prompt ids in the order sent.
+ * arrows are on, except on the newest prompt (at the end of the
+ * conversation or jumped to) while it has no command yet, where it is the
+ * latest earlier prompt with a command. So the drawer stays in place between
+ * a prompt and its first command. `prompts` is the trail's prompt ids in the
+ * order sent.
  */
-export function listedTurn(calls: readonly HeldCall[], turn: TurnOn | undefined, prompts: readonly string[], isAtRest: boolean): TurnOn | undefined {
-  if (!isAtRest || turn === undefined) return turn
+export function listedTurn(calls: readonly HeldCall[], turn: TurnOn | undefined, prompts: readonly string[]): TurnOn | undefined {
+  if (turn === undefined || turn.number !== turn.count) return turn
   const hasCalls = (promptId: string | undefined) => calls.some(call => call.promptId === promptId)
   if (hasCalls(turn.promptId)) return turn
   for (let index = turn.number - 2; index >= 0; index -= 1) {
@@ -703,7 +704,7 @@ export function registerToolDrawer(on: On, trail: PromptTrail) {
     const held = await read($, HELD_CALLS)
     // The count between the arrows is their place; the list may be an earlier turn's while they rest.
     const arrowsTurn = await readTurnOn($, trail)
-    const turn = listedTurn(held, arrowsTurn, trail.prompts, trail.at === undefined)
+    const turn = listedTurn(held, arrowsTurn, trail.prompts)
     const shown = callsInScope(held, view.scope, turn)
     const listedNumber = view.scope === 'turn' && turn !== undefined && turn.promptId !== arrowsTurn?.promptId ? turn.number : undefined
     // A turn with no commands keeps the drawer, so the arrows stay where they are; with no command anywhere it draws nothing.

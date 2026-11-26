@@ -454,16 +454,17 @@ test('the bar leaves room for the arrows, so a narrow bar does not wrap', () => 
   expect(cells(bar.summary) + 2 + arrowsCells('Turn 3/8') + 1).toBeLessThanOrEqual(width)
 })
 
-test('listedTurn holds the latest earlier turn with commands only while the arrows rest', () => {
+test('listedTurn holds the latest earlier turn with commands only on the newest prompt', () => {
   const calls = [call({ id: 'a', promptId: 'p1' }), call({ id: 'b', promptId: 'p2' })]
   const prompts = ['p1', 'p2', 'p3', 'p4']
   const on4 = { promptId: 'p4', number: 4, count: 4 }
-  expect(listedTurn(calls, on4, prompts, true)).toEqual({ promptId: 'p2', number: 2, count: 4 })
-  expect(listedTurn(calls, on4, prompts, false)).toBe(on4)
+  expect(listedTurn(calls, on4, prompts)).toEqual({ promptId: 'p2', number: 2, count: 4 })
+  const on3 = { promptId: 'p3', number: 3, count: 4 }
+  expect(listedTurn(calls, on3, prompts)).toBe(on3)
   const on1 = { promptId: 'p1', number: 1, count: 4 }
-  expect(listedTurn(calls, on1, prompts, true)).toBe(on1)
-  expect(listedTurn([], on4, prompts, true)).toBe(on4)
-  expect(listedTurn(calls, undefined, prompts, true)).toBeUndefined()
+  expect(listedTurn(calls, on1, prompts)).toBe(on1)
+  expect(listedTurn([], on4, prompts)).toBe(on4)
+  expect(listedTurn(calls, undefined, prompts)).toBeUndefined()
 })
 
 test('after a new prompt the drawer keeps the last turn’s commands until the new turn’s first command', async ($, on) => {
@@ -489,6 +490,28 @@ test('after a new prompt the drawer keeps the last turn’s commands until the n
   expect(await next.find({ key: 'tool-drawer:card:c2' })).toBeDefined()
   expect(await next.find({ key: 'tool-drawer:card:c1' })).toBeUndefined()
   await finishCall(world, running, 'c2')
+})
+
+test('on the newest prompt, a ◀ from the end keeps the held list; a second ◀ to an older empty turn shows the empty drawer', async ($, on) => {
+  const world = session(on)
+  on('ui.scroll', () => ({}))
+  await prompt($, 'p1')
+  await finishCall(world, await startCall($, world, 'c1'), 'c1')
+  await prompt($, 'p2')
+  await prompt($, 'p3')
+  const band = await mountBand($)
+  const summary = '▾ Tool Usage (1 done · bash · turn 1)'
+  expect((await band.find({ key: 'tool-drawer:toggle' }))?.props.label).toBe(summary)
+  const rows = rowsOf(ownPart(await band.drawn()))
+  await band.press({ key: 'prompt-jump:previous' })
+  expect((await band.find({ key: 'tool-drawer:toggle' }))?.props.label).toBe(summary)
+  expect((await band.find({ key: 'tool-drawer:scope' }))?.props.label).toBe('Turn 3/3')
+  expect(await band.find({ key: 'tool-drawer:card:c1' })).toBeDefined()
+  expect(rowsOf(ownPart(await band.drawn()))).toBe(rows)
+  await band.press({ key: 'prompt-jump:previous' })
+  expect((await band.find({ key: 'tool-drawer:toggle' }))?.props.label).toBe('▾ Tool Usage (no commands · bash)')
+  expect(await band.find({ type: 'Text', text: NO_COMMANDS_TEXT })).toBeDefined()
+  expect((await band.find({ key: 'tool-drawer:scope' }))?.props.label).toBe('Turn 2/3')
 })
 
 test('a jump to a prompt with no commands keeps the drawer and the arrows where they were', async ($, on) => {
