@@ -1,6 +1,6 @@
 {
   "name": "sc-mods",
-  "version": "8.6.0",
+  "version": "8.7.0",
   "description": "Claude Code mods: draws mermaid diagrams in replies as Unicode text, jumps between prompts, moves shell commands into a drawer above the prompt, marks each turn, copies a reply's markdown, and gives Claude a tool that shows pictures inline in the conversation",
   "author": {
     "name": "Kyle Snow Schwartz"
