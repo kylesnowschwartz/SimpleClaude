@@ -1,7 +1,20 @@
 import type { On, PromptOrigin, RenderElement, SessionAppendDoor } from 'claude-code'
 import type { Engine, MockClock } from 'claude-code/testing'
 import { expect, mock, test } from 'claude-code/testing'
-import { jumpTarget, newTrail, notePrompt, noteStored, positionText, promptIdsOfRead, storedPromptIds, type PromptTrail } from '../hooks/prompt-jump'
+import {
+  END_ROW_COUNT,
+  endRowsToTry,
+  firstScrollRefusal,
+  jumpTarget,
+  newTrail,
+  notePrompt,
+  noteStored,
+  positionText,
+  storedPromptIds,
+  storedRows,
+  storedRowsOfRead,
+  type PromptTrail,
+} from '../hooks/prompt-jump'
 import { drawsEngineDefaults, ok, recordToasts } from './support'
 
 const BAND = {
@@ -191,14 +204,62 @@ test('a subagent’s prompt is not counted', async ($, on) => {
   expect(await bandCount($)).toBe('Turn 1/1')
 })
 
-test('with no row stored since the plugin loaded, ▶ at the newest prompt says there is no later prompt', async ($, on) => {
-  const file = storedSession(on, [promptLine(1, 'p1'), promptLine(5, 'p2')].join('\n'))
+/** A row the file holds that is not one of the person's prompts: a reply, say. */
+const replyLine = (line: number, id: string) => `${line}:"type":"assistant"\n${line}:"uuid":"${id}"`
+
+test('with no prompt and no row known, ▶ says there is no later prompt', async ($, on) => {
+  const file = storedSession(on, '')
   const toasts = recordToasts(on)
   await load($, file)
   const band = await mountBand($)
   await band.press({ key: 'prompt-jump:next' })
   expect(toasts).toEqual(['No later prompt'])
+})
+
+// The kit has no transcript to scroll, so it refuses every row the way a surface without one does.
+test('with no row stored since the plugin loaded, ▶ at the newest prompt scrolls to the file’s last rows', async ($, on) => {
+  const file = storedSession(on, [promptLine(1, 'p1'), promptLine(5, 'p2'), replyLine(6, 'reply-2')].join('\n'))
+  const toasts = recordToasts(on)
+  await load($, file)
+  const band = await mountBand($)
+  await band.press({ key: 'prompt-jump:next' })
+  expect(toasts.length).toBe(1)
+  expect(toasts[0]).toMatch(/^Can't scroll to the end: \S/)
   expect((await band.find(POSITION))?.text).toBe('Turn 2/2')
+})
+
+test('after load, ▶ at the newest prompt tries the file’s rows newest first', () => {
+  const trail = newTrail()
+  noteStored(trail, ['p1'])
+  trail.storedEndRows = storedRows([promptLine(1, 'p1'), replyLine(2, 'reply-1'), replyLine(3, 'hidden')].join('\n')).endRowIds
+  expect(jumpTarget(trail, 1)).toBeUndefined()
+  expect(endRowsToTry(trail)).toEqual(['hidden', 'reply-1', 'p1'])
+})
+
+test('the row stored while the plugin runs comes before the file’s rows', () => {
+  const trail = newTrail()
+  trail.storedEndRows = ['a', 'b']
+  expect(endRowsToTry(trail)).toEqual(['b', 'a'])
+  trail.endRow = 'live'
+  expect(endRowsToTry(trail)).toEqual(['live'])
+})
+
+test('the scroll to the end falls back to an older row when the newer is refused, and gives the last refusal when all are', async () => {
+  const asked: string[] = []
+  const scroll = async (id: string) => (asked.push(id), id === 'c' ? undefined : `no ${id}`)
+  expect(await firstScrollRefusal(['a', 'c', 'd'], scroll)).toBeUndefined()
+  expect(asked).toEqual(['a', 'c'])
+  expect(await firstScrollRefusal(['a', 'b'], scroll)).toBe('no b')
+  expect(await firstScrollRefusal([], scroll)).toBeUndefined()
+})
+
+test('two quick presses of ◀ move two prompts', async ($, on) => {
+  drawsEngineDefaults(on)
+  await storeAll($, 'p1', 'p2', 'p3')
+  const band = await mountBand($)
+  // The second press arrives while the first one's scroll is under way.
+  await Promise.all([band.press({ key: 'prompt-jump:previous' }), band.press({ key: 'prompt-jump:previous' })])
+  expect((await band.find(POSITION))?.text).toBe('Turn 1/3')
 })
 
 // The kit has no transcript to scroll, so its scroll fails the way a surface without one does.
@@ -347,8 +408,26 @@ test('a transcript file that cannot be read leaves the prompts stored since coun
 
 test('a cut grep output counts nothing, so the newest prompts are not left out', () => {
   const cut = { ...ok(promptLine(1, 'p1')), isStdoutTruncated: true }
-  expect(() => promptIdsOfRead(cut)).toThrow(/truncated/)
-  expect(promptIdsOfRead(ok(promptLine(1, 'p1')))).toEqual(['p1'])
+  expect(() => storedRowsOfRead(cut)).toThrow(/truncated/)
+  expect(storedRowsOfRead(ok(promptLine(1, 'p1')))).toEqual({ promptIds: ['p1'], endRowIds: ['p1'] })
+})
+
+test('the file’s last rows are the main conversation’s since the last compaction, newest last, a few of them', () => {
+  const fields = [
+    replyLine(1, 'before'),
+    boundaryLine(2),
+    promptLine(3, 'p1'),
+    replyLine(4, 'r1'),
+    `5:"type":"user"\n5:"uuid":"agent-row"\n5:"isSidechain":true`,
+    replyLine(6, 'r2'),
+  ].join('\n')
+  expect(storedRows(fields).endRowIds).toEqual(['p1', 'r1', 'r2'])
+
+  const many = Array.from({ length: END_ROW_COUNT + 3 }, (_, n) => replyLine(n + 1, `r${n + 1}`)).join('\n')
+  const kept = storedRows(many).endRowIds
+  expect(kept.length).toBe(END_ROW_COUNT)
+  expect(kept.at(-1)).toBe(`r${END_ROW_COUNT + 3}`)
+  expect(kept[0]).toBe('r4')
 })
 
 test('a file that holds none of the prompts known is read again at the next press', async ($, on) => {

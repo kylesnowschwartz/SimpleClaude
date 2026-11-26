@@ -14,10 +14,26 @@ export type Step = -1 | 1
  * file or a file behind the conversation, so the next need tries again.
  * `endRow` is the id of the row the conversation stored last, where its end
  * is drawn; undefined until it stores one while the plugin runs.
+ * `storedEndRows` is the ids of the last main-conversation rows the
+ * transcript file held since its last compaction, newest last: where the end
+ * of a conversation the plugin loaded into is drawn.
  */
-export type PromptTrail = { prompts: string[]; at: number | undefined; storedRead: Promise<void> | undefined; endRow: string | undefined }
+export type PromptTrail = {
+  prompts: string[]
+  at: number | undefined
+  storedRead: Promise<void> | undefined
+  endRow: string | undefined
+  storedEndRows: string[]
+}
 
-export const newTrail = (): PromptTrail => ({ prompts: [], at: undefined, storedRead: undefined, endRow: undefined })
+export const newTrail = (): PromptTrail => ({ prompts: [], at: undefined, storedRead: undefined, endRow: undefined, storedEndRows: [] })
+
+/**
+ * The rows ▶ on the newest prompt tries, in order, to reach the end of the
+ * conversation: the row stored last while the plugin runs, else the
+ * transcript file's last rows, newest first.
+ */
+export const endRowsToTry = (trail: PromptTrail): string[] => (trail.endRow !== undefined ? [trail.endRow] : [...trail.storedEndRows].reverse())
 
 /** Whether the person sent it: typed at the terminal, or through Remote Control. */
 export const isPersonsPrompt = (origin: { kind: string }) => origin.kind === 'composer' || origin.kind === 'bridge'
@@ -140,16 +156,34 @@ const isPersonsRow = (fields: readonly string[]) =>
  * before it have no row to scroll to.
  */
 export function storedPromptIds(grepOutput: string): string[] {
-  let ids: string[] = []
+  return storedRows(grepOutput).promptIds
+}
+
+/** How many of the transcript file's last rows ▶ tries for the end of the conversation. */
+export const END_ROW_COUNT = 5
+
+/**
+ * What a transcript file holds since its last compaction, from `grep -n -o`
+ * of ROW_FIELDS over it: the ids of the person's prompts, in order, and of
+ * the last `END_ROW_COUNT` rows of the main conversation (not a subagent's),
+ * newest last.
+ */
+export function storedRows(grepOutput: string): { promptIds: string[]; endRowIds: string[] } {
+  let promptIds: string[] = []
+  let endRowIds: string[] = []
   for (const fields of linesOf(grepOutput)) {
     if (fields.includes('"subtype":"compact_boundary"')) {
-      ids = []
+      promptIds = []
+      endRowIds = []
       continue
     }
     const id = fields.map(field => UUID_FIELD.exec(field)?.[1]).find(found => found !== undefined)
-    if (id !== undefined && isPersonsRow(fields)) ids.push(id)
+    if (id === undefined || fields.includes('"isSidechain":true')) continue
+    if (isPersonsRow(fields)) promptIds.push(id)
+    endRowIds.push(id)
+    if (endRowIds.length > END_ROW_COUNT) endRowIds.shift()
   }
-  return ids
+  return { promptIds, endRowIds }
 }
 
 // grep's exit status when it read the file and matched nothing.
@@ -158,12 +192,12 @@ const NO_MATCH = 1
 /** Whether the file read holds the row anywhere, before its last compaction included. */
 export const readHoldsRow = (grepOutput: string, id: string) => grepOutput.includes(`"uuid":"${id}"`)
 
-/** The prompt ids `transcriptFieldsCommand` found, from what it printed and how it exited. */
-export function promptIdsOfRead({ exitCode, stdout, stderr, isStdoutTruncated }: ProcessRunResult): string[] {
+/** The rows `transcriptFieldsCommand` found (see `storedRows`), from what it printed and how it exited. */
+export function storedRowsOfRead({ exitCode, stdout, stderr, isStdoutTruncated }: ProcessRunResult): { promptIds: string[]; endRowIds: string[] } {
   // A cut output loses the newest rows, the ones a jump reaches.
   if (isStdoutTruncated) throw new Error('grep output truncated')
-  if (exitCode === 0) return storedPromptIds(stdout)
-  if (exitCode === NO_MATCH) return []
+  if (exitCode === 0) return storedRows(stdout)
+  if (exitCode === NO_MATCH) return { promptIds: [], endRowIds: [] }
   throw new Error(stderr.trim() || `grep exited ${exitCode}`)
 }
 
@@ -221,7 +255,9 @@ function readStored($: EngineInterface, trail: PromptTrail): Promise<void> {
       }
       const read = await $.process.run(transcriptFieldsCommand(path), { timeoutMs: TRANSCRIPT_READ_TIMEOUT_MS })
       if (trail.storedRead !== pending) return
-      noteStored(trail, promptIdsOfRead(read))
+      const { promptIds, endRowIds } = storedRowsOfRead(read)
+      noteStored(trail, promptIds)
+      trail.storedEndRows = endRowIds
       // A file that holds none of the prompts known lags the conversation: the next need reads it again.
       const [first] = trail.prompts
       if (first !== undefined && !readHoldsRow(read.stdout, first)) trail.storedRead = undefined
@@ -267,20 +303,35 @@ async function jump($: EngineInterface, trail: PromptTrail, step: Step) {
   await readStored($, trail)
   const target = jumpTarget(trail, step)
   if (target === undefined) {
-    if (step === 1 && trail.endRow !== undefined) {
-      const refusal = await scrollRefusal($, trail.endRow)
-      if (refusal !== undefined) $.ui.toast(`Can't scroll to the end: ${refusal}`)
+    const endRows = step === 1 ? endRowsToTry(trail) : []
+    if (endRows.length === 0) {
+      $.ui.toast(step === -1 ? 'No earlier prompt' : 'No later prompt')
       return
     }
-    $.ui.toast(step === -1 ? 'No earlier prompt' : 'No later prompt')
+    const refusal = await firstScrollRefusal(endRows, id => scrollRefusal($, id))
+    if (refusal !== undefined) $.ui.toast(`Can't scroll to the end: ${refusal}`)
     return
   }
 
-  // The arrows move on past a prompt the transcript cannot reach (one a rewind took away), so the next press goes beyond it.
-  const refusal = await scrollRefusal($, trail.prompts[target] as string)
-  if (refusal !== undefined) $.ui.toast(`Can't jump to that prompt: ${refusal}`)
+  // The arrows move on before the scroll, so a press during it steps from this prompt, and past a prompt the transcript cannot reach (one a rewind took away).
   trail.at = target
   await publishPosition($, trail)
+  const refusal = await scrollRefusal($, trail.prompts[target] as string)
+  if (refusal !== undefined) $.ui.toast(`Can't jump to that prompt: ${refusal}`)
+}
+
+/**
+ * Scrolls to each row in turn until one is not refused (a file's row may be
+ * one the transcript does not draw). Undefined once the transcript moved,
+ * else the last row's refusal.
+ */
+export async function firstScrollRefusal(ids: readonly string[], scroll: (id: string) => Promise<string | undefined>): Promise<string | undefined> {
+  let refusal: string | undefined
+  for (const id of ids) {
+    refusal = await scroll(id)
+    if (refusal === undefined) return undefined
+  }
+  return refusal
 }
 
 /**
