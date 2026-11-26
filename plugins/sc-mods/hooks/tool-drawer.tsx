@@ -42,7 +42,7 @@ const ELLIPSIS = '…'
 
 // Change a tag when its value's fields change: it declines what an earlier version stored.
 const HELD_CALLS = atom({ plugin: 'sc-mods', key: 'heldCalls' } as const, [], { shape: 'held-calls-4' })
-export const NEW_VIEW: DrawerView = { isOn: true, isOpen: false, isSetByHand: false, scope: 'turn', expanded: [], collapsed: [] }
+export const NEW_VIEW: DrawerView = { isOn: true, isOpen: false, isSetByHand: false, scope: 'turn', expanded: [] }
 const DRAWER_VIEW = atom({ plugin: 'sc-mods', key: 'drawerView' } as const, NEW_VIEW, { shape: 'drawer-view-2' })
 /** The time a running card's elapsed seconds count to, moved on each second while a call runs. */
 const DRAWER_CLOCK = atom({ plugin: 'sc-mods', key: 'drawerClock' } as const, 0)
@@ -472,18 +472,17 @@ async function noteStart($: EngineInterface, trail: PromptTrail, id: string, com
  */
 let conversation = 0
 
-/** Keeps how a call ended, and opens its card when it failed; nothing when its conversation has ended. */
+/** Keeps how a call ended; nothing when its conversation has ended. */
 async function noteEnd($: EngineInterface, id: string, ending: CallEnding, startedIn: number) {
   if (startedIn !== conversation) return
   const endedAt = await $.clock.now()
-  const calls = await update($, HELD_CALLS, list => list.map(one => (one.id === id ? endedCall(one, ending, endedAt) : one)))
-  if (ending.status === 'error') await update($, DRAWER_VIEW, view => prunedView(openedOnFailure(view, id), calls))
+  await update($, HELD_CALLS, list => list.map(one => (one.id === id ? endedCall(one, ending, endedAt) : one)))
 }
 
-/** The view with only the held calls' ids in `expanded` and `collapsed`. */
+/** The view with only the held calls' ids in `expanded`. */
 export function prunedView(view: DrawerView, calls: readonly HeldCall[]): DrawerView {
   const held = new Set(calls.map(call => call.id))
-  return { ...view, expanded: view.expanded.filter(id => held.has(id)), collapsed: view.collapsed.filter(id => held.has(id)) }
+  return { ...view, expanded: view.expanded.filter(id => held.has(id)) }
 }
 
 /**
@@ -536,10 +535,6 @@ async function record($: EngineInterface, trail: PromptTrail, id: string, comman
  */
 const callsUnderWay = new Map<string, { hasRun: boolean }>()
 
-/** The view with a failed call's card open, unless the person closed that card. */
-export const openedOnFailure = (view: DrawerView, id: string): DrawerView =>
-  view.collapsed.includes(id) || view.expanded.includes(id) ? view : { ...view, expanded: [...view.expanded, id] }
-
 /**
  * Marks a held call the row says an abort ended, once: a failed or still
  * running call is interrupted. A write is refused while drawing, so it goes
@@ -579,8 +574,8 @@ async function toggleCard($: EngineInterface, id: string) {
 
 /** The view with the card opened, or closed by hand. */
 export function toggleExpanded(view: DrawerView, id: string): DrawerView {
-  if (view.expanded.includes(id)) return { ...view, expanded: view.expanded.filter(one => one !== id), collapsed: [...view.collapsed, id] }
-  return { ...view, expanded: [...view.expanded, id], collapsed: view.collapsed.filter(one => one !== id) }
+  if (view.expanded.includes(id)) return { ...view, expanded: view.expanded.filter(one => one !== id) }
+  return { ...view, expanded: [...view.expanded, id] }
 }
 
 /**

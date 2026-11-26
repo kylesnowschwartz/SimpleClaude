@@ -46,11 +46,9 @@ export type DrawerScope = 'turn' | 'all'
  * How the tool drawer shows. `isOn` false gives every row back to the
  * transcript and hides the drawer; `isSetByHand` is true once the person has
  * opened or closed it, so a new prompt's first call leaves it as it is.
- * `expanded` lists the ids of the calls whose card shows its output;
- * `collapsed` those whose card the person closed, which a failure does not
- * open again.
+ * `expanded` lists the ids of the calls whose card shows its output.
  */
-export type DrawerView = { isOn: boolean; isOpen: boolean; isSetByHand: boolean; scope: DrawerScope; expanded: string[]; collapsed: string[] }
+export type DrawerView = { isOn: boolean; isOpen: boolean; isSetByHand: boolean; scope: DrawerScope; expanded: string[] }
 
 declare module 'claude-code' {
   interface PluginState {

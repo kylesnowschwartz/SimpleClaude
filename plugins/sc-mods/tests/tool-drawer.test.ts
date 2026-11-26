@@ -16,7 +16,6 @@ import {
   MAX_KEPT_LINES,
   NEW_VIEW,
   prunedView,
-  openedOnFailure,
   toggleExpanded,
   ARROWS_ROWS,
   FRAME_ROWS,
@@ -211,7 +210,7 @@ test('a call is kept running, then done with its output and duration', async ($,
   expect(await band.find({ type: 'Text', text: 'ls' })).toMatchObject({ props: { color: 'suggestion' } })
 })
 
-test('a failed call opens its own card; a refused one is declined', async ($, on) => {
+test('a failed call leaves its card closed; a refused one is declined', async ($, on) => {
   const world = session(on)
   await prompt($, 'p1')
   const failing = await startCall($, world, 'c1')
@@ -220,8 +219,8 @@ test('a failed call opens its own card; a refused one is declined', async ($, on
   await (await startCall($, world, 'c2')).running
   const band = await mountBand($)
   expect((await band.find({ key: 'tool-drawer:toggle' }))?.props.label).toBe('▾ Tool Usage (1 failed · 1 declined · bash)')
-  expect(String((await band.find({ key: 'tool-drawer:card:c1' }))?.props.label)).toMatch(/^▾ ✗ 󰯠/u)
-  expect(await band.find({ type: 'Text', text: /(^|\n)boom(\n|$)/ })).toBeDefined()
+  expect(String((await band.find({ key: 'tool-drawer:card:c1' }))?.props.label)).toMatch(/^▸ ✗ 󰯠/u)
+  expect(await band.find({ type: 'Text', text: /(^|\n)boom(\n|$)/ })).toBeUndefined()
   expect(await band.find({ type: 'Text', text: '✗' })).toMatchObject({ props: { color: 'error' } })
   expect(String((await band.find({ key: 'tool-drawer:card:c2' }))?.props.label)).toMatch(/^▸ ⊘ 󰯠/u)
   expect(await band.find({ type: 'Text', text: '⊘' })).toMatchObject({ props: { dimColor: true } })
@@ -230,11 +229,22 @@ test('a failed call opens its own card; a refused one is declined', async ($, on
   expect(await band.find({ type: 'Text', text: /declined/ })).toBeDefined()
 })
 
-test('a failed card the person closed stays closed', async ($, on) => {
-  const view = toggleExpanded(openedOnFailure(NEW_VIEW, 'c1'), 'c1')
-  expect(view.expanded).toEqual([])
-  expect(openedOnFailure(view, 'c1').expanded).toEqual([])
-  expect(toggleExpanded(view, 'c1')).toMatchObject({ expanded: ['c1'], collapsed: [] })
+test('a click opens a failed card and shows its error, and a second click closes it', async ($, on) => {
+  const world = session(on)
+  await prompt($, 'p1')
+  await finishCall(world, await startCall($, world, 'c1'), 'c1', { error: 'Exit code 2\nboom' })
+  const band = await mountBand($)
+  await band.press({ key: 'tool-drawer:card:c1' })
+  expect(String((await band.find({ key: 'tool-drawer:card:c1' }))?.props.label)).toMatch(/^▾ ✗ 󰯠/u)
+  expect(await band.find({ type: 'Text', text: /(^|\n)boom(\n|$)/ })).toBeDefined()
+  await band.press({ key: 'tool-drawer:card:c1' })
+  expect(await band.find({ type: 'Text', text: /(^|\n)boom(\n|$)/ })).toBeUndefined()
+})
+
+test('toggleExpanded adds or removes the id in expanded', () => {
+  const opened = toggleExpanded(NEW_VIEW, 'c1')
+  expect(opened.expanded).toEqual(['c1'])
+  expect(toggleExpanded(opened, 'c1').expanded).toEqual([])
 })
 
 test('a call cut short by an abort, or stopped with Esc, is interrupted', async ($, on) => {
@@ -261,7 +271,7 @@ test('a row an abort ended marks its call interrupted', async ($, on) => {
   })
   await world.clock.advance(0)
   await row.unmount()
-  expect(String((await (await mountBand($)).find({ key: 'tool-drawer:card:c1' }))?.props.label)).toMatch(/^▾ ■ 󰯠/u)
+  expect(String((await (await mountBand($)).find({ key: 'tool-drawer:card:c1' }))?.props.label)).toMatch(/^▸ ■ 󰯠/u)
 })
 
 test('a running card counts its seconds up while the call runs', async ($, on) => {
@@ -712,7 +722,9 @@ test('a failed card draws its error text in the error colour', async ($, on) => 
   const world = session(on)
   await prompt($, 'p1')
   await finishCall(world, await startCall($, world, 'c1'), 'c1', { error: 'boom' })
-  expect(await (await mountBand($)).find({ type: 'Text', text: /(^|\n)boom(\n|$)/ })).toMatchObject({ props: { color: 'error' } })
+  const band = await mountBand($)
+  await band.press({ key: 'tool-drawer:card:c1' })
+  expect(await band.find({ type: 'Text', text: /(^|\n)boom(\n|$)/ })).toMatchObject({ props: { color: 'error' } })
 })
 
 test('an open card’s copy button copies the command and its output', async ($, on) => {
@@ -857,13 +869,14 @@ test('a command that throws surfaces its own error when the bookkeeping fails to
 
 // --- Declined against failed -------------------------------------------------
 
-test('a command that ran and failed is failed however quickly it ended, and opens its card', async ($, on) => {
+test('a command that ran and failed is failed however quickly it ended, and its card stays closed', async ($, on) => {
   const world = session(on)
   await prompt($, 'p1')
   await finishCall(world, await startCall($, world, 'c1', 'ls /nonexistent'), 'c1', { error: 'Exit code 1\nls: /nonexistent: No such file or directory' })
   const band = await mountBand($)
   expect((await band.find({ key: 'tool-drawer:toggle' }))?.props.label).toBe('▾ Tool Usage (1 failed · bash)')
-  expect(String((await band.find({ key: 'tool-drawer:card:c1' }))?.props.label)).toMatch(/^▾ ✗ 󰯠/u)
+  expect(String((await band.find({ key: 'tool-drawer:card:c1' }))?.props.label)).toMatch(/^▸ ✗ 󰯠/u)
+  await band.press({ key: 'tool-drawer:card:c1' })
   expect(await band.find({ type: 'Text', text: /(^|\n)ls: \/nonexistent: No such file or directory(\n|$)/ })).toMatchObject({ props: { color: 'error' } })
 })
 
@@ -880,8 +893,8 @@ test('a command declined at the dialog never ran and is declined', async ($, on)
 // --- The view keeps only held calls ------------------------------------------
 
 test('prunedView drops the ids of calls no longer held', () => {
-  const view = { ...NEW_VIEW, expanded: ['a', 'gone'], collapsed: ['b', 'old'] }
-  expect(prunedView(view, [call({ id: 'a' }), call({ id: 'b' })])).toMatchObject({ expanded: ['a'], collapsed: ['b'] })
+  const view = { ...NEW_VIEW, expanded: ['a', 'gone', 'b'] }
+  expect(prunedView(view, [call({ id: 'a' }), call({ id: 'b' })])).toMatchObject({ expanded: ['a', 'b'] })
 })
 
 test('a call that fails after its conversation was cleared leaves the new one alone', async ($, on) => {
