@@ -8,7 +8,8 @@ export type Step = -1 | 1
  * The person's prompts the conversation keeps, by their stored row ids, in
  * the order sent: those its transcript file held when the plugin loaded,
  * then those stored since. `at` is the index of the prompt the arrows last
- * jumped to, or undefined while they rest on the newest prompt, where every
+ * jumped to, or undefined while they rest at the end of the conversation, a
+ * place after the newest prompt where ▶ past the newest and every
  * new prompt puts them. `storedRead` is the read of the transcript file,
  * under way or done; undefined until it starts, and again when it found no
  * file or a file behind the conversation, so the next need tries again.
@@ -53,10 +54,16 @@ export function promptIdOf(e: SessionAppendInput): string | undefined {
 /** The index of the prompt the arrows are on: the one last jumped to, else the newest. */
 const indexOn = ({ prompts, at }: PromptTrail) => at ?? prompts.length - 1
 
-/** The index of the prompt a step from the one the arrows are on lands on, or undefined past either end. */
-export function jumpTarget(trail: PromptTrail, step: Step): number | undefined {
-  const target = indexOn(trail) + step
-  return target >= 0 && target < trail.prompts.length ? target : undefined
+/**
+ * Where a step lands: the index of a prompt, `'end'` for the end of the
+ * conversation after the newest prompt, or undefined before the first. From
+ * the end, a step back lands on the newest prompt and a step on stays at the
+ * end; from the newest prompt, a step on lands at the end.
+ */
+export function jumpTarget(trail: PromptTrail, step: Step): number | 'end' | undefined {
+  const target = (trail.at ?? trail.prompts.length) + step
+  if (target < 0) return undefined
+  return target < trail.prompts.length ? target : 'end'
 }
 
 /** `Turn 7/8` while the arrows are on the seventh of eight prompts; empty with none known. */
@@ -303,20 +310,24 @@ async function jump($: EngineInterface, trail: PromptTrail, step: Step) {
   await readStored($, trail)
   const target = jumpTarget(trail, step)
   if (target === undefined) {
-    const endRows = step === 1 ? endRowsToTry(trail) : []
-    if (endRows.length === 0) {
-      $.ui.toast(step === -1 ? 'No earlier prompt' : 'No later prompt')
-      return
-    }
-    const refusal = await firstScrollRefusal(endRows, id => scrollRefusal($, id))
-    if (refusal !== undefined) $.ui.toast(`Can't scroll to the end: ${refusal}`)
+    $.ui.toast('No earlier prompt')
     return
   }
 
-  // The arrows move on before the scroll, so a press during it steps from this prompt, and past a prompt the transcript cannot reach (one a rewind took away).
-  trail.at = target
+  // The arrows move on before the scroll, so a press during it steps from this place, and past a prompt the transcript cannot reach (one a rewind took away).
+  trail.at = target === 'end' ? undefined : target
   await publishPosition($, trail)
-  const refusal = await scrollRefusal($, trail.prompts[target] as string)
+  if (target === 'end') {
+    const endRows = endRowsToTry(trail)
+    if (endRows.length === 0) {
+      $.ui.toast('No later prompt')
+      return
+    }
+    const refusal = await firstScrollRefusal(endRows, id => scrollRefusal($, id, 'end'))
+    if (refusal !== undefined) $.ui.toast(`Can't scroll to the end: ${refusal}`)
+    return
+  }
+  const refusal = await scrollRefusal($, trail.prompts[target] as string, 'start')
   if (refusal !== undefined) $.ui.toast(`Can't jump to that prompt: ${refusal}`)
 }
 
@@ -335,15 +346,16 @@ export async function firstScrollRefusal(ids: readonly string[], scroll: (id: st
 }
 
 /**
- * Why the transcript did not move to the row, or undefined once it did. The
- * row lands at the window's bottom, just above the prompt box, with the rows
- * after it out of view. Claude Code scrolls to a row its transcript has
- * drawn; the window stays where it is when the row cannot reach the bottom
- * (a prompt near the start), and that answers as moved.
+ * Why the transcript did not move to the row, or undefined once it did. With
+ * `block` `'start'` the row lands at the window's top, with the rows after it
+ * below; with `'end'` it lands at the window's bottom, just above the prompt
+ * box. Claude Code scrolls to a row its transcript has drawn; the window
+ * stays where it is when the row cannot reach that edge (a row near the end
+ * cannot reach the top), and that answers as moved.
  */
-async function scrollRefusal($: EngineInterface, requestId: string): Promise<string | undefined> {
+async function scrollRefusal($: EngineInterface, requestId: string, block: 'start' | 'end'): Promise<string | undefined> {
   try {
-    return (await $.ui.scroll({ to: { requestId }, block: 'end' })).deny
+    return (await $.ui.scroll({ to: { requestId }, block })).deny
   } catch (error) {
     // Where no surface scrolls the transcript, the call rejects instead of denying.
     return error instanceof Error ? error.message : String(error)
@@ -352,14 +364,15 @@ async function scrollRefusal($: EngineInterface, requestId: string): Promise<str
 
 /**
  * The band's ◀ and ▶ buttons, which scroll the transcript so the previous or
- * next of the person's prompts sits at the bottom of the view, with the
- * arrows' place among them between; on the newest prompt, ▶ scrolls to the
- * end of the conversation. Hotkeys 1 and 2 press them while the band holds
- * the keyboard.
+ * next of the person's prompts sits at the top of the view, with the
+ * arrows' place among them between. The end of the conversation is a place
+ * after the newest prompt: ▶ from the newest prompt, or from the end, scrolls
+ * there, and ◀ from it goes to the newest prompt. Hotkeys 1 and 2 press them
+ * while the band holds the keyboard.
  *
  * The prompts counted are those the transcript file holds since its last
  * compaction, read when the plugin loads or at the first press, and those
- * stored since. The arrows step from the prompt last jumped to, so a press
+ * stored since. The arrows step from the place last jumped to, so a press
  * moves them on even where the window could not move; the person's own
  * scrolling does not move them.
  *

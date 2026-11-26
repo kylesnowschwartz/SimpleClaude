@@ -356,6 +356,8 @@ test('scope follows the arrows, and the scope button switches to all turns', asy
   expect(await band.find({ key: 'tool-drawer:card:c1' })).toBeUndefined()
   expect(await band.find({ key: 'tool-drawer:card:c2' })).toBeDefined()
 
+  // From the end, the first ◀ lands on the newest prompt, the second on the one before it.
+  await band.press({ key: 'prompt-jump:previous' })
   await band.press({ key: 'prompt-jump:previous' })
   expect((await band.find({ key: 'tool-drawer:scope' }))?.props.label).toBe('Turn 1/2')
   expect(await band.find({ key: 'tool-drawer:card:c1' })).toBeDefined()
