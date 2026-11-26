@@ -119,6 +119,24 @@ export function callsInScope(calls: readonly HeldCall[], scope: DrawerScope, tur
   return turn === undefined ? [] : calls.filter(call => call.promptId === turn.promptId)
 }
 
+/**
+ * The turn whose commands the drawer lists under scope `turn`: the one the
+ * arrows are on, except while they rest at the end of the conversation on a
+ * prompt with no command yet, where it is the latest earlier prompt with a
+ * command. So the drawer stays in place between a prompt and its first
+ * command. `prompts` is the trail's prompt ids in the order sent.
+ */
+export function listedTurn(calls: readonly HeldCall[], turn: TurnOn | undefined, prompts: readonly string[], isAtRest: boolean): TurnOn | undefined {
+  if (!isAtRest || turn === undefined) return turn
+  const hasCalls = (promptId: string | undefined) => calls.some(call => call.promptId === promptId)
+  if (hasCalls(turn.promptId)) return turn
+  for (let index = turn.number - 2; index >= 0; index -= 1) {
+    const promptId = prompts[index]
+    if (promptId !== undefined && hasCalls(promptId)) return { promptId, number: index + 1, count: turn.count }
+  }
+  return turn
+}
+
 /** `Tool Usage (2 done · 1 failed · 1 declined · 1 running · bash)`, each count shown only when above 0. */
 export function summaryText(calls: readonly HeldCall[]): string {
   const count = (status: HeldCallStatus) => calls.filter(call => call.status === status).length
@@ -679,8 +697,9 @@ export function registerToolDrawer(on: On, trail: PromptTrail) {
     const view = await read($, DRAWER_VIEW)
     if (!view.isOn) return next(e)
 
-    const turn = await readTurnOn($, trail)
-    const shown = callsInScope(await read($, HELD_CALLS), view.scope, turn)
+    const held = await read($, HELD_CALLS)
+    const turn = listedTurn(held, await readTurnOn($, trail), trail.prompts, trail.at === undefined)
+    const shown = callsInScope(held, view.scope, turn)
     if (shown.length === 0) return next(e)
 
     const now = await read($, DRAWER_CLOCK)

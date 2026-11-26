@@ -74,7 +74,8 @@ Closed, the drawer is one line, with the arrows at its end:
 - A command that fails stays closed, with its `✗` mark in the error colour; click its line to read the error.
 - The drawer fits the band with any other mod's rows in it: when its commands do not fit, it shows the newest under a dim `… N earlier calls` line. An open command keeps its output in view before older closed commands do: they move into the `… N earlier calls` count first, and of several open commands the one opened last comes first. An open command with no room for its output shows closed. When the band has no room for even one command, the bar says `no room for cards`.
 - The drawer opens by itself at the first command of each new prompt, until you open or close it yourself. After that it stays as you left it for the rest of the session.
-- When the prompt the arrows are on has no commands, the drawer is not shown, and the arrows take their own row.
+- When you send a prompt, the drawer keeps listing the latest earlier prompt's commands, at the same size and open or closed, with that prompt's number on its `Turn` button, until the new prompt's first command starts.
+- When the arrows are on a prompt with no commands, the drawer is not shown, and the arrows take their own row.
 
 Output shows as the terminal would leave it: colour codes and other escape sequences are removed, a line a progress bar rewrote with carriage returns keeps what was last written, tabs are expanded, and lines are cut to the band's width counting wide characters as two columns.
 

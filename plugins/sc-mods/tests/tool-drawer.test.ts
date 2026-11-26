@@ -18,6 +18,7 @@ import {
   prunedView,
   toggleExpanded,
   arrowsCells,
+  listedTurn,
   FRAME_ROWS,
   drawerRoom,
   otherRowsOf,
@@ -449,6 +450,55 @@ test('the bar leaves room for the arrows, so a narrow bar does not wrap', () => 
   const bar = barTexts(summary, 'npm test 12s', arrowsCells('Turn 3/8') + 1, width)
   expect(bar.running).toBeUndefined()
   expect(cells(bar.summary) + 2 + arrowsCells('Turn 3/8') + 1).toBeLessThanOrEqual(width)
+})
+
+test('listedTurn holds the latest earlier turn with commands only while the arrows rest', () => {
+  const calls = [call({ id: 'a', promptId: 'p1' }), call({ id: 'b', promptId: 'p2' })]
+  const prompts = ['p1', 'p2', 'p3', 'p4']
+  const on4 = { promptId: 'p4', number: 4, count: 4 }
+  expect(listedTurn(calls, on4, prompts, true)).toEqual({ promptId: 'p2', number: 2, count: 4 })
+  expect(listedTurn(calls, on4, prompts, false)).toBe(on4)
+  const on1 = { promptId: 'p1', number: 1, count: 4 }
+  expect(listedTurn(calls, on1, prompts, true)).toBe(on1)
+  expect(listedTurn([], on4, prompts, true)).toBe(on4)
+  expect(listedTurn(calls, undefined, prompts, true)).toBeUndefined()
+})
+
+test('after a new prompt the drawer keeps the last turn’s commands until the new turn’s first command', async ($, on) => {
+  const world = session(on)
+  on('ui.scroll', () => ({}))
+  await prompt($, 'p1')
+  await finishCall(world, await startCall($, world, 'c1'), 'c1')
+  const before = await mountBand($)
+  const rowsBefore = rowsOf(ownPart(await before.drawn()))
+  await before.unmount()
+
+  await prompt($, 'p2')
+  const held = await mountBand($)
+  expect((await held.find({ key: 'tool-drawer:scope' }))?.props.label).toBe('Turn 1/2')
+  expect(await held.find({ key: 'tool-drawer:card:c1' })).toBeDefined()
+  expect(rowsOf(ownPart(await held.drawn()))).toBe(rowsBefore)
+  await held.unmount()
+
+  const running = await startCall($, world, 'c2')
+  const next = await mountBand($)
+  expect((await next.find({ key: 'tool-drawer:scope' }))?.props.label).toBe('Turn 2/2')
+  expect(await next.find({ key: 'tool-drawer:card:c2' })).toBeDefined()
+  expect(await next.find({ key: 'tool-drawer:card:c1' })).toBeUndefined()
+  await finishCall(world, running, 'c2')
+})
+
+test('a jump to a prompt with no commands draws no drawer', async ($, on) => {
+  const world = session(on)
+  on('ui.scroll', () => ({}))
+  await prompt($, 'p1')
+  await prompt($, 'p2')
+  await finishCall(world, await startCall($, world, 'c2'), 'c2')
+  const band = await mountBand($)
+  await band.press({ key: 'prompt-jump:previous' })
+  await band.press({ key: 'prompt-jump:previous' })
+  expect(await band.find({ key: 'tool-drawer:toggle' })).toBeUndefined()
+  expect(await band.findAll({ key: 'prompt-jump:previous' })).toHaveLength(1)
 })
 
 test('scope follows the arrows, and the scope button switches to all turns', async ($, on) => {
